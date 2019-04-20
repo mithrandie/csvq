@@ -46,11 +46,11 @@ var calcTests = []struct {
 
 func TestCalc(t *testing.T) {
 	tx, _ := query.NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, query.NewSession())
-	filter := query.NewFilter(tx)
+	scope := query.NewReferenceScope(tx)
 	ctx := context.Background()
 
 	for _, v := range calcTests {
-		_ = tx.Rollback(filter, nil)
+		_ = tx.Rollback(scope, nil)
 
 		if 0 < len(v.Stdin) {
 			_ = tx.Session.SetStdin(query.NewInput(strings.NewReader(v.Stdin)))

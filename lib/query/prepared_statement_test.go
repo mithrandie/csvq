@@ -11,7 +11,6 @@ import (
 
 func TestPreparedStatementMap_Prepare(t *testing.T) {
 	m := NewPreparedStatementMap()
-	filter := NewFilter(TestTx)
 
 	expr := parser.StatementPreparation{
 		Name:      parser.Identifier{Literal: "stmt"},
@@ -41,7 +40,7 @@ func TestPreparedStatementMap_Prepare(t *testing.T) {
 		},
 	})
 
-	err := m.Prepare(filter, expr)
+	err := m.Prepare(TestTx.Flags, expr)
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	} else {
@@ -51,7 +50,7 @@ func TestPreparedStatementMap_Prepare(t *testing.T) {
 	}
 
 	expectErr := "statement stmt is a duplicate"
-	err = m.Prepare(filter, expr)
+	err = m.Prepare(TestTx.Flags, expr)
 	if err == nil {
 		t.Errorf("no error, want error %q", expectErr)
 	} else {
@@ -65,7 +64,7 @@ func TestPreparedStatementMap_Prepare(t *testing.T) {
 		Statement: value.NewString("select from"),
 	}
 	expectErr = "prepare stmt2 [L:1 C:8] syntax error: unexpected token \"from\""
-	err = m.Prepare(filter, expr)
+	err = m.Prepare(TestTx.Flags, expr)
 	if err == nil {
 		t.Errorf("no error, want error %q", expectErr)
 	} else {
@@ -209,7 +208,7 @@ func TestNewPreparedStatement(t *testing.T) {
 		HolderNumber: 0,
 	}
 
-	result, err := NewPreparedStatement(NewFilter(TestTx), expr)
+	result, err := NewPreparedStatement(TestTx.Flags, expr)
 	if err != nil {
 		t.Errorf("error %q, want no error", err.Error())
 	} else {
@@ -224,7 +223,7 @@ func TestNewPreparedStatement(t *testing.T) {
 	}
 	expectErr := "prepare stmt [L:1 C:8] syntax error: unexpected token \"from\""
 
-	_, err = NewPreparedStatement(NewFilter(TestTx), expr)
+	_, err = NewPreparedStatement(TestTx.Flags, expr)
 	if err == nil {
 		t.Errorf("no error, want error %q", expectErr)
 	} else if err.Error() != expectErr {

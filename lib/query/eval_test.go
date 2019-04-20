@@ -6,16 +6,16 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
-
 	"github.com/mithrandie/ternary"
 )
 
-var filterEvaluateTests = []struct {
+var evaluateTests = []struct {
 	Name          string
-	Filter        *Filter
+	Scope         *ReferenceScope
 	Expr          parser.QueryExpression
 	ReplaceValues *ReplaceValues
 	Result        value.Primary
@@ -45,210 +45,196 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "FieldReference",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str"),
-							}),
-							NewRecordWithId(2, []value.Primary{
-								value.NewInteger(2),
-								value.NewString("strstr"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str"),
+						}),
+						NewRecordWithId(2, []value.Primary{
+							value.NewInteger(2),
+							value.NewString("strstr"),
+						}),
 					},
-					recordIndex: 1,
 				},
+				recordIndex: 1,
 			},
-		},
+		}),
 		Expr:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 		Result: value.NewString("strstr"),
 	},
 	{
 		Name: "FieldReference ColumnNotExist Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str"),
-							}),
-							NewRecordWithId(2, []value.Primary{
-								value.NewInteger(2),
-								value.NewString("strstr"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str"),
+						}),
+						NewRecordWithId(2, []value.Primary{
+							value.NewInteger(2),
+							value.NewString("strstr"),
+						}),
 					},
-					recordIndex: 1,
 				},
+				recordIndex: 1,
 			},
-		},
+		}),
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
 		Error: "field column3 does not exist",
 	},
 	{
 		Name: "FieldReference FieldAmbigous Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column1"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str"),
-							}),
-							NewRecordWithId(2, []value.Primary{
-								value.NewInteger(2),
-								value.NewString("strstr"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column1"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str"),
+						}),
+						NewRecordWithId(2, []value.Primary{
+							value.NewInteger(2),
+							value.NewString("strstr"),
+						}),
 					},
-					recordIndex: 1,
 				},
+				recordIndex: 1,
 			},
-		},
+		}),
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		Error: "field column1 is ambiguous",
 	},
 	{
 		Name: "FieldReference Not Group Key Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: []HeaderField{
-							{
-								View:        "table1",
-								Column:      "column1",
-								IsFromTable: true,
-							},
-							{
-								View:   "table1",
-								Column: "column2",
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: []HeaderField{
+						{
+							View:        "table1",
+							Column:      "column1",
+							IsFromTable: true,
 						},
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-								}),
-							},
-							{
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-								}),
-							},
+						{
+							View:   "table1",
+							Column: "column2",
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+							}),
+						},
+						{
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+							}),
+						},
+					},
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 		Error: "field column1 is not a group key",
 	},
 	{
 		Name: "ColumnNumber",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str"),
-							}),
-							NewRecordWithId(2, []value.Primary{
-								value.NewInteger(2),
-								value.NewString("strstr"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str"),
+						}),
+						NewRecordWithId(2, []value.Primary{
+							value.NewInteger(2),
+							value.NewString("strstr"),
+						}),
 					},
-					recordIndex: 1,
 				},
+				recordIndex: 1,
 			},
-		},
+		}),
 		Expr:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(2)},
 		Result: value.NewString("strstr"),
 	},
 	{
 		Name: "ColumnNumber Not Exist Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str"),
-							}),
-							NewRecordWithId(2, []value.Primary{
-								value.NewInteger(2),
-								value.NewString("strstr"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str"),
+						}),
+						NewRecordWithId(2, []value.Primary{
+							value.NewInteger(2),
+							value.NewString("strstr"),
+						}),
 					},
-					recordIndex: 1,
 				},
+				recordIndex: 1,
 			},
-		},
+		}),
 		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(9)},
 		Error: "field table1.9 does not exist",
 	},
 	{
 		Name: "ColumnNumber Not Group Key Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: []HeaderField{
-							{
-								View:        "table1",
-								Column:      "column1",
-								Number:      1,
-								IsFromTable: true,
-							},
-							{
-								View:        "table1",
-								Column:      "column2",
-								Number:      2,
-								IsFromTable: true,
-								IsGroupKey:  true,
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: []HeaderField{
+						{
+							View:        "table1",
+							Column:      "column1",
+							Number:      1,
+							IsFromTable: true,
 						},
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-								}),
-							},
-							{
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-								}),
-							},
+						{
+							View:        "table1",
+							Column:      "column2",
+							Number:      2,
+							IsFromTable: true,
+							IsGroupKey:  true,
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+							}),
+						},
+						{
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+							}),
+						},
+					},
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(1)},
 		Error: "field table1.1 is not a group key",
 	},
@@ -1179,22 +1165,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In Subquery",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.In{
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
@@ -1320,22 +1304,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In JsonArray",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.In{
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
@@ -1350,22 +1332,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In JsonArray Query is Null",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.In{
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
@@ -1380,22 +1360,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In JsonArray Query Evaluation Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.In{
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
@@ -1410,22 +1388,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In JsonArray JsonText Evaluation Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.In{
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
@@ -1440,22 +1416,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In JsonArray Query Load Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.In{
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
@@ -1470,22 +1444,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "In JsonArray Empty Result Set",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.In{
 			LHS: parser.NewIntegerValue(2),
 			Values: parser.RowValue{
@@ -2271,22 +2243,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Exists",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.Exists{
 			Query: parser.Subquery{
 				Query: parser.SelectQuery{
@@ -2373,22 +2343,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Subquery",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table2", []string{"column3", "column4"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.Subquery{
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
@@ -2532,9 +2500,9 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "User Defined Function",
-		Filter: &Filter{
-			functions: UserDefinedFunctionScopes{
-				UserDefinedFunctionMap{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
 						Parameters: []parser.Variable{
@@ -2547,7 +2515,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Expr: parser.Function{
 			Name: "userfunc",
 			Args: []parser.QueryExpression{
@@ -2558,9 +2526,9 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "User Defined Function Argument Length Error",
-		Filter: &Filter{
-			functions: UserDefinedFunctionScopes{
-				UserDefinedFunctionMap{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERFUNC": &UserDefinedFunction{
 						Name: parser.Identifier{Literal: "userfunc"},
 						Parameters: []parser.Variable{
@@ -2573,7 +2541,7 @@ var filterEvaluateTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, nil),
 		Expr: parser.Function{
 			Name: "userfunc",
 			Args: []parser.QueryExpression{},
@@ -2604,36 +2572,34 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
@@ -2645,31 +2611,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Argument Length Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
@@ -2678,22 +2642,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Not Grouped Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
@@ -2705,31 +2667,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Nested Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
@@ -2746,31 +2706,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Count With AllColumns",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
@@ -2782,31 +2740,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Count With Null",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
@@ -2817,8 +2773,7 @@ var filterEvaluateTests = []struct {
 		Result: value.NewInteger(0),
 	},
 	{
-		Name:   "Aggregate Function As a Statement Error",
-		Filter: &Filter{},
+		Name: "Aggregate Function As a Statement Error",
 		Expr: parser.AggregateFunction{
 			Name:     "avg",
 			Distinct: parser.Token{},
@@ -2830,34 +2785,9 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function User Defined",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-									value.NewString("str4"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					recordIndex: 0,
-				},
-			},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -2936,7 +2866,31 @@ var filterEvaluateTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+								value.NewString("str4"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				recordIndex: 0,
+			},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "useraggfunc",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -2949,34 +2903,9 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function User Defined Argument Length Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-									value.NewString("str4"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					recordIndex: 0,
-				},
-			},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -2992,7 +2921,31 @@ var filterEvaluateTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+								value.NewString("str4"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				recordIndex: 0,
+			},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "useraggfunc",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3004,34 +2957,9 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function User Defined Argument Evaluation Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-									value.NewString("str4"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					recordIndex: 0,
-				},
-			},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -3047,7 +2975,31 @@ var filterEvaluateTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+								value.NewString("str4"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				recordIndex: 0,
+			},
+		}),
 		Expr: parser.AggregateFunction{
 			Name:     "useraggfunc",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3060,32 +3012,9 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Execute User Defined Aggregate Function Passed As Scala Function",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					recordIndex: 0,
-				},
-			},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -3146,7 +3075,29 @@ var filterEvaluateTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				recordIndex: 0,
+			},
+		}),
 		Expr: parser.Function{
 			Name: "useraggfunc",
 			Args: []parser.QueryExpression{
@@ -3157,32 +3108,9 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Aggregate Function Execute User Defined Aggregate Function Undeclared Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
-						},
-						isGrouped: true,
-					},
-					recordIndex: 0,
-				},
-			},
-			functions: UserDefinedFunctionScopes{
-				{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameFunctions: {
 					"USERAGGFUNC": &UserDefinedFunction{
 						Name:        parser.Identifier{Literal: "useraggfunc"},
 						IsAggregate: true,
@@ -3243,7 +3171,29 @@ var filterEvaluateTests = []struct {
 					},
 				},
 			},
-		},
+		}, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
+						},
+					},
+					isGrouped: true,
+				},
+				recordIndex: 0,
+			},
+		}),
 		Expr: parser.AggregateFunction{
 			Name: "undefined",
 			Args: []parser.QueryExpression{
@@ -3254,39 +3204,37 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-									value.NewInteger(3),
-									value.NewInteger(4),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-									value.NewInteger(3),
-									value.NewInteger(4),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str2"),
-									value.NewString("str1"),
-									value.NewNull(),
-									value.NewString("str2"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+								value.NewInteger(3),
+								value.NewInteger(4),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+								value.NewInteger(3),
+								value.NewInteger(4),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str2"),
+								value.NewString("str1"),
+								value.NewNull(),
+								value.NewString("str2"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3304,39 +3252,37 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Null",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-									value.NewInteger(3),
-									value.NewInteger(4),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-									value.NewInteger(3),
-									value.NewInteger(4),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewNull(),
-									value.NewNull(),
-									value.NewNull(),
-									value.NewNull(),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+								value.NewInteger(3),
+								value.NewInteger(4),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+								value.NewInteger(3),
+								value.NewInteger(4),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewNull(),
+								value.NewNull(),
+								value.NewNull(),
+								value.NewNull(),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
 			Args: []parser.QueryExpression{
@@ -3348,22 +3294,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Argument Length Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3377,22 +3321,20 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Not Grouped Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecordWithId(1, []value.Primary{
-								value.NewInteger(1),
-								value.NewString("str2"),
-							}),
-						},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(1, []value.Primary{
+							value.NewInteger(1),
+							value.NewString("str2"),
+						}),
 					},
-					recordIndex: 0,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3410,33 +3352,31 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Sort Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-									value.NewInteger(3),
-									value.NewInteger(4),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str2"),
-									value.NewString("str1"),
-									value.NewNull(),
-									value.NewString("str2"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+								value.NewInteger(3),
+								value.NewInteger(4),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str2"),
+								value.NewString("str1"),
+								value.NewNull(),
+								value.NewString("str2"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3454,31 +3394,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Nested Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name: "listagg",
 			Args: []parser.QueryExpression{
@@ -3495,31 +3433,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Second Argument Evaluation Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name: "listagg",
 			Args: []parser.QueryExpression{
@@ -3531,31 +3467,29 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "ListAgg Function Second Argument Not String Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewNull(),
-									value.NewInteger(3),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str1"),
-									value.NewString("str2"),
-									value.NewString("str3"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewNull(),
+								value.NewInteger(3),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str1"),
+								value.NewString("str2"),
+								value.NewString("str3"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name: "listagg",
 			Args: []parser.QueryExpression{
@@ -3566,8 +3500,7 @@ var filterEvaluateTests = []struct {
 		Error: "the second argument must be a string for function listagg",
 	},
 	{
-		Name:   "ListAgg Function As a Statement Error",
-		Filter: &Filter{},
+		Name: "ListAgg Function As a Statement Error",
 		Expr: parser.ListFunction{
 			Name:     "listagg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3585,39 +3518,37 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "JsonAgg Function",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-									value.NewInteger(3),
-									value.NewInteger(4),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-									value.NewInteger(3),
-									value.NewInteger(4),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str2"),
-									value.NewString("str1"),
-									value.NewNull(),
-									value.NewString("str2"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+								value.NewInteger(3),
+								value.NewInteger(4),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+								value.NewInteger(3),
+								value.NewInteger(4),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str2"),
+								value.NewString("str1"),
+								value.NewNull(),
+								value.NewString("str2"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name:     "json_agg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3634,33 +3565,31 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "JsonAgg Function Arguments Error",
-		Filter: &Filter{
-			records: []filterRecord{
-				{
-					view: &View{
-						Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							{
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewInteger(1),
-									value.NewInteger(2),
-								}),
-								NewGroupCell([]value.Primary{
-									value.NewString("str2"),
-									value.NewString("str1"),
-								}),
-							},
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						{
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewInteger(1),
+								value.NewInteger(2),
+							}),
+							NewGroupCell([]value.Primary{
+								value.NewString("str2"),
+								value.NewString("str1"),
+							}),
 						},
-						isGrouped: true,
 					},
-					recordIndex: 0,
+					isGrouped: true,
 				},
+				recordIndex: 0,
 			},
-		},
+		}),
 		Expr: parser.ListFunction{
 			Name:     "json_agg",
 			Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
@@ -3894,17 +3823,13 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Variable",
-		Filter: NewFilterWithScopes(
-			TestTx,
-			[]VariableMap{
-				GenerateVariableMap(map[string]value.Primary{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameVariables: {
 					"var1": value.NewInteger(1),
-				}),
+				},
 			},
-			[]ViewMap{NewViewMap()},
-			[]CursorMap{{}},
-			[]UserDefinedFunctionMap{{}},
-		),
+		}, nil, time.Time{}, nil),
 		Expr: parser.Variable{
 			Name: "var1",
 		},
@@ -3947,17 +3872,13 @@ var filterEvaluateTests = []struct {
 	},
 	{
 		Name: "Variable Substitution",
-		Filter: NewFilterWithScopes(
-			TestTx,
-			[]VariableMap{
-				GenerateVariableMap(map[string]value.Primary{
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameVariables: {
 					"var1": value.NewInteger(1),
-				}),
+				},
 			},
-			[]ViewMap{NewViewMap()},
-			[]CursorMap{{}},
-			[]UserDefinedFunctionMap{{}},
-		),
+		}, nil, time.Time{}, nil),
 		Expr: parser.VariableSubstitution{
 			Variable: parser.Variable{Name: "var1"},
 			Value:    parser.NewIntegerValue(2),
@@ -4094,41 +4015,37 @@ var filterEvaluateTests = []struct {
 	},
 }
 
-func TestFilter_Evaluate(t *testing.T) {
+func TestEvaluate(t *testing.T) {
 	defer func() {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.Repository = TestDataDir
-
-	cursors := CursorMap{
+	scope := NewReferenceScope(TestTx)
+	scope.blocks[0].cursors = CursorMap{
 		"CUR": &Cursor{
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 	}
 
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
-	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
+	ctx := context.Background()
+	_ = scope.OpenCursor(ctx, parser.Identifier{Literal: "cur"}, nil)
+	_, _ = scope.FetchCursor(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
-	for _, v := range filterEvaluateTests {
+	for _, v := range evaluateTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
-		if v.Filter == nil {
-			v.Filter = NewFilter(TestTx)
-		} else {
-			v.Filter.tx = TestTx
+		if v.Scope == nil {
+			v.Scope = scope
 		}
 
-		v.Filter.cursors = append(v.Filter.cursors, cursors)
-
-		evalCtx := ContextForExecusion(ctx, v.Filter)
+		evalCtx := ctx
 		if v.ReplaceValues != nil {
 			evalCtx = ContextForPreparedStatement(ctx, v.ReplaceValues)
 		}
-		result, err := v.Filter.Evaluate(evalCtx, v.Expr)
+		result, err := Evaluate(evalCtx, v.Scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -4147,7 +4064,7 @@ func TestFilter_Evaluate(t *testing.T) {
 	}
 }
 
-var filterEvaluateEmbeddedStringTests = []struct {
+var evaluateEmbeddedStringTests = []struct {
 	Input  string
 	Expect string
 	Error  string
@@ -4202,13 +4119,13 @@ var filterEvaluateEmbeddedStringTests = []struct {
 	},
 }
 
-func TestFilter_EvaluateEmbeddedString(t *testing.T) {
-	filter := NewFilter(TestTx)
-	_ = filter.variables[0].Add(parser.Variable{Name: "var"}, value.NewInteger(1))
+func TestEvaluateEmbeddedString(t *testing.T) {
+	scope := NewReferenceScope(TestTx)
+	_ = scope.DeclareVariableDirectly(parser.Variable{Name: "var"}, value.NewInteger(1))
 	_ = os.Setenv("CSVQ_TEST_FILTER", "FILTER_TEST")
 
-	for _, v := range filterEvaluateEmbeddedStringTests {
-		result, err := filter.EvaluateEmbeddedString(context.Background(), v.Input)
+	for _, v := range evaluateEmbeddedStringTests {
+		result, err := EvaluateEmbeddedString(context.Background(), scope, v.Input)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -4229,14 +4146,36 @@ func TestFilter_EvaluateEmbeddedString(t *testing.T) {
 	}
 }
 
-func BenchmarkFilter_EvaluateCountAllColumns(b *testing.B) {
+func generateBenchGroupedViewScope() *ReferenceScope {
+	primaries := make([]value.Primary, 10000)
+	for i := 0; i < 10000; i++ {
+		primaries[i] = value.NewInteger(int64(i))
+	}
+
+	view := &View{
+		Header: NewHeader("table1", []string{"c1"}),
+		RecordSet: []Record{
+			{
+				NewGroupCell(primaries),
+			},
+		},
+		isGrouped: true,
+	}
+
+	return NewReferenceScope(TestTx).CreateScopeForRecordEvaluation(
+		view,
+		0,
+	)
+}
+
+func BenchmarkEvaluateCountAllColumns(b *testing.B) {
 	ctx := context.Background()
-	filter := GenerateBenchGroupedViewFilter()
+	scope := generateBenchGroupedViewScope()
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = filter.Evaluate(ctx, parser.AggregateFunction{
+		_, _ = Evaluate(ctx, scope, parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
 			Args: []parser.QueryExpression{
@@ -4246,14 +4185,14 @@ func BenchmarkFilter_EvaluateCountAllColumns(b *testing.B) {
 	}
 }
 
-func BenchmarkFilter_EvaluateCount(b *testing.B) {
+func BenchmarkEvaluateCount(b *testing.B) {
 	ctx := context.Background()
-	filter := GenerateBenchGroupedViewFilter()
+	scope := generateBenchGroupedViewScope()
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = filter.Evaluate(ctx, parser.AggregateFunction{
+		_, _ = Evaluate(ctx, scope, parser.AggregateFunction{
 			Name:     "count",
 			Distinct: parser.Token{},
 			Args: []parser.QueryExpression{
@@ -4263,14 +4202,14 @@ func BenchmarkFilter_EvaluateCount(b *testing.B) {
 	}
 }
 
-func BenchmarkFilter_EvaluateSingleThread(b *testing.B) {
+func BenchmarkEvaluateSingleThread(b *testing.B) {
 	ctx := context.Background()
 
 	for i := 0; i < b.N; i++ {
-		filter := NewFilter(TestTx)
+		scope := NewReferenceScope(TestTx)
 
 		for j := 0; j < 150; j++ {
-			_, _ = filter.Evaluate(ctx, parser.Comparison{
+			_, _ = Evaluate(ctx, scope, parser.Comparison{
 				LHS:      parser.NewIntegerValue(1),
 				RHS:      parser.NewStringValue("1"),
 				Operator: "=",
@@ -4279,7 +4218,7 @@ func BenchmarkFilter_EvaluateSingleThread(b *testing.B) {
 	}
 }
 
-func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
+func BenchmarkEvaluateMultiThread(b *testing.B) {
 	ctx := context.Background()
 
 	for i := 0; i < b.N; i++ {
@@ -4287,10 +4226,10 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 		for i := 0; i < 3; i++ {
 			wg.Add(1)
 			go func(thIdx int) {
-				filter := NewFilter(TestTx)
+				scope := NewReferenceScope(TestTx)
 
 				for j := 0; j < 50; j++ {
-					_, _ = filter.Evaluate(ctx, parser.Comparison{
+					_, _ = Evaluate(ctx, scope, parser.Comparison{
 						LHS:      parser.NewIntegerValue(1),
 						RHS:      parser.NewStringValue("1"),
 						Operator: "=",
@@ -4303,61 +4242,34 @@ func BenchmarkFilter_EvaluateMultiThread(b *testing.B) {
 	}
 }
 
-var filterEvaluateFieldReferenceBenchFilter = &Filter{
-	records: []filterRecord{
-		{
-			view: &View{
-				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
-				RecordSet: RecordSet{
-					NewRecord([]value.Primary{
-						value.NewInteger(1),
-						value.NewInteger(1),
-						value.NewInteger(1),
-					}),
-				},
+var evaluateFieldReferenceBenchScope = GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+	{
+		view: &View{
+			Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
+			RecordSet: RecordSet{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewInteger(1),
+					value.NewInteger(1),
+				}),
 			},
-			recordIndex: 0,
 		},
+		recordIndex:           0,
+		fieldReferenceIndices: make(map[string]int),
 	},
-}
+})
 
-var filterEvaluateFieldReferenceWithIndexCacheBenchFilter = &Filter{
-	records: []filterRecord{
-		{
-			view: &View{
-				Header: NewHeader("table1", []string{"column1", "column2", "column3"}),
-				RecordSet: RecordSet{
-					NewRecord([]value.Primary{
-						value.NewInteger(1),
-						value.NewInteger(1),
-						value.NewInteger(1),
-					}),
-				},
-			},
-			recordIndex:           0,
-			fieldReferenceIndices: make(map[string]int),
-		},
-	},
-}
-
-var filterEvaluateFieldReferenceBenchExpr = parser.FieldReference{
+var evaluateFieldReferenceBenchExpr = parser.FieldReference{
 	Column: parser.Identifier{Literal: "column3"},
 }
 
-func BenchmarkFilter_EvaluateFieldReference(b *testing.B) {
+func BenchmarkEvaluateFieldReference(b *testing.B) {
 	ctx := context.Background()
-	filter := filterEvaluateFieldReferenceBenchFilter
-	expr := filterEvaluateFieldReferenceBenchExpr
-	for i := 0; i < b.N; i++ {
-		_, _ = filter.Evaluate(ctx, expr)
-	}
-}
+	scope := evaluateFieldReferenceBenchScope
+	expr := evaluateFieldReferenceBenchExpr
 
-func BenchmarkFilter_EvaluateFieldReferenceWithIndexCache(b *testing.B) {
-	ctx := context.Background()
-	filter := filterEvaluateFieldReferenceWithIndexCacheBenchFilter
-	expr := filterEvaluateFieldReferenceBenchExpr
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = filter.Evaluate(ctx, expr)
+		_, _ = Evaluate(ctx, scope, expr)
 	}
 }

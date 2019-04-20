@@ -7,67 +7,6 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-type VariableScopes []VariableMap
-
-func (list VariableScopes) Declare(ctx context.Context, expr parser.VariableDeclaration) error {
-	return list[0].Declare(ctx, expr)
-}
-
-func (list VariableScopes) Get(expr parser.Variable) (value value.Primary, err error) {
-	for i := range list {
-		if value, err = list[i].Get(expr); err == nil {
-			return
-		}
-	}
-	err = NewUndeclaredVariableError(expr)
-	return
-}
-
-func (list VariableScopes) Substitute(ctx context.Context, expr parser.VariableSubstitution) (value value.Primary, err error) {
-	for i := range list {
-		if value, err = list[i].Substitute(ctx, expr); err == nil {
-			return
-		}
-		if _, ok := err.(*UndeclaredVariableError); !ok {
-			return
-		}
-	}
-	err = NewUndeclaredVariableError(expr.Variable)
-	return
-}
-
-func (list VariableScopes) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
-	var err error
-	for i := range list {
-		if value, err = list[i].SubstituteDirectly(variable, value); err == nil {
-			return value, nil
-		}
-	}
-	return nil, NewUndeclaredVariableError(variable)
-}
-
-func (list VariableScopes) Dispose(expr parser.Variable) error {
-	for i := range list {
-		if err := list[i].Dispose(expr); err == nil {
-			return nil
-		}
-	}
-	return NewUndeclaredVariableError(expr)
-}
-
-func (list VariableScopes) All() VariableMap {
-	all := NewVariableMap()
-	for i := range list {
-		list[i].Range(func(key, val interface{}) bool {
-			if !all.Exists(key.(string)) {
-				all.Store(key.(string), val.(value.Primary))
-			}
-			return true
-		})
-	}
-	return all
-}
-
 type VariableMap struct {
 	*SyncMap
 }
@@ -78,8 +17,12 @@ func NewVariableMap() VariableMap {
 	}
 }
 
-func (m VariableMap) Store(name string, value value.Primary) {
-	m.store(name, value)
+func (m VariableMap) IsEmpty() bool {
+	return m.SyncMap == nil
+}
+
+func (m VariableMap) Store(name string, val value.Primary) {
+	m.store(name, val)
 }
 
 func (m VariableMap) Load(name string) (value.Primary, bool) {
@@ -97,19 +40,19 @@ func (m VariableMap) Exists(name string) bool {
 	return m.exists(name)
 }
 
-func (m VariableMap) Add(variable parser.Variable, value value.Primary) error {
+func (m VariableMap) Add(variable parser.Variable, val value.Primary) error {
 	if m.Exists(variable.Name) {
 		return NewVariableRedeclaredError(variable)
 	}
-	m.Store(variable.Name, value)
+	m.Store(variable.Name, val)
 	return nil
 }
 
-func (m VariableMap) Set(variable parser.Variable, value value.Primary) error {
+func (m VariableMap) Set(variable parser.Variable, val value.Primary) error {
 	if !m.Exists(variable.Name) {
 		return NewUndeclaredVariableError(variable)
 	}
-	m.Store(variable.Name, value)
+	m.Store(variable.Name, val)
 	return nil
 }
 
@@ -128,19 +71,14 @@ func (m VariableMap) Dispose(variable parser.Variable) error {
 	return nil
 }
 
-func (m VariableMap) Declare(ctx context.Context, declaration parser.VariableDeclaration) error {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return err
-	}
-
+func (m VariableMap) Declare(ctx context.Context, scope *ReferenceScope, declaration parser.VariableDeclaration) error {
 	for _, assignment := range declaration.Assignments {
 		var val value.Primary
 		var err error
 		if assignment.Value == nil {
 			val = value.NewNull()
 		} else {
-			val, err = filter.Evaluate(ctx, assignment.Value)
+			val, err = Evaluate(ctx, scope, assignment.Value)
 			if err != nil {
 				return err
 			}
@@ -153,20 +91,11 @@ func (m VariableMap) Declare(ctx context.Context, declaration parser.VariableDec
 	return nil
 }
 
-func (m VariableMap) Substitute(ctx context.Context, substitution parser.VariableSubstitution) (value.Primary, error) {
-	filter, err := GetFilter(ctx)
+func (m VariableMap) Substitute(ctx context.Context, scope *ReferenceScope, substitution parser.VariableSubstitution) (value.Primary, error) {
+	val, err := Evaluate(ctx, scope, substitution.Value)
 	if err != nil {
 		return nil, err
 	}
-
-	val, err := filter.Evaluate(ctx, substitution.Value)
-	if err != nil {
-		return nil, err
-	}
-	return m.SubstituteDirectly(substitution.Variable, val)
-}
-
-func (m VariableMap) SubstituteDirectly(variable parser.Variable, value value.Primary) (value.Primary, error) {
-	err := m.Set(variable, value)
-	return value, err
+	err = m.Set(substitution.Variable, val)
+	return val, err
 }

@@ -50,769 +50,6 @@ var selectQueryForCursorQueryErrorTest = parser.SelectQuery{
 	},
 }
 
-var cursorScopesDeclareTests = []struct {
-	Name   string
-	Expr   parser.CursorDeclaration
-	Result CursorScopes
-	Error  string
-}{
-	{
-		Name: "CursorScopes Declare",
-		Expr: parser.CursorDeclaration{
-			Cursor: parser.Identifier{Literal: "cur"},
-			Query:  selectQueryForCursorTest,
-		},
-		Result: CursorScopes{
-			{
-				"CUR": &Cursor{
-					name:  "cur",
-					query: selectQueryForCursorTest,
-					mtx:   &sync.Mutex{},
-				},
-			},
-			{},
-		},
-	},
-	{
-		Name: "CursorScopes Declare for Statement",
-		Expr: parser.CursorDeclaration{
-			Cursor:    parser.Identifier{Literal: "stmtcur"},
-			Statement: parser.Identifier{Literal: "stmt"},
-		},
-		Result: CursorScopes{
-			{
-				"CUR": &Cursor{
-					name:  "cur",
-					query: selectQueryForCursorTest,
-					mtx:   &sync.Mutex{},
-				},
-				"STMTCUR": &Cursor{
-					name:      "stmtcur",
-					statement: parser.Identifier{Literal: "stmt"},
-					mtx:       &sync.Mutex{},
-				},
-			},
-			{},
-		},
-	},
-}
-
-func TestCursorScopes_Declare(t *testing.T) {
-	list := CursorScopes{
-		{},
-		{},
-	}
-
-	for _, v := range cursorScopesDeclareTests {
-		err := list.Declare(v.Expr)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
-		}
-	}
-}
-
-var cursorScopesAddPseudoCursorTests = []struct {
-	Name    string
-	CurName parser.Identifier
-	Values  []value.Primary
-	Result  CursorScopes
-	Error   string
-}{
-	{
-		Name:    "CursorScopes AddPseudoCursor",
-		CurName: parser.Identifier{Literal: "pcur"},
-		Values: []value.Primary{
-			value.NewInteger(1),
-			value.NewInteger(2),
-		},
-		Result: CursorScopes{
-			{
-				"PCUR": &Cursor{
-					view: &View{
-						Header: NewHeader("", []string{"c1"}),
-						RecordSet: RecordSet{
-							NewRecord([]value.Primary{value.NewInteger(1)}),
-							NewRecord([]value.Primary{value.NewInteger(2)}),
-						},
-					},
-					index:    -1,
-					isPseudo: true,
-					mtx:      &sync.Mutex{},
-				},
-			},
-			{},
-		},
-	},
-}
-
-func TestCursorScopes_AddPseudoCursor(t *testing.T) {
-	list := CursorScopes{
-		{},
-		{},
-	}
-
-	for _, v := range cursorScopesAddPseudoCursorTests {
-		err := list.AddPseudoCursor(v.CurName, v.Values)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
-		}
-	}
-}
-
-var cursorScopesDisposeTests = []struct {
-	Name    string
-	CurName parser.Identifier
-	Result  CursorScopes
-	Error   string
-}{
-	{
-		Name:    "CursorScopes Dispose",
-		CurName: parser.Identifier{Literal: "cur"},
-		Result: CursorScopes{
-			{
-				"PCUR": &Cursor{
-					view: &View{
-						Header: NewHeader("", []string{"c1"}),
-						RecordSet: RecordSet{
-							NewRecord([]value.Primary{value.NewInteger(1)}),
-							NewRecord([]value.Primary{value.NewInteger(2)}),
-						},
-					},
-					index:    -1,
-					isPseudo: true,
-					mtx:      &sync.Mutex{},
-				},
-			},
-			{},
-		},
-	},
-	{
-		Name:    "CursorScopes Dispose Pseudo Cursor Error",
-		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "cursor pcur is a pseudo cursor",
-	},
-	{
-		Name:    "CursorScopes Dispose Undeclared Error",
-		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
-	},
-}
-
-func TestCursorScopes_Dispose(t *testing.T) {
-	list := CursorScopes{
-		{
-			"PCUR": &Cursor{
-				view: &View{
-					Header: NewHeader("", []string{"c1"}),
-					RecordSet: RecordSet{
-						NewRecord([]value.Primary{value.NewInteger(1)}),
-						NewRecord([]value.Primary{value.NewInteger(2)}),
-					},
-				},
-				index:    -1,
-				isPseudo: true,
-				mtx:      &sync.Mutex{},
-			},
-		},
-		{
-			"CUR": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-		},
-	}
-
-	for _, v := range cursorScopesDisposeTests {
-		err := list.Dispose(v.CurName)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
-		}
-	}
-}
-
-var cursorScopesOpenTests = []struct {
-	Name      string
-	CurName   parser.Identifier
-	CurValues []parser.ReplaceValue
-	Result    CursorScopes
-	Error     string
-}{
-	{
-		Name:    "CursorScopes Open",
-		CurName: parser.Identifier{Literal: "cur"},
-		Result: CursorScopes{
-			{
-				"PCUR": &Cursor{
-					view: &View{
-						Header: NewHeader("", []string{"c1"}),
-						RecordSet: RecordSet{
-							NewRecord([]value.Primary{value.NewInteger(1)}),
-							NewRecord([]value.Primary{value.NewInteger(2)}),
-						},
-					},
-					index:    -1,
-					isPseudo: true,
-					mtx:      &sync.Mutex{},
-				},
-			},
-			CursorMap{
-				"CUR": &Cursor{
-					query: selectQueryForCursorTest,
-					view: &View{
-						Header: NewHeader("table1", []string{"column1", "column2"}),
-						RecordSet: []Record{
-							NewRecord([]value.Primary{
-								value.NewString("1"),
-								value.NewString("str1"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("2"),
-								value.NewString("str2"),
-							}),
-							NewRecord([]value.Primary{
-								value.NewString("3"),
-								value.NewString("str3"),
-							}),
-						},
-						FileInfo: &FileInfo{
-							Path:      GetTestFilePath("table1.csv"),
-							Delimiter: ',',
-							NoHeader:  false,
-							Encoding:  text.UTF8,
-							LineBreak: text.LF,
-						},
-					},
-					index: -1,
-					mtx:   &sync.Mutex{},
-				},
-			},
-		},
-	},
-	{
-		Name:    "CursorScopes Open Undeclared Error",
-		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
-	},
-	{
-		Name:    "CursorScopes Open Open Error",
-		CurName: parser.Identifier{Literal: "cur"},
-		Error:   "cursor cur is already open",
-	},
-	{
-		Name:    "CursorScopes Close Pseudo Cursor Error",
-		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "cursor pcur is a pseudo cursor",
-	},
-}
-
-func TestCursorScopes_Open(t *testing.T) {
-	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		initFlag(TestTx.Flags)
-	}()
-
-	TestTx.Flags.Repository = TestDir
-
-	list := CursorScopes{
-		{
-			"PCUR": &Cursor{
-				view: &View{
-					Header: NewHeader("", []string{"c1"}),
-					RecordSet: RecordSet{
-						NewRecord([]value.Primary{value.NewInteger(1)}),
-						NewRecord([]value.Primary{value.NewInteger(2)}),
-					},
-				},
-				index:    -1,
-				isPseudo: true,
-				mtx:      &sync.Mutex{},
-			},
-		},
-		{
-			"CUR": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-		},
-	}
-
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	for _, v := range cursorScopesOpenTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-
-		err := list.Open(ctx, v.CurName, v.CurValues)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
-		}
-	}
-}
-
-var cursorScopesCloseTests = []struct {
-	Name    string
-	CurName parser.Identifier
-	Result  CursorScopes
-	Error   string
-}{
-	{
-		Name:    "CursorScopes Close",
-		CurName: parser.Identifier{Literal: "cur"},
-		Result: CursorScopes{
-			{
-				"PCUR": &Cursor{
-					view: &View{
-						Header: NewHeader("", []string{"c1"}),
-						RecordSet: RecordSet{
-							NewRecord([]value.Primary{value.NewInteger(1)}),
-							NewRecord([]value.Primary{value.NewInteger(2)}),
-						},
-					},
-					index:    -1,
-					isPseudo: true,
-					mtx:      &sync.Mutex{},
-				},
-			},
-			CursorMap{
-				"CUR": &Cursor{
-					query: selectQueryForCursorTest,
-					mtx:   &sync.Mutex{},
-				},
-			},
-		},
-	},
-	{
-		Name:    "CursorScopes Close Pseudo Cursor Error",
-		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "cursor pcur is a pseudo cursor",
-	},
-	{
-		Name:    "CursorScopes Close Undeclared Error",
-		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
-	},
-}
-
-func TestCursorScopes_Close(t *testing.T) {
-	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		initFlag(TestTx.Flags)
-	}()
-
-	TestTx.Flags.Repository = TestDir
-
-	list := CursorScopes{
-		{
-			"PCUR": &Cursor{
-				view: &View{
-					Header: NewHeader("", []string{"c1"}),
-					RecordSet: RecordSet{
-						NewRecord([]value.Primary{value.NewInteger(1)}),
-						NewRecord([]value.Primary{value.NewInteger(2)}),
-					},
-				},
-				index:    -1,
-				isPseudo: true,
-				mtx:      &sync.Mutex{},
-			},
-		},
-		{
-			"CUR": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-		},
-	}
-
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = list[1]["CUR"].Open(ctx, parser.Identifier{Literal: "cur"}, nil)
-
-	for _, v := range cursorScopesCloseTests {
-		err := list.Close(v.CurName)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !reflect.DeepEqual(list, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, list, v.Result)
-		}
-	}
-}
-
-var cursorScopesFetchTests = []struct {
-	Name     string
-	CurName  parser.Identifier
-	Position int
-	Number   int
-	Result   []value.Primary
-	Error    string
-}{
-	{
-		Name:     "CursorScopes Fetch",
-		CurName:  parser.Identifier{Literal: "cur"},
-		Position: parser.NEXT,
-		Result: []value.Primary{
-			value.NewString("1"),
-			value.NewString("str1"),
-		},
-	},
-	{
-		Name:     "CursorScopes Fetch Undeclared Error",
-		CurName:  parser.Identifier{Literal: "notexist"},
-		Position: parser.NEXT,
-		Error:    "cursor notexist is undeclared",
-	},
-	{
-		Name:     "CursorScopes Fetch Closed Error",
-		CurName:  parser.Identifier{Literal: "cur2"},
-		Position: parser.NEXT,
-		Error:    "cursor cur2 is closed",
-	},
-}
-
-func TestCursorScopes_Fetch(t *testing.T) {
-	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		initFlag(TestTx.Flags)
-	}()
-
-	TestTx.Flags.Repository = TestDir
-
-	list := CursorScopes{
-		{},
-		{
-			"CUR": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-			"CUR2": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-		},
-	}
-
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = list[1]["CUR"].Open(ctx, parser.Identifier{Literal: "cur"}, nil)
-
-	for _, v := range cursorScopesFetchTests {
-		result, err := list.Fetch(v.CurName, v.Position, v.Number)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !reflect.DeepEqual(result, v.Result) {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
-		}
-	}
-}
-
-var cursorScopesIsOpenTests = []struct {
-	Name    string
-	CurName parser.Identifier
-	Result  ternary.Value
-	Error   string
-}{
-	{
-		Name:    "CursorScopes IsOpen",
-		CurName: parser.Identifier{Literal: "cur"},
-		Result:  ternary.TRUE,
-	},
-	{
-		Name:    "CursorScopes IsOpen Undeclared Error",
-		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
-	},
-}
-
-func TestCursorScopes_IsOpen(t *testing.T) {
-	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		initFlag(TestTx.Flags)
-	}()
-
-	TestTx.Flags.Repository = TestDir
-
-	list := CursorScopes{
-		{},
-		{
-			"CUR": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-		},
-	}
-
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = list[1]["CUR"].Open(ctx, parser.Identifier{Literal: "cur"}, nil)
-
-	for _, v := range cursorScopesIsOpenTests {
-		result, err := list.IsOpen(v.CurName)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if result != v.Result {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
-		}
-	}
-}
-
-var cursorScopesIsInRangeTests = []struct {
-	Name    string
-	CurName parser.Identifier
-	Index   int
-	Result  ternary.Value
-	Error   string
-}{
-	{
-		Name:    "CursorScopes Is In Range UNKNOWN",
-		CurName: parser.Identifier{Literal: "cur"},
-		Result:  ternary.UNKNOWN,
-	},
-	{
-		Name:    "CursorMap Is In Range Not Open Error",
-		CurName: parser.Identifier{Literal: "cur2"},
-		Error:   "cursor cur2 is closed",
-	},
-	{
-		Name:    "CursorMap Is In Range Undeclared Error",
-		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
-	},
-}
-
-func TestCursorScopes_IsInRange(t *testing.T) {
-	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		initFlag(TestTx.Flags)
-	}()
-
-	TestTx.Flags.Repository = TestDir
-
-	list := CursorScopes{
-		{},
-		{
-			"CUR": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-			"CUR2": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-		},
-	}
-
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = list[1]["CUR"].Open(ctx, parser.Identifier{Literal: "cur"}, nil)
-
-	for _, v := range cursorScopesIsInRangeTests {
-		result, err := list.IsInRange(v.CurName)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if result != v.Result {
-			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
-		}
-	}
-}
-
-var cursorScopesCountTests = []struct {
-	Name    string
-	CurName parser.Identifier
-	Result  int
-	Error   string
-}{
-	{
-		Name:    "CursorScopes Count",
-		CurName: parser.Identifier{Literal: "cur"},
-		Result:  3,
-	},
-	{
-		Name:    "CursorScopes Count Not Open Error",
-		CurName: parser.Identifier{Literal: "cur2"},
-		Error:   "cursor cur2 is closed",
-	},
-	{
-		Name:    "CursorScopes Count Undeclared Error",
-		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
-	},
-}
-
-func TestCursorScopes_Count(t *testing.T) {
-	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		initFlag(TestTx.Flags)
-	}()
-
-	TestTx.Flags.Repository = TestDir
-
-	list := CursorScopes{
-		{},
-		{
-			"CUR": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-			"CUR2": &Cursor{
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-		},
-	}
-
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = list[1]["CUR"].Open(ctx, parser.Identifier{Literal: "cur"}, nil)
-
-	for _, v := range cursorScopesCountTests {
-		result, err := list.Count(v.CurName)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if result != v.Result {
-			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
-		}
-	}
-}
-
-func TestCursorScopes_All(t *testing.T) {
-	list := CursorScopes{
-		{
-			"CUR2": &Cursor{
-				name:  "cur2",
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-		},
-		{
-			"CUR": &Cursor{
-				name:  "cur",
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-			"CUR2": &Cursor{
-				name:  "cur2",
-				query: selectQueryForCursorTest,
-				mtx:   &sync.Mutex{},
-			},
-			"CUR3": &Cursor{
-				isPseudo: true,
-				name:     "cur3",
-				query:    selectQueryForCursorTest,
-				mtx:      &sync.Mutex{},
-			},
-		},
-	}
-
-	expect := CursorMap{
-		"CUR": &Cursor{
-			name:  "cur",
-			query: selectQueryForCursorTest,
-			mtx:   &sync.Mutex{},
-		},
-		"CUR2": &Cursor{
-			name:  "cur2",
-			query: selectQueryForCursorTest,
-			mtx:   &sync.Mutex{},
-		},
-	}
-
-	result := list.All()
-	if !reflect.DeepEqual(result, expect) {
-		t.Errorf("result = %v, want %v", result, expect)
-	}
-}
-
 var cursorMapDeclareTests = []struct {
 	Name   string
 	Expr   parser.CursorDeclaration
@@ -1219,22 +456,22 @@ func TestCursorMap_Open(t *testing.T) {
 		initFlag(TestTx.Flags)
 	}()
 
-	filter := NewFilter(TestTx)
+	scope := NewReferenceScope(TestTx)
 	TestTx.Flags.Repository = TestDir
-	_ = TestTx.PreparedStatements.Prepare(filter, parser.StatementPreparation{
+	_ = TestTx.PreparedStatements.Prepare(scope.Tx.Flags, parser.StatementPreparation{
 		Name:      parser.Identifier{Literal: "stmt"},
 		Statement: value.NewString("select * from table1 where column1 = ?"),
 	})
-	_ = TestTx.PreparedStatements.Prepare(filter, parser.StatementPreparation{
+	_ = TestTx.PreparedStatements.Prepare(scope.Tx.Flags, parser.StatementPreparation{
 		Name:      parser.Identifier{Literal: "invalid_stmt"},
 		Statement: value.NewString("insert into table1 values (?, ?)"),
 	})
-	_ = TestTx.PreparedStatements.Prepare(filter, parser.StatementPreparation{
+	_ = TestTx.PreparedStatements.Prepare(scope.Tx.Flags, parser.StatementPreparation{
 		Name:      parser.Identifier{Literal: "invalid_stmt2"},
 		Statement: value.NewString("select 1; insert into table1 values (?, ?);"),
 	})
 
-	cursors := CursorMap{
+	scope.blocks[0].cursors = CursorMap{
 		"CUR": &Cursor{
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
@@ -1260,7 +497,7 @@ func TestCursorMap_Open(t *testing.T) {
 			mtx:       &sync.Mutex{},
 		},
 	}
-	_ = cursors.AddPseudoCursor(
+	_ = scope.blocks[0].cursors.AddPseudoCursor(
 		parser.Identifier{Literal: "pcur"},
 		[]value.Primary{
 			value.NewInteger(1),
@@ -1268,10 +505,10 @@ func TestCursorMap_Open(t *testing.T) {
 		},
 	)
 
-	ctx := ContextForExecusion(context.Background(), filter)
+	ctx := context.Background()
 	for _, v := range cursorMapOpenTests {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		err := cursors.Open(ctx, v.CurName, v.CurValues)
+		err := scope.blocks[0].cursors.Open(ctx, scope, v.CurName, v.CurValues)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -1284,8 +521,8 @@ func TestCursorMap_Open(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(cursors, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, cursors, v.Result)
+		if !reflect.DeepEqual(scope.blocks[0].cursors, v.Result) {
+			t.Errorf("%s: result = %v, want %v", v.Name, scope.blocks[0].cursors, v.Result)
 		}
 	}
 }
@@ -1351,8 +588,9 @@ func TestCursorMap_Close(t *testing.T) {
 			value.NewInteger(2),
 		},
 	)
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
+	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur"}, nil)
 
 	for _, v := range cursorMapCloseTests {
 		err := cursors.Close(v.CurName)
@@ -1508,8 +746,9 @@ func TestCursorMap_Fetch(t *testing.T) {
 			mtx:   &sync.Mutex{},
 		},
 	}
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
+	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur"}, nil)
 
 	for _, v := range cursorMapFetchTests {
 		result, err := cursors.Fetch(v.CurName, v.Position, v.Number)
@@ -1572,8 +811,9 @@ func TestCursorMap_IsOpen(t *testing.T) {
 			mtx:   &sync.Mutex{},
 		},
 	}
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
+	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur"}, nil)
 
 	for _, v := range cursorMapIsOpenTests {
 		result, err := cursors.IsOpen(v.CurName)
@@ -1653,11 +893,12 @@ func TestCursorMap_IsInRange(t *testing.T) {
 			mtx:   &sync.Mutex{},
 		},
 	}
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	_ = cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
+	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur"}, nil)
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	_ = cursors.Open(ctx, parser.Identifier{Literal: "cur2"}, nil)
+	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur2"}, nil)
 	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur2"}, parser.NEXT, 0)
 
 	for _, v := range cursorMapIsInRangeTests {
@@ -1725,8 +966,9 @@ func TestCursorMap_Count(t *testing.T) {
 		},
 	}
 	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-	ctx := ContextForExecusion(context.Background(), NewFilter(TestTx))
-	_ = cursors.Open(ctx, parser.Identifier{Literal: "cur"}, nil)
+	scope := NewReferenceScope(TestTx)
+	ctx := context.Background()
+	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur"}, nil)
 
 	for _, v := range cursorMapCountTests {
 		result, err := cursors.Count(v.CurName)

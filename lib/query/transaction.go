@@ -101,7 +101,7 @@ func (tx *Transaction) UseColor(useColor bool) {
 	tx.Flags.SetColor(useColor)
 }
 
-func (tx *Transaction) Commit(ctx context.Context, filter *Filter, expr parser.Expression) error {
+func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr parser.Expression) error {
 	tx.operationMutex.Lock()
 	defer tx.operationMutex.Unlock()
 
@@ -165,7 +165,7 @@ func (tx *Transaction) Commit(ctx context.Context, filter *Filter, expr parser.E
 		tx.LogNotice(fmt.Sprintf("Commit: file %q is updated.", f.Path), tx.Flags.Quiet)
 	}
 
-	msglist := filter.tempViews.Store(tx.Session, tx.uncommittedViews.UncommittedTempViews())
+	msglist := scope.StoreTemporaryTable(tx.Session, tx.uncommittedViews.UncommittedTempViews())
 	if 0 < len(msglist) {
 		tx.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 	}
@@ -177,7 +177,7 @@ func (tx *Transaction) Commit(ctx context.Context, filter *Filter, expr parser.E
 	return nil
 }
 
-func (tx *Transaction) Rollback(filter *Filter, expr parser.Expression) error {
+func (tx *Transaction) Rollback(scope *ReferenceScope, expr parser.Expression) error {
 	tx.operationMutex.Lock()
 	defer tx.operationMutex.Unlock()
 
@@ -195,8 +195,8 @@ func (tx *Transaction) Rollback(filter *Filter, expr parser.Expression) error {
 		}
 	}
 
-	if filter != nil {
-		msglist := filter.tempViews.Restore(tx.uncommittedViews.UncommittedTempViews())
+	if scope != nil {
+		msglist := scope.RestoreTemporaryTable(tx.uncommittedViews.UncommittedTempViews())
 		if 0 < len(msglist) {
 			tx.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 		}

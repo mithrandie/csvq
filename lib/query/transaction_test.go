@@ -80,7 +80,7 @@ func TestTransaction_Commit(t *testing.T) {
 	out := NewOutput()
 	tx.Session.SetStdout(out)
 
-	_ = TestTx.Commit(context.Background(), NewFilter(tx), parser.TransactionControl{Token: parser.COMMIT})
+	_ = TestTx.Commit(context.Background(), NewReferenceScope(tx), parser.TransactionControl{Token: parser.COMMIT})
 
 	log := out.String()
 
@@ -120,7 +120,7 @@ func TestTransaction_Rollback(t *testing.T) {
 	out := NewOutput()
 	tx.Session.SetStdout(out)
 
-	_ = TestTx.Rollback(NewFilter(tx), nil)
+	_ = TestTx.Rollback(NewReferenceScope(tx), nil)
 
 	log := out.String()
 

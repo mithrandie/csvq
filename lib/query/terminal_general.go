@@ -20,8 +20,8 @@ type SSHTerminal struct {
 	tx        *Transaction
 }
 
-func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
-	stdin := int(filter.tx.Session.ScreenFd())
+func NewTerminal(ctx context.Context, scope *ReferenceScope) (VirtualTerminal, error) {
+	stdin := int(scope.Tx.Session.ScreenFd())
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
 		return nil, err
@@ -32,18 +32,18 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		return nil, err
 	}
 
-	prompt := NewPrompt(filter)
+	prompt := NewPrompt(scope)
 	if err = prompt.LoadConfig(); err != nil {
 		return nil, err
 	}
 
 	t := SSHTerminal{
-		terminal:  terminal.NewTerminal(NewStdIO(filter.tx.Session), filter.tx.Palette.Render(cmd.PromptEffect, TerminalPrompt)),
+		terminal:  terminal.NewTerminal(NewStdIO(scope.Tx.Session), scope.Tx.Palette.Render(cmd.PromptEffect, TerminalPrompt)),
 		stdin:     stdin,
 		origState: origState,
 		rawState:  rawState,
 		prompt:    prompt,
-		tx:        filter.tx,
+		tx:        scope.Tx,
 	}
 
 	_ = t.RestoreOriginalMode()

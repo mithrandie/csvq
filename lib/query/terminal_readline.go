@@ -23,18 +23,18 @@ type ReadLineTerminal struct {
 	tx        *Transaction
 }
 
-func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
-	fd := int(filter.tx.Session.ScreenFd())
+func NewTerminal(ctx context.Context, scope *ReferenceScope) (VirtualTerminal, error) {
+	fd := int(scope.Tx.Session.ScreenFd())
 
-	limit := *filter.tx.Environment.InteractiveShell.HistoryLimit
-	historyFile, err := HistoryFilePath(filter.tx.Environment.InteractiveShell.HistoryFile)
+	limit := *scope.Tx.Environment.InteractiveShell.HistoryLimit
+	historyFile, err := HistoryFilePath(scope.Tx.Environment.InteractiveShell.HistoryFile)
 	if err != nil {
-		filter.tx.LogWarn(fmt.Sprintf("cannot detect filepath: %q", filter.tx.Environment.InteractiveShell.HistoryFile), false)
+		scope.Tx.LogWarn(fmt.Sprintf("cannot detect filepath: %q", scope.Tx.Environment.InteractiveShell.HistoryFile), false)
 		limit = -1
 	}
 
-	prompt := NewPrompt(filter)
-	completer := NewCompleter(filter)
+	prompt := NewPrompt(scope)
+	completer := NewCompleter(scope)
 
 	t, err := readline.NewEx(&readline.Config{
 		HistoryFile:            historyFile,
@@ -42,9 +42,9 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		HistoryLimit:           limit,
 		HistorySearchFold:      true,
 		Listener:               new(ReadlineListener),
-		Stdin:                  filter.tx.Session.Stdin(),
-		Stdout:                 filter.tx.Session.Stdout(),
-		Stderr:                 filter.tx.Session.Stderr(),
+		Stdin:                  scope.Tx.Session.Stdin(),
+		Stdout:                 scope.Tx.Session.Stdout(),
+		Stderr:                 scope.Tx.Session.Stderr(),
 	})
 	if err != nil {
 		return nil, err
@@ -54,9 +54,9 @@ func NewTerminal(ctx context.Context, filter *Filter) (VirtualTerminal, error) {
 		terminal:  t,
 		fd:        fd,
 		prompt:    prompt,
-		env:       filter.tx.Environment,
+		env:       scope.Tx.Environment,
 		completer: completer,
-		tx:        filter.tx,
+		tx:        scope.Tx,
 	}
 
 	terminal.setCompleter()

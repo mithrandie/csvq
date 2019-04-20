@@ -13,130 +13,6 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-type CursorScopes []CursorMap
-
-func (list CursorScopes) Declare(expr parser.CursorDeclaration) error {
-	return list[0].Declare(expr)
-}
-
-func (list CursorScopes) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
-	return list[0].AddPseudoCursor(name, values)
-}
-
-func (list CursorScopes) Dispose(name parser.Identifier) error {
-	for _, m := range list {
-		err := m.Dispose(name)
-		if err == nil {
-			return nil
-		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
-			return err
-		}
-	}
-	return NewUndeclaredCursorError(name)
-}
-
-func (list CursorScopes) Open(ctx context.Context, name parser.Identifier, values []parser.ReplaceValue) error {
-	var err error
-
-	for _, m := range list {
-		err = m.Open(ctx, name, values)
-		if err == nil {
-			return nil
-		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
-			return err
-		}
-	}
-	return NewUndeclaredCursorError(name)
-}
-
-func (list CursorScopes) Close(name parser.Identifier) error {
-	for _, m := range list {
-		err := m.Close(name)
-		if err == nil {
-			return nil
-		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
-			return err
-		}
-	}
-	return NewUndeclaredCursorError(name)
-}
-
-func (list CursorScopes) Fetch(name parser.Identifier, position int, number int) ([]value.Primary, error) {
-	var values []value.Primary
-	var err error
-
-	for _, m := range list {
-		values, err = m.Fetch(name, position, number)
-		if err == nil {
-			return values, nil
-		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
-			return nil, err
-		}
-	}
-	return nil, NewUndeclaredCursorError(name)
-}
-
-func (list CursorScopes) IsOpen(name parser.Identifier) (ternary.Value, error) {
-	for _, m := range list {
-		if ok, err := m.IsOpen(name); err == nil {
-			return ok, nil
-		}
-	}
-	return ternary.FALSE, NewUndeclaredCursorError(name)
-}
-
-func (list CursorScopes) IsInRange(name parser.Identifier) (ternary.Value, error) {
-	var result ternary.Value
-	var err error
-
-	for _, m := range list {
-		result, err = m.IsInRange(name)
-		if err == nil {
-			return result, nil
-		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
-			return ternary.FALSE, err
-		}
-	}
-	return ternary.FALSE, NewUndeclaredCursorError(name)
-}
-
-func (list CursorScopes) Count(name parser.Identifier) (int, error) {
-	var count int
-	var err error
-
-	for _, m := range list {
-		count, err = m.Count(name)
-		if err == nil {
-			return count, nil
-		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
-			return 0, err
-		}
-	}
-	return 0, NewUndeclaredCursorError(name)
-}
-
-func (list CursorScopes) All() CursorMap {
-	all := make(CursorMap, 10)
-
-	for _, m := range list {
-		for key, cursor := range m {
-			if cursor.isPseudo {
-				continue
-			}
-			if _, ok := all[key]; !ok {
-				all[key] = cursor
-			}
-		}
-	}
-	return all
-}
-
 type CursorMap map[string]*Cursor
 
 func (m CursorMap) Declare(expr parser.CursorDeclaration) error {
@@ -169,9 +45,9 @@ func (m CursorMap) Dispose(name parser.Identifier) error {
 	return NewUndeclaredCursorError(name)
 }
 
-func (m CursorMap) Open(ctx context.Context, name parser.Identifier, values []parser.ReplaceValue) error {
+func (m CursorMap) Open(ctx context.Context, scope *ReferenceScope, name parser.Identifier, values []parser.ReplaceValue) error {
 	if cur, ok := m[strings.ToUpper(name.Literal)]; ok {
-		return cur.Open(ctx, name, values)
+		return cur.Open(ctx, scope, name, values)
 	}
 	return NewUndeclaredCursorError(name)
 }
@@ -281,14 +157,9 @@ func NewPseudoCursor(values []value.Primary) *Cursor {
 	}
 }
 
-func (c *Cursor) Open(ctx context.Context, name parser.Identifier, values []parser.ReplaceValue) error {
+func (c *Cursor) Open(ctx context.Context, scope *ReferenceScope, name parser.Identifier, values []parser.ReplaceValue) error {
 	if c.isPseudo {
 		return NewPseudoCursorError(name)
-	}
-
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return err
 	}
 
 	c.mtx.Lock()
@@ -299,10 +170,11 @@ func (c *Cursor) Open(ctx context.Context, name parser.Identifier, values []pars
 	}
 
 	var view *View
+	var err error
 	if c.query.SelectEntity != nil {
-		view, err = Select(ctx, c.query)
+		view, err = Select(ctx, scope, c.query)
 	} else {
-		prepared, e := filter.tx.PreparedStatements.Get(c.statement)
+		prepared, e := scope.Tx.PreparedStatements.Get(c.statement)
 		if e != nil {
 			return e
 		}
@@ -313,7 +185,7 @@ func (c *Cursor) Open(ctx context.Context, name parser.Identifier, values []pars
 		if !ok {
 			return NewInvalidCursorStatementError(c.statement)
 		}
-		view, err = Select(ContextForPreparedStatement(ctx, NewReplaceValues(values)), stmt)
+		view, err = Select(ContextForPreparedStatement(ctx, NewReplaceValues(values)), scope, stmt)
 	}
 	if err != nil {
 		return err

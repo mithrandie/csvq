@@ -7,54 +7,19 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
-type InlineTableNodes []InlineTableMap
-
-func (list InlineTableNodes) Set(ctx context.Context, inlineTable parser.InlineTable) error {
-	return list[0].Set(ctx, inlineTable)
-}
-
-func (list InlineTableNodes) Get(name parser.Identifier) (*View, error) {
-	for _, m := range list {
-		if view, err := m.Get(name); err == nil {
-			return view, nil
-		}
-	}
-	return nil, NewUndefinedInLineTableError(name)
-}
-
-func (list InlineTableNodes) Load(ctx context.Context, clause parser.WithClause) error {
-	for _, v := range clause.InlineTables {
-		inlineTable := v.(parser.InlineTable)
-		err := list.Set(ctx, inlineTable)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 type InlineTableMap map[string]*View
 
-func (it InlineTableMap) Set(ctx context.Context, inlineTable parser.InlineTable) error {
+func (it InlineTableMap) Set(ctx context.Context, scope *ReferenceScope, inlineTable parser.InlineTable) error {
 	uname := strings.ToUpper(inlineTable.Name.Literal)
 	if _, err := it.Get(inlineTable.Name); err == nil {
 		return NewInLineTableRedefinedError(inlineTable.Name)
 	}
 
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return err
-	}
-
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
-
 	if inlineTable.IsRecursive() {
-		filter.recursiveTable = &inlineTable
+		scope.RecursiveTable = &inlineTable
 	}
-	view, err := Select(ctx, inlineTable.Query)
+
+	view, err := Select(ctx, scope, inlineTable.Query)
 	if err != nil {
 		return err
 	}

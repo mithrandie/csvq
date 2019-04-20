@@ -5,18 +5,28 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.17
+
+Released on April 20, 2019
+
+- Set the limit of iterations for recursive queries.
+
+  The limit can be changed in [configuration json file](https://mithrandie.github.io/csvq/reference/command.html#configurations).
+- Fix the following bug.
+  - The global options are ignored by subcommands.
+
 ## Version 1.9.16
 
 Released on April 16, 2019
 
-- Fix the following bug
+- Fix the following bug.
   - Reference scopes cannot be refered from subquery. This bug has occurred in version 1.9.15.
 
 ## Version 1.9.15
 
 Released on April 16, 2019
 
-- Fix the following bug
+- Fix the following bug.
   - COUNT(null) returns the number of rows, but must return 0.
 - Remove "Alloc" from resource statistics.
 - Optimize memory usage in JOIN operation.

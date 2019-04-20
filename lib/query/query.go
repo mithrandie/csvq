@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"strings"
+	"sync/atomic"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
@@ -10,18 +11,13 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-func FetchCursor(ctx context.Context, name parser.Identifier, fetchPosition parser.FetchPosition, vars []parser.Variable) (bool, error) {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return false, err
-	}
-
+func FetchCursor(ctx context.Context, scope *ReferenceScope, name parser.Identifier, fetchPosition parser.FetchPosition, vars []parser.Variable) (bool, error) {
 	position := parser.NEXT
 	number := -1
 	if !fetchPosition.Position.IsEmpty() {
 		position = fetchPosition.Position.Token
 		if fetchPosition.Number != nil {
-			p, err := filter.Evaluate(ctx, fetchPosition.Number)
+			p, err := Evaluate(ctx, scope, fetchPosition.Number)
 			if err != nil {
 				return false, err
 			}
@@ -33,7 +29,7 @@ func FetchCursor(ctx context.Context, name parser.Identifier, fetchPosition pars
 		}
 	}
 
-	primaries, err := filter.cursors.Fetch(name, position, number)
+	primaries, err := scope.FetchCursor(name, position, number)
 	if err != nil {
 		return false, err
 	}
@@ -45,7 +41,7 @@ func FetchCursor(ctx context.Context, name parser.Identifier, fetchPosition pars
 	}
 
 	for i, v := range vars {
-		_, err := filter.variables.SubstituteDirectly(v, primaries[i])
+		_, err := scope.SubstituteVariableDirectly(v, primaries[i])
 		if err != nil {
 			return false, err
 		}
@@ -53,20 +49,16 @@ func FetchCursor(ctx context.Context, name parser.Identifier, fetchPosition pars
 	return true, nil
 }
 
-func DeclareView(ctx context.Context, expr parser.ViewDeclaration) error {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return err
-	}
-
-	if filter.tempViews.Exists(expr.View.Literal) {
+func DeclareView(ctx context.Context, scope *ReferenceScope, expr parser.ViewDeclaration) error {
+	if scope.TemporaryTableExists(expr.View.Literal) {
 		return NewTemporaryTableRedeclaredError(expr.View)
 	}
 
 	var view *View
+	var err error
 
 	if expr.Query != nil {
-		view, err = Select(ctx, expr.Query.(parser.SelectQuery))
+		view, err = Select(ctx, scope, expr.Query.(parser.SelectQuery))
 		if err != nil {
 			return err
 		}
@@ -98,17 +90,12 @@ func DeclareView(ctx context.Context, expr parser.ViewDeclaration) error {
 	}
 	view.CreateRestorePoint()
 
-	filter.tempViews.Set(view)
+	scope.SetTemporaryTable(view)
 
 	return err
 }
 
-func Select(ctx context.Context, query parser.SelectQuery) (*View, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func Select(ctx context.Context, scope *ReferenceScope, query parser.SelectQuery) (*View, error) {
 	var intoVars []parser.Variable = nil
 	if selectEntity, ok := query.SelectEntity.(parser.SelectEntity); ok && selectEntity.IntoClause != nil {
 		intoClause := selectEntity.IntoClause.(parser.IntoClause)
@@ -116,47 +103,46 @@ func Select(ctx context.Context, query parser.SelectQuery) (*View, error) {
 			return nil, NewSelectIntoQueryFieldLengthNotMatchError(query, len(intoClause.Variables))
 		}
 		for _, v := range intoClause.Variables {
-			if _, err := parentFilter.variables.Get(v); err != nil {
+			if _, err := scope.GetVariable(v); err != nil {
 				return nil, err
 			}
 		}
 		intoVars = intoClause.Variables
 	}
 
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
 	if query.WithClause != nil {
-		if err := filter.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
+		if err := queryScope.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
 			return nil, err
 		}
 	}
 
-	view, err := selectEntity(ctx, query.SelectEntity, query.ForUpdate)
+	view, err := selectEntity(ctx, queryScope, query.SelectEntity, query.ForUpdate)
 	if err != nil {
 		return nil, err
 	}
 
 	if query.OrderByClause != nil {
-		if err := view.OrderBy(ctx, query.OrderByClause.(parser.OrderByClause)); err != nil {
+		if err := view.OrderBy(ctx, queryScope, query.OrderByClause.(parser.OrderByClause)); err != nil {
 			return nil, err
 		}
 	}
 
 	if query.OffsetClause != nil {
-		if err := view.Offset(ctx, query.OffsetClause.(parser.OffsetClause)); err != nil {
+		if err := view.Offset(ctx, queryScope, query.OffsetClause.(parser.OffsetClause)); err != nil {
 			return nil, err
 		}
 	}
 
 	if query.LimitClause != nil {
-		if err := view.Limit(ctx, query.LimitClause.(parser.LimitClause)); err != nil {
+		if err := view.Limit(ctx, queryScope, query.LimitClause.(parser.LimitClause)); err != nil {
 			return nil, err
 		}
 	}
 
-	err = view.Fix(ctx)
+	err = view.Fix(ctx, queryScope.Tx.Flags)
 
 	if intoVars != nil {
 		if view.FieldLen() != len(intoVars) {
@@ -165,13 +151,13 @@ func Select(ctx context.Context, query parser.SelectQuery) (*View, error) {
 		switch view.RecordLen() {
 		case 0:
 			for _, v := range intoVars {
-				if _, err := parentFilter.variables.SubstituteDirectly(v, value.NewNull()); err != nil {
+				if _, err := scope.SubstituteVariableDirectly(v, value.NewNull()); err != nil {
 					return view, err
 				}
 			}
 		case 1:
 			for i, v := range intoVars {
-				if _, err := parentFilter.variables.SubstituteDirectly(v, view.RecordSet[0][i].Value()); err != nil {
+				if _, err := scope.SubstituteVariableDirectly(v, view.RecordSet[0][i].Value()); err != nil {
 					return view, err
 				}
 			}
@@ -183,78 +169,73 @@ func Select(ctx context.Context, query parser.SelectQuery) (*View, error) {
 	return view, err
 }
 
-func selectEntity(ctx context.Context, expr parser.QueryExpression, forUpdate bool) (*View, error) {
+func selectEntity(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression, forUpdate bool) (*View, error) {
 	entity, ok := expr.(parser.SelectEntity)
 	if !ok {
-		return selectSet(ctx, expr.(parser.SelectSet), forUpdate)
+		return selectSet(ctx, scope, expr.(parser.SelectSet), forUpdate)
 	}
 
 	if entity.FromClause == nil {
 		entity.FromClause = parser.FromClause{}
 	}
 	view := NewView()
-	err := view.Load(ctx, entity.FromClause.(parser.FromClause), forUpdate, false)
+	err := view.Load(ctx, scope, entity.FromClause.(parser.FromClause), forUpdate, false)
 	if err != nil {
 		return nil, err
 	}
 
 	if entity.WhereClause != nil {
-		if err := view.Where(ctx, entity.WhereClause.(parser.WhereClause)); err != nil {
+		if err := view.Where(ctx, scope, entity.WhereClause.(parser.WhereClause)); err != nil {
 			return nil, err
 		}
 	}
 
 	if entity.GroupByClause != nil {
-		if err := view.GroupBy(ctx, entity.GroupByClause.(parser.GroupByClause)); err != nil {
+		if err := view.GroupBy(ctx, scope, entity.GroupByClause.(parser.GroupByClause)); err != nil {
 			return nil, err
 		}
 	}
 
 	if entity.HavingClause != nil {
-		if err := view.Having(ctx, entity.HavingClause.(parser.HavingClause)); err != nil {
+		if err := view.Having(ctx, scope, entity.HavingClause.(parser.HavingClause)); err != nil {
 			return nil, err
 		}
 	}
 
-	if err := view.Select(ctx, entity.SelectClause.(parser.SelectClause)); err != nil {
+	if err := view.Select(ctx, scope, entity.SelectClause.(parser.SelectClause)); err != nil {
 		return nil, err
 	}
 
 	return view, nil
 }
 
-func selectSetEntity(ctx context.Context, expr parser.QueryExpression, forUpdate bool) (*View, error) {
+func selectSetEntity(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression, forUpdate bool) (*View, error) {
 	if subquery, ok := expr.(parser.Subquery); ok {
-		return Select(ctx, subquery.Query)
+		return Select(ctx, scope, subquery.Query)
 	}
 
-	view, err := selectEntity(ctx, expr, forUpdate)
+	view, err := selectEntity(ctx, scope, expr, forUpdate)
 	if err != nil {
 		return nil, err
 	}
-	err = view.Fix(ctx)
+	err = view.Fix(ctx, scope.Tx.Flags)
 	return view, err
 }
 
-func selectSet(ctx context.Context, set parser.SelectSet, forUpdate bool) (*View, error) {
-	filter, err := GetFilter(ctx)
+func selectSet(ctx context.Context, scope *ReferenceScope, set parser.SelectSet, forUpdate bool) (*View, error) {
+	lview, err := selectSetEntity(ctx, scope, set.LHS, forUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	lview, err := selectSetEntity(ctx, set.LHS, forUpdate)
-	if err != nil {
-		return nil, err
-	}
-
-	if filter.recursiveTable != nil {
-		filter.recursiveTmpView = nil
-		err := selectSetForRecursion(ctx, lview, set, forUpdate)
+	if scope.RecursiveTable != nil {
+		scope.RecursiveTmpView = nil
+		err := selectSetForRecursion(ctx, scope, lview, set, forUpdate)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		rview, err := selectSetEntity(ctx, set.RHS, forUpdate)
+		rview, err := selectSetEntity(ctx, scope, set.RHS, forUpdate)
 		if err != nil {
 			return nil, err
 		}
@@ -265,43 +246,48 @@ func selectSet(ctx context.Context, set parser.SelectSet, forUpdate bool) (*View
 
 		switch set.Operator.Token {
 		case parser.UNION:
-			if err = lview.Union(ctx, rview, !set.All.IsEmpty()); err != nil {
+			if err = lview.Union(ctx, scope.Tx.Flags, rview, !set.All.IsEmpty()); err != nil {
 				return nil, err
 			}
 		case parser.EXCEPT:
-			if err = lview.Except(ctx, rview, !set.All.IsEmpty()); err != nil {
+			if err = lview.Except(ctx, scope.Tx.Flags, rview, !set.All.IsEmpty()); err != nil {
 				return nil, err
 			}
 		case parser.INTERSECT:
-			if err = lview.Intersect(ctx, rview, !set.All.IsEmpty()); err != nil {
+			if err = lview.Intersect(ctx, scope.Tx.Flags, rview, !set.All.IsEmpty()); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	err = lview.SelectAllColumns(ctx)
+	err = lview.SelectAllColumns(ctx, scope)
 	return lview, err
 }
 
-func selectSetForRecursion(ctx context.Context, view *View, set parser.SelectSet, forUpdate bool) error {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return err
+func selectSetForRecursion(ctx context.Context, scope *ReferenceScope, view *View, set parser.SelectSet, forUpdate bool) error {
+	if -1 < *scope.Tx.Environment.LimitRecursion {
+		if scope.RecursiveCount == nil {
+			scope.RecursiveCount = new(int64)
+		}
+		atomic.AddInt64(scope.RecursiveCount, 1)
+		if *scope.Tx.Environment.LimitRecursion < *scope.RecursiveCount {
+			return NewRecursionExceededLimitError(set.RHS, *scope.Tx.Environment.LimitRecursion)
+		}
 	}
 
-	tmpViewName := strings.ToUpper(filter.recursiveTable.Name.Literal)
+	tmpViewName := strings.ToUpper(scope.RecursiveTable.Name.Literal)
 
-	if filter.recursiveTmpView == nil {
-		err := view.Header.Update(tmpViewName, filter.recursiveTable.Fields)
+	if scope.RecursiveTmpView == nil {
+		err := view.Header.Update(tmpViewName, scope.RecursiveTable.Fields)
 		if err != nil {
 			return err
 		}
-		filter.recursiveTmpView = view
+		scope.RecursiveTmpView = view
 	}
 
-	selectFilter := filter.CreateNode()
-	defer selectFilter.CloseNode()
-	rview, err := selectSetEntity(ContextForExecusion(ctx, selectFilter), set.RHS, forUpdate)
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
+	rview, err := selectSetEntity(ctx, queryScope, set.RHS, forUpdate)
 	if err != nil {
 		return err
 	}
@@ -312,43 +298,37 @@ func selectSetForRecursion(ctx context.Context, view *View, set parser.SelectSet
 	if rview.RecordLen() < 1 {
 		return nil
 	}
-	if err = rview.Header.Update(tmpViewName, filter.recursiveTable.Fields); err != nil {
+	if err = rview.Header.Update(tmpViewName, scope.RecursiveTable.Fields); err != nil {
 		return err
 	}
-	filter.recursiveTmpView = rview
+	scope.RecursiveTmpView = rview
 
 	switch set.Operator.Token {
 	case parser.UNION:
-		if err = view.Union(ctx, rview, !set.All.IsEmpty()); err != nil {
+		if err = view.Union(ctx, scope.Tx.Flags, rview, !set.All.IsEmpty()); err != nil {
 			return err
 		}
 	case parser.EXCEPT:
-		if err = view.Except(ctx, rview, !set.All.IsEmpty()); err != nil {
+		if err = view.Except(ctx, scope.Tx.Flags, rview, !set.All.IsEmpty()); err != nil {
 			return err
 		}
 	case parser.INTERSECT:
-		if err = view.Intersect(ctx, rview, !set.All.IsEmpty()); err != nil {
+		if err = view.Intersect(ctx, scope.Tx.Flags, rview, !set.All.IsEmpty()); err != nil {
 			return err
 		}
 	}
 
-	return selectSetForRecursion(ctx, view, set, forUpdate)
+	return selectSetForRecursion(ctx, scope, view, set, forUpdate)
 }
 
-func Insert(ctx context.Context, query parser.InsertQuery) (*FileInfo, int, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
+func Insert(ctx context.Context, scope *ReferenceScope, query parser.InsertQuery) (*FileInfo, int, error) {
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
 	var insertRecords int
 
 	if query.WithClause != nil {
-		if err := filter.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
+		if err := queryScope.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
 			return nil, insertRecords, err
 		}
 	}
@@ -359,11 +339,11 @@ func Insert(ctx context.Context, query parser.InsertQuery) (*FileInfo, int, erro
 		},
 	}
 
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	queryScope.Tx.operationMutex.Lock()
+	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err = view.Load(ctx, fromClause, true, false)
+	err := view.Load(ctx, queryScope, fromClause, true, false)
 	if err != nil {
 		return nil, insertRecords, err
 	}
@@ -374,11 +354,11 @@ func Insert(ctx context.Context, query parser.InsertQuery) (*FileInfo, int, erro
 	}
 
 	if query.ValuesList != nil {
-		if insertRecords, err = view.InsertValues(ctx, fields, query.ValuesList); err != nil {
+		if insertRecords, err = view.InsertValues(ctx, queryScope, fields, query.ValuesList); err != nil {
 			return nil, insertRecords, err
 		}
 	} else {
-		if insertRecords, err = view.InsertFromQuery(ctx, fields, query.Query.(parser.SelectQuery)); err != nil {
+		if insertRecords, err = view.InsertFromQuery(ctx, queryScope, fields, query.Query.(parser.SelectQuery)); err != nil {
 			return nil, insertRecords, err
 		}
 	}
@@ -388,26 +368,20 @@ func Insert(ctx context.Context, query parser.InsertQuery) (*FileInfo, int, erro
 	}
 
 	if !view.FileInfo.IsFile() {
-		filter.tempViews.Replace(view)
+		scope.ReplaceTemporaryTable(view)
 	} else {
-		filter.tx.cachedViews.Set(view)
+		scope.Tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, insertRecords, err
 }
 
-func Update(ctx context.Context, query parser.UpdateQuery) ([]*FileInfo, []int, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
+func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery) ([]*FileInfo, []int, error) {
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
 	if query.WithClause != nil {
-		if err := filter.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
+		if err := queryScope.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -416,17 +390,17 @@ func Update(ctx context.Context, query parser.UpdateQuery) ([]*FileInfo, []int, 
 		query.FromClause = parser.FromClause{Tables: query.Tables}
 	}
 
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	queryScope.Tx.operationMutex.Lock()
+	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err = view.Load(ctx, query.FromClause.(parser.FromClause), true, true)
+	err := view.Load(ctx, queryScope, query.FromClause.(parser.FromClause), true, true)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if query.WhereClause != nil {
-		if err := view.Where(ctx, query.WhereClause.(parser.WhereClause)); err != nil {
+		if err := view.Where(ctx, queryScope, query.WhereClause.(parser.WhereClause)); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -435,16 +409,16 @@ func Update(ctx context.Context, query parser.UpdateQuery) ([]*FileInfo, []int, 
 	updatedCount := make(map[string]int)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		fpath, err := filter.aliases.Get(table.Name())
+		fpath, err := queryScope.GetAlias(table.Name())
 		if err != nil {
 			return nil, nil, err
 		}
 		viewKey := strings.ToUpper(table.Name().Literal)
 
-		if filter.tempViews.Exists(fpath) {
-			viewsToUpdate[viewKey], _ = filter.tempViews.Get(parser.Identifier{Literal: fpath})
+		if queryScope.TemporaryTableExists(fpath) {
+			viewsToUpdate[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToUpdate[viewKey], _ = filter.tx.cachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToUpdate[viewKey], _ = queryScope.Tx.cachedViews.Get(parser.Identifier{Literal: fpath})
 		}
 		if err = viewsToUpdate[viewKey].Header.Update(table.Name().Literal, nil); err != nil {
 			return nil, nil, err
@@ -452,14 +426,13 @@ func Update(ctx context.Context, query parser.UpdateQuery) ([]*FileInfo, []int, 
 	}
 
 	updatesList := make(map[string]map[int][]int)
-	filterForLoop := NewFilterForSequentialEvaluation(filter, view)
-	rctx := ContextForExecusion(ctx, filterForLoop)
+	seqScope := queryScope.CreateScopeForSequentialEvaluation(view)
 	for i := range view.RecordSet {
-		filterForLoop.records[0].recordIndex = i
+		seqScope.Records[0].recordIndex = i
 		internalIds := make(map[string]int)
 
 		for _, uset := range query.SetList {
-			val, err := filterForLoop.Evaluate(rctx, uset.Value)
+			val, err := Evaluate(ctx, seqScope, uset.Value)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -511,9 +484,9 @@ func Update(ctx context.Context, query parser.UpdateQuery) ([]*FileInfo, []int, 
 		}
 
 		if !v.FileInfo.IsFile() {
-			filter.tempViews.Replace(v)
+			scope.ReplaceTemporaryTable(v)
 		} else {
-			filter.tx.cachedViews.Set(v)
+			scope.Tx.cachedViews.Set(v)
 		}
 
 		fileInfos = append(fileInfos, v.FileInfo)
@@ -523,20 +496,14 @@ func Update(ctx context.Context, query parser.UpdateQuery) ([]*FileInfo, []int, 
 	return fileInfos, updateRecords, nil
 }
 
-func Replace(ctx context.Context, query parser.ReplaceQuery) (*FileInfo, int, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
+func Replace(ctx context.Context, scope *ReferenceScope, query parser.ReplaceQuery) (*FileInfo, int, error) {
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
 	var replaceRecords int
 
 	if query.WithClause != nil {
-		if err := filter.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
+		if err := queryScope.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
 			return nil, replaceRecords, err
 		}
 	}
@@ -547,11 +514,11 @@ func Replace(ctx context.Context, query parser.ReplaceQuery) (*FileInfo, int, er
 		},
 	}
 
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	queryScope.Tx.operationMutex.Lock()
+	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err = view.Load(ctx, fromClause, true, false)
+	err := view.Load(ctx, queryScope, fromClause, true, false)
 	if err != nil {
 		return nil, replaceRecords, err
 	}
@@ -562,11 +529,11 @@ func Replace(ctx context.Context, query parser.ReplaceQuery) (*FileInfo, int, er
 	}
 
 	if query.ValuesList != nil {
-		if replaceRecords, err = view.ReplaceValues(ctx, fields, query.ValuesList, query.Keys); err != nil {
+		if replaceRecords, err = view.ReplaceValues(ctx, queryScope, fields, query.ValuesList, query.Keys); err != nil {
 			return nil, replaceRecords, err
 		}
 	} else {
-		if replaceRecords, err = view.ReplaceFromQuery(ctx, fields, query.Query.(parser.SelectQuery), query.Keys); err != nil {
+		if replaceRecords, err = view.ReplaceFromQuery(ctx, queryScope, fields, query.Query.(parser.SelectQuery), query.Keys); err != nil {
 			return nil, replaceRecords, err
 		}
 	}
@@ -576,26 +543,20 @@ func Replace(ctx context.Context, query parser.ReplaceQuery) (*FileInfo, int, er
 	}
 
 	if !view.FileInfo.IsFile() {
-		filter.tempViews.Replace(view)
+		scope.ReplaceTemporaryTable(view)
 	} else {
-		filter.tx.cachedViews.Set(view)
+		scope.Tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, replaceRecords, err
 }
 
-func Delete(ctx context.Context, query parser.DeleteQuery) ([]*FileInfo, []int, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
+func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery) ([]*FileInfo, []int, error) {
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
 	if query.WithClause != nil {
-		if err := filter.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
+		if err := queryScope.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -614,17 +575,17 @@ func Delete(ctx context.Context, query parser.DeleteQuery) ([]*FileInfo, []int, 
 		}
 	}
 
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	queryScope.Tx.operationMutex.Lock()
+	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err = view.Load(ctx, query.FromClause, true, true)
+	err := view.Load(ctx, queryScope, query.FromClause, true, true)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if query.WhereClause != nil {
-		if err := view.Where(ctx, query.WhereClause.(parser.WhereClause)); err != nil {
+		if err := view.Where(ctx, queryScope, query.WhereClause.(parser.WhereClause)); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -633,16 +594,16 @@ func Delete(ctx context.Context, query parser.DeleteQuery) ([]*FileInfo, []int, 
 	deletedIndices := make(map[string]map[int]bool)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		fpath, err := filter.aliases.Get(table.Name())
+		fpath, err := queryScope.GetAlias(table.Name())
 		if err != nil {
 			return nil, nil, err
 		}
 
 		viewKey := strings.ToUpper(table.Name().Literal)
-		if filter.tempViews.Exists(fpath) {
-			viewsToDelete[viewKey], _ = filter.tempViews.Get(parser.Identifier{Literal: fpath})
+		if queryScope.TemporaryTableExists(fpath) {
+			viewsToDelete[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToDelete[viewKey], _ = filter.tx.cachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToDelete[viewKey], _ = queryScope.Tx.cachedViews.Get(parser.Identifier{Literal: fpath})
 		}
 		if err = viewsToDelete[viewKey].Header.Update(table.Name().Literal, nil); err != nil {
 			return nil, nil, err
@@ -686,9 +647,9 @@ func Delete(ctx context.Context, query parser.DeleteQuery) ([]*FileInfo, []int, 
 		}
 
 		if !v.FileInfo.IsFile() {
-			filter.tempViews.Replace(v)
+			scope.ReplaceTemporaryTable(v)
 		} else {
-			filter.tx.cachedViews.Set(v)
+			scope.Tx.cachedViews.Set(v)
 		}
 
 		fileInfos = append(fileInfos, v.FileInfo)
@@ -698,24 +659,18 @@ func Delete(ctx context.Context, query parser.DeleteQuery) ([]*FileInfo, []int, 
 	return fileInfos, deletedCounts, nil
 }
 
-func CreateTable(ctx context.Context, query parser.CreateTable) (*FileInfo, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
+func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.CreateTable) (*FileInfo, error) {
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
 	var view *View
 
-	flags := parentFilter.tx.Flags
+	flags := queryScope.Tx.Flags
 	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.WriteDelimiter, flags.WriteEncoding)
 	if err != nil {
 		return nil, err
 	}
-	h, err := file.NewHandlerForCreate(filter.tx.FileContainer, fileInfo.Path)
+	h, err := file.NewHandlerForCreate(queryScope.Tx.FileContainer, fileInfo.Path)
 	if err != nil {
 		query.Table.Literal = fileInfo.Path
 		return nil, ConvertFileHandlerError(err, query.Table)
@@ -729,16 +684,16 @@ func CreateTable(ctx context.Context, query parser.CreateTable) (*FileInfo, erro
 	fileInfo.ForUpdate = true
 
 	if query.Query != nil {
-		view, err = Select(ctx, query.Query.(parser.SelectQuery))
+		view, err = Select(ctx, queryScope, query.Query.(parser.SelectQuery))
 		if err != nil {
-			return nil, appendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
+			return nil, appendCompositeError(err, queryScope.Tx.FileContainer.Close(fileInfo.Handler))
 		}
 
 		if err = view.Header.Update(parser.FormatTableName(fileInfo.Path), query.Fields); err != nil {
 			if _, ok := err.(*FieldLengthNotMatchError); ok {
 				err = NewTableFieldLengthError(query.Query.(parser.SelectQuery), query.Table, len(query.Fields))
 			}
-			return nil, appendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
+			return nil, appendCompositeError(err, queryScope.Tx.FileContainer.Close(fileInfo.Handler))
 		}
 	} else {
 		fields := make([]string, len(query.Fields))
@@ -746,7 +701,7 @@ func CreateTable(ctx context.Context, query parser.CreateTable) (*FileInfo, erro
 			f, _ := v.(parser.Identifier)
 			if InStrSliceWithCaseInsensitive(f.Literal, fields) {
 				err = NewDuplicateFieldNameError(f)
-				return nil, appendCompositeError(err, filter.tx.FileContainer.Close(fileInfo.Handler))
+				return nil, appendCompositeError(err, queryScope.Tx.FileContainer.Close(fileInfo.Handler))
 			}
 			fields[i] = f.Literal
 		}
@@ -759,20 +714,14 @@ func CreateTable(ctx context.Context, query parser.CreateTable) (*FileInfo, erro
 
 	view.FileInfo = fileInfo
 
-	filter.tx.cachedViews.Set(view)
+	scope.Tx.cachedViews.Set(view)
 
 	return view.FileInfo, nil
 }
 
-func AddColumns(ctx context.Context, query parser.AddColumns) (*FileInfo, int, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
+func AddColumns(ctx context.Context, scope *ReferenceScope, query parser.AddColumns) (*FileInfo, int, error) {
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
 	if query.Position == nil {
 		query.Position = parser.ColumnPosition{
@@ -780,11 +729,11 @@ func AddColumns(ctx context.Context, query parser.AddColumns) (*FileInfo, int, e
 		}
 	}
 
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	queryScope.Tx.operationMutex.Lock()
+	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err = view.LoadFromTableIdentifier(ctx, query.Table, true, false)
+	err := view.LoadFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -843,7 +792,7 @@ func AddColumns(ctx context.Context, query parser.AddColumns) (*FileInfo, int, e
 
 	records := make(RecordSet, view.RecordLen())
 
-	if err = NewFilterForSequentialEvaluation(filter, view).EvaluateSequentially(ctx, func(f *Filter, rIdx int) error {
+	if err := EvaluateSequentially(ctx, queryScope, view, func(seqScope *ReferenceScope, rIdx int) error {
 		record := make(Record, newFieldLen)
 		for i, cell := range view.RecordSet[rIdx] {
 			var cellIdx int
@@ -859,7 +808,7 @@ func AddColumns(ctx context.Context, query parser.AddColumns) (*FileInfo, int, e
 			if v == nil {
 				v = parser.NewNullValue()
 			}
-			val, e := f.Evaluate(ContextForExecusion(ctx, f), v)
+			val, e := Evaluate(ctx, seqScope, v)
 			if e != nil {
 				return e
 			}
@@ -875,29 +824,23 @@ func AddColumns(ctx context.Context, query parser.AddColumns) (*FileInfo, int, e
 	view.RecordSet = records
 
 	if !view.FileInfo.IsFile() {
-		filter.tempViews.Replace(view)
+		scope.ReplaceTemporaryTable(view)
 	} else {
-		filter.tx.cachedViews.Set(view)
+		scope.Tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, len(fields), err
 }
 
-func DropColumns(ctx context.Context, query parser.DropColumns) (*FileInfo, int, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
+func DropColumns(ctx context.Context, scope *ReferenceScope, query parser.DropColumns) (*FileInfo, int, error) {
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
-
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	queryScope.Tx.operationMutex.Lock()
+	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err = view.LoadFromTableIdentifier(ctx, query.Table, true, false)
+	err := view.LoadFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -918,35 +861,29 @@ func DropColumns(ctx context.Context, query parser.DropColumns) (*FileInfo, int,
 		}
 	}
 
-	if err = view.Fix(ctx); err != nil {
+	if err = view.Fix(ctx, scope.Tx.Flags); err != nil {
 		return nil, 0, err
 	}
 
 	if !view.FileInfo.IsFile() {
-		filter.tempViews.Replace(view)
+		scope.ReplaceTemporaryTable(view)
 	} else {
-		filter.tx.cachedViews.Set(view)
+		scope.Tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, len(dropIndices), err
 
 }
 
-func RenameColumn(ctx context.Context, query parser.RenameColumn) (*FileInfo, error) {
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, err
-	}
+func RenameColumn(ctx context.Context, scope *ReferenceScope, query parser.RenameColumn) (*FileInfo, error) {
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
-
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	queryScope.Tx.operationMutex.Lock()
+	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err = view.LoadFromTableIdentifier(ctx, query.Table, true, false)
+	err := view.LoadFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -964,30 +901,25 @@ func RenameColumn(ctx context.Context, query parser.RenameColumn) (*FileInfo, er
 	view.Header[idx].Column = query.New.Literal
 
 	if !view.FileInfo.IsFile() {
-		filter.tempViews.Replace(view)
+		scope.ReplaceTemporaryTable(view)
 	} else {
-		filter.tx.cachedViews.Set(view)
+		scope.Tx.cachedViews.Set(view)
 	}
 
 	return view.FileInfo, err
 }
 
-func SetTableAttribute(ctx context.Context, query parser.SetTableAttribute) (*FileInfo, string, error) {
+func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.SetTableAttribute) (*FileInfo, string, error) {
 	var log string
-	parentFilter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, log, err
-	}
 
-	filter := parentFilter.CreateNode()
-	ctx = ContextForExecusion(ctx, filter)
-	defer filter.CloseNode()
+	queryScope := scope.CreateNode()
+	defer queryScope.CloseCurrentNode()
 
-	filter.tx.operationMutex.Lock()
-	defer filter.tx.operationMutex.Unlock()
+	queryScope.Tx.operationMutex.Lock()
+	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err = view.LoadFromTableIdentifier(ctx, query.Table, true, false)
+	err := view.LoadFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, log, err
 	}
@@ -999,7 +931,7 @@ func SetTableAttribute(ctx context.Context, query parser.SetTableAttribute) (*Fi
 	if ident, ok := query.Value.(parser.Identifier); ok {
 		p = value.NewString(ident.Literal)
 	} else {
-		p, err = filter.Evaluate(ctx, query.Value)
+		p, err = Evaluate(ctx, scope, query.Value)
 		if err != nil {
 			return nil, log, err
 		}
@@ -1051,11 +983,11 @@ func SetTableAttribute(ctx context.Context, query parser.SetTableAttribute) (*Fi
 		return nil, log, NewInvalidTableAttributeValueError(query, err.Error())
 	}
 
-	w := NewObjectWriter(filter.tx)
+	w := NewObjectWriter(scope.Tx)
 	w.WriteColorWithoutLineBreak("Path: ", cmd.LableEffect)
 	w.WriteColorWithoutLineBreak(fileInfo.Path, cmd.ObjectEffect)
 	w.NewLine()
-	writeTableAttribute(w, parentFilter.tx.Flags, fileInfo)
+	writeTableAttribute(w, scope.Tx.Flags, fileInfo)
 	w.NewLine()
 
 	w.Title1 = "Attributes Updated in"
@@ -1069,6 +1001,6 @@ func SetTableAttribute(ctx context.Context, query parser.SetTableAttribute) (*Fi
 	w.Title2Effect = cmd.IdentifierEffect
 	log = "\n" + w.String() + "\n"
 
-	filter.tx.cachedViews.Set(view)
+	scope.Tx.cachedViews.Set(view)
 	return view.FileInfo, log, err
 }

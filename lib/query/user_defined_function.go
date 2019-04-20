@@ -11,56 +11,6 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-type UserDefinedFunctionScopes []UserDefinedFunctionMap
-
-func (list UserDefinedFunctionScopes) Declare(expr parser.FunctionDeclaration) error {
-	return list[0].Declare(expr)
-}
-
-func (list UserDefinedFunctionScopes) DeclareAggregate(expr parser.AggregateDeclaration) error {
-	return list[0].DeclareAggregate(expr)
-}
-
-func (list UserDefinedFunctionScopes) Get(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
-	for _, v := range list {
-		if fn, err := v.Get(expr, name); err == nil {
-			return fn, nil
-		}
-	}
-	return nil, NewFunctionNotExistError(expr, name)
-}
-
-func (list UserDefinedFunctionScopes) Dispose(name parser.Identifier) error {
-	for _, m := range list {
-		err := m.Dispose(name)
-		if err == nil {
-			return nil
-		}
-	}
-	return NewFunctionNotExistError(name, name.Literal)
-}
-
-func (list UserDefinedFunctionScopes) All() (UserDefinedFunctionMap, UserDefinedFunctionMap) {
-	scalaAll := make(UserDefinedFunctionMap, 10)
-	aggregateAll := make(UserDefinedFunctionMap, 10)
-
-	for _, m := range list {
-		for key, fn := range m {
-			if fn.IsAggregate {
-				if _, ok := aggregateAll[key]; !ok {
-					aggregateAll[key] = fn
-				}
-			} else {
-				if _, ok := scalaAll[key]; !ok {
-					scalaAll[key] = fn
-				}
-			}
-		}
-	}
-
-	return scalaAll, aggregateAll
-}
-
 type UserDefinedFunctionMap map[string]*UserDefinedFunction
 
 func (m UserDefinedFunctionMap) Declare(expr parser.FunctionDeclaration) error {
@@ -204,33 +154,21 @@ type UserDefinedFunction struct {
 	Cursor      parser.Identifier // For Aggregate Functions
 }
 
-func (fn *UserDefinedFunction) Execute(ctx context.Context, args []value.Primary) (value.Primary, error) {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (fn *UserDefinedFunction) Execute(ctx context.Context, scope *ReferenceScope, args []value.Primary) (value.Primary, error) {
+	childScope := scope.CreateChild()
+	defer childScope.CloseCurrentBlock()
 
-	childScope := filter.CreateChildScope()
-	ctx = ContextForExecusion(ctx, childScope)
-	defer childScope.CloseScope()
-
-	return fn.execute(ctx, args)
+	return fn.execute(ctx, childScope, args)
 }
 
-func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, values []value.Primary, args []value.Primary) (value.Primary, error) {
-	filter, err := GetFilter(ctx)
-	if err != nil {
+func (fn *UserDefinedFunction) ExecuteAggregate(ctx context.Context, scope *ReferenceScope, values []value.Primary, args []value.Primary) (value.Primary, error) {
+	childScope := scope.CreateChild()
+	defer childScope.CloseCurrentBlock()
+
+	if err := childScope.AddPseudoCursor(fn.Cursor, values); err != nil {
 		return nil, err
 	}
-
-	childScope := filter.CreateChildScope()
-	ctx = ContextForExecusion(ctx, childScope)
-	defer childScope.CloseScope()
-
-	if err := childScope.cursors.AddPseudoCursor(fn.Cursor, values); err != nil {
-		return nil, err
-	}
-	return fn.execute(ctx, args)
+	return fn.execute(ctx, childScope, args)
 }
 
 func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name string, argsLen int) error {
@@ -254,34 +192,29 @@ func (fn *UserDefinedFunction) CheckArgsLen(expr parser.QueryExpression, name st
 	return nil
 }
 
-func (fn *UserDefinedFunction) execute(ctx context.Context, args []value.Primary) (value.Primary, error) {
-	filter, err := GetFilter(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (fn *UserDefinedFunction) execute(ctx context.Context, scope *ReferenceScope, args []value.Primary) (value.Primary, error) {
 	if err := fn.CheckArgsLen(fn.Name, fn.Name.Literal, len(args)); err != nil {
 		return nil, err
 	}
 
 	for i, v := range fn.Parameters {
 		if i < len(args) {
-			if err := filter.variables[0].Add(v, args[i]); err != nil {
+			if err := scope.blocks[0].variables.Add(v, args[i]); err != nil {
 				return nil, err
 			}
 		} else {
 			defaultValue, _ := fn.Defaults[v.Name]
-			val, err := filter.Evaluate(ctx, defaultValue)
+			val, err := Evaluate(ctx, scope, defaultValue)
 			if err != nil {
 				return nil, err
 			}
-			if err = filter.variables[0].Add(v, val); err != nil {
+			if err = scope.DeclareVariableDirectly(v, val); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	proc := NewProcessorWithFilter(filter.tx, filter)
+	proc := NewProcessorWithScope(scope.Tx, scope)
 	if _, err := proc.execute(ctx, fn.Statements); err != nil {
 		return nil, err
 	}

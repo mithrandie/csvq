@@ -13,6 +13,7 @@ const DefaultEnvJson = `
     "vi_mode": false
   },
   "environment_variables": {},
+  "limit_recursion": 1000,
   "palette": {
     "effectors": {
       "label": {
