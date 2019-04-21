@@ -6,7 +6,7 @@ imports:
 - name: github.com/mithrandie/go-file
   version: 326bf786e0d7109ce49f26a6e3250ba375035c0d
 - name: github.com/mithrandie/go-text
-  version: db8ffcc58137bfeacc6d79799220c3bc0fb29f6b
+  version: cbfb676db2f7eb1db6f70db1ddebab3d8abfa4d0
   subpackages:
   - color
   - csv
