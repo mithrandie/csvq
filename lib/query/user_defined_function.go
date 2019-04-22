@@ -5,13 +5,42 @@ import (
 	"fmt"
 	"strings"
 
-	"sort"
-
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
-type UserDefinedFunctionMap map[string]*UserDefinedFunction
+type UserDefinedFunctionMap struct {
+	*SyncMap
+}
+
+func NewUserDefinedFunctionMap() UserDefinedFunctionMap {
+	return UserDefinedFunctionMap{
+		NewSyncMap(),
+	}
+}
+
+func (m UserDefinedFunctionMap) IsEmpty() bool {
+	return m.SyncMap == nil
+}
+
+func (m UserDefinedFunctionMap) Store(name string, val *UserDefinedFunction) {
+	m.store(strings.ToUpper(name), val)
+}
+
+func (m UserDefinedFunctionMap) Load(name string) (*UserDefinedFunction, bool) {
+	if v, ok := m.load(strings.ToUpper(name)); ok {
+		return v.(*UserDefinedFunction), true
+	}
+	return nil, false
+}
+
+func (m UserDefinedFunctionMap) Delete(name string) {
+	m.delete(strings.ToUpper(name))
+}
+
+func (m UserDefinedFunctionMap) Exists(name string) bool {
+	return m.exists(strings.ToUpper(name))
+}
 
 func (m UserDefinedFunctionMap) Declare(expr parser.FunctionDeclaration) error {
 	if err := m.CheckDuplicate(expr.Name); err != nil {
@@ -23,15 +52,13 @@ func (m UserDefinedFunctionMap) Declare(expr parser.FunctionDeclaration) error {
 		return err
 	}
 
-	uname := strings.ToUpper(expr.Name.Literal)
-
-	m[uname] = &UserDefinedFunction{
+	m.Store(expr.Name.Literal, &UserDefinedFunction{
 		Name:         expr.Name,
 		Statements:   expr.Statements,
 		Parameters:   parameters,
 		Defaults:     defaults,
 		RequiredArgs: required,
-	}
+	})
 	return nil
 }
 
@@ -45,9 +72,7 @@ func (m UserDefinedFunctionMap) DeclareAggregate(expr parser.AggregateDeclaratio
 		return err
 	}
 
-	uname := strings.ToUpper(expr.Name.Literal)
-
-	m[uname] = &UserDefinedFunction{
+	m.Store(expr.Name.Literal, &UserDefinedFunction{
 		Name:         expr.Name,
 		Statements:   expr.Statements,
 		Parameters:   parameters,
@@ -55,7 +80,7 @@ func (m UserDefinedFunctionMap) DeclareAggregate(expr parser.AggregateDeclaratio
 		RequiredArgs: required,
 		IsAggregate:  true,
 		Cursor:       expr.Cursor,
-	}
+	})
 	return nil
 }
 
@@ -100,47 +125,25 @@ func (m UserDefinedFunctionMap) CheckDuplicate(name parser.Identifier) error {
 	if _, ok := AnalyticFunctions[uname]; ok {
 		return NewBuiltInFunctionDeclaredError(name)
 	}
-	if _, ok := m[uname]; ok {
+	if m.Exists(uname) {
 		return NewFunctionRedeclaredError(name)
 	}
 	return nil
 }
 
 func (m UserDefinedFunctionMap) Get(fn parser.QueryExpression, name string) (*UserDefinedFunction, error) {
-	uname := strings.ToUpper(name)
-	if fn, ok := m[uname]; ok {
+	if fn, ok := m.Load(name); ok {
 		return fn, nil
 	}
 	return nil, NewFunctionNotExistError(fn, name)
 }
 
-func (m UserDefinedFunctionMap) Keys() []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-func (m UserDefinedFunctionMap) SortedKeys() []string {
-	keys := m.Keys()
-	sort.Strings(keys)
-	return keys
-}
-
 func (m UserDefinedFunctionMap) Dispose(name parser.Identifier) error {
-	uname := strings.ToUpper(name.Literal)
-	if _, ok := m[uname]; ok {
-		delete(m, uname)
+	if m.Exists(name.Literal) {
+		m.Delete(name.Literal)
 		return nil
 	}
 	return NewFunctionNotExistError(name, name.Literal)
-}
-
-func (m UserDefinedFunctionMap) Clear() {
-	for k := range m {
-		delete(m, k)
-	}
 }
 
 type UserDefinedFunction struct {

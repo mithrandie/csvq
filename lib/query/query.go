@@ -111,40 +111,45 @@ func Select(ctx context.Context, scope *ReferenceScope, query parser.SelectQuery
 	}
 
 	queryScope := scope.CreateNode()
-	defer queryScope.CloseCurrentNode()
 
 	if query.WithClause != nil {
 		if err := queryScope.LoadInlineTable(ctx, query.WithClause.(parser.WithClause)); err != nil {
+			queryScope.CloseCurrentNode()
 			return nil, err
 		}
 	}
 
 	view, err := selectEntity(ctx, queryScope, query.SelectEntity, query.ForUpdate)
 	if err != nil {
+		queryScope.CloseCurrentNode()
 		return nil, err
 	}
 
 	if query.OrderByClause != nil {
 		if err := view.OrderBy(ctx, queryScope, query.OrderByClause.(parser.OrderByClause)); err != nil {
+			queryScope.CloseCurrentNode()
 			return nil, err
 		}
 	}
 
 	if query.OffsetClause != nil {
 		if err := view.Offset(ctx, queryScope, query.OffsetClause.(parser.OffsetClause)); err != nil {
+			queryScope.CloseCurrentNode()
 			return nil, err
 		}
 	}
 
 	if query.LimitClause != nil {
 		if err := view.Limit(ctx, queryScope, query.LimitClause.(parser.LimitClause)); err != nil {
+			queryScope.CloseCurrentNode()
 			return nil, err
 		}
 	}
 
 	err = view.Fix(ctx, queryScope.Tx.Flags)
+	queryScope.CloseCurrentNode()
 
-	if intoVars != nil {
+	if err == nil && intoVars != nil {
 		if view.FieldLen() != len(intoVars) {
 			return nil, NewSelectIntoQueryFieldLengthNotMatchError(query, len(intoVars))
 		}
@@ -179,7 +184,7 @@ func selectEntity(ctx context.Context, scope *ReferenceScope, expr parser.QueryE
 		entity.FromClause = parser.FromClause{}
 	}
 	view := NewView()
-	err := view.Load(ctx, scope, entity.FromClause.(parser.FromClause), forUpdate, false)
+	err := view.Load(ctx, scope, entity.FromClause.(parser.FromClause).Tables, forUpdate, false)
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +270,10 @@ func selectSet(ctx context.Context, scope *ReferenceScope, set parser.SelectSet,
 }
 
 func selectSetForRecursion(ctx context.Context, scope *ReferenceScope, view *View, set parser.SelectSet, forUpdate bool) error {
+	if ctx.Err() != nil {
+		return ConvertContextError(ctx.Err())
+	}
+
 	if -1 < scope.Tx.Flags.LimitRecursion {
 		if scope.RecursiveCount == nil {
 			scope.RecursiveCount = new(int64)
@@ -286,8 +295,9 @@ func selectSetForRecursion(ctx context.Context, scope *ReferenceScope, view *Vie
 	}
 
 	queryScope := scope.CreateNode()
-	defer queryScope.CloseCurrentNode()
 	rview, err := selectSetEntity(ctx, queryScope, set.RHS, forUpdate)
+	queryScope.CloseCurrentNode()
+	queryScope = nil
 	if err != nil {
 		return err
 	}
@@ -298,10 +308,6 @@ func selectSetForRecursion(ctx context.Context, scope *ReferenceScope, view *Vie
 	if rview.RecordLen() < 1 {
 		return nil
 	}
-	if err = rview.Header.Update(tmpViewName, scope.RecursiveTable.Fields); err != nil {
-		return err
-	}
-	scope.RecursiveTmpView = rview
 
 	switch set.Operator.Token {
 	case parser.UNION:
@@ -318,6 +324,11 @@ func selectSetForRecursion(ctx context.Context, scope *ReferenceScope, view *Vie
 		}
 	}
 
+	if err = rview.Header.Update(tmpViewName, scope.RecursiveTable.Fields); err != nil {
+		return err
+	}
+	scope.RecursiveTmpView = rview
+
 	return selectSetForRecursion(ctx, scope, view, set, forUpdate)
 }
 
@@ -333,17 +344,15 @@ func Insert(ctx context.Context, scope *ReferenceScope, query parser.InsertQuery
 		}
 	}
 
-	fromClause := parser.FromClause{
-		Tables: []parser.QueryExpression{
-			query.Table,
-		},
+	tables := []parser.QueryExpression{
+		query.Table,
 	}
 
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err := view.Load(ctx, queryScope, fromClause, true, false)
+	err := view.Load(ctx, queryScope, tables, true, false)
 	if err != nil {
 		return nil, insertRecords, err
 	}
@@ -394,7 +403,7 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err := view.Load(ctx, queryScope, query.FromClause.(parser.FromClause), true, true)
+	err := view.Load(ctx, queryScope, query.FromClause.(parser.FromClause).Tables, true, true)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -508,17 +517,15 @@ func Replace(ctx context.Context, scope *ReferenceScope, query parser.ReplaceQue
 		}
 	}
 
-	fromClause := parser.FromClause{
-		Tables: []parser.QueryExpression{
-			query.Table,
-		},
+	tables := []parser.QueryExpression{
+		query.Table,
 	}
 
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err := view.Load(ctx, queryScope, fromClause, true, false)
+	err := view.Load(ctx, queryScope, tables, true, false)
 	if err != nil {
 		return nil, replaceRecords, err
 	}
@@ -561,15 +568,15 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 		}
 	}
 
-	fromClause := query.FromClause
+	tables := query.FromClause.Tables
 	if query.Tables == nil {
-		if 1 < len(fromClause.Tables) {
+		if 1 < len(tables) {
 			return nil, nil, NewDeleteTableNotSpecifiedError(query)
 		}
-		table := fromClause.Tables[0].(parser.Table)
+		table := tables[0].(parser.Table)
 		switch table.Object.(type) {
 		case parser.Identifier, parser.TableObject, parser.Stdin:
-			query.Tables = fromClause.Tables
+			query.Tables = tables
 		default:
 			return nil, nil, NewDeleteTableNotSpecifiedError(query)
 		}
@@ -579,7 +586,7 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 	defer queryScope.Tx.operationMutex.Unlock()
 
 	view := NewView()
-	err := view.Load(ctx, queryScope, query.FromClause, true, true)
+	err := view.Load(ctx, queryScope, tables, true, true)
 	if err != nil {
 		return nil, nil, err
 	}

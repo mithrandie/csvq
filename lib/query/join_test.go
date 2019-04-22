@@ -1053,7 +1053,7 @@ func TestCalcMinimumRequired(t *testing.T) {
 func GenerateBenchView(tableName string, records int, startIdx int) *View {
 	view := &View{
 		Header:    NewHeader(tableName, []string{"c1"}),
-		RecordSet: make([]Record, records),
+		RecordSet: make(RecordSet, records),
 	}
 
 	for i := 0; i < records; i++ {

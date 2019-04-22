@@ -29,7 +29,7 @@ func Evaluate(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpre
 
 	switch expr.(type) {
 	case parser.PrimitiveType:
-		return expr.(parser.PrimitiveType).Value, nil
+		val = expr.(parser.PrimitiveType).Value
 	case parser.Parentheses:
 		val, err = Evaluate(ctx, scope, expr.(parser.Parentheses).Expr)
 	case parser.FieldReference, parser.ColumnNumber:

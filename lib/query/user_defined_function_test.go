@@ -32,8 +32,8 @@ var userDefinedFunctionMapDeclareTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
-		Result: UserDefinedFunctionMap{
-			"USERFUNC": &UserDefinedFunction{
+		Result: GenerateUserDefinedFunctionMap([]*UserDefinedFunction{
+			{
 				Name: parser.Identifier{Literal: "userfunc"},
 				Parameters: []parser.Variable{
 					{Name: "arg1"},
@@ -45,7 +45,7 @@ var userDefinedFunctionMapDeclareTests = []struct {
 					parser.Print{Value: parser.Variable{Name: "var1"}},
 				},
 			},
-		},
+		}),
 	},
 	{
 		Name: "UserDefinedFunctionMap Declare Redeclaration Error",
@@ -86,7 +86,7 @@ var userDefinedFunctionMapDeclareTests = []struct {
 }
 
 func TestUserDefinedFunctionMap_Declare(t *testing.T) {
-	funcs := UserDefinedFunctionMap{}
+	funcs := NewUserDefinedFunctionMap()
 
 	for _, v := range userDefinedFunctionMapDeclareTests {
 		err := funcs.Declare(v.Expr)
@@ -102,7 +102,7 @@ func TestUserDefinedFunctionMap_Declare(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(funcs, v.Result) {
+		if !SyncMapEqual(funcs, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, funcs, v.Result)
 		}
 	}
@@ -131,8 +131,8 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
-		Result: UserDefinedFunctionMap{
-			"USERAGGFUNC": &UserDefinedFunction{
+		Result: GenerateUserDefinedFunctionMap([]*UserDefinedFunction{
+			{
 				Name:        parser.Identifier{Literal: "useraggfunc"},
 				IsAggregate: true,
 				Cursor:      parser.Identifier{Literal: "column1"},
@@ -146,7 +146,7 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 					parser.Print{Value: parser.Variable{Name: "var1"}},
 				},
 			},
-		},
+		}),
 	},
 	{
 		Name: "UserDefinedFunctionMap DeclareAggregate Redeclaration Error",
@@ -181,7 +181,7 @@ var userDefinedFunctionMapDeclareAggregateTests = []struct {
 }
 
 func TestUserDefinedFunctionMap_DeclareAggregate(t *testing.T) {
-	funcs := UserDefinedFunctionMap{}
+	funcs := NewUserDefinedFunctionMap()
 
 	for _, v := range userDefinedFunctionMapDeclareAggregateTests {
 		err := funcs.DeclareAggregate(v.Expr)
@@ -197,7 +197,7 @@ func TestUserDefinedFunctionMap_DeclareAggregate(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !reflect.DeepEqual(funcs, v.Result) {
+		if !SyncMapEqual(funcs, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, funcs, v.Result)
 		}
 	}
@@ -237,8 +237,8 @@ var userDefinedFunctionMapCheckDuplicateTests = []struct {
 }
 
 func TestUserDefinedFunctionMap_CheckDuplicate(t *testing.T) {
-	funcs := UserDefinedFunctionMap{
-		"USERFUNC": &UserDefinedFunction{
+	funcs := GenerateUserDefinedFunctionMap([]*UserDefinedFunction{
+		{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "arg1"},
@@ -248,7 +248,7 @@ func TestUserDefinedFunctionMap_CheckDuplicate(t *testing.T) {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
-	}
+	})
 
 	for _, v := range userDefinedFunctionMapCheckDuplicateTests {
 		err := funcs.CheckDuplicate(v.FuncName)
@@ -305,8 +305,8 @@ var userDefinedFunctionMapGetTests = []struct {
 }
 
 func TestUserDefinedFunctionMap_Get(t *testing.T) {
-	funcs := UserDefinedFunctionMap{
-		"USERFUNC": &UserDefinedFunction{
+	funcs := GenerateUserDefinedFunctionMap([]*UserDefinedFunction{
+		{
 			Name: parser.Identifier{Literal: "userfunc"},
 			Parameters: []parser.Variable{
 				{Name: "arg1"},
@@ -316,7 +316,7 @@ func TestUserDefinedFunctionMap_Get(t *testing.T) {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
-	}
+	})
 
 	for _, v := range userDefinedFunctionMapGetTests {
 		result, err := funcs.Get(v.Function, v.FuncName)

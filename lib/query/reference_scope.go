@@ -56,8 +56,8 @@ func NewBlockScope() BlockScope {
 	return BlockScope{
 		variables:       NewVariableMap(),
 		temporaryTables: NewViewMap(),
-		cursors:         make(CursorMap),
-		functions:       make(UserDefinedFunctionMap),
+		cursors:         NewCursorMap(),
+		functions:       NewUserDefinedFunctionMap(),
 	}
 }
 
@@ -536,17 +536,17 @@ func (rs *ReferenceScope) CursorCount(name parser.Identifier) (int, error) {
 }
 
 func (rs *ReferenceScope) AllCursors() CursorMap {
-	all := make(CursorMap, 10)
-
+	all := NewCursorMap()
 	for i := range rs.blocks {
-		for key, cursor := range rs.blocks[i].cursors {
-			if cursor.isPseudo {
-				continue
+		rs.blocks[i].cursors.Range(func(key, val interface{}) bool {
+			cur := val.(*Cursor)
+			if !cur.isPseudo {
+				if !all.Exists(key.(string)) {
+					all.Store(key.(string), cur)
+				}
 			}
-			if _, ok := all[key]; !ok {
-				all[key] = cursor
-			}
-		}
+			return true
+		})
 	}
 	return all
 }
@@ -579,21 +579,23 @@ func (rs *ReferenceScope) DisposeFunction(name parser.Identifier) error {
 }
 
 func (rs *ReferenceScope) AllFunctions() (UserDefinedFunctionMap, UserDefinedFunctionMap) {
-	scalaAll := make(UserDefinedFunctionMap, 10)
-	aggregateAll := make(UserDefinedFunctionMap, 10)
+	scalaAll := NewUserDefinedFunctionMap()
+	aggregateAll := NewUserDefinedFunctionMap()
 
 	for i := range rs.blocks {
-		for key, fn := range rs.blocks[i].functions {
+		rs.blocks[i].functions.Range(func(key, val interface{}) bool {
+			fn := val.(*UserDefinedFunction)
 			if fn.IsAggregate {
-				if _, ok := aggregateAll[key]; !ok {
-					aggregateAll[key] = fn
+				if !aggregateAll.Exists(key.(string)) {
+					aggregateAll.Store(key.(string), fn)
 				}
 			} else {
-				if _, ok := scalaAll[key]; !ok {
-					scalaAll[key] = fn
+				if !scalaAll.Exists(key.(string)) {
+					scalaAll.Store(key.(string), fn)
 				}
 			}
-		}
+			return true
+		})
 	}
 
 	return scalaAll, aggregateAll

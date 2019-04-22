@@ -15,11 +15,13 @@ func (it InlineTableMap) Set(ctx context.Context, scope *ReferenceScope, inlineT
 		return NewInLineTableRedefinedError(inlineTable.Name)
 	}
 
+	scope = scope.CreateNode()
 	if inlineTable.IsRecursive() {
 		scope.RecursiveTable = &inlineTable
 	}
 
 	view, err := Select(ctx, scope, inlineTable.Query)
+	scope.CloseCurrentNode()
 	if err != nil {
 		return err
 	}

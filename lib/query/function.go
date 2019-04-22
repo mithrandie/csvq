@@ -1586,9 +1586,9 @@ func JsonObject(ctx context.Context, scope *ReferenceScope, fn parser.Function) 
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
 	}
 
-	record := make([]value.Primary, 0, view.FieldLen())
-	for _, cell := range view.RecordSet[0] {
-		record = append(record, cell.Value())
+	record := make([]value.Primary, view.FieldLen())
+	for i := range view.RecordSet[0] {
+		record[i] = view.RecordSet[0][i].Value()
 	}
 	structure, _ := json.ConvertRecordValueToJsonStructure(pathes, record)
 	return value.NewString(structure.Encode()), nil

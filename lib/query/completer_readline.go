@@ -218,47 +218,55 @@ func (c *Completer) updateCursors() {
 	cursorKeys := cursors.SortedKeys()
 	c.cursorList = make([]string, 0, len(cursorKeys))
 	for _, key := range cursorKeys {
-		c.cursorList = append(c.cursorList, cursors[key].name)
+		if cur, ok := cursors.Load(key); ok {
+			c.cursorList = append(c.cursorList, cur.name)
+		}
 	}
 }
 
 func (c *Completer) updateFunctions() {
 	userfuncs, userAggFuncs := c.scope.AllFunctions()
-	c.userFuncs = make([]string, 0, len(userfuncs))
-	c.userAggFuncs = make([]string, 0, len(userAggFuncs))
+	c.userFuncs = make([]string, 0, userfuncs.Len())
+	c.userAggFuncs = make([]string, 0, userAggFuncs.Len())
 
-	funcKeys := make([]string, 0, len(c.funcs)+len(userfuncs))
+	funcKeys := make([]string, 0, len(c.funcs)+userfuncs.Len())
 	for _, v := range c.funcs {
 		funcKeys = append(funcKeys, v+"()")
 	}
-	for _, f := range userfuncs {
+	userfuncs.Range(func(key, value interface{}) bool {
+		f := value.(*UserDefinedFunction)
 		funcKeys = append(funcKeys, f.Name.String()+"()")
 		c.userFuncs = append(c.userFuncs, f.Name.String())
-	}
+		return true
+	})
 	sort.Strings(funcKeys)
 	c.funcList = funcKeys
 
-	aggFuncKeys := make([]string, 0, len(c.aggFuncs)+len(userAggFuncs))
+	aggFuncKeys := make([]string, 0, len(c.aggFuncs)+userAggFuncs.Len())
 	for _, v := range c.aggFuncs {
 		aggFuncKeys = append(aggFuncKeys, v+"()")
 	}
-	for _, f := range userAggFuncs {
+	userAggFuncs.Range(func(key, value interface{}) bool {
+		f := value.(*UserDefinedFunction)
 		aggFuncKeys = append(aggFuncKeys, f.Name.String()+"()")
 		c.userAggFuncs = append(c.userAggFuncs, f.Name.String())
-	}
+		return true
+	})
 	sort.Strings(aggFuncKeys)
 	c.aggFuncList = aggFuncKeys
 
 	c.userFuncList = append(c.userFuncs, c.userAggFuncs...)
 	sort.Strings(c.userFuncList)
 
-	analyticFuncKeys := make([]string, 0, len(c.analyticFuncs)+len(userAggFuncs))
+	analyticFuncKeys := make([]string, 0, len(c.analyticFuncs)+userAggFuncs.Len())
 	for _, v := range c.analyticFuncs {
 		analyticFuncKeys = append(analyticFuncKeys, v+"() OVER ()")
 	}
-	for _, f := range userAggFuncs {
+	userAggFuncs.Range(func(key, value interface{}) bool {
+		f := value.(*UserDefinedFunction)
 		analyticFuncKeys = append(analyticFuncKeys, f.Name.String()+"() OVER ()")
-	}
+		return true
+	})
 	sort.Strings(analyticFuncKeys)
 	c.analyticFuncList = analyticFuncKeys
 }
