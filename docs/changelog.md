@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.9.19
+
+Released on April 22, 2019
+
+- Improve execusion performance.
+
 ## Version 1.9.18
 
 Released on April 20, 2019
