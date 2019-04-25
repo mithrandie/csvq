@@ -1,5 +1,13 @@
 # Change Log
 
+## Version 1.10.0
+
+Released on April 25, 2019
+
+- Support UTF-16.
+- Support automatic detection of character encoding.
+- Remove the use of glide from support.
+
 ## Version 1.9.19
 
 Released on April 22, 2019
@@ -323,7 +331,7 @@ Released on November 8, 2018
 
 Released on November 5, 2018
 
-- Fix a bug in calculation of Shift-JIS byte length.
+- Fix a bug in calculation of Shift_JIS byte length.
 
 ## Version 1.5.1
 
@@ -337,7 +345,7 @@ Released on November 4, 2018
 
 - Support Fixed-Length Format.
 - Implement WIDTH function.
-- Support operate with byte length in Shift-JIS encoding in the following string functions.
+- Support operate with byte length in Shift_JIS encoding in the following string functions.
   - BYTE_LEN
   - LPAN
   - RPAD

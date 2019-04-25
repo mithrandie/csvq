@@ -277,7 +277,7 @@ func IsReadableFromPipeOrRedirection(fp *os.File) bool {
 func ParseEncoding(s string) (text.Encoding, error) {
 	encoding, err := text.ParseEncoding(s)
 	if err != nil {
-		err = errors.New("encoding must be one of UTF8|UTF8M|SJIS")
+		err = errors.New("encoding must be one of AUTO|UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS")
 	}
 	return encoding, err
 }
@@ -285,7 +285,7 @@ func ParseEncoding(s string) (text.Encoding, error) {
 func ParseLineBreak(s string) (text.LineBreak, error) {
 	lb, err := text.ParseLineBreak(s)
 	if err != nil {
-		err = errors.New("line-break must be one of CRLF|LF|CR")
+		err = errors.New("line-break must be one of CRLF|CR|LF")
 	}
 	return lb, err
 }

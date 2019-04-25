@@ -2939,17 +2939,43 @@ var CsvqSyntax = []Expression{
 		Label: "Parameters",
 		Grammar: []Definition{
 			{
-				Name: "Encoding",
+				Name: "Import Encoding",
 				Description: Description{
 					Template: "" +
 						"```\n" +
-						"+-------+----------------------------+\n" +
-						"| Value |     Character Encoding     |\n" +
-						"+-------+----------------------------+\n" +
-						"| UTF8  | UTF-8                      |\n" +
-						"| UTF8M | UTF-8 with Byte order mark |\n" +
-						"| SJIS  | Shift-JIS                  |\n" +
-						"+-------+----------------------------+\n" +
+						"+----------+---------------------------------------------+\n" +
+						"| Value    |     Character Encoding                      |\n" +
+						"+----------+---------------------------------------------+\n" +
+						"| AUTO     | Detect encoding automatically               |\n" +
+						"| UTF8     | UTF-8. Detect BOM automatically             |\n" +
+						"| UTF8M    | UTF-8 with BOM                              |\n" +
+						"| UTF16    | UTF-16. Detect BOM and Endian automatically |\n" +
+						"| UTF16BE  | UTF-16 Big-Endian                           |\n" +
+						"| UTF16LE  | UTF-16 Little-Endian                        |\n" +
+						"| UTF16BEM | UTF-16 Big-Endian with BOM                  |\n" +
+						"| UTF16LEM | UTF-16 Little-Endian with BOM               |\n" +
+						"| SJIS     | Shift_JIS                                   |\n" +
+						"+----------+---------------------------------------------+\n" +
+						"```",
+				},
+			},
+			{
+				Name: "Export Encoding",
+				Description: Description{
+					Template: "" +
+						"```\n" +
+						"+----------+----------------------------------+\n" +
+						"| Value    |     Character Encoding           |\n" +
+						"+----------+----------------------------------+\n" +
+						"| UTF8     | UTF-8                            |\n" +
+						"| UTF8M    | UTF-8 with BOM                   |\n" +
+						"| UTF16    | An alias of UTF16BE              |\n" +
+						"| UTF16BE  | UTF-16 Big-Endian                |\n" +
+						"| UTF16LE  | UTF-16 Little-Endian             |\n" +
+						"| UTF16BEM | UTF-16 Big-Endian with BOM       |\n" +
+						"| UTF16LEM | UTF-16 Little-Endian with BOM    |\n" +
+						"| SJIS     | Shift_JIS                        |\n" +
+						"+----------+----------------------------------+\n" +
 						"```",
 				},
 			},

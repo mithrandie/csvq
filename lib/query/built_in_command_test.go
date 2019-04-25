@@ -617,7 +617,7 @@ var setFlagTests = []struct {
 			Flag:  parser.Flag{Name: "line_break"},
 			Value: parser.NewStringValue("invalid"),
 		},
-		Error: "line-break must be one of CRLF|LF|CR",
+		Error: "line-break must be one of CRLF|CR|LF",
 	},
 }
 
@@ -1655,31 +1655,31 @@ var showObjectsTests = []struct {
 			},
 		}),
 		Expect: "\n" +
-			"                       Loaded Tables\n" +
-			"-----------------------------------------------------------\n" +
+			"                      Loaded Tables\n" +
+			"----------------------------------------------------------\n" +
 			" table1.csv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: CSV      Delimiter: \"\\t\"  Enclose All: false\n" +
-			"     Encoding: SJIS   LineBreak: CRLF  Header: false\n" +
+			"     Format: CSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: JSON     Escape: BACKSLASH  Query: {}\n" +
-			"     Encoding: UTF8   LineBreak: LF    Pretty Print: false\n" +
+			"     Format: JSON    Escape: BACKSLASH  Query: {}\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV      Delimiter: \"\\t\"  Enclose All: false\n" +
-			"     Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			"     Format: TSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: FIXED    Delimiter Positions: [3, 12]\n" +
-			"     Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			"     Format: FIXED   Delimiter Positions: [3, 12]\n" +
+			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table2.json\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: JSON     Escape: HEX      Query: (empty)\n" +
-			"     Encoding: UTF8   LineBreak: LF    Pretty Print: false\n" +
+			"     Format: JSON    Escape: HEX      Query: (empty)\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table2.txt\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: FIXED    Delimiter Positions: S[3, 12]\n" +
+			"     Format: FIXED   Delimiter Positions: S[3, 12]\n" +
 			"     Encoding: UTF8\n" +
 			"\n",
 	},
@@ -1765,31 +1765,31 @@ var showObjectsTests = []struct {
 			},
 		},
 		Expect: "\n" +
-			"           Loaded Tables (Uncommitted: 2 Tables)\n" +
-			"-----------------------------------------------------------\n" +
+			"          Loaded Tables (Uncommitted: 2 Tables)\n" +
+			"----------------------------------------------------------\n" +
 			" table1.csv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: CSV      Delimiter: \"\\t\"  Enclose All: false\n" +
-			"     Encoding: SJIS   LineBreak: CRLF  Header: false\n" +
+			"     Format: CSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: JSON     Escape: BACKSLASH  Query: {}\n" +
-			"     Encoding: UTF8   LineBreak: LF    Pretty Print: false\n" +
+			"     Format: JSON    Escape: BACKSLASH  Query: {}\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" *Created* table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV      Delimiter: \"\\t\"  Enclose All: false\n" +
-			"     Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			"     Format: TSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: FIXED    Delimiter Positions: [3, 12]\n" +
-			"     Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			"     Format: FIXED   Delimiter Positions: [3, 12]\n" +
+			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" *Updated* table2.json\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: JSON     Escape: BACKSLASH  Query: (empty)\n" +
-			"     Encoding: UTF8   LineBreak: LF    Pretty Print: false\n" +
+			"     Format: JSON    Escape: BACKSLASH  Query: (empty)\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table2.txt\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: FIXED    Delimiter Positions: S[3, 12]\n" +
+			"     Format: FIXED   Delimiter Positions: S[3, 12]\n" +
 			"     Encoding: UTF8\n" +
 			"\n",
 	},
@@ -1815,8 +1815,8 @@ var showObjectsTests = []struct {
 			" table1.csv\n" +
 			"     Fields: colabcdef1, colabcdef2, colabcdef3, colabcdef4, colabcdef5, \n" +
 			"             colabcdef6, colabcdef7\n" +
-			"     Format: CSV      Delimiter: \"\\t\"  Enclose All: false\n" +
-			"     Encoding: SJIS   LineBreak: CRLF  Header: false\n" +
+			"     Format: CSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			"\n",
 	},
 	{
@@ -2357,8 +2357,8 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
-			" Format: CSV      Delimiter: \",\"   Enclose All: false\n" +
-			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			" Format: CSV     Delimiter: \",\"   Enclose All: false\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Created\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
@@ -2396,8 +2396,8 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
-			" Format: CSV      Delimiter: \",\"   Enclose All: false\n" +
-			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			" Format: CSV     Delimiter: \",\"   Enclose All: false\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Created\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
@@ -2435,8 +2435,8 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_update.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_update.csv") + "\n" +
-			" Format: CSV      Delimiter: \",\"   Enclose All: false\n" +
-			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			" Format: CSV     Delimiter: \",\"   Enclose All: false\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Updated\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
@@ -2462,7 +2462,7 @@ var showFieldsTests = []struct {
 }
 
 func calcShowFieldsWidth(fileName string, fileNameInTitle string, prefixLen int) int {
-	w := 54
+	w := 53
 	pathLen := 8 + len(GetTestFilePath(fileName))
 	titleLen := prefixLen + len(fileNameInTitle)
 

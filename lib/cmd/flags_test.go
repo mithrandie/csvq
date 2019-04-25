@@ -245,7 +245,7 @@ func TestFlags_SetEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, text.SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of UTF8|UTF8M|SJIS"
+	expectErr := "encoding must be one of AUTO|UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS"
 	err := flags.SetEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -383,7 +383,7 @@ func TestFlags_SetWriteEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, text.SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of UTF8|UTF8M|SJIS"
+	expectErr := "write-encoding must be one of UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS"
 	err := flags.SetWriteEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -474,7 +474,7 @@ func TestFlags_SetLineBreak(t *testing.T) {
 		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.LF, "LF")
 	}
 
-	expectErr := "line-break must be one of CRLF|LF|CR"
+	expectErr := "line-break must be one of CRLF|CR|LF"
 	err := flags.SetLineBreak("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")

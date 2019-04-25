@@ -29,6 +29,7 @@ const (
 	ErrMsgIO                                   = "%s"
 	ErrMsgCommit                               = "failed to commit: %s"
 	ErrMsgRollback                             = "failed to rollback: %s"
+	ErrMsgCannotDetectFileEncoding             = "cannot detect character encoding: %s"
 	ErrMsgFieldAmbiguous                       = "field %s is ambiguous"
 	ErrMsgFieldNotExist                        = "field %s does not exist"
 	ErrMsgFieldNotGroupKey                     = "field %s is not a group key"
@@ -424,6 +425,16 @@ func NewRollbackError(expr parser.Expression, message string) error {
 	}
 	return &RollbackError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgRollback, message), ReturnCodeIOError, ErrorRollback),
+	}
+}
+
+type CannotDetectFileEncodingError struct {
+	*BaseError
+}
+
+func NewCannotDetectFileEncodingError(file parser.QueryExpression) error {
+	return &CannotDetectFileEncodingError{
+		NewBaseError(file, fmt.Sprintf(ErrMsgCannotDetectFileEncoding, file), ReturnCodeApplicationError, ErrorCannotDetectFileEncoding),
 	}
 }
 

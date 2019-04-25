@@ -805,8 +805,8 @@ var processorExecuteStatementTests = []struct {
 			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1.csv", 22)) + "\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: TSV      Delimiter: \"\\t\"  Enclose All: false\n" +
-			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			" Format: TSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			"\n",
 	},
 	{
@@ -925,8 +925,8 @@ var processorExecuteStatementTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: CSV      Delimiter: \",\"   Enclose All: false\n" +
-			" Encoding: UTF8   LineBreak: LF    Header: true\n" +
+			" Format: CSV     Delimiter: \",\"   Enclose All: false\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Fixed\n" +
 			" Fields:\n" +
 			"   1. column1\n" +

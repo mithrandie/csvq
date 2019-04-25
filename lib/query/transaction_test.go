@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/mithrandie/go-text"
+
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -30,8 +32,9 @@ func TestTransaction_Commit(t *testing.T) {
 			Header:    NewHeader("created_file", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
 			FileInfo: &FileInfo{
-				Path:    GetTestFilePath("created_file.csv"),
-				Handler: ch,
+				Path:     GetTestFilePath("created_file.csv"),
+				Handler:  ch,
+				Encoding: text.UTF8,
 			},
 		},
 		{
@@ -51,8 +54,9 @@ func TestTransaction_Commit(t *testing.T) {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:    GetTestFilePath("updated_file_1.csv"),
-				Handler: uh,
+				Path:     GetTestFilePath("updated_file_1.csv"),
+				Handler:  uh,
+				Encoding: text.UTF8,
 			},
 		},
 	})
@@ -61,14 +65,16 @@ func TestTransaction_Commit(t *testing.T) {
 		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
-				Path:    GetTestFilePath("created_file.csv"),
-				Handler: ch,
+				Path:     GetTestFilePath("created_file.csv"),
+				Handler:  ch,
+				Encoding: text.UTF8,
 			},
 		},
 		Updated: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("updated_file_1.csv")): {
-				Path:    GetTestFilePath("updated_file_1.csv"),
-				Handler: uh,
+				Path:     GetTestFilePath("updated_file_1.csv"),
+				Handler:  uh,
+				Encoding: text.UTF8,
 			},
 		},
 	}
@@ -80,7 +86,10 @@ func TestTransaction_Commit(t *testing.T) {
 	out := NewOutput()
 	tx.Session.SetStdout(out)
 
-	_ = TestTx.Commit(context.Background(), NewReferenceScope(tx), parser.TransactionControl{Token: parser.COMMIT})
+	err := TestTx.Commit(context.Background(), NewReferenceScope(tx), parser.TransactionControl{Token: parser.COMMIT})
+	if err != nil {
+		t.Fatalf("unexpected error %q", err.Error())
+	}
 
 	log := out.String()
 

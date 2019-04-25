@@ -429,7 +429,7 @@ func TestEncodeView(t *testing.T) {
 	ctx := context.Background()
 
 	for _, v := range encodeViewTests {
-		if v.WriteEncoding == "" {
+		if v.WriteEncoding == text.AUTO {
 			v.WriteEncoding = text.UTF8
 		}
 		if v.LineBreak == "" {

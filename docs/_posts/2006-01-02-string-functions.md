@@ -243,7 +243,7 @@ _str_
 _encoding_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-  "UTF8" or "SJIS". The default is "UTF8".
+  "UTF8", "UTF16" or "SJIS". The default is "UTF8".
 
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
@@ -289,7 +289,7 @@ _pad_type_
 _encoding_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-  "UTF8" or "SJIS". The default is "UTF8".
+  "UTF8", "UTF16" or "SJIS". The default is "UTF8".
 
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
@@ -320,7 +320,7 @@ _pad_type_
 _encoding_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-  "UTF8" or "SJIS". The default is "UTF8".
+  "UTF8", "UTF16" or "SJIS". The default is "UTF8".
 
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})

@@ -247,7 +247,7 @@ func TestParseEncoding(t *testing.T) {
 		t.Errorf("encoding = %s, expect to set %s for %s", e, text.SJIS, "sjis")
 	}
 
-	expectErr := "encoding must be one of UTF8|UTF8M|SJIS"
+	expectErr := "encoding must be one of AUTO|UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS"
 	_, err = ParseEncoding("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")

@@ -696,10 +696,12 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 }
 
 func writeTableAttribute(w *ObjectWriter, flags *cmd.Flags, info *FileInfo) {
+	encWidth := cmd.TextWidth(info.Encoding.String(), flags)
+
 	w.WriteColor("Format: ", cmd.LableEffect)
 	w.WriteWithoutLineBreak(info.Format.String())
 
-	w.WriteSpaces(9 - cmd.TextWidth(info.Format.String(), flags))
+	w.WriteSpaces(encWidth + 4 - cmd.TextWidth(info.Format.String(), flags))
 	switch info.Format {
 	case cmd.CSV:
 		w.WriteColorWithoutLineBreak("Delimiter: ", cmd.LableEffect)
@@ -752,7 +754,7 @@ func writeTableAttribute(w *ObjectWriter, flags *cmd.Flags, info *FileInfo) {
 	}
 
 	if !(info.Format == cmd.FIXED && info.SingleLine) {
-		w.WriteSpaces(7 - (cmd.TextWidth(info.Encoding.String(), flags)))
+		w.WriteSpaces(encWidth + 2 - (cmd.TextWidth(info.Encoding.String(), flags)))
 		w.WriteColorWithoutLineBreak("LineBreak: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(info.LineBreak.String())
 	}

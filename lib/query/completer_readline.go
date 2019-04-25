@@ -86,6 +86,17 @@ var tableObjectCandidates = []string{
 	"LTSV()",
 }
 
+var exportEncodingsCandidates = []string{
+	"SJIS",
+	"UTF16",
+	"UTF16BE",
+	"UTF16BEM",
+	"UTF16LE",
+	"UTF16LEM",
+	"UTF8",
+	"UTF8M",
+}
+
 type ReadlineListener struct {
 	scanner parser.Scanner
 }
@@ -1524,7 +1535,7 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 					case TableDelimiterPositions:
 						return nil, c.candidateList(delimiterPositionsCandidates, false), true
 					case TableEncoding:
-						return nil, c.candidateList(c.encodingList(), false), true
+						return nil, c.candidateList(exportEncodingsCandidates, false), true
 					case TableLineBreak:
 						return nil, c.candidateList(c.lineBreakList(), false), true
 					case TableJsonEscape:
@@ -1701,8 +1712,10 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList(delimiterCandidates, false), true
 					case cmd.DelimiterPositionsFlag, cmd.WriteDelimiterPositionsFlag:
 						return nil, c.candidateList(delimiterPositionsCandidates, false), true
-					case cmd.EncodingFlag, cmd.WriteEncodingFlag:
+					case cmd.EncodingFlag:
 						return nil, c.candidateList(c.encodingList(), false), true
+					case cmd.WriteEncodingFlag:
+						return nil, c.candidateList(exportEncodingsCandidates, false), true
 					case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
 						cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
 						cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
