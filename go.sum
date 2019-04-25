@@ -6,8 +6,8 @@ github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnG
 github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mithrandie/go-file/v2 v2.0.2 h1:3/yzItlTssDX9wOZrj9MtRyXbr52OZURmXFMuvpJ6Fg=
 github.com/mithrandie/go-file/v2 v2.0.2/go.mod h1:98a9loPjYr7ffsfwMDdJ7iH/dO8EXAca8XiI6SZpPV8=
-github.com/mithrandie/go-text v1.2.1 h1:iHyv/kCHjRhBA1K1w68GfnEtge8anz7mIfJhZC5k0qc=
-github.com/mithrandie/go-text v1.2.1/go.mod h1:YLvRM8Joe+DAwO6fj2/gUxjBj4qRVIHRNJyauZ6G68Q=
+github.com/mithrandie/go-text v1.3.0 h1:MnDA4z8y0D0K3W8OMCaKvaJltU2/5MqjA8JcMMQAIBA=
+github.com/mithrandie/go-text v1.3.0/go.mod h1:OdYittmPS9ZAaSaLPTi6GFpFawtQZZ79vMSbzolxxQs=
 github.com/mithrandie/readline-csvq v1.0.3 h1:axQ/yd2cQSA0jKVqPdr4cI7YJ7VcdapcInyIu4cqlsI=
 github.com/mithrandie/readline-csvq v1.0.3/go.mod h1:vEphKc6sQMA0hlS4B6MDviaqFI1b9/vGRC3ishGoAbY=
 github.com/mithrandie/ternary v1.1.0 h1:BlN8EoTsIYjhuWkfXHrh7+G+/Y0VvvWGVVldyjNH2VU=
@@ -18,5 +18,6 @@ golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869 h1:kkXA53yGe04D0adEYJwEVQ
 golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8 h1:YoY1wS6JYVRpIfFngRf2HHo9R9dAne3xbkGOQ5rJXjU=
 golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
-golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
-golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+golang.org/x/text v0.3.1 h1:nsUiJHvm6yOoRozW9Tz0siNk9sHieLzR+w814Ihse3A=
+golang.org/x/text v0.3.1/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
+golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=

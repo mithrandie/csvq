@@ -853,7 +853,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: "invalid argument for csv: encoding must be one of UTF8|UTF8M|SJIS",
+		Error: "invalid argument for csv: encoding must be one of AUTO|UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS",
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File",
@@ -2447,7 +2447,7 @@ func TestView_Load(t *testing.T) {
 		TestTx.Flags.SingleLine = v.SingleLine
 		TestTx.Flags.JsonQuery = v.JsonQuery
 		TestTx.Flags.NoHeader = v.NoHeader
-		if v.Encoding != "" {
+		if v.Encoding != text.AUTO {
 			TestTx.Flags.Encoding = v.Encoding
 		} else {
 			TestTx.Flags.Encoding = text.UTF8

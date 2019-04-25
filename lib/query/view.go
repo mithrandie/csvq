@@ -735,13 +735,15 @@ func loadViewFromFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, f
 	case cmd.JSON:
 		return loadViewFromJsonFile(fp, fileInfo, expr)
 	}
-	return loadViewFromCSVFile(ctx, fp, fileInfo, withoutNull)
+	return loadViewFromCSVFile(ctx, fp, fileInfo, withoutNull, expr)
 }
 
 func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
-	if enc, err := text.DetectEncoding(fp); err == nil {
-		fileInfo.Encoding = enc
+	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
+	if err != nil {
+		return nil, NewCannotDetectFileEncodingError(expr)
 	}
+	fileInfo.Encoding = enc
 
 	var r io.Reader
 
@@ -810,10 +812,12 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, file
 	return view, nil
 }
 
-func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool) (*View, error) {
-	if enc, err := text.DetectEncoding(fp); err == nil {
-		fileInfo.Encoding = enc
+func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
+	if err != nil {
+		return nil, NewCannotDetectFileEncodingError(expr)
 	}
+	fileInfo.Encoding = enc
 
 	reader, err := csv.NewReader(fp, fileInfo.Encoding)
 	if err != nil {
@@ -855,9 +859,11 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 }
 
 func loadViewFromLTSVFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
-	if enc, err := text.DetectEncoding(fp); err == nil {
-		fileInfo.Encoding = enc
+	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
+	if err != nil {
+		return nil, NewCannotDetectFileEncodingError(expr)
 	}
+	fileInfo.Encoding = enc
 
 	reader, err := ltsv.NewReader(fp, fileInfo.Encoding)
 	if err != nil {

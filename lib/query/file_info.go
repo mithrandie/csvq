@@ -191,8 +191,8 @@ func (f *FileInfo) SetFormat(s string) error {
 
 func (f *FileInfo) SetEncoding(s string) error {
 	encoding, err := cmd.ParseEncoding(s)
-	if err != nil {
-		return err
+	if err != nil || encoding == text.AUTO {
+		return errors.New("encoding must be one of UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS")
 	}
 
 	switch f.Format {

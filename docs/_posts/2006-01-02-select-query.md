@@ -214,7 +214,7 @@ _delimiter_positions_
 _encoding_
 : [string]({{ '/reference/value.html#string' | relative_url }}) or [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
   
-  "UTF8" or "SJIS"
+  "AUTO", "UTF8", "UTF8M", "UTF16", "UTF16BE", "UTF16LE", "UTF16BEM", "UTF16LEM" or "SJIS".
 
 _no_header_
 : [boolean]({{ '/reference/value.html#boolean' | relative_url }})

@@ -683,8 +683,8 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 		encs := value.ToString(args[4])
 		if !value.IsNull(encs) {
 			e, err := cmd.ParseEncoding(encs.(*value.String).Raw())
-			if err != nil {
-				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
+			if err != nil || e == text.AUTO {
+				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "encoding must be one of UTF8|UTF16|SJIS")
 			}
 			enc = e
 		}
@@ -838,8 +838,8 @@ func ByteLen(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prim
 		encs := value.ToString(args[1])
 		if !value.IsNull(encs) {
 			e, err := cmd.ParseEncoding(encs.(*value.String).Raw())
-			if err != nil {
-				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
+			if err != nil || e == text.AUTO {
+				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "encoding must be one of UTF8|UTF16|SJIS")
 			}
 			enc = e
 		}

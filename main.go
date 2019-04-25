@@ -39,7 +39,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "timezone, z",
 			Value: "Local",
-			Usage: "default timezone. \"Local\", \"UTC\" or a timezone name",
+			Usage: "default timezone",
 		},
 		cli.StringFlag{
 			Name:  "datetime-format, t",
@@ -57,7 +57,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "import-format, i",
 			Value: "CSV",
-			Usage: "default format to load files. one of: CSV|TSV|FIXED|JSON|LTSV",
+			Usage: "default format to load files",
 		},
 		cli.StringFlag{
 			Name:  "delimiter, d",
@@ -74,8 +74,8 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "encoding, e",
-			Value: "UTF8",
-			Usage: "file encoding. one of: UTF8|UTF8M|SJIS",
+			Value: "AUTO",
+			Usage: "file encoding",
 		},
 		cli.BoolFlag{
 			Name:  "no-header, n",
@@ -92,12 +92,12 @@ func main() {
 		cli.StringFlag{
 			Name:  "format, f",
 			Value: "TEXT",
-			Usage: "format of query results. one of: CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT",
+			Usage: "format of query results",
 		},
 		cli.StringFlag{
 			Name:  "write-encoding, E",
 			Value: "UTF8",
-			Usage: "character encoding of query results. one of: UTF8|UTF8M|SJIS",
+			Usage: "character encoding of query results",
 		},
 		cli.StringFlag{
 			Name:  "write-delimiter, D",
@@ -115,7 +115,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "line-break, l",
 			Value: "LF",
-			Usage: "line break in query results. one of: CRLF|LF|CR",
+			Usage: "line break in query results",
 		},
 		cli.BoolFlag{
 			Name:  "enclose-all, Q",
@@ -124,7 +124,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "json-escape, J",
 			Value: "BACKSLASH",
-			Usage: "JSON escape type. one of: BACKSLASH|HEX|HEXALL",
+			Usage: "JSON escape type",
 		},
 		cli.BoolFlag{
 			Name:  "pretty-print, P",

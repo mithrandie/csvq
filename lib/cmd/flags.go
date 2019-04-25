@@ -217,7 +217,7 @@ func NewFlags(env *Environment) *Flags {
 		DelimiterPositions:      nil,
 		SingleLine:              false,
 		JsonQuery:               "",
-		Encoding:                text.UTF8,
+		Encoding:                text.AUTO,
 		NoHeader:                false,
 		WithoutNull:             false,
 		Format:                  TEXT,
@@ -415,8 +415,8 @@ func (f *Flags) SetWriteEncoding(s string) error {
 	}
 
 	encoding, err := ParseEncoding(s)
-	if err != nil {
-		return err
+	if err != nil || encoding == text.AUTO {
+		return errors.New("write-encoding must be one of UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS")
 	}
 
 	f.WriteEncoding = encoding

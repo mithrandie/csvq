@@ -34,7 +34,10 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
   * JSON
 * Support following file encodings
   * UTF-8
-  * Shift-JIS (except for JSON Format)
+  * UTF-16
+  * Shift_JIS
+
+  > JSON Format supports only UTF-8.
 
 ## Reference Manual
 

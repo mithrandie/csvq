@@ -24,7 +24,23 @@ SUBCOMMANDS:{{range .VisibleCategories}}{{if .Name}}
 
 OPTIONS:
    {{range $index, $option := .VisibleFlags}}{{if $index}}
-   {{end}}{{$option}}{{end}}{{end}}{{if .Copyright}}
+   {{end}}{{$option}}{{end}}
+
+PARAMETERS:
+   Timezone
+       Local | UTC
+   Import Format
+       CSV | TSV | FIXED | JSON | LTSV
+   Export Format
+       CSV | TSV | FIXED | JSON | LTSV | GFM | ORG | TEXT
+   Import Character Encodings
+       AUTO | UTF8 | UTF8M | UTF16 | UTF16BE | UTF16LE | UTF16BEM | UTF16LEM | SJIS
+   Export Character Encodings
+       UTF8 | UTF8M | UTF16 | UTF16BE | UTF16LE | UTF16BEM | UTF16LEM | SJIS
+   Line Break
+       CRLF | CR | LF
+   JSON Escape Type
+       BACKSLASH | HEX | HEXALL{{end}}{{if .Copyright}}
 
 COPYRIGHT:
    {{.Copyright}}{{end}}

@@ -4338,7 +4338,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "encoding"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "encoding must be one of UTF8|UTF8M|SJIS",
+		Error: "encoding must be one of UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS",
 	},
 	{
 		Name: "Set Encoding Error in JSON Format",
@@ -4372,7 +4372,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "line_break"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "line-break must be one of CRLF|LF|CR",
+		Error: "line-break must be one of CRLF|CR|LF",
 	},
 	{
 		Name: "Set NoHeader to true",

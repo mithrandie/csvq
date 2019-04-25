@@ -42,8 +42,10 @@ Version 1.9.19
   * [JSON]({{ '/reference/json.html' | relative_url }})
 * Support following file encodings
   * UTF-8
-  * Shift-JIS (except for JSON Format)
-  
+  * UTF-16
+  * Shift_JIS
+
+  > JSON Format supports only UTF-8.
 
 ## Install
 
