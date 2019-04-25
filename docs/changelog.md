@@ -5,6 +5,14 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.10.0
+
+Released on April 25, 2019
+
+- Support UTF-16.
+- Support automatic detection of character encoding.
+- Remove the use of glide from support.
+
 ## Version 1.9.19
 
 Released on April 22, 2019
