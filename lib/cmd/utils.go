@@ -171,7 +171,7 @@ func UnescapeIdentifier(s string) string {
 }
 
 func QuoteString(s string) string {
-	return "\"" + EscapeString(s) + "\""
+	return "'" + EscapeString(s) + "'"
 }
 
 func QuoteIdentifier(s string) string {

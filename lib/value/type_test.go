@@ -66,7 +66,7 @@ func TestIsNull(t *testing.T) {
 func TestString_String(t *testing.T) {
 	s := "abcde"
 	p := NewString(s)
-	expect := "\"" + s + "\""
+	expect := "'" + s + "'"
 	if p.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", p.String(), expect, p)
 	}
@@ -214,7 +214,7 @@ func TestDatetime_String(t *testing.T) {
 	s := "2012-01-01T12:34:56Z"
 	p := NewDatetimeFromString(s, nil)
 
-	expect := "\"" + s + "\""
+	expect := "'" + s + "'"
 	if p.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", p.String(), expect, p)
 	}

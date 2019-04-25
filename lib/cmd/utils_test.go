@@ -47,7 +47,7 @@ func TestUnescapeIdentifier(t *testing.T) {
 
 func TestQuoteString(t *testing.T) {
 	s := "abc'def"
-	expect := "\"abc\\'def\""
+	expect := "'abc\\'def'"
 	result := QuoteString(s)
 	if result != expect {
 		t.Errorf("quoted string = %q, want %q for %q", result, expect, s)

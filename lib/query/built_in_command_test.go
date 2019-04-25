@@ -81,7 +81,7 @@ var printTests = []struct {
 		Expr: parser.Print{
 			Value: parser.NewStringValue("foo"),
 		},
-		Result: "\"foo\"",
+		Result: "'foo'",
 	},
 	{
 		Name: "Print Error",
@@ -132,7 +132,7 @@ var printfTests = []struct {
 				parser.NewIntegerValue(1),
 			},
 		},
-		Result: "printf test: value1 \"str\", value2 \"1\"",
+		Result: "printf test: value1 'str', value2 '1'",
 	},
 	{
 		Name: "Printf Format Error",
@@ -934,7 +934,7 @@ var showFlagTests = []struct {
 				Value: parser.NewStringValue("\t"),
 			},
 		},
-		Result: "\033[34;1m@@DELIMITER:\033[0m \033[32m\"\\t\"\033[0m",
+		Result: "\033[34;1m@@DELIMITER:\033[0m \033[32m'\\t'\033[0m",
 	},
 	{
 		Name: "Show Delimiter Positions",
@@ -1080,7 +1080,7 @@ var showFlagTests = []struct {
 				Value: parser.NewStringValue("CSV"),
 			},
 		},
-		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[32m\"\\t\"\033[0m",
+		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[32m'\\t'\033[0m",
 	},
 	{
 		Name: "Show WriteDelimiter Ignored",
@@ -1097,7 +1097,7 @@ var showFlagTests = []struct {
 				Value: parser.NewStringValue("JSON"),
 			},
 		},
-		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m(ignored) \"\\t\"\033[0m",
+		Result: "\033[34;1m@@WRITE_DELIMITER:\033[0m \033[90m(ignored) '\\t'\033[0m",
 	},
 	{
 		Name: "Show WriteDelimiterPositions for Single-Line FIXED",
@@ -1659,7 +1659,7 @@ var showObjectsTests = []struct {
 			"----------------------------------------------------------\n" +
 			" table1.csv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: CSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
@@ -1667,7 +1667,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -1769,7 +1769,7 @@ var showObjectsTests = []struct {
 			"----------------------------------------------------------\n" +
 			" table1.csv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: CSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
@@ -1777,7 +1777,7 @@ var showObjectsTests = []struct {
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" *Created* table1.tsv\n" +
 			"     Fields: col1, col2\n" +
-			"     Format: TSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" table1.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -1815,7 +1815,7 @@ var showObjectsTests = []struct {
 			" table1.csv\n" +
 			"     Fields: colabcdef1, colabcdef2, colabcdef3, colabcdef4, colabcdef5, \n" +
 			"             colabcdef6, colabcdef7\n" +
-			"     Format: CSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			"\n",
 	},
@@ -2105,7 +2105,7 @@ var showObjectsTests = []struct {
 			"           @@DATETIME_FORMAT: (not set)\n" +
 			"              @@WAIT_TIMEOUT: 15\n" +
 			"             @@IMPORT_FORMAT: CSV\n" +
-			"                 @@DELIMITER: \",\"\n" +
+			"                 @@DELIMITER: ','\n" +
 			"       @@DELIMITER_POSITIONS: SPACES\n" +
 			"                @@JSON_QUERY: (empty)\n" +
 			"                  @@ENCODING: UTF8\n" +
@@ -2113,7 +2113,7 @@ var showObjectsTests = []struct {
 			"              @@WITHOUT_NULL: false\n" +
 			"                    @@FORMAT: CSV\n" +
 			"            @@WRITE_ENCODING: UTF8\n" +
-			"           @@WRITE_DELIMITER: \",\"\n" +
+			"           @@WRITE_DELIMITER: ','\n" +
 			" @@WRITE_DELIMITER_POSITIONS: (ignored) SPACES\n" +
 			"            @@WITHOUT_HEADER: false\n" +
 			"                @@LINE_BREAK: LF\n" +
@@ -2357,7 +2357,7 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
-			" Format: CSV     Delimiter: \",\"   Enclose All: false\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Created\n" +
 			" Fields:\n" +
@@ -2396,7 +2396,7 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
-			" Format: CSV     Delimiter: \",\"   Enclose All: false\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Created\n" +
 			" Fields:\n" +
@@ -2435,7 +2435,7 @@ var showFieldsTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_update.csv", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("show_fields_update.csv") + "\n" +
-			" Format: CSV     Delimiter: \",\"   Enclose All: false\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Updated\n" +
 			" Fields:\n" +
