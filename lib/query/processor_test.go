@@ -1591,12 +1591,12 @@ func TestProcessor_While(t *testing.T) {
 
 	for _, v := range processorWhileTests {
 		proc.returnVal = nil
-		if _, err := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test"}); err != nil {
+		if _, ok := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test"}); !ok {
 			_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
 		_ = proc.ReferenceScope.CurrentBlock().variables.Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
-		if _, err := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test_count"}); err != nil {
+		if _, ok := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test_count"}); !ok {
 			_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 		}
 		_ = proc.ReferenceScope.CurrentBlock().variables.Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))

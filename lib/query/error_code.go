@@ -55,6 +55,7 @@ const (
 	ErrorInlineTableFieldLength               = 11103
 	ErrorFileNameAmbiguous                    = 11201
 	ErrorDataParsing                          = 11301
+	ErrorDataEncoding                         = 11351
 	ErrorTableFieldLength                     = 11401
 	ErrorTemporaryTableRedeclared             = 11501
 	ErrorUndeclaredTemporaryTable             = 11502

@@ -142,27 +142,38 @@ func (m *GoroutineTaskManager) Wait() {
 	m.waitGroup.Wait()
 }
 
-func (m *GoroutineTaskManager) Run(ctx context.Context, fn func(int) error) error {
-	for i := 0; i < m.Number; i++ {
-		m.Add()
-		go func(thIdx int) {
-			start, end := m.RecordRange(thIdx)
+func (m *GoroutineTaskManager) run(ctx context.Context, fn func(int) error, thIdx int) {
+	start, end := m.RecordRange(thIdx)
 
-			for j := start; j < end; j++ {
-				if m.HasError() || ctx.Err() != nil {
-					break
-				}
+	for i := start; i < end; i++ {
+		if m.HasError() {
+			break
+		}
+		if i&15 == 0 && ctx.Err() != nil {
+			break
+		}
 
-				if err := fn(j); err != nil {
-					m.SetError(err)
-					break
-				}
-			}
-
-			m.Done()
-		}(i)
+		if err := fn(i); err != nil {
+			m.SetError(err)
+			break
+		}
 	}
-	m.Wait()
+
+	if 1 < m.Number {
+		m.Done()
+	}
+}
+
+func (m *GoroutineTaskManager) Run(ctx context.Context, fn func(int) error) error {
+	if 1 < m.Number {
+		for i := 0; i < m.Number; i++ {
+			m.Add()
+			go m.run(ctx, fn, i)
+		}
+		m.Wait()
+	} else {
+		m.run(ctx, fn, 0)
+	}
 
 	if m.HasError() {
 		return m.Err()

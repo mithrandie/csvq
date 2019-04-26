@@ -210,12 +210,12 @@ var cursorMapDisposeTests = []struct {
 	{
 		Name:    "CursorMap Dispose Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
+		Error:   "undeclared cursor",
 	},
 	{
 		Name:    "CursorMap Dispose Rseudo Cursor Error",
 		CurName: parser.Identifier{Literal: "pcur"},
-		Error:   "cursor pcur is a pseudo cursor",
+		Error:   "unpermmitted pseudo cursor usage",
 	},
 }
 
@@ -433,7 +433,7 @@ var cursorMapOpenTests = []struct {
 	{
 		Name:    "CursorMap Open Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
+		Error:   "undeclared cursor",
 	},
 	{
 		Name:    "CursorMap Open Open Error",
@@ -589,7 +589,7 @@ var cursorMapCloseTests = []struct {
 	{
 		Name:    "CursorMap Close Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
+		Error:   "undeclared cursor",
 	},
 }
 
@@ -745,7 +745,7 @@ var cursorMapFetchTests = []struct {
 		Name:     "CursorMap Fetch Undeclared Error",
 		CurName:  parser.Identifier{Literal: "notexist"},
 		Position: parser.NEXT,
-		Error:    "cursor notexist is undeclared",
+		Error:    "undeclared cursor",
 	},
 	{
 		Name:     "CursorMap Fetch Closed Error",
@@ -818,7 +818,7 @@ var cursorMapIsOpenTests = []struct {
 	{
 		Name:    "CursorMap IsOpen Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
+		Error:   "undeclared cursor",
 	},
 }
 
@@ -898,7 +898,7 @@ var cursorMapIsInRangeTests = []struct {
 	{
 		Name:    "CursorMap Is In Range Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
+		Error:   "undeclared cursor",
 	},
 }
 
@@ -978,7 +978,7 @@ var cursorMapCountTests = []struct {
 	{
 		Name:    "CursorMap Count Undeclared Error",
 		CurName: parser.Identifier{Literal: "notexist"},
-		Error:   "cursor notexist is undeclared",
+		Error:   "undeclared cursor",
 	},
 }
 

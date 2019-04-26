@@ -25,3 +25,7 @@ func (cell Cell) GroupedValue(index int) value.Primary {
 func (cell Cell) Len() int {
 	return len(cell)
 }
+
+func (cell Cell) ConvertToNewCell() Cell {
+	return cell[:1]
+}

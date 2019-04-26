@@ -29,7 +29,7 @@ import (
 )
 
 const fileLoadingPreparedRecordSetCap = 300
-const fileLoadingBuffer = 200
+const fileLoadingBuffer = 300
 
 type RecordReader interface {
 	Read() ([]text.RawText, error)
@@ -59,10 +59,17 @@ func NewView() *View {
 	return &View{}
 }
 
+func getTableName(texpr parser.QueryExpression) parser.Identifier {
+	if p, ok := texpr.(parser.Parentheses); ok {
+		return getTableName(p)
+	}
+	return texpr.(parser.Table).Name()
+}
+
 func (view *View) Load(ctx context.Context, scope *ReferenceScope, tables []parser.QueryExpression, forUpdate bool, useInternalId bool) error {
 	if tables == nil {
 		var obj parser.QueryExpression
-		if scope.Tx.Session.CanReadStdin() {
+		if scope.Tx.Session.CanReadStdin {
 			obj = parser.Stdin{Stdin: "stdin"}
 		} else {
 			obj = parser.Dual{}
@@ -71,10 +78,17 @@ func (view *View) Load(ctx context.Context, scope *ReferenceScope, tables []pars
 	}
 
 	views := make([]*View, len(tables))
+	tableNames := make([]string, 0, len(tables))
 	for i, v := range tables {
 		loaded, err := loadView(ctx, scope, v, forUpdate, useInternalId)
 		if err != nil {
 			return err
+		}
+		if 0 < loaded.FieldLen() && 0 < len(loaded.Header[0].View) {
+			if InStrSliceWithCaseInsensitive(loaded.Header[0].View, tableNames) {
+				return NewDuplicateTableNameError(getTableName(v))
+			}
+			tableNames = append(tableNames, loaded.Header[0].View)
 		}
 		views[i] = loaded
 	}
@@ -308,12 +322,12 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		if err != nil {
 			return nil, err
 		}
-		view2, err := loadView(ctx, scope, join.JoinTable, forUpdate, useInternalId)
+		joinView, err := loadView(ctx, scope, join.JoinTable, forUpdate, useInternalId)
 		if err != nil {
 			return nil, err
 		}
 
-		condition, includeFields, excludeFields, err := ParseJoinCondition(join, view, view2)
+		condition, includeFields, excludeFields, err := ParseJoinCondition(join, view, joinView)
 		if err != nil {
 			return nil, err
 		}
@@ -329,15 +343,15 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 		switch joinType {
 		case parser.CROSS:
-			if err = CrossJoin(ctx, scope, view, view2); err != nil {
+			if err = CrossJoin(ctx, scope, view, joinView); err != nil {
 				return nil, err
 			}
 		case parser.INNER:
-			if err = InnerJoin(ctx, scope, view, view2, condition); err != nil {
+			if err = InnerJoin(ctx, scope, view, joinView, condition); err != nil {
 				return nil, err
 			}
 		case parser.OUTER:
-			if err = OuterJoin(ctx, scope, view, view2, condition, join.Direction.Token); err != nil {
+			if err = OuterJoin(ctx, scope, view, joinView, condition, join.Direction.Token); err != nil {
 				return nil, err
 			}
 		}
@@ -346,10 +360,10 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		excludeIndices := make([]int, 0, len(includeFields))
 		if includeFields != nil {
 			for i := range includeFields {
-				idx, _ := view.Header.Contains(includeFields[i])
+				idx, _ := view.Header.SearchIndex(includeFields[i])
 				includeIndices = append(includeIndices, idx)
 
-				idx, _ = view.Header.Contains(excludeFields[i])
+				idx, _ = view.Header.SearchIndex(excludeFields[i])
 				excludeIndices = append(excludeIndices, idx)
 			}
 
@@ -386,6 +400,9 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 	case parser.JsonQuery:
 		jsonQuery := table.Object.(parser.JsonQuery)
 		alias := table.Name().Literal
+		if table.Alias == nil {
+			alias = ""
+		}
 
 		queryValue, err := Evaluate(ctx, scope, jsonQuery.Query)
 		if err != nil {
@@ -444,11 +461,6 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 			return nil, err
 		}
-
-		if err = scope.AddAlias(table.Name(), ""); err != nil {
-			return nil, err
-		}
-
 	case parser.Subquery:
 		subquery := table.Object.(parser.Subquery)
 		view, err = Select(ctx, scope, subquery.Query)
@@ -456,11 +468,12 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			return nil, err
 		}
 
-		if err = view.Header.Update(table.Name().Literal, nil); err != nil {
-			return nil, err
+		tableName := ""
+		if table.Alias != nil {
+			tableName = table.Alias.(parser.Identifier).Literal
 		}
 
-		if err = scope.AddAlias(table.Name(), ""); err != nil {
+		if err = view.Header.Update(tableName, nil); err != nil {
 			return nil, err
 		}
 	}
@@ -472,19 +485,20 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 	scope.Tx.viewLoadingMutex.Lock()
 	defer scope.Tx.viewLoadingMutex.Unlock()
 
+	var err error
 	view, ok := scope.Global().temporaryTables.Load(stdin.String())
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 		if forUpdate {
-			if err := scope.Tx.LockStdinContext(ctx); err != nil {
+			if err = scope.Tx.LockStdinContext(ctx); err != nil {
 				return nil, err
 			}
 		} else {
-			if err := scope.Tx.RLockStdinContext(ctx); err != nil {
+			if err = scope.Tx.RLockStdinContext(ctx); err != nil {
 				return nil, err
 			}
 			defer scope.Tx.RUnlockStdin()
 		}
-		view, err := scope.Tx.Session.GetStdinView(ctx, scope.Tx.Flags, fileInfo, stdin)
+		view, err = scope.Tx.Session.GetStdinView(ctx, scope.Tx.Flags, fileInfo, stdin)
 		if err != nil {
 			return nil, err
 		}
@@ -493,17 +507,32 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 
 	pathIdent := parser.Identifier{Literal: stdin.String()}
 	if useInternalId {
-		view, _ = scope.Global().temporaryTables.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags)
+		if view, err = scope.Global().temporaryTables.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+			if err == errTableNotLoaded {
+				err = NewUndeclaredTemporaryTableError(pathIdent)
+			}
+			return nil, err
+		}
 	} else {
-		view, _ = scope.Global().temporaryTables.Get(pathIdent)
+		if view, err = scope.Global().temporaryTables.Get(pathIdent); err != nil {
+			if err == errTableNotLoaded {
+				err = NewUndeclaredTemporaryTableError(pathIdent)
+			}
+			return nil, err
+		}
 	}
 	if !strings.EqualFold(stdin.String(), tableName.Literal) {
-		if err := view.Header.Update(tableName.Literal, nil); err != nil {
+		if err = view.Header.Update(tableName.Literal, nil); err != nil {
 			return nil, err
 		}
 	}
 
-	return view, scope.AddAlias(tableName, view.FileInfo.Path)
+	if forUpdate {
+		if err = scope.AddAlias(tableName, view.FileInfo.Path); err != nil {
+			return nil, err
+		}
+	}
+	return view, nil
 }
 
 func loadObject(
@@ -557,12 +586,10 @@ func loadObject(
 		return view, nil
 	}
 
-	if view, err := scope.GetInlineTable(tableIdentifier); err == nil {
-		if err = scope.AddAlias(tableName, ""); err != nil {
-			return nil, err
-		}
+	if scope.InlineTableExists(tableIdentifier) {
+		view, _ := scope.GetInlineTable(tableIdentifier)
 		if tableIdentifier.Literal != tableName.Literal {
-			if err = view.Header.Update(tableName.Literal, nil); err != nil {
+			if err := view.Header.Update(tableName.Literal, nil); err != nil {
 				return nil, err
 			}
 		}
@@ -572,15 +599,22 @@ func loadObject(
 	filePath := tableIdentifier.Literal
 	if scope.TemporaryTableExists(filePath) {
 		var view *View
+		var err error
 		pathIdent := parser.Identifier{Literal: filePath}
 		if useInternalId {
-			view, _ = scope.GetTemporaryTableWithInternalId(ctx, pathIdent, scope.Tx.Flags)
+			if view, err = scope.GetTemporaryTableWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+				return nil, err
+			}
 		} else {
-			view, _ = scope.GetTemporaryTable(pathIdent)
+			if view, err = scope.GetTemporaryTable(pathIdent); err != nil {
+				return nil, err
+			}
 		}
 
-		if err := scope.AddAlias(tableName, filePath); err != nil {
-			return nil, err
+		if forUpdate {
+			if err := scope.AddAlias(tableName, filePath); err != nil {
+				return nil, err
+			}
 		}
 
 		if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
@@ -616,13 +650,22 @@ func loadObject(
 	var view *View
 	pathIdent := parser.Identifier{Literal: filePath}
 	if useInternalId {
-		view, _ = scope.Tx.cachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags)
+		if view, err = scope.Tx.cachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+			if err == errTableNotLoaded {
+				err = NewTableNotLoadedError(pathIdent)
+			}
+			return nil, err
+		}
 	} else {
-		view, _ = scope.Tx.cachedViews.Get(pathIdent)
+		if view, err = scope.Tx.cachedViews.Get(pathIdent); err != nil {
+			return nil, NewTableNotLoadedError(pathIdent)
+		}
 	}
 
-	if err = scope.AddAlias(tableName, filePath); err != nil {
-		return nil, err
+	if forUpdate {
+		if err = scope.AddAlias(tableName, filePath); err != nil {
+			return nil, err
+		}
 	}
 
 	if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
@@ -657,7 +700,7 @@ func cacheViewFromFile(
 	if !cacheExists {
 		p, err := CreateFilePath(tableIdentifier, scope.Tx.Flags.Repository)
 		if err != nil {
-			return filePath, err
+			return filePath, NewIOError(tableIdentifier, err.Error())
 		}
 		filePath = p
 	}
@@ -914,7 +957,6 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 	var err error
 	recordSet := make(RecordSet, 0, fileLoadingPreparedRecordSetCap)
 	rowch := make(chan []text.RawText, fileLoadingBuffer)
-	fieldch := make(chan []value.Primary, fileLoadingBuffer)
 	pos := 0
 
 	wg := sync.WaitGroup{}
@@ -922,9 +964,17 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 	wg.Add(1)
 	go func() {
 		for {
-			primaries, ok := <-fieldch
+			row, ok := <-rowch
 			if !ok {
 				break
+			}
+			record := make(Record, len(row))
+			for i, v := range row {
+				if v == nil {
+					record[i] = NewCell(value.NewNull())
+				} else {
+					record[i] = NewCell(value.NewString(string(v)))
+				}
 			}
 
 			if 0 < fileSize && len(recordSet) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
@@ -934,29 +984,8 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 				recordSet = newSet
 			}
 
-			recordSet = append(recordSet, NewRecord(primaries))
+			recordSet = append(recordSet, record)
 		}
-		wg.Done()
-	}()
-
-	wg.Add(1)
-	go func() {
-		for {
-			row, ok := <-rowch
-			if !ok {
-				break
-			}
-			fields := make([]value.Primary, len(row))
-			for i, v := range row {
-				if v == nil {
-					fields[i] = value.NewNull()
-				} else {
-					fields[i] = value.NewString(string(v))
-				}
-			}
-			fieldch <- fields
-		}
-		close(fieldch)
 		wg.Done()
 	}()
 
@@ -964,12 +993,12 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 	go func() {
 		i := 0
 		for {
-			if ctx.Err() != nil {
+			if i&15 == 0 && ctx.Err() != nil {
 				err = ConvertContextError(ctx.Err())
 				break
 			}
 
-			record, e := reader.Read()
+			row, e := reader.Read()
 			if e == io.EOF {
 				break
 			}
@@ -979,13 +1008,13 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 			}
 
 			if 0 < fileSize && i < fileLoadingPreparedRecordSetCap {
-				for j := range record {
-					pos += len(record[j])
+				for j := range row {
+					pos += len(row[j])
 				}
-				i++
 			}
 
-			rowch <- record
+			rowch <- row
+			i++
 		}
 		close(rowch)
 		wg.Done()
@@ -1023,12 +1052,10 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 }
 
 func loadDualView() *View {
-	view := View{
-		Header:    NewDualHeader(),
-		RecordSet: make(RecordSet, 1),
+	return &View{
+		Header:    NewEmptyHeader(1),
+		RecordSet: RecordSet{NewEmptyRecord(1)},
 	}
-	view.RecordSet[0] = NewEmptyRecord(1)
-	return &view
 }
 
 func NewViewFromGroupedRecord(ctx context.Context, flags *cmd.Flags, referenceRecor ReferenceRecord) (*View, error) {
@@ -1152,7 +1179,7 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 	for _, item := range items {
 		switch item.(type) {
 		case parser.FieldReference, parser.ColumnNumber:
-			idx, _ := view.FieldIndex(item)
+			idx, _ := view.Header.SearchIndex(item)
 			view.Header[idx].IsGroupKey = true
 		}
 	}
@@ -1483,7 +1510,7 @@ func (view *View) additionalColumns(ctx context.Context, scope *ReferenceScope, 
 		}
 	}
 
-	if _, err := view.Header.ContainsObject(expr); err != nil {
+	if _, ok := view.Header.ContainsObject(expr); !ok {
 		s := expr.String()
 		if !InStrSliceWithCaseInsensitive(s, list) {
 			list = append(list, s)
@@ -1523,15 +1550,13 @@ func (view *View) ExtendRecordCapacity(ctx context.Context, scope *ReferenceScop
 }
 
 func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj parser.QueryExpression, alias string) (idx int, err error) {
-	idx, err = view.Header.ContainsObject(obj)
-	if err == nil {
+	idx, ok := view.Header.ContainsObject(obj)
+	if ok {
 		rScope := scope.CreateScopeForRecordEvaluation(view, -1)
 		if _, err = Evaluate(ctx, rScope, obj); err != nil {
 			return
 		}
 	} else {
-		err = nil
-
 		if analyticFunction, ok := obj.(parser.AnalyticFunction); ok {
 			err = view.evalAnalyticFunction(ctx, scope, analyticFunction)
 			if err != nil {
@@ -1907,8 +1932,9 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 }
 
 func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
+	fieldLen := len(view.selectFields)
 	resize := false
-	if len(view.selectFields) < view.FieldLen() {
+	if fieldLen != view.FieldLen() {
 		resize = true
 	} else {
 		for i := 0; i < view.FieldLen(); i++ {
@@ -1920,18 +1946,17 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 	}
 
 	if resize {
-		fieldLen := len(view.selectFields)
-
 		if err := NewGoroutineTaskManager(view.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
 			record := make(Record, fieldLen)
 			for j, idx := range view.selectFields {
-				if 1 < view.RecordSet[index].GroupLen() {
-					record[j] = NewCell(view.RecordSet[index][idx].Value())
-				} else {
-					record[j] = view.RecordSet[index][idx]
-				}
+				record[j] = view.RecordSet[index][idx].ConvertToNewCell()
 			}
-			view.RecordSet[index] = view.RecordSet[index][:fieldLen]
+
+			if len(view.RecordSet[index]) < fieldLen {
+				view.RecordSet[index] = make(Record, fieldLen)
+			} else if fieldLen < len(view.RecordSet[index]) {
+				view.RecordSet[index] = view.RecordSet[index][:fieldLen]
+			}
 			for i := range record {
 				view.RecordSet[index][i] = record[i]
 			}
@@ -2095,10 +2120,15 @@ func (view *View) RestoreHeaderReferences() error {
 }
 
 func (view *View) FieldIndex(fieldRef parser.QueryExpression) (int, error) {
-	if number, ok := fieldRef.(parser.ColumnNumber); ok {
-		return view.Header.ContainsNumber(number)
+	idx, err := view.Header.SearchIndex(fieldRef)
+	if err != nil {
+		if err == errFieldAmbiguous {
+			err = NewFieldAmbiguousError(fieldRef)
+		} else {
+			err = NewFieldNotExistError(fieldRef)
+		}
 	}
-	return view.Header.Contains(fieldRef.(parser.FieldReference))
+	return idx, err
 }
 
 func (view *View) FieldIndices(fields []parser.QueryExpression) ([]int, error) {

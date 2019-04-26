@@ -70,17 +70,17 @@ func FormatCount(i int, obj string) string {
 
 var comparisonKeysBufPool = &sync.Pool{
 	New: func() interface{} {
-		return new(bytes.Buffer)
+		return &bytes.Buffer{}
 	},
 }
 
 func GetComparisonKeysBuf() *bytes.Buffer {
 	buf := comparisonKeysBufPool.Get().(*bytes.Buffer)
-	buf.Reset()
 	return buf
 }
 
 func PutComparisonkeysBuf(buf *bytes.Buffer) {
+	buf.Reset()
 	comparisonKeysBufPool.Put(buf)
 }
 

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -19,12 +20,10 @@ type HeaderField struct {
 	IsGroupKey   bool
 }
 
-type Header []HeaderField
+var errFieldAmbiguous = errors.New("field ambiguous")
+var errFieldNotExist = errors.New("field not exists")
 
-func NewDualHeader() Header {
-	h := make([]HeaderField, 1)
-	return h
-}
+type Header []HeaderField
 
 func NewHeaderWithId(view string, words []string) Header {
 	h := make([]HeaderField, len(words)+1)
@@ -65,7 +64,7 @@ func NewHeaderWithAutofill(view string, words []string) Header {
 }
 
 func NewEmptyHeader(len int) Header {
-	return make([]HeaderField, len)
+	return make([]HeaderField, len, len+2)
 }
 
 func AddHeaderField(h Header, column string, alias string) (header Header, index int) {
@@ -115,17 +114,24 @@ func (h Header) TableColumnNames() []string {
 	return names
 }
 
-func (h Header) ContainsObject(obj parser.QueryExpression) (int, error) {
+func (h Header) ContainsObject(obj parser.QueryExpression) (int, bool) {
 	if fref, ok := obj.(parser.FieldReference); ok {
-		return h.Contains(fref)
+		if n, err := h.SearchIndex(fref); err == nil {
+			return n, true
+		} else {
+			return -1, false
+		}
 	} else if cnum, ok := obj.(parser.ColumnNumber); ok {
-		return h.ContainsNumber(cnum)
+		if n, err := h.FieldNumberIndex(cnum); err == nil {
+			return n, true
+		} else {
+			return -1, false
+		}
 	}
 
 	column := parser.FormatFieldIdentifier(obj)
 
 	idx := -1
-
 	for i, f := range h {
 		if f.IsFromTable {
 			continue
@@ -135,24 +141,29 @@ func (h Header) ContainsObject(obj parser.QueryExpression) (int, error) {
 			continue
 		}
 
-		if -1 < idx {
-			return -1, NewFieldAmbiguousError(obj)
-		}
 		idx = i
+		break
 	}
 
 	if idx < 0 {
-		return -1, NewFieldNotExistError(obj)
+		return -1, false
 	}
-	return idx, nil
+	return idx, true
 }
 
-func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
+func (h Header) SearchIndex(fieldRef parser.QueryExpression) (int, error) {
+	if number, ok := fieldRef.(parser.ColumnNumber); ok {
+		return h.FieldNumberIndex(number)
+	}
+	return h.FieldIndex(fieldRef.(parser.FieldReference))
+}
+
+func (h Header) FieldNumberIndex(number parser.ColumnNumber) (int, error) {
 	view := number.View.Literal
 	idx := int(number.Number.Raw())
 
 	if idx < 1 {
-		return -1, NewFieldNotExistError(number)
+		return -1, errFieldNotExist
 	}
 
 	for i, f := range h {
@@ -160,10 +171,10 @@ func (h Header) ContainsNumber(number parser.ColumnNumber) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, NewFieldNotExistError(number)
+	return -1, errFieldNotExist
 }
 
-func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
+func (h Header) FieldIndex(fieldRef parser.FieldReference) (int, error) {
 	var view string
 	if 0 < len(fieldRef.View.Literal) {
 		view = fieldRef.View.Literal
@@ -190,13 +201,13 @@ func (h Header) Contains(fieldRef parser.FieldReference) (int, error) {
 		}
 
 		if -1 < idx {
-			return -1, NewFieldAmbiguousError(fieldRef)
+			return -1, errFieldAmbiguous
 		}
 		idx = i
 	}
 
 	if idx < 0 {
-		return -1, NewFieldNotExistError(fieldRef)
+		return -1, errFieldNotExist
 	}
 
 	return idx, nil
@@ -207,7 +218,7 @@ func (h Header) ContainsInternalId(viewName string) (int, error) {
 		View:   parser.Identifier{Literal: viewName},
 		Column: parser.Identifier{Literal: InternalIdColumn},
 	}
-	return h.Contains(fieldRef)
+	return h.SearchIndex(fieldRef)
 }
 
 func (h Header) Update(reference string, fields []parser.QueryExpression) error {

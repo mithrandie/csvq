@@ -56,7 +56,7 @@ func NewRecord(values []value.Primary) Record {
 }
 
 func NewEmptyRecord(len int) Record {
-	record := make(Record, len)
+	record := make(Record, len, len+2)
 	for i := 0; i < len; i++ {
 		record[i] = NewCell(value.NewNull())
 	}

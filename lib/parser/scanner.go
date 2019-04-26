@@ -94,7 +94,7 @@ func TokenLiteral(token int) string {
 type Scanner struct {
 	src     []rune
 	srcPos  int
-	literal *bytes.Buffer
+	literal bytes.Buffer
 
 	line       int
 	char       int
@@ -111,7 +111,6 @@ type Scanner struct {
 func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, forPrepared bool) *Scanner {
 	s.src = []rune(src)
 	s.srcPos = 0
-	s.literal = new(bytes.Buffer)
 	s.line = 1
 	s.char = 0
 	s.sourceFile = sourceFile

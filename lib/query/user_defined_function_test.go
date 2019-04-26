@@ -275,7 +275,7 @@ var userDefinedFunctionMapGetTests = []struct {
 	Function parser.QueryExpression
 	FuncName string
 	Result   *UserDefinedFunction
-	Error    string
+	OK       bool
 }{
 	{
 		Name: "UserDefinedFunctionMap Get",
@@ -293,6 +293,7 @@ var userDefinedFunctionMapGetTests = []struct {
 				parser.Print{Value: parser.Variable{Name: "var1"}},
 			},
 		},
+		OK: true,
 	},
 	{
 		Name: "UserDefinedFunctionMap Get Not Exist Error",
@@ -300,7 +301,7 @@ var userDefinedFunctionMapGetTests = []struct {
 			Name: "notexist",
 		},
 		FuncName: "notexist",
-		Error:    "function notexist does not exist",
+		OK:       false,
 	},
 }
 
@@ -319,20 +320,12 @@ func TestUserDefinedFunctionMap_Get(t *testing.T) {
 	})
 
 	for _, v := range userDefinedFunctionMapGetTests {
-		result, err := funcs.Get(v.Function, v.FuncName)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
+		result, ok := funcs.Get(v.Function, v.FuncName)
+		if ok != v.OK {
+			t.Errorf("%s: result = %t, want %t", v.Name, ok, v.OK)
 			continue
 		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !reflect.DeepEqual(result, v.Result) {
+		if ok && v.OK && !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
 		}
 	}

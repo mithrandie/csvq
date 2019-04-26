@@ -184,7 +184,7 @@ func main() {
 			Usage:     "Calculate a value from stdin",
 			ArgsUsage: "expression",
 			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
-				if !cmd.IsReadableFromPipeOrRedirection(os.Stdin) {
+				if !proc.Tx.Session.CanReadStdin {
 					return query.NewIncorrectCommandUsageError(query.ErrMsgStdinEmpty)
 				}
 				if 1 != c.NArg() {

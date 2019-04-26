@@ -114,98 +114,109 @@ func Analyze(ctx context.Context, scope *ReferenceScope, view *View, fn parser.A
 	}
 
 	gm := NewGoroutineTaskManager(len(partitionMapKeys), -1, scope.Tx.Flags.CPU)
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
-			seqScope := scope.CreateScopeForSequentialEvaluation(view)
 
-		AnalyzeLoop:
-			for i := start; i < end; i++ {
-				if gm.HasError() || ctx.Err() != nil {
+	var analyzeFn = func(thIdx int) {
+		start, end := gm.RecordRange(thIdx)
+		seqScope := scope.CreateScopeForSequentialEvaluation(view)
+
+	AnalyzeLoop:
+		for i := start; i < end; i++ {
+			if gm.HasError() {
+				break AnalyzeLoop
+			}
+			if i&15 == 0 && ctx.Err() != nil {
+				break AnalyzeLoop
+			}
+
+			if anfn != nil {
+				list, e := anfn.Execute(ctx, seqScope, partitions[partitionMapKeys[i]], fn)
+				if e != nil {
+					gm.SetError(e)
 					break AnalyzeLoop
 				}
+				for idx, val := range list {
+					view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
+				}
+			} else {
+				if 0 < len(fn.Args) {
+					if _, ok := fn.Args[0].(parser.AllColumns); ok {
+						fn.Args[0] = parser.NewIntegerValue(1)
+					}
+				}
 
-				if anfn != nil {
-					list, e := anfn.Execute(ctx, seqScope, partitions[partitionMapKeys[i]], fn)
-					if e != nil {
-						gm.SetError(e)
-						break AnalyzeLoop
-					}
-					for idx, val := range list {
-						view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
-					}
-				} else {
-					if 0 < len(fn.Args) {
-						if _, ok := fn.Args[0].(parser.AllColumns); ok {
-							fn.Args[0] = parser.NewIntegerValue(1)
+				if aggfn != nil {
+					partition := partitions[partitionMapKeys[i]]
+					frameSet := WindowFrameSet(partition, fn.AnalyticClause)
+
+					valueCache := make(map[int]value.Primary, len(partition))
+
+					for _, frame := range frameSet {
+						values, e := windowValues(ctx, seqScope, frame, partition, fn, valueCache)
+						if e != nil {
+							gm.SetError(e)
+							break AnalyzeLoop
+						}
+						val := aggfn(values, scope.Tx.Flags)
+
+						for _, idx := range frame.Records {
+							view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
 						}
 					}
+				} else { //User Defined Function
+					partition := partitions[partitionMapKeys[i]]
+					frameSet := WindowFrameSet(partition, fn.AnalyticClause)
 
-					if aggfn != nil {
-						partition := partitions[partitionMapKeys[i]]
-						frameSet := WindowFrameSet(partition, fn.AnalyticClause)
+					valueCache := make(map[int]value.Primary, len(partition))
 
-						valueCache := make(map[int]value.Primary, len(partition))
-
-						for _, frame := range frameSet {
-							values, e := windowValues(ctx, seqScope, frame, partition, fn, valueCache)
-							if e != nil {
-								gm.SetError(e)
-								break AnalyzeLoop
-							}
-							val := aggfn(values, scope.Tx.Flags)
-
-							for _, idx := range frame.Records {
-								view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
-							}
+					for _, frame := range frameSet {
+						values, e := windowValues(ctx, seqScope, frame, partition, fn, valueCache)
+						if e != nil {
+							gm.SetError(e)
+							break AnalyzeLoop
 						}
-					} else { //User Defined Function
-						partition := partitions[partitionMapKeys[i]]
-						frameSet := WindowFrameSet(partition, fn.AnalyticClause)
 
-						valueCache := make(map[int]value.Primary, len(partition))
+						for _, idx := range frame.Records {
+							seqScope.Records[0].recordIndex = idx
 
-						for _, frame := range frameSet {
-							values, e := windowValues(ctx, seqScope, frame, partition, fn, valueCache)
-							if e != nil {
-								gm.SetError(e)
-								break AnalyzeLoop
-							}
-
-							for _, idx := range frame.Records {
-								seqScope.Records[0].recordIndex = idx
-
-								var args []value.Primary
-								argsExprs := fn.Args[1:]
-								args = make([]value.Primary, len(argsExprs))
-								for i, v := range argsExprs {
-									arg, e := Evaluate(ctx, seqScope, v)
-									if e != nil {
-										gm.SetError(e)
-										break AnalyzeLoop
-									}
-									args[i] = arg
-								}
-
-								val, e := udfn.ExecuteAggregate(ctx, seqScope, values, args)
+							var args []value.Primary
+							argsExprs := fn.Args[1:]
+							args = make([]value.Primary, len(argsExprs))
+							for i, v := range argsExprs {
+								arg, e := Evaluate(ctx, seqScope, v)
 								if e != nil {
 									gm.SetError(e)
 									break AnalyzeLoop
 								}
-
-								view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
+								args[i] = arg
 							}
+
+							val, e := udfn.ExecuteAggregate(ctx, seqScope, values, args)
+							if e != nil {
+								gm.SetError(e)
+								break AnalyzeLoop
+							}
+
+							view.RecordSet[idx] = append(view.RecordSet[idx], NewCell(val))
 						}
 					}
 				}
 			}
+		}
 
+		if 1 < gm.Number {
 			gm.Done()
-		}(i)
+		}
 	}
 
-	gm.Wait()
+	if 1 < gm.Number {
+		for i := 0; i < gm.Number; i++ {
+			gm.Add()
+			go analyzeFn(i)
+		}
+		gm.Wait()
+	} else {
+		analyzeFn(0)
+	}
 
 	if gm.HasError() {
 		return gm.Err()

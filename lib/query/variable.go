@@ -48,27 +48,27 @@ func (m VariableMap) Add(variable parser.Variable, val value.Primary) error {
 	return nil
 }
 
-func (m VariableMap) Set(variable parser.Variable, val value.Primary) error {
+func (m VariableMap) Set(variable parser.Variable, val value.Primary) bool {
 	if !m.Exists(variable.Name) {
-		return NewUndeclaredVariableError(variable)
+		return false
 	}
 	m.Store(variable.Name, val)
-	return nil
+	return true
 }
 
-func (m VariableMap) Get(variable parser.Variable) (value.Primary, error) {
+func (m VariableMap) Get(variable parser.Variable) (value.Primary, bool) {
 	if v, ok := m.Load(variable.Name); ok {
-		return v, nil
+		return v, ok
 	}
-	return nil, NewUndeclaredVariableError(variable)
+	return nil, false
 }
 
-func (m VariableMap) Dispose(variable parser.Variable) error {
+func (m VariableMap) Dispose(variable parser.Variable) bool {
 	if !m.Exists(variable.Name) {
-		return NewUndeclaredVariableError(variable)
+		return false
 	}
 	m.Delete(variable.Name)
-	return nil
+	return true
 }
 
 func (m VariableMap) Declare(ctx context.Context, scope *ReferenceScope, declaration parser.VariableDeclaration) error {
@@ -89,13 +89,4 @@ func (m VariableMap) Declare(ctx context.Context, scope *ReferenceScope, declara
 		}
 	}
 	return nil
-}
-
-func (m VariableMap) Substitute(ctx context.Context, scope *ReferenceScope, substitution parser.VariableSubstitution) (value.Primary, error) {
-	val, err := Evaluate(ctx, scope, substitution.Value)
-	if err != nil {
-		return nil, err
-	}
-	err = m.Set(substitution.Variable, val)
-	return val, err
 }

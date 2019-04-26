@@ -21,11 +21,11 @@ var blockScopePool = sync.Pool{
 
 func GetBlockScope() BlockScope {
 	scope := blockScopePool.Get().(BlockScope)
-	scope.Clear()
 	return scope
 }
 
 func PutBlockScope(scope BlockScope) {
+	scope.Clear()
 	blockScopePool.Put(scope)
 }
 
@@ -37,11 +37,11 @@ var nodeScopePool = sync.Pool{
 
 func GetNodeScope() NodeScope {
 	scope := nodeScopePool.Get().(NodeScope)
-	scope.Clear()
 	return scope
 }
 
 func PutNodeScope(scope NodeScope) {
+	scope.Clear()
 	nodeScopePool.Put(scope)
 }
 
@@ -269,22 +269,23 @@ func (rs *ReferenceScope) DeclareVariableDirectly(variable parser.Variable, val 
 	return rs.blocks[0].variables.Add(variable, val)
 }
 
-func (rs *ReferenceScope) GetVariable(expr parser.Variable) (value value.Primary, err error) {
+func (rs *ReferenceScope) GetVariable(expr parser.Variable) (val value.Primary, err error) {
 	for i := range rs.blocks {
-		if value, err = rs.blocks[i].variables.Get(expr); err == nil {
-			return
+		if v, ok := rs.blocks[i].variables.Get(expr); ok {
+			return v, nil
 		}
 	}
-	err = NewUndeclaredVariableError(expr)
-	return
+	return nil, NewUndeclaredVariableError(expr)
 }
 
 func (rs *ReferenceScope) SubstituteVariable(ctx context.Context, expr parser.VariableSubstitution) (val value.Primary, err error) {
+	val, err = Evaluate(ctx, rs, expr.Value)
+	if err != nil {
+		return
+	}
+
 	for i := range rs.blocks {
-		if val, err = rs.blocks[i].variables.Substitute(ctx, rs, expr); err == nil {
-			return
-		}
-		if _, ok := err.(*UndeclaredVariableError); !ok {
+		if rs.blocks[i].variables.Set(expr.Variable, val) {
 			return
 		}
 	}
@@ -293,9 +294,8 @@ func (rs *ReferenceScope) SubstituteVariable(ctx context.Context, expr parser.Va
 }
 
 func (rs *ReferenceScope) SubstituteVariableDirectly(variable parser.Variable, val value.Primary) (value.Primary, error) {
-	var err error
 	for i := range rs.blocks {
-		if err = rs.blocks[i].variables.Set(variable, val); err == nil {
+		if rs.blocks[i].variables.Set(variable, val) {
 			return val, nil
 		}
 	}
@@ -304,7 +304,7 @@ func (rs *ReferenceScope) SubstituteVariableDirectly(variable parser.Variable, v
 
 func (rs *ReferenceScope) DisposeVariable(expr parser.Variable) error {
 	for i := range rs.blocks {
-		if err := rs.blocks[i].variables.Dispose(expr); err == nil {
+		if rs.blocks[i].variables.Dispose(expr) {
 			return nil
 		}
 	}
@@ -342,10 +342,12 @@ func (rs *ReferenceScope) GetTemporaryTable(name parser.Identifier) (*View, erro
 	return nil, NewUndeclaredTemporaryTableError(name)
 }
 
-func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *cmd.Flags) (*View, error) {
+func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *cmd.Flags) (view *View, err error) {
 	for i := range rs.blocks {
-		if view, err := rs.blocks[i].temporaryTables.GetWithInternalId(ctx, name, flags); err == nil {
-			return view, nil
+		if view, err = rs.blocks[i].temporaryTables.GetWithInternalId(ctx, name, flags); err == nil {
+			return
+		} else if err != errTableNotLoaded {
+			return nil, err
 		}
 	}
 	return nil, NewUndeclaredTemporaryTableError(name)
@@ -366,7 +368,7 @@ func (rs *ReferenceScope) ReplaceTemporaryTable(view *View) {
 
 func (rs *ReferenceScope) DisposeTemporaryTable(name parser.QueryExpression) error {
 	for i := range rs.blocks {
-		if err := rs.blocks[i].temporaryTables.DisposeTemporaryTable(name); err == nil {
+		if rs.blocks[i].temporaryTables.DisposeTemporaryTable(name) {
 			return nil
 		}
 	}
@@ -444,8 +446,8 @@ func (rs *ReferenceScope) DisposeCursor(name parser.Identifier) error {
 		if err == nil {
 			return nil
 		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
-			return err
+		if err == errPseudoCursor {
+			return NewPseudoCursorError(name)
 		}
 	}
 	return NewUndeclaredCursorError(name)
@@ -458,7 +460,7 @@ func (rs *ReferenceScope) OpenCursor(ctx context.Context, name parser.Identifier
 		if err == nil {
 			return nil
 		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
+		if err != errUndeclaredCursor {
 			return err
 		}
 	}
@@ -471,7 +473,7 @@ func (rs *ReferenceScope) CloseCursor(name parser.Identifier) error {
 		if err == nil {
 			return nil
 		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
+		if err != errUndeclaredCursor {
 			return err
 		}
 	}
@@ -487,7 +489,7 @@ func (rs *ReferenceScope) FetchCursor(name parser.Identifier, position int, numb
 		if err == nil {
 			return values, nil
 		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
+		if err != errUndeclaredCursor {
 			return nil, err
 		}
 	}
@@ -512,8 +514,8 @@ func (rs *ReferenceScope) CursorIsInRange(name parser.Identifier) (ternary.Value
 		if err == nil {
 			return result, nil
 		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
-			return ternary.FALSE, err
+		if err != errUndeclaredCursor {
+			return result, err
 		}
 	}
 	return ternary.FALSE, NewUndeclaredCursorError(name)
@@ -528,7 +530,7 @@ func (rs *ReferenceScope) CursorCount(name parser.Identifier) (int, error) {
 		if err == nil {
 			return count, nil
 		}
-		if _, ok := err.(*UndeclaredCursorError); !ok {
+		if err != errUndeclaredCursor {
 			return 0, err
 		}
 	}
@@ -561,7 +563,7 @@ func (rs *ReferenceScope) DeclareAggregateFunction(expr parser.AggregateDeclarat
 
 func (rs *ReferenceScope) GetFunction(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
 	for i := range rs.blocks {
-		if fn, err := rs.blocks[i].functions.Get(expr, name); err == nil {
+		if fn, ok := rs.blocks[i].functions.Get(expr, name); ok {
 			return fn, nil
 		}
 	}
@@ -570,8 +572,7 @@ func (rs *ReferenceScope) GetFunction(expr parser.QueryExpression, name string) 
 
 func (rs *ReferenceScope) DisposeFunction(name parser.Identifier) error {
 	for i := range rs.blocks {
-		err := rs.blocks[i].functions.Dispose(name)
-		if err == nil {
+		if rs.blocks[i].functions.Dispose(name) {
 			return nil
 		}
 	}
@@ -612,6 +613,15 @@ func (rs *ReferenceScope) GetInlineTable(name parser.Identifier) (*View, error) 
 		}
 	}
 	return nil, NewUndefinedInLineTableError(name)
+}
+
+func (rs *ReferenceScope) InlineTableExists(name parser.Identifier) bool {
+	for i := range rs.nodes {
+		if rs.nodes[i].inlineTables.Exists(name) {
+			return true
+		}
+	}
+	return false
 }
 
 func (rs *ReferenceScope) LoadInlineTable(ctx context.Context, clause parser.WithClause) error {

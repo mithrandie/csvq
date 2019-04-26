@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
-	"fmt"
 	"io"
 	"strconv"
 	"time"
@@ -54,7 +52,7 @@ func EncodeView(ctx context.Context, fp io.Writer, view *View, fileInfo *FileInf
 func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, encloseAll bool) error {
 	w, err := csv.NewWriter(fp, lineBreak, encoding)
 	if err != nil {
-		return err
+		return NewDataEncodingError(err.Error())
 	}
 	w.Delimiter = delimiter
 
@@ -65,13 +63,14 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, li
 			fields[i] = csv.NewField(view.Header[i].Column, encloseAll)
 		}
 		if err := w.Write(fields); err != nil {
-			return err
+			return NewSystemError(err.Error())
 		}
 	}
 
 	for i := range view.RecordSet {
-		if ctx.Err() != nil {
-			return ConvertContextError(ctx.Err())
+		if i&15 == 0 && ctx.Err() != nil {
+			err = ConvertContextError(ctx.Err())
+			break
 		}
 
 		for j := range view.RecordSet[i] {
@@ -83,10 +82,13 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, li
 			fields[j] = csv.NewField(str, quote)
 		}
 		if err := w.Write(fields); err != nil {
-			return err
+			return NewSystemError(err.Error())
 		}
 	}
-	return w.Flush()
+	if err = w.Flush(); err != nil {
+		return NewSystemError(err.Error())
+	}
+	return nil
 }
 
 func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, positions []int, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, singleLine bool) error {
@@ -113,7 +115,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 		}
 
 		for i := range view.RecordSet {
-			if ctx.Err() != nil {
+			if i&15 == 0 && ctx.Err() != nil {
 				return ConvertContextError(ctx.Err())
 			}
 
@@ -129,24 +131,26 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 		positions = m.GeneratePositions()
 		w, err := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
 		if err != nil {
-			return err
+			return NewDataEncodingError(err.Error())
 		}
 		w.InsertSpace = true
 		for i := range fieldList {
-			if ctx.Err() != nil {
+			if i&15 == 0 && ctx.Err() != nil {
 				return ConvertContextError(ctx.Err())
 			}
 
 			if err := w.Write(fieldList[i]); err != nil {
-				return err
+				return NewDataEncodingError(err.Error())
 			}
 		}
-		err = w.Flush()
+		if err = w.Flush(); err != nil {
+			return NewSystemError(err.Error())
+		}
 
 	} else {
 		w, err := fixedlen.NewWriter(fp, positions, lineBreak, encoding)
 		if err != nil {
-			return err
+			return NewDataEncodingError(err.Error())
 		}
 		w.SingleLine = singleLine
 
@@ -157,12 +161,12 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 				fields[i] = fixedlen.NewField(view.Header[i].Column, text.NotAligned)
 			}
 			if err := w.Write(fields); err != nil {
-				return err
+				return NewDataEncodingError(err.Error())
 			}
 		}
 
 		for i := range view.RecordSet {
-			if ctx.Err() != nil {
+			if i&15 == 0 && ctx.Err() != nil {
 				return ConvertContextError(ctx.Err())
 			}
 
@@ -171,11 +175,11 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 				fields[j] = fixedlen.NewField(str, a)
 			}
 			if err := w.Write(fields); err != nil {
-				return err
+				return NewDataEncodingError(err.Error())
 			}
 		}
 		if err = w.Flush(); err != nil {
-			return err
+			return NewSystemError(err.Error())
 		}
 	}
 	return nil
@@ -185,7 +189,7 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 	header := view.Header.TableColumnNames()
 	records := make([][]value.Primary, view.RecordLen())
 	for i := range view.RecordSet {
-		if ctx.Err() != nil {
+		if i&15 == 0 && ctx.Err() != nil {
 			return ConvertContextError(ctx.Err())
 		}
 
@@ -201,7 +205,7 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 		if ctx.Err() != nil {
 			return ConvertContextError(ctx.Err())
 		}
-		return errors.New(fmt.Sprintf("encoding to json failed: %s", err.Error()))
+		return NewDataEncodingError(err.Error())
 	}
 
 	e := txjson.NewEncoder()
@@ -216,10 +220,13 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 	s := e.Encode(data)
 
 	w := bufio.NewWriter(fp)
-	if _, err := w.WriteString(s); err != nil {
-		return err
+	if _, err = w.WriteString(s); err != nil {
+		return NewSystemError(err.Error())
 	}
-	return w.Flush()
+	if err = w.Flush(); err != nil {
+		return NewSystemError(err.Error())
+	}
+	return nil
 }
 
 func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format, lineBreak text.LineBreak, withoutHeader bool, encoding text.Encoding, tx *Transaction) (string, error) {
@@ -264,7 +271,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 	var textStrBuf bytes.Buffer
 	var textLineBuf bytes.Buffer
 	for i := range view.RecordSet {
-		if ctx.Err() != nil {
+		if i&15 == 0 && ctx.Err() != nil {
 			return "", ConvertContextError(ctx.Err())
 		}
 
@@ -321,13 +328,16 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 
 	s, err := e.Encode()
 	if err != nil {
-		return "", err
+		return "", NewDataEncodingError(err.Error())
 	}
 	w := bufio.NewWriter(fp)
-	if _, err := w.WriteString(s); err != nil {
-		return "", err
+	if _, err = w.WriteString(s); err != nil {
+		return "", NewSystemError(err.Error())
 	}
-	return "", w.Flush()
+	if err = w.Flush(); err != nil {
+		return "", NewSystemError(err.Error())
+	}
+	return "", nil
 }
 
 func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.LineBreak, encoding text.Encoding) error {
@@ -338,12 +348,12 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 
 	w, err := ltsv.NewWriter(fp, hfields, lineBreak, encoding)
 	if err != nil {
-		return err
+		return NewDataEncodingError(err.Error())
 	}
 
 	fields := make([]string, view.FieldLen())
 	for i := range view.RecordSet {
-		if ctx.Err() != nil {
+		if i&15 == 0 && ctx.Err() != nil {
 			return ConvertContextError(ctx.Err())
 		}
 
@@ -351,10 +361,13 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 			fields[j], _, _ = ConvertFieldContents(view.RecordSet[i][j].Value(), false)
 		}
 		if err := w.Write(fields); err != nil {
-			return err
+			return NewDataEncodingError(err.Error())
 		}
 	}
-	return w.Flush()
+	if err = w.Flush(); err != nil {
+		return NewSystemError(err.Error())
+	}
+	return nil
 }
 
 func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string, text.FieldAlignment) {

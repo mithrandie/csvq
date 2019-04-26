@@ -469,7 +469,7 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 				internalIds[viewref] = internalId
 			}
 
-			fieldIdx, _ := viewsToUpdate[viewref].FieldIndex(uset.Field)
+			fieldIdx, _ := viewsToUpdate[viewref].Header.SearchIndex(uset.Field)
 			if _, ok := updatesList[viewref]; !ok {
 				updatesList[viewref] = make(map[int][]int)
 			}

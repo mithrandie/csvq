@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -264,14 +263,6 @@ func FormatNumber(f float64, precision int, decimalPoint string, thousandsSepara
 	}
 
 	return formatted
-}
-
-func IsReadableFromPipeOrRedirection(fp *os.File) bool {
-	fi, err := fp.Stat()
-	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
-		return true
-	}
-	return false
 }
 
 func ParseEncoding(s string) (text.Encoding, error) {

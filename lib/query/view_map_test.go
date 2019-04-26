@@ -76,7 +76,7 @@ var viewMapGetTests = []struct {
 	{
 		Name:  "ViewMap Get Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "table /path/to/table2.csv is not loaded",
+		Error: "table not loaded",
 	},
 }
 
@@ -151,7 +151,7 @@ var viewMapGetWithInternalIdTests = []struct {
 	{
 		Name:  "ViewMap GetWithInternalId Not Loaded Error",
 		Path:  parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "table /path/to/table2.csv is not loaded",
+		Error: "table not loaded",
 	},
 }
 
@@ -257,7 +257,7 @@ var viewMapDisposeTemporaryTable = []struct {
 	Name   string
 	Table  parser.Identifier
 	Result ViewMap
-	Error  string
+	OK     bool
 }{
 	{
 		Name:  "ViewMap DisposeTemporaryTable",
@@ -281,16 +281,17 @@ var viewMapDisposeTemporaryTable = []struct {
 				},
 			},
 		}),
+		OK: true,
 	},
 	{
 		Name:  "ViewMap DisposeTemporaryTable Not Temporary Table",
 		Table: parser.Identifier{Literal: "/path/to/table2.csv"},
-		Error: "view /path/to/table2.csv is undeclared",
+		OK:    false,
 	},
 	{
 		Name:  "ViewMap DisposeTemporaryTable Undeclared Error",
 		Table: parser.Identifier{Literal: "/path/to/undef.csv"},
-		Error: "view /path/to/undef.csv is undeclared",
+		OK:    false,
 	},
 }
 
@@ -334,20 +335,11 @@ func TestViewMap_DisposeTemporaryTable(t *testing.T) {
 	})
 
 	for _, v := range viewMapDisposeTemporaryTable {
-		err := viewMap.DisposeTemporaryTable(v.Table)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Name, err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Name, err.Error(), v.Error)
-			}
-			continue
+		ok := viewMap.DisposeTemporaryTable(v.Table)
+		if ok != v.OK {
+			t.Errorf("%s: result = %t, want %t", v.Name, ok, v.OK)
 		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
-			continue
-		}
-		if !SyncMapEqual(viewMap, v.Result) {
+		if ok && v.OK && !SyncMapEqual(viewMap, v.Result) {
 			t.Errorf("%s: map = %v, want %v", v.Name, viewMap, v.Result)
 		}
 	}
