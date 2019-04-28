@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.10.1
+
+Released on April 28, 2019
+
+- Improve execusion performance.
+
 ## Version 1.10.0
 
 Released on April 25, 2019
