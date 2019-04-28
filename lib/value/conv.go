@@ -2,7 +2,6 @@ package value
 
 import (
 	"bytes"
-	"errors"
 	"math"
 	"strconv"
 	"strings"
@@ -47,12 +46,12 @@ func (dfmap DatetimeFormatMap) Get(s string) string {
 	return f
 }
 
-func StrToTime(s string, formats []string) (time.Time, error) {
+func StrToTime(s string, formats []string) (time.Time, bool) {
 	s = strings.TrimSpace(s)
 
 	for _, format := range formats {
 		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, cmd.GetLocation()); e == nil {
-			return t, nil
+			return t, true
 		}
 	}
 
@@ -61,82 +60,82 @@ func StrToTime(s string, formats []string) (time.Time, error) {
 		case s[4] == '-':
 			if len(s) < 10 {
 				if t, e := time.ParseInLocation("2006-1-2", s, cmd.GetLocation()); e == nil {
-					return t, nil
+					return t, true
 				}
 			} else if len(s) == 10 {
 				if t, e := time.ParseInLocation("2006-01-02", s, cmd.GetLocation()); e == nil {
-					return t, nil
+					return t, true
 				}
 			} else if s[10] == 'T' {
 				if s[len(s)-6] == '+' || s[len(s)-6] == '-' || s[len(s)-1] == 'Z' {
 					if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
-						return t, nil
+						return t, true
 					}
 				} else {
 					if t, e := time.ParseInLocation("2006-01-02T15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-						return t, nil
+						return t, true
 					}
 				}
 			} else if s[10] == ' ' {
 				if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -07:00", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -0700", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 MST", s); e == nil {
-					return t, nil
+					return t, true
 				}
 			} else {
 				if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -07:00", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -0700", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 MST", s); e == nil {
-					return t, nil
+					return t, true
 				}
 			}
 		case s[4] == '/':
 			if len(s) < 10 {
 				if t, e := time.ParseInLocation("2006/1/2", s, cmd.GetLocation()); e == nil {
-					return t, nil
+					return t, true
 				}
 			} else if len(s) == 10 {
 				if t, e := time.ParseInLocation("2006/01/02", s, cmd.GetLocation()); e == nil {
-					return t, nil
+					return t, true
 				}
 			} else if s[10] == ' ' {
 				if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 Z07:00", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 -0700", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 MST", s); e == nil {
-					return t, nil
+					return t, true
 				}
 			} else {
 				if t, e := time.ParseInLocation("2006/1/2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 Z07:00", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 -0700", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 MST", s); e == nil {
-					return t, nil
+					return t, true
 				}
 			}
 		default:
 			if t, e := time.Parse(time.RFC822, s); e == nil {
-				return t, nil
+				return t, true
 			} else if t, e := time.Parse(time.RFC822Z, s); e == nil {
-				return t, nil
+				return t, true
 			}
 		}
 	}
-	return time.Time{}, errors.New("conversion failed")
+	return time.Time{}, false
 }
 
 func ConvertDatetimeFormat(format string) string {
@@ -322,7 +321,7 @@ func ToDatetime(p Primary, formats []string) Primary {
 		return p
 	case *String:
 		s := strings.TrimSpace(p.(*String).Raw())
-		if dt, e := StrToTime(s, formats); e == nil {
+		if dt, ok := StrToTime(s, formats); ok {
 			return NewDatetime(dt)
 		}
 		if maybeNumber(s) {

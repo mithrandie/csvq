@@ -294,7 +294,7 @@ func (s *Scanner) Scan() (Token, error) {
 		case '"', '\'':
 			err = s.scanString(ch)
 			literal = cmd.UnescapeString(s.literal.String())
-			if _, e := value.StrToTime(literal, s.datetimeFormats); e == nil {
+			if _, ok := value.StrToTime(literal, s.datetimeFormats); ok {
 				token = DATETIME
 			} else {
 				token = STRING

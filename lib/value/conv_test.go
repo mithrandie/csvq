@@ -13,148 +13,148 @@ func TestStrToTime(t *testing.T) {
 	formats := []string{"01/02/2006"}
 
 	s := "01/02/2006"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 -08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 PST"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/11/2 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 PST"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 -08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 PST"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 -08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 PST"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "02 Jan 06 15:04 PDT"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "02 Jan 06 15:04 -0700"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05-08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05+08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "e"
-	if _, err := StrToTime(s, formats); err == nil {
-		t.Errorf("no errors, want error for %q", s)
+	if _, ok := StrToTime(s, formats); ok {
+		t.Errorf("successeded, want to fail for %q", s)
 	}
 }
 
