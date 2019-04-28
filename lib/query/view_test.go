@@ -23,6 +23,7 @@ var viewLoadTests = []struct {
 	Encoding           text.Encoding
 	NoHeader           bool
 	From               parser.FromClause
+	ForUpdate          bool
 	UseInternalId      bool
 	Stdin              string
 	ImportFormat       cmd.Format
@@ -95,13 +96,47 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+	},
+	{
+		Name: "Load File ForUpdate",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "table1.csv"},
 				},
 			},
-		}, time.Time{}, nil),
+		},
+		ForUpdate: true,
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table1.csv",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ForUpdate: true,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{
+			scopeNameAliases: {
+				"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+			},
+		}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load File with UTF-8 BOM",
@@ -135,13 +170,7 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1_BOM": strings.ToUpper(GetTestFilePath("table1_bom.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load with Parentheses",
@@ -177,13 +206,7 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load From Stdin",
@@ -193,6 +216,41 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin: "column1,column2\n1,\"str1\"",
+		Result: &View{
+			Header: NewHeader("t", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "stdin",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeStdin,
+			},
+		},
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
+						FileInfo: &FileInfo{Path: "STDIN"},
+					},
+				},
+			},
+		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+	},
+	{
+		Name: "Load From Stdin ForUpdate",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:     "column1,column2\n1,\"str1\"",
+		ForUpdate: true,
 		Result: &View{
 			Header: NewHeader("t", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -258,13 +316,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-		}, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": "STDIN",
-				},
-			},
-		}, time.Time{}, nil),
+		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Json From Stdin",
@@ -302,13 +354,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-		}, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": "STDIN",
-				},
-			},
-		}, time.Time{}, nil),
+		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load JsonH From Stdin",
@@ -351,13 +397,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-		}, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": "STDIN",
-				},
-			},
-		}, time.Time{}, nil),
+		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load JsonA From Stdin",
@@ -394,19 +434,16 @@ var viewLoadTests = []struct {
 		},
 		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
 			{
+				scopeNameAliases: {
+					"T": "STDIN",
+				},
 				scopeNameTempTables: {
 					"STDIN": &View{
 						FileInfo: &FileInfo{Path: "STDIN"},
 					},
 				},
 			},
-		}, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": "STDIN",
-				},
-			},
-		}, time.Time{}, nil),
+		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Json From Stdin Json Query Error",
@@ -456,13 +493,7 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name:         "Load Fixed-Length Text File NoHeader",
@@ -505,13 +536,7 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"FIXED_LENGTH": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name:               "Load Fixed-Length Text File Position Error",
@@ -554,13 +579,7 @@ var viewLoadTests = []struct {
 					},
 				},
 			},
-		}, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"STDIN": "STDIN",
-				},
-			},
-		}, time.Time{}, nil),
+		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load From Stdin Broken CSV Error",
@@ -582,6 +601,18 @@ var viewLoadTests = []struct {
 		},
 		Stdin: "column1,column2\n1,\"str1\"",
 		Error: "table name t is a duplicate",
+	},
+	{
+		Name: "Load From Stdin ForUpdate Duplicate Table Name Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
+				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		ForUpdate: true,
+		Stdin:     "column1,column2\n1,\"str1\"",
+		Error:     "table name t is a duplicate",
 	},
 	{
 		Name: "Stdin Empty Error",
@@ -638,13 +669,7 @@ var viewLoadTests = []struct {
 				NoHeader:  true,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": strings.ToUpper(GetTestFilePath("table5.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From TSV File",
@@ -683,13 +708,7 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": strings.ToUpper(GetTestFilePath("table3.tsv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From CSV File FormatElement Evaluate Error",
@@ -894,13 +913,7 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": strings.ToUpper(GetTestFilePath("fixed_length.txt")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File with UTF-8 BOM",
@@ -941,13 +954,7 @@ var viewLoadTests = []struct {
 				LineBreak:          text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": strings.ToUpper(GetTestFilePath("fixed_length_bom.txt")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From Single-Line Fixed-Length File",
@@ -989,13 +996,7 @@ var viewLoadTests = []struct {
 				SingleLine:         true,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": strings.ToUpper(GetTestFilePath("fixed_length_sl.txt")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From Fixed-Length File FormatElement Is Not Specified",
@@ -1101,13 +1102,7 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"JT": strings.ToUpper(GetTestFilePath("table.json")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From JsonH File",
@@ -1145,13 +1140,7 @@ var viewLoadTests = []struct {
 				JsonEscape: json.HexDigits,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"JT": strings.ToUpper(GetTestFilePath("table_h.json")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From JsonA File",
@@ -1189,13 +1178,7 @@ var viewLoadTests = []struct {
 				JsonEscape: json.AllWithHexDigits,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"JT": strings.ToUpper(GetTestFilePath("table_a.json")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From Json File FormatElement Is Not Specified",
@@ -1281,13 +1264,7 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From LTSV File Without Null",
@@ -1330,13 +1307,7 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": strings.ToUpper(GetTestFilePath("table6.ltsv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From LTSV File with UTF-8 BOM",
@@ -1375,13 +1346,7 @@ var viewLoadTests = []struct {
 				LineBreak: text.LF,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": strings.ToUpper(GetTestFilePath("table6_bom.ltsv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load TableObject From LTSV File Arguments Length Error",
@@ -1460,6 +1425,17 @@ var viewLoadTests = []struct {
 		Error: "table name t is a duplicate",
 	},
 	{
+		Name: "Load From File ForUpdate Duplicate Table Name Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
+				parser.Table{Object: parser.Identifier{Literal: "table2"}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		ForUpdate: true,
+		Error:     "table name t is a duplicate",
+	},
+	{
 		Name: "Load From File Inline Table",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -1513,11 +1489,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"T": "",
-				},
-			},
+			{},
 			{
 				scopeNameInlineTables: {
 					"IT": &View{
@@ -1603,13 +1575,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE_SJIS": strings.ToUpper(GetTestFilePath("table_sjis.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name:     "Load No Header File",
@@ -1634,13 +1600,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE_NOHEADER": strings.ToUpper(GetTestFilePath("table_noheader.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Multiple File",
@@ -1718,14 +1678,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
-					"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Cross Join",
@@ -1808,14 +1761,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
-					"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Inner Join",
@@ -1862,14 +1808,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
-					"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Inner Join Using Condition",
@@ -1916,14 +1855,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
-					"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Outer Join",
@@ -1977,14 +1909,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
-					"TABLE2": strings.ToUpper(GetTestFilePath("table2.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Outer Join Natural",
@@ -2033,14 +1958,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
-					"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Join Left Side Table File Not Exist Error",
@@ -2114,13 +2032,7 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"JT": "",
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Json Table Query Evaluation Error",
@@ -2231,13 +2143,7 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"JT": "",
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Json Table From File Path Error",
@@ -2298,13 +2204,7 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
-			{
-				scopeNameAliases: {
-					"ALIAS": "",
-				},
-			},
-		}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
 		Name: "Load Subquery Duplicate Table Name Error",
@@ -2435,6 +2335,7 @@ func TestView_Load(t *testing.T) {
 	ctx := context.Background()
 
 	for _, v := range viewLoadTests {
+		TestTx.UnlockStdin()
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
 		_ = TestTx.Session.SetStdin(os.Stdin)
@@ -2455,6 +2356,8 @@ func TestView_Load(t *testing.T) {
 
 		if 0 < len(v.Stdin) {
 			_ = TestTx.Session.SetStdin(NewInput(strings.NewReader(v.Stdin)))
+		} else {
+			_ = TestTx.Session.SetStdin(nil)
 		}
 
 		view := NewView()
@@ -2463,7 +2366,7 @@ func TestView_Load(t *testing.T) {
 		}
 
 		queryScope := v.Scope.CreateNode()
-		err := view.Load(ctx, queryScope, v.From.Tables, false, v.UseInternalId)
+		err := view.Load(ctx, queryScope, v.From.Tables, v.ForUpdate, v.UseInternalId)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -5954,6 +5857,48 @@ func TestView_Fix(t *testing.T) {
 				value.NewString("str1"),
 			}),
 			NewRecord([]value.Primary{
+				value.NewString("str1"),
+			}),
+		},
+		selectFields: []int(nil),
+	}
+
+	_ = view.Fix(context.Background(), TestTx.Flags)
+	if !reflect.DeepEqual(view, expect) {
+		t.Errorf("fix: view = %v, want %v", view, expect)
+	}
+
+	view = &View{
+		Header: []HeaderField{
+			{View: "table1", Column: InternalIdColumn},
+			{View: "table1", Column: "column1", IsFromTable: true},
+			{View: "table1", Column: "column2", IsFromTable: true},
+		},
+		RecordSet: []Record{
+			NewRecordWithId(1, []value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
+			}),
+			NewRecordWithId(2, []value.Primary{
+				value.NewString("1"),
+				value.NewString("str1"),
+			}),
+		},
+		selectFields: []int{2, 2, 2, 2},
+	}
+	expect = &View{
+		Header: NewHeader("table1", []string{"column2", "column2", "column2", "column2"}),
+		RecordSet: []Record{
+			NewRecord([]value.Primary{
+				value.NewString("str1"),
+				value.NewString("str1"),
+				value.NewString("str1"),
+				value.NewString("str1"),
+			}),
+			NewRecord([]value.Primary{
+				value.NewString("str1"),
+				value.NewString("str1"),
+				value.NewString("str1"),
 				value.NewString("str1"),
 			}),
 		},

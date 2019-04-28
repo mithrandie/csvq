@@ -24,9 +24,9 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Qu
 				continue
 			}
 			ref := parser.FieldReference{BaseExpr: parser.NewBaseExpr(join.Natural), Column: parser.Identifier{Literal: field.Column}}
-			if _, err := joinView.FieldIndex(ref); err != nil {
-				if _, ok := err.(*FieldAmbiguousError); ok {
-					return nil, nil, nil, err
+			if _, err := joinView.Header.SearchIndex(ref); err != nil {
+				if err == errFieldAmbiguous {
+					return nil, nil, nil, NewFieldAmbiguousError(ref)
 				}
 				continue
 			}
@@ -140,48 +140,61 @@ func InnerJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 
 	gm := NewGoroutineTaskManager(view.RecordLen(), CalcMinimumRequired(view.RecordLen(), joinView.RecordLen(), MinimumRequiredPerCPUCore), scope.Tx.Flags.CPU)
 	recordsList := make([]RecordSet, gm.Number)
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			ctx := ctx
-			start, end := gm.RecordRange(thIdx)
-			records := make(RecordSet, 0, end-start)
-			seqScope := scope.CreateScopeForRecordEvaluation(
-				&View{
-					Header:    mergedHeader,
-					RecordSet: make(RecordSet, 1),
-				},
-				0,
-			)
 
-		InnerJoinLoop:
-			for i := start; i < end; i++ {
-				for j := 0; j < joinView.RecordLen(); j++ {
-					if gm.HasError() || ctx.Err() != nil {
-						break InnerJoinLoop
-					}
+	var joinFn = func(thIdx int) {
+		ctx := ctx
+		start, end := gm.RecordRange(thIdx)
+		records := make(RecordSet, 0, end-start)
+		seqScope := scope.CreateScopeForRecordEvaluation(
+			&View{
+				Header:    mergedHeader,
+				RecordSet: make(RecordSet, 1),
+			},
+			0,
+		)
 
-					mergedRecord := view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
-					seqScope.Records[0].view.RecordSet[0] = mergedRecord
+	InnerJoinLoop:
+		for i := start; i < end; i++ {
+			for j := 0; j < joinView.RecordLen(); j++ {
+				if gm.HasError() {
+					break InnerJoinLoop
+				}
+				if i&15 == 0 && ctx.Err() != nil {
+					break InnerJoinLoop
+				}
 
-					primary, e := Evaluate(ctx, seqScope, condition)
-					if e != nil {
-						gm.SetError(e)
-						break InnerJoinLoop
-					}
-					if primary.Ternary() == ternary.TRUE {
-						records = append(records, mergedRecord)
-					} else {
-						recordPool.Put(mergedRecord)
-					}
+				mergedRecord := view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
+				seqScope.Records[0].view.RecordSet[0] = mergedRecord
+
+				primary, e := Evaluate(ctx, seqScope, condition)
+				if e != nil {
+					gm.SetError(e)
+					break InnerJoinLoop
+				}
+				if primary.Ternary() == ternary.TRUE {
+					records = append(records, mergedRecord)
+				} else {
+					recordPool.Put(mergedRecord)
 				}
 			}
+		}
 
-			recordsList[thIdx] = records
+		recordsList[thIdx] = records
+
+		if 1 < gm.Number {
 			gm.Done()
-		}(i)
+		}
 	}
-	gm.Wait()
+
+	if 1 < gm.Number {
+		for i := 0; i < gm.Number; i++ {
+			gm.Add()
+			go joinFn(i)
+		}
+		gm.Wait()
+	} else {
+		joinFn(0)
+	}
 
 	if gm.HasError() {
 		return gm.Err()
@@ -218,90 +231,102 @@ func OuterJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 	recordsList := make([]RecordSet, gm.Number+1)
 	joinViewMatchesList := make([][]bool, gm.Number)
 
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			ctx := ctx
-			start, end := gm.RecordRange(thIdx)
-			records := make(RecordSet, 0, end-start)
-			seqScope := scope.CreateScopeForRecordEvaluation(
-				&View{
-					Header:    mergedHeader,
-					RecordSet: make(RecordSet, 1),
-				},
-				0,
-			)
+	var joinFn = func(thIdx int) {
+		ctx := ctx
+		start, end := gm.RecordRange(thIdx)
+		records := make(RecordSet, 0, end-start)
+		seqScope := scope.CreateScopeForRecordEvaluation(
+			&View{
+				Header:    mergedHeader,
+				RecordSet: make(RecordSet, 1),
+			},
+			0,
+		)
 
-			joinViewMatches := make([]bool, joinView.RecordLen())
-			var leftViewFieldLen int
-			if direction == parser.RIGHT {
-				leftViewFieldLen = joinView.FieldLen()
-			} else {
-				leftViewFieldLen = view.FieldLen()
-			}
+		joinViewMatches := make([]bool, joinView.RecordLen())
+		var leftViewFieldLen int
+		if direction == parser.RIGHT {
+			leftViewFieldLen = joinView.FieldLen()
+		} else {
+			leftViewFieldLen = view.FieldLen()
+		}
 
-		OuterJoinLoop:
-			for i := start; i < end; i++ {
-				match := false
-				for j := 0; j < joinView.RecordLen(); j++ {
-					if gm.HasError() || ctx.Err() != nil {
-						break OuterJoinLoop
-					}
-
-					var mergedRecord Record
-					switch direction {
-					case parser.RIGHT:
-						mergedRecord = joinView.RecordSet[j].Merge(view.RecordSet[i], recordPool)
-					default:
-						mergedRecord = view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
-					}
-					seqScope.Records[0].view.RecordSet[0] = mergedRecord
-
-					primary, e := Evaluate(ctx, seqScope, condition)
-					if e != nil {
-						gm.SetError(e)
-						break OuterJoinLoop
-					}
-					if primary.Ternary() == ternary.TRUE {
-						if direction == parser.FULL && !joinViewMatches[j] {
-							joinViewMatches[j] = true
-						}
-						records = append(records, mergedRecord)
-						match = true
-					} else {
-						recordPool.Put(mergedRecord)
-					}
+	OuterJoinLoop:
+		for i := start; i < end; i++ {
+			match := false
+			for j := 0; j < joinView.RecordLen(); j++ {
+				if gm.HasError() {
+					break OuterJoinLoop
+				}
+				if i&15 == 0 && ctx.Err() != nil {
+					break OuterJoinLoop
 				}
 
-				if !match {
-					record := recordPool.Get().(Record)
-					switch direction {
-					case parser.RIGHT:
-						for k := 0; k < leftViewFieldLen; k++ {
-							record[k] = NewCell(value.NewNull())
-						}
-						for k := range view.RecordSet[i] {
-							record[k+leftViewFieldLen] = view.RecordSet[i][k]
-						}
-					default:
-						for k := range view.RecordSet[i] {
-							record[k] = view.RecordSet[i][k]
-						}
-						for k := 0; k < joinView.FieldLen(); k++ {
-							record[k+leftViewFieldLen] = NewCell(value.NewNull())
-						}
-					}
-					records = append(records, record)
+				var mergedRecord Record
+				switch direction {
+				case parser.RIGHT:
+					mergedRecord = joinView.RecordSet[j].Merge(view.RecordSet[i], recordPool)
+				default:
+					mergedRecord = view.RecordSet[i].Merge(joinView.RecordSet[j], recordPool)
+				}
+				seqScope.Records[0].view.RecordSet[0] = mergedRecord
 
+				primary, e := Evaluate(ctx, seqScope, condition)
+				if e != nil {
+					gm.SetError(e)
+					break OuterJoinLoop
+				}
+				if primary.Ternary() == ternary.TRUE {
+					if direction == parser.FULL && !joinViewMatches[j] {
+						joinViewMatches[j] = true
+					}
+					records = append(records, mergedRecord)
+					match = true
+				} else {
+					recordPool.Put(mergedRecord)
 				}
 			}
 
-			recordsList[thIdx] = records
-			joinViewMatchesList[thIdx] = joinViewMatches
+			if !match {
+				record := recordPool.Get().(Record)
+				switch direction {
+				case parser.RIGHT:
+					for k := 0; k < leftViewFieldLen; k++ {
+						record[k] = NewCell(value.NewNull())
+					}
+					for k := range view.RecordSet[i] {
+						record[k+leftViewFieldLen] = view.RecordSet[i][k]
+					}
+				default:
+					for k := range view.RecordSet[i] {
+						record[k] = view.RecordSet[i][k]
+					}
+					for k := 0; k < joinView.FieldLen(); k++ {
+						record[k+leftViewFieldLen] = NewCell(value.NewNull())
+					}
+				}
+				records = append(records, record)
+
+			}
+		}
+
+		recordsList[thIdx] = records
+		joinViewMatchesList[thIdx] = joinViewMatches
+
+		if 1 < gm.Number {
 			gm.Done()
-		}(i)
+		}
 	}
-	gm.Wait()
+
+	if 1 < gm.Number {
+		for i := 0; i < gm.Number; i++ {
+			gm.Add()
+			go joinFn(i)
+		}
+		gm.Wait()
+	} else {
+		joinFn(0)
+	}
 
 	if gm.HasError() {
 		return gm.Err()

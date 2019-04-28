@@ -16,10 +16,6 @@ import (
 )
 
 func Evaluate(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression) (value.Primary, error) {
-	if ctx.Err() != nil {
-		return nil, ConvertContextError(ctx.Err())
-	}
-
 	if expr == nil {
 		return value.NewTernary(ternary.TRUE), nil
 	}
@@ -30,10 +26,10 @@ func Evaluate(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpre
 	switch expr.(type) {
 	case parser.PrimitiveType:
 		val = expr.(parser.PrimitiveType).Value
-	case parser.Parentheses:
-		val, err = Evaluate(ctx, scope, expr.(parser.Parentheses).Expr)
 	case parser.FieldReference, parser.ColumnNumber:
 		val, err = evalFieldReference(expr, scope)
+	case parser.Parentheses:
+		val, err = Evaluate(ctx, scope, expr.(parser.Parentheses).Expr)
 	case parser.Arithmetic:
 		val, err = evalArithmetic(ctx, scope, expr.(parser.Arithmetic))
 	case parser.UnaryArithmetic:
@@ -91,41 +87,55 @@ func Evaluate(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpre
 	case parser.Placeholder:
 		val, err = evalPlaceholder(ctx, scope, expr.(parser.Placeholder))
 	default:
-		return nil, NewInvalidValueExpressionError(expr)
+		err = NewInvalidValueExpressionError(expr)
 	}
 
 	return val, err
 }
 
+func evaluateSequentialRoutine(ctx context.Context, scope *ReferenceScope, view *View, fn func(*ReferenceScope, int) error, thIdx int, gm *GoroutineTaskManager) {
+	start, end := gm.RecordRange(thIdx)
+	seqScope := scope.CreateScopeForSequentialEvaluation(
+		&View{
+			Header:    view.Header,
+			RecordSet: view.RecordSet[start:end],
+			isGrouped: view.isGrouped,
+		},
+	)
+
+	i := 0
+	for seqScope.NextRecord() {
+		if gm.HasError() {
+			break
+		}
+		if i&15 == 0 && ctx.Err() != nil {
+			break
+		}
+
+		if err := fn(seqScope, start+seqScope.Records[0].recordIndex); err != nil {
+			gm.SetError(err)
+			break
+		}
+
+		i++
+	}
+
+	if 1 < gm.Number {
+		gm.Done()
+	}
+}
+
 func EvaluateSequentially(ctx context.Context, scope *ReferenceScope, view *View, fn func(*ReferenceScope, int) error) error {
 	gm := NewGoroutineTaskManager(view.Len(), -1, scope.Tx.Flags.CPU)
-	for i := 0; i < gm.Number; i++ {
-		gm.Add()
-		go func(thIdx int) {
-			start, end := gm.RecordRange(thIdx)
-			seqScope := scope.CreateScopeForSequentialEvaluation(
-				&View{
-					Header:    view.Header,
-					RecordSet: view.RecordSet[start:end],
-					isGrouped: view.isGrouped,
-				},
-			)
-
-			for seqScope.NextRecord() {
-				if gm.HasError() || ctx.Err() != nil {
-					break
-				}
-
-				if err := fn(seqScope, start+seqScope.Records[0].recordIndex); err != nil {
-					gm.SetError(err)
-					break
-				}
-			}
-
-			gm.Done()
-		}(i)
+	if 1 < gm.Number {
+		for i := 0; i < gm.Number; i++ {
+			gm.Add()
+			go evaluateSequentialRoutine(ctx, scope, view, fn, i, gm)
+		}
+		gm.Wait()
+	} else {
+		evaluateSequentialRoutine(ctx, scope, view, fn, 0, gm)
 	}
-	gm.Wait()
 
 	if gm.HasError() {
 		return gm.Err()
@@ -152,7 +162,7 @@ func evalFieldReference(expr parser.QueryExpression, scope *ReferenceScope) (val
 			}
 		}
 
-		idx, err := record.view.FieldIndex(expr)
+		idx, err := record.view.Header.SearchIndex(expr)
 		if err == nil {
 			if record.view.isGrouped && record.view.Header[idx].IsFromTable && !record.view.Header[idx].IsGroupKey {
 				return nil, NewFieldNotGroupKeyError(expr)
@@ -166,10 +176,8 @@ func evalFieldReference(expr parser.QueryExpression, scope *ReferenceScope) (val
 				record.fieldReferenceIndices[exprStr] = idx
 			}
 			break
-		}
-
-		if _, ok := err.(*FieldAmbiguousError); ok {
-			return nil, err
+		} else if err == errFieldAmbiguous {
+			return nil, NewFieldAmbiguousError(expr)
 		}
 	}
 	if p == nil {
@@ -865,12 +873,13 @@ func EvalRowValue(ctx context.Context, scope *ReferenceScope, expr parser.QueryE
 	case parser.RowValue:
 		rowValue, err = EvalRowValue(ctx, scope, expr.(parser.RowValue).Value)
 	default:
-		p, e := Evaluate(ctx, scope, expr)
-		if e != nil {
-			return rowValue, e
+		var p value.Primary
+		p, err = Evaluate(ctx, scope, expr)
+		if err == nil {
+			rowValue = value.RowValue{p}
 		}
-		rowValue = value.RowValue{p}
 	}
+
 	return rowValue, err
 }
 
@@ -1110,7 +1119,7 @@ func evalJsonQueryParameters(ctx context.Context, scope *ReferenceScope, expr pa
 
 func EvaluateEmbeddedString(ctx context.Context, scope *ReferenceScope, embedded string) (string, error) {
 	scanner := new(excmd.ArgumentScanner).Init(embedded)
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	var err error
 
 	for scanner.Scan() {

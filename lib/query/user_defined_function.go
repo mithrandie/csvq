@@ -131,19 +131,19 @@ func (m UserDefinedFunctionMap) CheckDuplicate(name parser.Identifier) error {
 	return nil
 }
 
-func (m UserDefinedFunctionMap) Get(fn parser.QueryExpression, name string) (*UserDefinedFunction, error) {
+func (m UserDefinedFunctionMap) Get(fn parser.QueryExpression, name string) (*UserDefinedFunction, bool) {
 	if fn, ok := m.Load(name); ok {
-		return fn, nil
+		return fn, true
 	}
-	return nil, NewFunctionNotExistError(fn, name)
+	return nil, false
 }
 
-func (m UserDefinedFunctionMap) Dispose(name parser.Identifier) error {
+func (m UserDefinedFunctionMap) Dispose(name parser.Identifier) bool {
 	if m.Exists(name.Literal) {
 		m.Delete(name.Literal)
-		return nil
+		return true
 	}
-	return NewFunctionNotExistError(name, name.Literal)
+	return false
 }
 
 type UserDefinedFunction struct {

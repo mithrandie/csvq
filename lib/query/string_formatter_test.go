@@ -70,7 +70,7 @@ var stringFormatterFormatTests = []struct {
 			value.NewString("str"),
 			value.NewString("str"),
 		},
-		Expect: "--str--\"str\"--`str`--String--`st`--St--%",
+		Expect: "--str--'str'--`str`--String--`st`--St--%",
 	},
 	{
 		Format: "--%s--%s--%s--",

@@ -1909,7 +1909,7 @@ var formatTests = []functionTest{
 			value.NewString("str"),
 			value.NewInteger(1),
 		},
-		Result: value.NewString("string = \"str\", integer = \"1\""),
+		Result: value.NewString("string = 'str', integer = '1'"),
 	},
 	{
 		Name: "Format Argument Length Error",

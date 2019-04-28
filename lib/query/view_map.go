@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -11,6 +12,8 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
+
+var errTableNotLoaded = errors.New("table not loaded")
 
 type ViewMap struct {
 	*SyncMap
@@ -49,7 +52,7 @@ func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
 	if view, ok := m.Load(fpath.Literal); ok {
 		return view.Copy(), nil
 	}
-	return nil, NewTableNotLoadedError(fpath)
+	return nil, errTableNotLoaded
 }
 
 func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier, flags *cmd.Flags) (*View, error) {
@@ -72,7 +75,7 @@ func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier,
 
 		return ret, nil
 	}
-	return nil, NewTableNotLoadedError(fpath)
+	return nil, errTableNotLoaded
 }
 
 func (m ViewMap) Set(view *View) {
@@ -81,7 +84,7 @@ func (m ViewMap) Set(view *View) {
 	}
 }
 
-func (m ViewMap) DisposeTemporaryTable(table parser.QueryExpression) error {
+func (m ViewMap) DisposeTemporaryTable(table parser.QueryExpression) bool {
 	var tableName string
 	if e, ok := table.(parser.Stdin); ok {
 		tableName = e.Stdin
@@ -89,15 +92,11 @@ func (m ViewMap) DisposeTemporaryTable(table parser.QueryExpression) error {
 		tableName = table.(parser.Identifier).Literal
 	}
 
-	if v, ok := m.Load(tableName); ok {
-		if !v.FileInfo.IsFile() {
-			m.Delete(tableName)
-			return nil
-		} else {
-			return NewUndeclaredTemporaryTableError(table)
-		}
+	if v, ok := m.Load(tableName); ok && !v.FileInfo.IsFile() {
+		m.Delete(tableName)
+		return true
 	}
-	return NewUndeclaredTemporaryTableError(table)
+	return false
 }
 
 func (m ViewMap) Dispose(container *file.Container, name string) error {

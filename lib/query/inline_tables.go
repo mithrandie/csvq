@@ -10,8 +10,7 @@ import (
 type InlineTableMap map[string]*View
 
 func (it InlineTableMap) Set(ctx context.Context, scope *ReferenceScope, inlineTable parser.InlineTable) error {
-	uname := strings.ToUpper(inlineTable.Name.Literal)
-	if _, err := it.Get(inlineTable.Name); err == nil {
+	if it.Exists(inlineTable.Name) {
 		return NewInLineTableRedefinedError(inlineTable.Name)
 	}
 
@@ -35,9 +34,15 @@ func (it InlineTableMap) Set(ctx context.Context, scope *ReferenceScope, inlineT
 	}
 
 	view.FileInfo = nil
-	it[uname] = view
+	it[strings.ToUpper(inlineTable.Name.Literal)] = view
 
 	return nil
+}
+
+func (it InlineTableMap) Exists(name parser.Identifier) bool {
+	uname := strings.ToUpper(name.Literal)
+	_, ok := it[uname]
+	return ok
 }
 
 func (it InlineTableMap) Get(name parser.Identifier) (*View, error) {

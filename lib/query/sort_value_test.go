@@ -23,7 +23,7 @@ func TestSortValues_Serialize(t *testing.T) {
 	}
 	expect := "[N]:[I]1[B]true:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]0[B]false:[S]STR"
 
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	values.Serialize(buf)
 	result := buf.String()
 	if result != expect {

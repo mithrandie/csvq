@@ -12,6 +12,10 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+var errUndeclaredCursor = errors.New("undeclared cursor")
+var errPseudoCursor = errors.New("unpermmitted pseudo cursor usage")
+var errCursorClosed = errors.New("cursor cloased")
+
 type CursorMap struct {
 	*SyncMap
 }
@@ -64,51 +68,51 @@ func (m CursorMap) AddPseudoCursor(name parser.Identifier, values []value.Primar
 func (m CursorMap) Dispose(name parser.Identifier) error {
 	if cur, ok := m.Load(name.Literal); ok {
 		if cur.isPseudo {
-			return NewPseudoCursorError(name)
+			return errPseudoCursor
 		}
 		m.Delete(name.Literal)
 		return nil
 	}
-	return NewUndeclaredCursorError(name)
+	return errUndeclaredCursor
 }
 
 func (m CursorMap) Open(ctx context.Context, scope *ReferenceScope, name parser.Identifier, values []parser.ReplaceValue) error {
 	if cur, ok := m.Load(name.Literal); ok {
 		return cur.Open(ctx, scope, name, values)
 	}
-	return NewUndeclaredCursorError(name)
+	return errUndeclaredCursor
 }
 
 func (m CursorMap) Close(name parser.Identifier) error {
 	if cur, ok := m.Load(name.Literal); ok {
 		return cur.Close(name)
 	}
-	return NewUndeclaredCursorError(name)
+	return errUndeclaredCursor
 }
 
 func (m CursorMap) Fetch(name parser.Identifier, position int, number int) ([]value.Primary, error) {
 	if cur, ok := m.Load(name.Literal); ok {
 		return cur.Fetch(name, position, number)
 	}
-	return nil, NewUndeclaredCursorError(name)
+	return nil, errUndeclaredCursor
 }
 
 func (m CursorMap) IsOpen(name parser.Identifier) (ternary.Value, error) {
 	if cur, ok := m.Load(name.Literal); ok {
 		return cur.IsOpen(), nil
 	}
-	return ternary.FALSE, NewUndeclaredCursorError(name)
+	return ternary.FALSE, errUndeclaredCursor
 }
 
 func (m CursorMap) IsInRange(name parser.Identifier) (ternary.Value, error) {
 	if cur, ok := m.Load(name.Literal); ok {
 		t, err := cur.IsInRange()
-		if err != nil {
+		if err == errCursorClosed {
 			return ternary.FALSE, NewCursorClosedError(name)
 		}
 		return t, nil
 	}
-	return ternary.FALSE, NewUndeclaredCursorError(name)
+	return ternary.FALSE, errUndeclaredCursor
 }
 
 func (m CursorMap) Count(name parser.Identifier) (int, error) {
@@ -119,7 +123,7 @@ func (m CursorMap) Count(name parser.Identifier) (int, error) {
 		}
 		return i, nil
 	}
-	return 0, NewUndeclaredCursorError(name)
+	return 0, errUndeclaredCursor
 }
 
 type Cursor struct {
@@ -271,7 +275,7 @@ func (c *Cursor) IsOpen() ternary.Value {
 
 func (c *Cursor) IsInRange() (ternary.Value, error) {
 	if c.view == nil {
-		return ternary.FALSE, errors.New("cursor is closed")
+		return ternary.FALSE, errCursorClosed
 	}
 	if !c.fetched {
 		return ternary.UNKNOWN, nil
@@ -281,7 +285,7 @@ func (c *Cursor) IsInRange() (ternary.Value, error) {
 
 func (c *Cursor) Count() (int, error) {
 	if c.view == nil {
-		return 0, errors.New("cursor is closed")
+		return 0, errCursorClosed
 	}
 	return c.view.RecordLen(), nil
 }

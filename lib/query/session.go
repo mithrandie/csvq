@@ -15,6 +15,14 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+func isReadableFromPipeOrRedirection(fp *os.File) bool {
+	fi, err := fp.Stat()
+	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
+		return true
+	}
+	return false
+}
+
 type Discard struct {
 }
 
@@ -50,11 +58,11 @@ func (r *Input) Close() error {
 }
 
 type Output struct {
-	*bytes.Buffer
+	bytes.Buffer
 }
 
 func NewOutput() *Output {
-	return &Output{new(bytes.Buffer)}
+	return &Output{}
 }
 
 func (w *Output) Close() error {
@@ -162,15 +170,16 @@ type Session struct {
 	outFile  io.Writer
 	terminal VirtualTerminal
 
-	stdinViewMap  ViewMap
-	stdinLocker   *StdinLocker
-	stdinIsLocked bool
-	stdinRLockCnt int32
+	CanReadStdin bool
+	stdinViewMap ViewMap
+	stdinLocker  *StdinLocker
 
 	mtx *sync.Mutex
 }
 
 func NewSession() *Session {
+	canReadStdin := isReadableFromPipeOrRedirection(os.Stdin)
+
 	return &Session{
 		screenFd: os.Stdin.Fd(),
 		stdin:    os.Stdin,
@@ -179,6 +188,7 @@ func NewSession() *Session {
 		outFile:  nil,
 		terminal: nil,
 
+		CanReadStdin: canReadStdin,
 		stdinViewMap: NewViewMap(),
 		stdinLocker:  NewStdinLocker(),
 
@@ -218,6 +228,14 @@ func (sess *Session) SetStdinContext(ctx context.Context, r io.ReadCloser) error
 	if err := sess.stdinLocker.LockContext(ctx); err != nil {
 		return err
 	}
+
+	sess.CanReadStdin = false
+	if r != nil {
+		if fp, ok := r.(*os.File); !ok || (ok && isReadableFromPipeOrRedirection(fp)) {
+			sess.CanReadStdin = true
+		}
+	}
+
 	sess.stdin = r
 	_ = sess.stdinViewMap.Clean(nil)
 	return sess.stdinLocker.Unlock()
@@ -249,7 +267,7 @@ func (sess *Session) SetTerminal(t VirtualTerminal) {
 
 func (sess *Session) GetStdinView(ctx context.Context, flags *cmd.Flags, fileInfo *FileInfo, expr parser.Stdin) (*View, error) {
 	if !sess.stdinViewMap.Exists(expr.String()) {
-		if !sess.CanReadStdin() {
+		if !sess.CanReadStdin {
 			return nil, NewStdinEmptyError(expr)
 		}
 
@@ -272,16 +290,6 @@ func (sess *Session) GetStdinView(ctx context.Context, flags *cmd.Flags, fileInf
 
 func (sess *Session) updateStdinView(view *View) {
 	sess.stdinViewMap.Store(view.FileInfo.Path, view)
-}
-
-func (sess *Session) CanReadStdin() bool {
-	if sess.stdin == nil {
-		return false
-	}
-	if f, ok := sess.stdin.(*os.File); ok {
-		return cmd.IsReadableFromPipeOrRedirection(f)
-	}
-	return true
 }
 
 func (sess *Session) WriteToStdout(s string) (err error) {

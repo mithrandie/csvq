@@ -705,10 +705,10 @@ func writeTableAttribute(w *ObjectWriter, flags *cmd.Flags, info *FileInfo) {
 	switch info.Format {
 	case cmd.CSV:
 		w.WriteColorWithoutLineBreak("Delimiter: ", cmd.LableEffect)
-		w.WriteWithoutLineBreak("\"" + cmd.EscapeString(string(info.Delimiter)) + "\"")
+		w.WriteWithoutLineBreak("'" + cmd.EscapeString(string(info.Delimiter)) + "'")
 	case cmd.TSV:
 		w.WriteColorWithoutLineBreak("Delimiter: ", cmd.LableEffect)
-		w.WriteColorWithoutLineBreak("\"\\t\"", cmd.NullEffect)
+		w.WriteColorWithoutLineBreak("'\\t'", cmd.NullEffect)
 	case cmd.FIXED:
 		dp := info.DelimiterPositions.String()
 		if info.SingleLine {

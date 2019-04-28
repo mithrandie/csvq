@@ -98,7 +98,7 @@ func ConvertTableValueToJsonStructure(ctx context.Context, fields []string, rows
 
 	structure := make(json.Array, len(rows))
 	for i := range rows {
-		if ctx.Err() != nil {
+		if i&15 == 0 && ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
 

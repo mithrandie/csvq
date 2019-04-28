@@ -26,7 +26,7 @@ func TestSerializeComparisonKeys(t *testing.T) {
 	}
 	expect := "[S]STR:[I]1[B]true:[I]0[B]false:[I]3:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]1[B]true:[I]0[B]false:[N]:[N]"
 
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	SerializeComparisonKeys(buf, values, TestTx.Flags)
 	result := buf.String()
 	if result != expect {
@@ -55,7 +55,7 @@ func BenchmarkSerializeKey(b *testing.B) {
 		value.NewInteger(123),
 	}
 
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

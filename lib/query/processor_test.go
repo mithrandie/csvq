@@ -151,7 +151,7 @@ var processorExecuteStatementTests = []struct {
 		Input: parser.Print{
 			Value: parser.EnvironmentVariable{Name: "CSVQ_PROC_TEST"},
 		},
-		Logs: "\"foo\"\n",
+		Logs: "'foo'\n",
 	},
 	{
 		Input: parser.UnsetEnvVar{
@@ -162,7 +162,7 @@ var processorExecuteStatementTests = []struct {
 		Input: parser.Print{
 			Value: parser.EnvironmentVariable{Name: "CSVQ_PROC_TEST"},
 		},
-		Logs: "\"\"\n",
+		Logs: "''\n",
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -293,13 +293,13 @@ var processorExecuteStatementTests = []struct {
 		Input: parser.Print{
 			Value: parser.Variable{Name: "var2"},
 		},
-		Logs: "\"1\"\n",
+		Logs: "'1'\n",
 	},
 	{
 		Input: parser.Print{
 			Value: parser.Variable{Name: "var3"},
 		},
-		Logs: "\"str1\"\n",
+		Logs: "'str1'\n",
 	},
 	{
 		Input: parser.CloseCursor{
@@ -805,7 +805,7 @@ var processorExecuteStatementTests = []struct {
 			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1.csv", 22)-(22+len("table1.csv")))/2) + "Attributes Updated in table1.csv\n" +
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1.csv", 22)) + "\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: TSV     Delimiter: \"\\t\"  Enclose All: false\n" +
+			" Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			"\n",
 	},
@@ -826,7 +826,7 @@ var processorExecuteStatementTests = []struct {
 				},
 			},
 		},
-		Logs: "\"2\"\n",
+		Logs: "'2'\n",
 	},
 	{
 		Input: parser.While{
@@ -875,14 +875,14 @@ var processorExecuteStatementTests = []struct {
 		Input: parser.Source{
 			FilePath: parser.NewStringValue(GetTestFilePath("source.sql")),
 		},
-		Logs: "\"external executable file\"\n",
+		Logs: "'external executable file'\n",
 	},
 	{
 		Input: parser.Execute{
 			BaseExpr:   parser.NewBaseExpr(parser.Token{}),
 			Statements: parser.NewStringValue("print 'execute';"),
 		},
-		Logs: "\"execute\"\n",
+		Logs: "'execute'\n",
 	},
 	{
 		Input: parser.Trigger{
@@ -925,7 +925,7 @@ var processorExecuteStatementTests = []struct {
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1", 10)) + "\n" +
 			" Type: Table\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
-			" Format: CSV     Delimiter: \",\"   Enclose All: false\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Fixed\n" +
 			" Fields:\n" +
@@ -1036,7 +1036,7 @@ var processorIfStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"1\"\n",
+		Result:     "'1'\n",
 	},
 	{
 		Name: "If Statement Execute Nothing",
@@ -1077,7 +1077,7 @@ var processorIfStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"2\"\n",
+		Result:     "'2'\n",
 	},
 	{
 		Name: "If Statement Execute Else",
@@ -1107,7 +1107,7 @@ var processorIfStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"4\"\n",
+		Result:     "'4'\n",
 	},
 	{
 		Name: "If Statement Filter Error",
@@ -1201,7 +1201,7 @@ var processorCaseStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"2\"\n",
+		Result:     "'2'\n",
 	},
 	{
 		Name: "Case Comparison",
@@ -1223,7 +1223,7 @@ var processorCaseStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"2\"\n",
+		Result:     "'2'\n",
 	},
 	{
 		Name: "Case Else",
@@ -1249,7 +1249,7 @@ var processorCaseStmtTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"3\"\n",
+		Result:     "'3'\n",
 	},
 	{
 		Name: "Case No Match",
@@ -1591,12 +1591,12 @@ func TestProcessor_While(t *testing.T) {
 
 	for _, v := range processorWhileTests {
 		proc.returnVal = nil
-		if _, err := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test"}); err != nil {
+		if _, ok := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test"}); !ok {
 			_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
 		_ = proc.ReferenceScope.CurrentBlock().variables.Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
-		if _, err := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test_count"}); err != nil {
+		if _, ok := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test_count"}); !ok {
 			_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 		}
 		_ = proc.ReferenceScope.CurrentBlock().variables.Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
@@ -1652,7 +1652,7 @@ var processorWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"1\"\n\"2\"\n\"3\"\n",
+		Result:     "'1'\n'2'\n'3'\n",
 	},
 	{
 		Name: "While In Cursor With Declaration",
@@ -1669,7 +1669,7 @@ var processorWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"1\"\n\"2\"\n\"3\"\n",
+		Result:     "'1'\n'2'\n'3'\n",
 	},
 	{
 		Name: "While In Cursor Continue",
@@ -1695,7 +1695,7 @@ var processorWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"1\"\n\"3\"\n",
+		Result:     "'1'\n'3'\n",
 	},
 	{
 		Name: "While In Cursor Break",
@@ -1721,7 +1721,7 @@ var processorWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Terminate,
-		Result:     "\"1\"\n",
+		Result:     "'1'\n",
 	},
 	{
 		Name: "While In Cursor Exit With Code",
@@ -1747,7 +1747,7 @@ var processorWhileInCursorTests = []struct {
 			},
 		},
 		ResultFlow: Exit,
-		Result:     "\"1\"\n",
+		Result:     "'1'\n",
 	},
 	{
 		Name: "While In Cursor Fetch Error",

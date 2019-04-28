@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -47,7 +45,7 @@ func TestUnescapeIdentifier(t *testing.T) {
 
 func TestQuoteString(t *testing.T) {
 	s := "abc'def"
-	expect := "\"abc\\'def\""
+	expect := "'abc\\'def'"
 	result := QuoteString(s)
 	if result != expect {
 		t.Errorf("quoted string = %q, want %q for %q", result, expect, s)
@@ -197,36 +195,6 @@ func TestFormatNumber(t *testing.T) {
 		if result != v.Expect {
 			t.Errorf("result = %s, want %s for %f, %d, %q, %q, %q", result, v.Expect, v.Float, v.Precision, v.DecimalPoint, v.ThousandsSeparator, v.DecimalSeparator)
 		}
-	}
-}
-
-func TestIsReadableFromPipeOrRedirection(t *testing.T) {
-	oldStdin := os.Stdin
-	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
-	os.Stdin = r
-
-	result := IsReadableFromPipeOrRedirection(os.Stdin)
-
-	_ = r.Close()
-
-	if result != false {
-		t.Errorf("readable from pipe or redirection = %t, want %t", result, false)
-	}
-
-	oldStdin = os.Stdin
-	r, w, _ := os.Pipe()
-	os.Stdin = r
-
-	_, _ = w.Write([]byte("abcde"))
-	_ = w.Close()
-
-	result = IsReadableFromPipeOrRedirection(os.Stdin)
-
-	_ = r.Close()
-	os.Stdin = oldStdin
-
-	if result != true {
-		t.Errorf("readable from pipe or redirection = %t, want %t", result, true)
 	}
 }
 

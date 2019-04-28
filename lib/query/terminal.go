@@ -193,7 +193,7 @@ func (p *Prompt) evaluate(ctx context.Context, expr parser.QueryExpression) erro
 }
 
 func (p *Prompt) StripEscapeSequence(s string) string {
-	buf := new(bytes.Buffer)
+	p.buf.Reset()
 
 	inEscSeq := false
 	for _, r := range s {
@@ -204,9 +204,9 @@ func (p *Prompt) StripEscapeSequence(s string) string {
 		} else if r == 27 {
 			inEscSeq = true
 		} else {
-			buf.WriteRune(r)
+			p.buf.WriteRune(r)
 		}
 	}
 
-	return buf.String()
+	return p.buf.String()
 }

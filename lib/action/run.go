@@ -61,7 +61,7 @@ func Run(ctx context.Context, proc *query.Processor, input string, sourceFile st
 }
 
 func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
-	if cmd.IsReadableFromPipeOrRedirection(os.Stdin) {
+	if proc.Tx.Session.CanReadStdin {
 		return query.NewIncorrectCommandUsageError("input from pipe or redirection cannot be used in interactive shell")
 	}
 

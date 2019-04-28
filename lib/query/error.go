@@ -74,6 +74,7 @@ const (
 	ErrMsgFileLockTimeout                      = "file %s: lock wait timeout period exceeded"
 	ErrMsgFileNameAmbiguous                    = "filename %s is ambiguous"
 	ErrMsgDataParsing                          = "data parse error in file %s: %s"
+	ErrMsgDataEncoding                         = "data encode error: %s"
 	ErrMsgTableFieldLength                     = "select query should return exactly %s for table %s"
 	ErrMsgTemporaryTableRedeclared             = "view %s is redeclared"
 	ErrMsgUndeclaredTemporaryTable             = "view %s is undeclared"
@@ -899,6 +900,16 @@ type DataParsingError struct {
 func NewDataParsingError(file parser.QueryExpression, filepath string, message string) error {
 	return &DataParsingError{
 		NewBaseError(file, fmt.Sprintf(ErrMsgDataParsing, filepath, message), ReturnCodeApplicationError, ErrorDataParsing),
+	}
+}
+
+type DataEncodingError struct {
+	*BaseError
+}
+
+func NewDataEncodingError(message string) error {
+	return &DataEncodingError{
+		NewBaseErrorWithPrefix("", fmt.Sprintf(ErrMsgDataEncoding, message), ReturnCodeApplicationError, ErrorDataEncoding),
 	}
 }
 

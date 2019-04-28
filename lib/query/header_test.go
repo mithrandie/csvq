@@ -71,7 +71,7 @@ func TestHeader_TableColumnNames(t *testing.T) {
 var headerContainsObjectTests = []struct {
 	Expr   parser.QueryExpression
 	Result int
-	Error  string
+	Ok     bool
 }{
 	{
 		Expr: parser.AggregateFunction{
@@ -81,6 +81,7 @@ var headerContainsObjectTests = []struct {
 			},
 		},
 		Result: 5,
+		Ok:     true,
 	},
 	{
 		Expr: parser.FieldReference{
@@ -88,6 +89,7 @@ var headerContainsObjectTests = []struct {
 			Column: parser.Identifier{Literal: "c1"},
 		},
 		Result: 4,
+		Ok:     true,
 	},
 	{
 		Expr: parser.ColumnNumber{
@@ -95,14 +97,17 @@ var headerContainsObjectTests = []struct {
 			Number: value.NewInteger(2),
 		},
 		Result: 1,
+		Ok:     true,
 	},
 	{
-		Expr:  parser.NewIntegerValueFromString("1"),
-		Error: "field 1 is ambiguous",
+		Expr:   parser.NewIntegerValueFromString("1"),
+		Result: 6,
+		Ok:     true,
 	},
 	{
-		Expr:  parser.NewIntegerValueFromString("2"),
-		Error: "field 2 does not exist",
+		Expr:   parser.NewIntegerValueFromString("2"),
+		Result: -1,
+		Ok:     false,
 	},
 }
 
@@ -154,17 +159,9 @@ func TestHeader_ContainsObject(t *testing.T) {
 	}
 
 	for _, v := range headerContainsObjectTests {
-		result, err := h.ContainsObject(v.Expr)
-		if err != nil {
-			if len(v.Error) < 1 {
-				t.Errorf("%s: unexpected error %q", v.Expr.String(), err)
-			} else if err.Error() != v.Error {
-				t.Errorf("%s: error %q, want error %q", v.Expr.String(), err, v.Error)
-			}
-			continue
-		}
-		if 0 < len(v.Error) {
-			t.Errorf("%s: no error, want error %q", v.Expr.String(), v.Error)
+		result, ok := h.ContainsObject(v.Expr)
+		if ok != v.Ok {
+			t.Errorf("%s: contains flag = %t, want %t", v.Expr.String(), ok, v.Ok)
 			continue
 		}
 		if result != v.Result {
@@ -173,7 +170,7 @@ func TestHeader_ContainsObject(t *testing.T) {
 	}
 }
 
-var headerContainsNumberTests = []struct {
+var headerFieldNumberIndexTests = []struct {
 	Number parser.ColumnNumber
 	Result int
 	Error  string
@@ -190,18 +187,18 @@ var headerContainsNumberTests = []struct {
 			View:   parser.Identifier{Literal: "t1"},
 			Number: value.NewInteger(0),
 		},
-		Error: "field t1.0 does not exist",
+		Error: "field not exists",
 	},
 	{
 		Number: parser.ColumnNumber{
 			View:   parser.Identifier{Literal: "t1"},
 			Number: value.NewInteger(9),
 		},
-		Error: "field t1.9 does not exist",
+		Error: "field not exists",
 	},
 }
 
-func TestHeader_ContainsNumber(t *testing.T) {
+func TestHeader_FieldNumberIndex(t *testing.T) {
 	h := Header{
 		{
 			View:        "t1",
@@ -230,8 +227,8 @@ func TestHeader_ContainsNumber(t *testing.T) {
 		},
 	}
 
-	for _, v := range headerContainsNumberTests {
-		result, err := h.ContainsNumber(v.Number)
+	for _, v := range headerFieldNumberIndexTests {
+		result, err := h.FieldNumberIndex(v.Number)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Number.String(), err)
@@ -250,7 +247,7 @@ func TestHeader_ContainsNumber(t *testing.T) {
 	}
 }
 
-var headerContainsTests = []struct {
+var headerFieldIndexTests = []struct {
 	Ref    parser.FieldReference
 	Result int
 	Error  string
@@ -284,17 +281,17 @@ var headerContainsTests = []struct {
 		Ref: parser.FieldReference{
 			Column: parser.Identifier{Literal: "c1"},
 		},
-		Error: "field c1 is ambiguous",
+		Error: "field ambiguous",
 	},
 	{
 		Ref: parser.FieldReference{
 			Column: parser.Identifier{Literal: "d1"},
 		},
-		Error: "field d1 does not exist",
+		Error: "field not exists",
 	},
 }
 
-func TestHeader_Contains(t *testing.T) {
+func TestHeader_FieldIndex(t *testing.T) {
 	h := Header{
 		{
 			View:        "t1",
@@ -330,8 +327,8 @@ func TestHeader_Contains(t *testing.T) {
 		},
 	}
 
-	for _, v := range headerContainsTests {
-		result, err := h.Contains(v.Ref)
+	for _, v := range headerFieldIndexTests {
+		result, err := h.FieldIndex(v.Ref)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Ref.String(), err)

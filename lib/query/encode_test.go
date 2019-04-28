@@ -360,7 +360,7 @@ var encodeViewTests = []struct {
 		},
 		Format:                  cmd.FIXED,
 		WriteDelimiterPositions: []int{10, 42, -1},
-		Error:                   "invalid delimiter position: [10, 42, -1]",
+		Error:                   "data encode error: invalid delimiter position: [10, 42, -1]",
 	},
 	{
 		Name: "JSONH Column Name Convert Error",
@@ -374,7 +374,7 @@ var encodeViewTests = []struct {
 		},
 		Format:     cmd.JSON,
 		JsonEscape: json.HexDigits,
-		Error:      "encoding to json failed: unexpected token \".\" at column 4 in \"c1..\"",
+		Error:      "data encode error: unexpected token \".\" at column 4 in \"c1..\"",
 	},
 	{
 		Name: "LTSV Invalid Character in Label",
@@ -386,7 +386,7 @@ var encodeViewTests = []struct {
 			},
 		},
 		Format: cmd.LTSV,
-		Error:  "unpermitted character in label: U+003A",
+		Error:  "data encode error: unpermitted character in label: U+003A",
 	},
 	{
 		Name: "LTSV Invalid Character in Field-Value",
@@ -398,7 +398,7 @@ var encodeViewTests = []struct {
 			},
 		},
 		Format: cmd.LTSV,
-		Error:  "unpermitted character in field-value: U+0009",
+		Error:  "data encode error: unpermitted character in field-value: U+0009",
 	},
 	{
 		Name: "CSV Encode Character Code",
@@ -425,7 +425,7 @@ var encodeViewTests = []struct {
 func TestEncodeView(t *testing.T) {
 	defer TestTx.UseColor(false)
 
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	ctx := context.Background()
 
 	for _, v := range encodeViewTests {
