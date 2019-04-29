@@ -3016,6 +3016,41 @@ func TestUTC(t *testing.T) {
 	testFunction(t, UTC, utcTests)
 }
 
+var nanoToDatetimeTests = []functionTest{
+	{
+		Name: "NanoToDatetime",
+		Function: parser.Function{
+			Name: "nano_to_datetime",
+		},
+		Args: []value.Primary{
+			value.NewInteger(1328260695000000001),
+		},
+		Result: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 1, GetTestLocation())),
+	},
+	{
+		Name: "NanoToDatetime Invalid Argument",
+		Function: parser.Function{
+			Name: "nano_to_datetime",
+		},
+		Args: []value.Primary{
+			value.NewString("abc"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "NanoToDatetime Arguments Error",
+		Function: parser.Function{
+			Name: "nano_to_datetime",
+		},
+		Args:  []value.Primary{},
+		Error: "function nano_to_datetime takes exactly 1 argument",
+	},
+}
+
+func TestNanoToDatetime(t *testing.T) {
+	testFunction(t, NanoToDatetime, nanoToDatetimeTests)
+}
+
 var stringTests = []functionTest{
 	{
 		Name: "String from Integer",

@@ -46,6 +46,7 @@ category: reference
 | [TIME_DIFF](#time_diff) | Return the difference of time between two datetime values as seconds |
 | [TIME_NANO_DIFF](#time_nano_diff) | Return the difference of time between two datetime values as nanoseconds |
 | [UTC](#utc) | Return a datetime in UTC |
+| [NANO_TO_DATETIME](#nano_to_datetime) | Convert an integer representing Unix nano time to a datetime |
 
 ## Definitions
 
@@ -700,3 +701,18 @@ _return_
 
 Returns the datetime value of _datetime_ in UTC.
 
+
+### NANO_TO_DATETIME
+{: #nano_to_datetime}
+
+```
+NANO_TO_DATETIME(unix_nano_time)
+```
+
+_unix_nano_time_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_return_
+: [datetime]({{ '/reference/value.html#datetime' | relative_url }})
+
+Converts an integer representing Unix nano time to a datetime.

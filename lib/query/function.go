@@ -129,6 +129,7 @@ var Functions = map[string]BuiltInFunction{
 	"TIME_DIFF":        TimeDiff,
 	"TIME_NANO_DIFF":   TimeNanoDiff,
 	"UTC":              UTC,
+	"NANO_TO_DATETIME": NanoToDatetime,
 	"STRING":           String,
 	"INTEGER":          Integer,
 	"FLOAT":            Float,
@@ -1446,6 +1447,19 @@ func UTC(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Prim
 	}
 
 	return value.NewDatetime(dt.(*value.Datetime).Raw().UTC()), nil
+}
+
+func NanoToDatetime(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	i := value.ToInteger(args[0])
+	if value.IsNull(i) {
+		return value.NewNull(), nil
+	}
+
+	return value.NewDatetime(time.Unix(0, i.(*value.Integer).Raw()).In(cmd.GetLocation())), nil
 }
 
 func String(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {

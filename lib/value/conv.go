@@ -80,7 +80,7 @@ func StrToTime(s string, formats []string) (time.Time, bool) {
 			} else if s[10] == ' ' {
 				if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, location); e == nil {
 					return t, true
-				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -07:00", s); e == nil {
+				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 Z07:00", s); e == nil {
 					return t, true
 				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -0700", s); e == nil {
 					return t, true
@@ -90,7 +90,7 @@ func StrToTime(s string, formats []string) (time.Time, bool) {
 			} else {
 				if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, location); e == nil {
 					return t, true
-				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -07:00", s); e == nil {
+				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 Z07:00", s); e == nil {
 					return t, true
 				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -0700", s); e == nil {
 					return t, true
