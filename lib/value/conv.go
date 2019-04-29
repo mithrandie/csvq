@@ -48,9 +48,10 @@ func (dfmap DatetimeFormatMap) Get(s string) string {
 
 func StrToTime(s string, formats []string) (time.Time, bool) {
 	s = strings.TrimSpace(s)
+	location := cmd.GetLocation()
 
 	for _, format := range formats {
-		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, cmd.GetLocation()); e == nil {
+		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, location); e == nil {
 			return t, true
 		}
 	}
@@ -59,11 +60,11 @@ func StrToTime(s string, formats []string) (time.Time, bool) {
 		switch {
 		case s[4] == '-':
 			if len(s) < 10 {
-				if t, e := time.ParseInLocation("2006-1-2", s, cmd.GetLocation()); e == nil {
+				if t, e := time.ParseInLocation("2006-1-2", s, location); e == nil {
 					return t, true
 				}
 			} else if len(s) == 10 {
-				if t, e := time.ParseInLocation("2006-01-02", s, cmd.GetLocation()); e == nil {
+				if t, e := time.ParseInLocation("2006-01-02", s, location); e == nil {
 					return t, true
 				}
 			} else if s[10] == 'T' {
@@ -72,12 +73,12 @@ func StrToTime(s string, formats []string) (time.Time, bool) {
 						return t, true
 					}
 				} else {
-					if t, e := time.ParseInLocation("2006-01-02T15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+					if t, e := time.ParseInLocation("2006-01-02T15:04:05.999999999", s, location); e == nil {
 						return t, true
 					}
 				}
 			} else if s[10] == ' ' {
-				if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+				if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, location); e == nil {
 					return t, true
 				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -07:00", s); e == nil {
 					return t, true
@@ -87,7 +88,7 @@ func StrToTime(s string, formats []string) (time.Time, bool) {
 					return t, true
 				}
 			} else {
-				if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+				if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, location); e == nil {
 					return t, true
 				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -07:00", s); e == nil {
 					return t, true
@@ -99,15 +100,15 @@ func StrToTime(s string, formats []string) (time.Time, bool) {
 			}
 		case s[4] == '/':
 			if len(s) < 10 {
-				if t, e := time.ParseInLocation("2006/1/2", s, cmd.GetLocation()); e == nil {
+				if t, e := time.ParseInLocation("2006/1/2", s, location); e == nil {
 					return t, true
 				}
 			} else if len(s) == 10 {
-				if t, e := time.ParseInLocation("2006/01/02", s, cmd.GetLocation()); e == nil {
+				if t, e := time.ParseInLocation("2006/01/02", s, location); e == nil {
 					return t, true
 				}
 			} else if s[10] == ' ' {
-				if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+				if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, location); e == nil {
 					return t, true
 				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 Z07:00", s); e == nil {
 					return t, true
@@ -117,7 +118,7 @@ func StrToTime(s string, formats []string) (time.Time, bool) {
 					return t, true
 				}
 			} else {
-				if t, e := time.ParseInLocation("2006/1/2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
+				if t, e := time.ParseInLocation("2006/1/2 15:04:05.999999999", s, location); e == nil {
 					return t, true
 				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 Z07:00", s); e == nil {
 					return t, true
@@ -225,7 +226,7 @@ func Float64ToTime(f float64) time.Time {
 		}
 		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
 	}
-	return time.Unix(sec, nsec)
+	return timeFromUnixTime(sec, nsec)
 }
 
 func Int64ToStr(i int64) string {
@@ -312,7 +313,7 @@ func maybeNumber(s string) bool {
 func ToDatetime(p Primary, formats []string) Primary {
 	switch p.(type) {
 	case *Integer:
-		dt := time.Unix(p.(*Integer).Raw(), 0)
+		dt := timeFromUnixTime(p.(*Integer).Raw(), 0)
 		return NewDatetime(dt)
 	case *Float:
 		dt := Float64ToTime(p.(*Float).Raw())
@@ -326,7 +327,7 @@ func ToDatetime(p Primary, formats []string) Primary {
 		}
 		if maybeNumber(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-				dt := time.Unix(i, 0)
+				dt := timeFromUnixTime(i, 0)
 				return NewDatetime(dt)
 			}
 			if f, e := strconv.ParseFloat(s, 64); e == nil {
@@ -337,6 +338,10 @@ func ToDatetime(p Primary, formats []string) Primary {
 	}
 
 	return NewNull()
+}
+
+func timeFromUnixTime(sec int64, nano int64) time.Time {
+	return time.Unix(sec, nano).In(cmd.GetLocation())
 }
 
 func ToBoolean(p Primary) Primary {

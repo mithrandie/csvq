@@ -270,13 +270,13 @@ func (f *Flags) SetLocation(s string) error {
 		s = "UTC"
 	}
 
-	location, err := time.LoadLocation(s)
+	loc, err := time.LoadLocation(s)
 	if err != nil {
 		return errors.New(fmt.Sprintf("timezone %q does not exist", s))
 	}
 
 	f.Location = s
-	time.Local = location
+	location = loc
 	return nil
 }
 

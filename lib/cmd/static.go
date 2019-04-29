@@ -8,6 +8,7 @@ import (
 
 var (
 	TestTime time.Time // For Tests
+	location = time.Local
 
 	random  *rand.Rand
 	getRand sync.Once
@@ -21,12 +22,12 @@ func GetRand() *rand.Rand {
 }
 
 func GetLocation() *time.Location {
-	return time.Local
+	return location
 }
 
 func Now() time.Time {
 	if !TestTime.IsZero() {
 		return TestTime
 	}
-	return time.Now()
+	return time.Now().In(location)
 }
