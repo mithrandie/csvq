@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/cmd"
+
 	"github.com/mithrandie/ternary"
 )
 
@@ -40,67 +42,77 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 		if i2 := ToInteger(p2); !IsNull(i2) {
 			v1 := i1.(*Integer).Raw()
 			v2 := i2.(*Integer).Raw()
+			Discard(i1)
+			Discard(i2)
+
 			if v1 == v2 {
 				return IsEqual
 			} else if v1 < v2 {
 				return IsLess
-			} else {
-				return IsGreater
 			}
+			return IsGreater
 		}
+		Discard(i1)
 	}
 
 	if f1 := ToFloat(p1); !IsNull(f1) {
 		if f2 := ToFloat(p2); !IsNull(f2) {
 			v1 := f1.(*Float).Raw()
 			v2 := f2.(*Float).Raw()
+			Discard(f1)
+			Discard(f2)
+
 			if v1 == v2 {
 				return IsEqual
 			} else if v1 < v2 {
 				return IsLess
-			} else {
-				return IsGreater
 			}
+			return IsGreater
 		}
+		Discard(f1)
 	}
 
 	if d1 := ToDatetime(p1, datetimeFormats); !IsNull(d1) {
 		if d2 := ToDatetime(p2, datetimeFormats); !IsNull(d2) {
 			v1 := d1.(*Datetime).Raw()
 			v2 := d2.(*Datetime).Raw()
+			Discard(d1)
+			Discard(d2)
+
 			if v1.Equal(v2) {
 				return IsEqual
 			} else if v1.Before(v2) {
 				return IsLess
-			} else {
-				return IsGreater
 			}
+			return IsGreater
 		}
+		Discard(d1)
 	}
 
 	if b1 := ToBoolean(p1); !IsNull(b1) {
 		if b2 := ToBoolean(p2); !IsNull(b2) {
 			if b1.(*Boolean).Raw() == b2.(*Boolean).Raw() {
 				return IsBoolEqual
-			} else {
-				return IsNotEqual
 			}
+			return IsNotEqual
 		}
 	}
 
 	if s1, ok := p1.(*String); ok {
 		if s2, ok := p2.(*String); ok {
-			v1 := strings.ToUpper(strings.TrimSpace(s1.Raw()))
-			v2 := strings.ToUpper(strings.TrimSpace(s2.Raw()))
+			v1 := strings.ToUpper(cmd.TrimSpace(s1.Raw()))
+			v2 := strings.ToUpper(cmd.TrimSpace(s2.Raw()))
+			Discard(s1)
+			Discard(s2)
 
 			if v1 == v2 {
 				return IsEqual
 			} else if v1 < v2 {
 				return IsLess
-			} else {
-				return IsGreater
 			}
+			return IsGreater
 		}
+		Discard(s1)
 	}
 
 	return IsIncommensurable

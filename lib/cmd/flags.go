@@ -350,7 +350,7 @@ func (f *Flags) SetDelimiterPositions(s string) error {
 }
 
 func (f *Flags) SetJsonQuery(s string) {
-	f.JsonQuery = strings.TrimSpace(s)
+	f.JsonQuery = TrimSpace(s)
 }
 
 func (f *Flags) SetEncoding(s string) error {

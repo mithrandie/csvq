@@ -1192,6 +1192,7 @@ var analyticFunctionTestScope = GenerateReferenceScope(nil, nil, time.Time{}, []
 			},
 		},
 		recordIndex: 0,
+		cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 	},
 })
 

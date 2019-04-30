@@ -4564,8 +4564,7 @@ func TestSetTableAttribute(t *testing.T) {
 			return true
 		})
 
-		view := NewView()
-		_ = view.LoadFromTableIdentifier(ctx, scope.CreateNode(), v.Query.Table, false, false)
+		view, _ := LoadViewFromTableIdentifier(ctx, scope.CreateNode(), v.Query.Table, false, false)
 
 		if !reflect.DeepEqual(view.FileInfo, v.Expect) {
 			t.Errorf("%s: result = %v, want %v", v.Name, view.FileInfo, v.Expect)

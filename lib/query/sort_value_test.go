@@ -21,7 +21,7 @@ func TestSortValues_Serialize(t *testing.T) {
 		NewSortValue(value.NewBoolean(false), TestTx.Flags),
 		NewSortValue(value.NewString("str"), TestTx.Flags),
 	}
-	expect := "[N]:[I]1[B]true:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]0[B]false:[S]STR"
+	expect := "[N]:[I]1[B]t:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]0[B]f:[S]STR"
 
 	buf := &bytes.Buffer{}
 	values.Serialize(buf)

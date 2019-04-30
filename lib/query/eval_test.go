@@ -61,6 +61,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr:   parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
@@ -84,6 +85,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
@@ -107,6 +109,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -145,6 +148,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr:  parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
@@ -168,6 +172,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr:   parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(2)},
@@ -191,6 +196,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(9)},
@@ -233,6 +239,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr:  parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(1)},
@@ -347,6 +354,15 @@ var evaluateTests = []struct {
 			Operator: "=",
 		},
 		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Comparison With Single RowValue",
+		Expr: parser.Comparison{
+			LHS:      parser.RowValue{Value: parser.ValueList{Values: []parser.QueryExpression{parser.NewStringValue("2")}}},
+			RHS:      parser.NewIntegerValue(2),
+			Operator: "=",
+		},
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Comparison LHS Error",
@@ -1177,6 +1193,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.In{
@@ -1316,6 +1333,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.In{
@@ -1344,6 +1362,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.In{
@@ -1372,6 +1391,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.In{
@@ -1400,6 +1420,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.In{
@@ -1428,6 +1449,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.In{
@@ -1456,6 +1478,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.In{
@@ -2255,6 +2278,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.Exists{
@@ -2355,6 +2379,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.Subquery{
@@ -2598,6 +2623,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -2632,6 +2658,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -2654,6 +2681,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -2688,6 +2716,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -2727,6 +2756,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -2761,6 +2791,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -2889,6 +2920,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -2944,6 +2976,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -2998,6 +3031,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -3096,6 +3130,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.Function{
@@ -3192,6 +3227,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.AggregateFunction{
@@ -3233,6 +3269,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3281,6 +3318,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3306,6 +3344,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3333,6 +3372,7 @@ var evaluateTests = []struct {
 					},
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3375,6 +3415,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3415,6 +3456,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3454,6 +3496,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3488,6 +3531,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3547,6 +3591,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -3588,6 +3633,7 @@ var evaluateTests = []struct {
 					isGrouped: true,
 				},
 				recordIndex: 0,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Expr: parser.ListFunction{
@@ -4120,6 +4166,10 @@ var evaluateEmbeddedStringTests = []struct {
 		Input: "abc${@notexist}def",
 		Error: "@notexist [L:1 C:1] variable @notexist is undeclared",
 	},
+	{
+		Input: "abc${@var1; @var2;}def",
+		Error: "'@var1; @var2;': cannot evaluate as a value",
+	},
 }
 
 func TestEvaluateEmbeddedString(t *testing.T) {
@@ -4257,8 +4307,8 @@ var evaluateFieldReferenceBenchScope = GenerateReferenceScope(nil, nil, time.Tim
 				}),
 			},
 		},
-		recordIndex:           0,
-		fieldReferenceIndices: make(map[string]int),
+		recordIndex: 0,
+		cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 	},
 })
 

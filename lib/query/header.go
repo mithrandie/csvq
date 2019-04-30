@@ -183,19 +183,19 @@ func (h Header) FieldIndex(fieldRef parser.FieldReference) (int, error) {
 
 	idx := -1
 
-	for i, f := range h {
+	for i := range h {
 		if 0 < len(view) {
-			if !strings.EqualFold(f.View, view) || !strings.EqualFold(f.Column, column) {
+			if !strings.EqualFold(h[i].View, view) || !strings.EqualFold(h[i].Column, column) {
 				continue
 			}
 		} else {
-			isEqual := strings.EqualFold(f.Column, column)
-			if isEqual && f.IsJoinColumn {
+			isEqual := strings.EqualFold(h[i].Column, column)
+			if isEqual && h[i].IsJoinColumn {
 				idx = i
 				break
 			}
 
-			if !isEqual && !InStrSliceWithCaseInsensitive(column, f.Aliases) {
+			if !isEqual && !InStrSliceWithCaseInsensitive(column, h[i].Aliases) {
 				continue
 			}
 		}
@@ -227,13 +227,13 @@ func (h Header) Update(reference string, fields []parser.QueryExpression) error 
 			return NewFieldLengthNotMatchError()
 		}
 
-		names := make([]string, len(fields))
-		for i, v := range fields {
-			f, _ := v.(parser.Identifier)
-			if InStrSliceWithCaseInsensitive(f.Literal, names) {
-				return NewDuplicateFieldNameError(f)
+		names := make(map[string]bool, len(fields))
+		for i := range fields {
+			lit := strings.ToUpper(fields[i].(parser.Identifier).Literal)
+			if _, ok := names[lit]; ok {
+				return NewDuplicateFieldNameError(fields[i].(parser.Identifier))
 			}
-			names[i] = f.Literal
+			names[lit] = true
 		}
 	}
 
@@ -261,7 +261,8 @@ func (h Header) Merge(h2 Header) Header {
 
 func (h Header) Copy() Header {
 	header := make(Header, h.Len())
-	copy(header, h)
+	for i := range h {
+		header[i] = h[i]
+	}
 	return header
-
 }

@@ -97,6 +97,11 @@ var compareCombinedlyTests = []struct {
 		RHS:    NewTernaryFromString("true"),
 		Result: IsIncommensurable,
 	},
+	{
+		LHS:    NewString("1"),
+		RHS:    NewString("A"),
+		Result: IsLess,
+	},
 }
 
 func TestCompareCombinedly(t *testing.T) {

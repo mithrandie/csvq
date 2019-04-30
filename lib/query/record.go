@@ -9,6 +9,16 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
+type Cell []value.Primary
+
+func NewCell(val value.Primary) Cell {
+	return []value.Primary{val}
+}
+
+func NewGroupCell(values []value.Primary) Cell {
+	return values
+}
+
 type RecordSet []Record
 
 func (r RecordSet) Copy() RecordSet {
@@ -65,22 +75,23 @@ func NewEmptyRecord(len int) Record {
 }
 
 func (r Record) GroupLen() int {
-	return r[0].Len()
+	return len(r[0])
 }
 
 func (r Record) Copy() Record {
 	record := make(Record, len(r))
-	copy(record, r)
+	for i := range r {
+		record[i] = r[i]
+	}
 	return record
-
 }
 
 func (r Record) SerializeComparisonKeys(buf *bytes.Buffer, flags *cmd.Flags) {
-	for i, cell := range r {
+	for i := range r {
 		if 0 < i {
-			buf.WriteRune(':')
+			buf.WriteByte(58)
 		}
-		SerializeKey(buf, cell.Value(), flags)
+		SerializeKey(buf, r[i][0], flags)
 	}
 }
 

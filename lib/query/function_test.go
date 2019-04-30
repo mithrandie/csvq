@@ -1415,6 +1415,16 @@ var widthTests = []functionTest{
 		Result: value.NewInteger(9),
 	},
 	{
+		Name: "Width Arguments Is Null",
+		Function: parser.Function{
+			Name: "width",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+	{
 		Name: "Width Arguments Error",
 		Function: parser.Function{
 			Name: "width",
@@ -3418,6 +3428,7 @@ var jsonObjectTests = []struct {
 					},
 				},
 				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Result: value.NewString("{\"column1\":11}"),
@@ -3437,6 +3448,7 @@ var jsonObjectTests = []struct {
 					},
 				},
 				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Result: value.NewString("{\"column1\":11,\"column2\":{\"child1\":12}}"),
@@ -3467,6 +3479,7 @@ var jsonObjectTests = []struct {
 					},
 				},
 				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 			},
 		}),
 		Error: "unexpected token \".\" at column 9 in \"column2..\" for function json_object",

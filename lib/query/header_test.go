@@ -109,6 +109,14 @@ var headerContainsObjectTests = []struct {
 		Result: -1,
 		Ok:     false,
 	},
+	{
+		Expr: parser.ColumnNumber{
+			View:   parser.Identifier{Literal: "t1"},
+			Number: value.NewInteger(999),
+		},
+		Result: -1,
+		Ok:     false,
+	},
 }
 
 func TestHeader_ContainsObject(t *testing.T) {

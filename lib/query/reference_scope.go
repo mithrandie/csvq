@@ -13,6 +13,8 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
+const LimitToUseFieldIndexSliceChache = 8
+
 var blockScopePool = sync.Pool{
 	New: func() interface{} {
 		return NewBlockScope()
@@ -89,11 +91,67 @@ type ReferenceRecord struct {
 	view        *View
 	recordIndex int
 
-	fieldReferenceIndices map[string]int
+	cache *FieldIndexCache
+}
+
+func NewReferenceRecord(view *View, recordIdx int, cacheLen int) ReferenceRecord {
+	return ReferenceRecord{
+		view:        view,
+		recordIndex: recordIdx,
+		cache:       NewFieldIndexCache(cacheLen, LimitToUseFieldIndexSliceChache),
+	}
 }
 
 func (r *ReferenceRecord) IsInRange() bool {
 	return -1 < r.recordIndex && r.recordIndex < r.view.RecordLen()
+}
+
+type FieldIndexCache struct {
+	limitToUseSlice int
+	m               map[parser.QueryExpression]int
+	exprs           []parser.QueryExpression
+	indices         []int
+}
+
+func NewFieldIndexCache(initCap int, limitToUseSlice int) *FieldIndexCache {
+	return &FieldIndexCache{
+		limitToUseSlice: limitToUseSlice,
+		m:               nil,
+		exprs:           make([]parser.QueryExpression, 0, initCap),
+		indices:         make([]int, 0, initCap),
+	}
+}
+
+func (c *FieldIndexCache) Get(expr parser.QueryExpression) (int, bool) {
+	if c.m != nil {
+		idx, ok := c.m[expr]
+		return idx, ok
+	}
+
+	for i := range c.exprs {
+		if expr == c.exprs[i] {
+			return c.indices[i], true
+		}
+	}
+	return -1, false
+}
+
+func (c *FieldIndexCache) Add(expr parser.QueryExpression, idx int) {
+	if c.m == nil && c.limitToUseSlice <= len(c.exprs) {
+		c.m = make(map[parser.QueryExpression]int, c.limitToUseSlice*2)
+		for i := range c.exprs {
+			c.m[c.exprs[i]] = c.indices[i]
+		}
+		c.exprs = nil
+		c.indices = nil
+	}
+
+	if c.m == nil {
+		c.exprs = append(c.exprs, expr)
+		c.indices = append(c.indices, idx)
+	} else {
+		c.m[expr] = idx
+	}
 }
 
 type ReferenceScope struct {
@@ -126,11 +184,7 @@ func NewReferenceScopeWithBlock(tx *Transaction, scope BlockScope) *ReferenceSco
 
 func (rs *ReferenceScope) CreateScopeForRecordEvaluation(view *View, recordIndex int) *ReferenceScope {
 	records := make([]ReferenceRecord, len(rs.Records)+1)
-	records[0] = ReferenceRecord{
-		view:                  view,
-		recordIndex:           recordIndex,
-		fieldReferenceIndices: make(map[string]int),
-	}
+	records[0] = NewReferenceRecord(view, recordIndex, view.FieldLen())
 	for i := range rs.Records {
 		records[i+1] = rs.Records[i]
 	}
@@ -143,11 +197,7 @@ func (rs *ReferenceScope) CreateScopeForSequentialEvaluation(view *View) *Refere
 
 func (rs *ReferenceScope) CreateScopeForAnalytics() *ReferenceScope {
 	records := make([]ReferenceRecord, len(rs.Records))
-	records[0] = ReferenceRecord{
-		view:                  rs.Records[0].view,
-		recordIndex:           -1,
-		fieldReferenceIndices: make(map[string]int),
-	}
+	records[0] = NewReferenceRecord(rs.Records[0].view, -1, rs.Records[0].view.FieldLen())
 	for i := 1; i < len(rs.Records); i++ {
 		records[i] = rs.Records[i]
 	}

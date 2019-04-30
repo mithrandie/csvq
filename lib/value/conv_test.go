@@ -293,7 +293,7 @@ func TestToInteger(t *testing.T) {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
-	p = NewString("1")
+	p = NewString(" 1")
 	i = ToInteger(p)
 	if _, ok := i.(*Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
@@ -342,6 +342,12 @@ func TestToInteger(t *testing.T) {
 	}
 
 	p = NewString("03 Mar 12 12:03 PST")
+	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewString("")
 	i = ToInteger(p)
 	if _, ok := i.(*Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
@@ -518,6 +524,65 @@ func TestToString(t *testing.T) {
 	}
 }
 
+var maybeNumberTests = []struct {
+	Input  string
+	Expect bool
+}{
+	{
+		Input:  "",
+		Expect: false,
+	},
+	{
+		Input:  "12345",
+		Expect: true,
+	},
+	{
+		Input:  "+1234567",
+		Expect: true,
+	},
+	{
+		Input:  "12.345",
+		Expect: true,
+	},
+	{
+		Input:  "1e+02",
+		Expect: true,
+	},
+	{
+		Input:  "1.123e-3",
+		Expect: true,
+	},
+	{
+		Input:  "12345.",
+		Expect: false,
+	},
+	{
+		Input:  "1e",
+		Expect: false,
+	},
+	{
+		Input:  "1ea",
+		Expect: false,
+	},
+	{
+		Input:  "abc",
+		Expect: false,
+	},
+	{
+		Input:  "+",
+		Expect: false,
+	},
+}
+
+func TestMaybeNumber(t *testing.T) {
+	for _, v := range maybeNumberTests {
+		result := MaybeNumber(v.Input)
+		if result != v.Expect {
+			t.Errorf("result = %t, want %t for %q", result, v.Expect, v.Input)
+		}
+	}
+}
+
 func BenchmarkStrToTime1(b *testing.B) {
 	formats := []string{"01/02/2006"}
 
@@ -582,16 +647,37 @@ func BenchmarkStrToTime7(b *testing.B) {
 }
 
 func BenchmarkToInteger(b *testing.B) {
+	p := NewString("a")
 	for i := 0; i < b.N; i++ {
-		p := NewString("a")
-		ToInteger(p)
+		_ = ToInteger(p)
 	}
 }
 
 func BenchmarkToInteger2(b *testing.B) {
+	p := NewString("2012-02-02")
 	for i := 0; i < b.N; i++ {
-		p := NewString("2012-02-02")
-		ToInteger(p)
+		_ = ToInteger(p)
+	}
+}
+
+func BenchmarkToInteger3(b *testing.B) {
+	p := NewString(" 12345")
+	for i := 0; i < b.N; i++ {
+		_ = ToInteger(p)
+	}
+}
+
+func BenchmarkToInteger4(b *testing.B) {
+	p := NewString(" 123.456")
+	for i := 0; i < b.N; i++ {
+		_ = ToInteger(p)
+	}
+}
+
+func BenchmarkToInteger5(b *testing.B) {
+	p := NewFloat(123.456)
+	for i := 0; i < b.N; i++ {
+		_ = ToInteger(p)
 	}
 }
 

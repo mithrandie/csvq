@@ -47,7 +47,7 @@ func (dfmap DatetimeFormatMap) Get(s string) string {
 }
 
 func StrToTime(s string, formats []string) (time.Time, bool) {
-	s = strings.TrimSpace(s)
+	s = cmd.TrimSpace(s)
 	location := cmd.GetLocation()
 
 	for _, format := range formats {
@@ -217,16 +217,19 @@ func ConvertDatetimeFormat(format string) string {
 
 func Float64ToTime(f float64) time.Time {
 	s := Float64ToStr(f)
-	ns := strings.Split(s, ".")
-	sec, _ := strconv.ParseInt(ns[0], 10, 64)
-	var nsec int64
-	if 1 < len(ns) {
-		if 9 < len(ns[1]) {
-			ns[1] = ns[1][:9]
+	pointIdx := strings.Index(s, ".")
+	if -1 < pointIdx {
+		afterPLen := len(s) - 1 - pointIdx
+		if 9 < afterPLen {
+			s = s[:pointIdx+10]
+			afterPLen = 9
 		}
-		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
+		s = s[:pointIdx] + s[pointIdx+1:] + strings.Repeat("0", 9-afterPLen)
+	} else {
+		s = s + strings.Repeat("0", 9)
 	}
-	return timeFromUnixTime(sec, nsec)
+	nsec, _ := strconv.ParseInt(s, 10, 64)
+	return timeFromUnixTime(0, nsec)
 }
 
 func Int64ToStr(i int64) string {
@@ -247,18 +250,20 @@ func ParseFloat64(f float64) Primary {
 func ToInteger(p Primary) Primary {
 	switch p.(type) {
 	case *Integer:
-		return p
+		return NewInteger(p.(*Integer).Raw())
 	case *Float:
 		f := p.(*Float).Raw()
 		if math.Remainder(f, 1) == 0 {
 			return NewInteger(int64(f))
 		}
 	case *String:
-		s := strings.TrimSpace(p.(*String).Raw())
-		if maybeNumber(s) {
+		s := cmd.TrimSpace(p.(*String).Raw())
+		if MaybeInteger(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 				return NewInteger(i)
 			}
+		}
+		if MaybeNumber(s) {
 			if f, e := strconv.ParseFloat(s, 64); e == nil {
 				if math.Remainder(f, 1) == 0 {
 					return NewInteger(int64(f))
@@ -275,10 +280,10 @@ func ToFloat(p Primary) Primary {
 	case *Integer:
 		return NewFloat(float64(p.(*Integer).Raw()))
 	case *Float:
-		return p
+		return NewFloat(p.(*Float).Raw())
 	case *String:
-		s := strings.TrimSpace(p.(*String).Raw())
-		if maybeNumber(s) {
+		s := cmd.TrimSpace(p.(*String).Raw())
+		if MaybeNumber(s) {
 			if f, e := strconv.ParseFloat(p.(*String).Raw(), 64); e == nil {
 				return NewFloat(f)
 			}
@@ -288,48 +293,94 @@ func ToFloat(p Primary) Primary {
 	return NewNull()
 }
 
-func maybeNumber(s string) bool {
-	slen := len(s)
-	if 1 < slen && (s[0] == '-' || s[0] == '+') && '0' <= s[1] && s[1] <= '9' {
-		return true
+func MaybeInteger(s string) bool {
+	if len(s) < 1 {
+		return false
 	}
-	if 0 < slen && '0' <= s[0] && s[0] <= '9' {
-		if 8 <= slen {
-			if s[4] == '-' && (s[6] == '-' || s[7] == '-') {
-				return false
-			}
-			if s[4] == '/' && (s[6] == '/' || s[7] == '/') {
-				return false
-			}
-			if s[2] == ' ' {
-				return false
-			}
+
+	start := 0
+	if s[start] == '+' || s[start] == '-' {
+		start++
+	}
+
+	for i := start; i < len(s); i++ {
+		if !isDecimal(s[i]) {
+			return false
 		}
-		return true
 	}
-	return false
+	return true
+}
+
+func MaybeNumber(s string) bool {
+	if len(s) < 1 {
+		return false
+	}
+
+	start := 0
+	if s[start] == '+' || s[start] == '-' {
+		start++
+	}
+	if len(s) < start+1 {
+		return false
+	}
+
+	pointExists := false
+	eExists := false
+	for i := start; i < len(s); i++ {
+		if !pointExists && s[i] == '.' {
+			if len(s) < i+2 {
+				return false
+			}
+			pointExists = true
+			continue
+		}
+
+		if !eExists && (s[i] == 'e' || s[i] == 'E') {
+			i++
+			if len(s) < i+2 {
+				return false
+			}
+			if s[i] != '+' && s[i] != '-' {
+				return false
+			}
+			eExists = true
+			continue
+		}
+
+		if isDecimal(s[i]) {
+			continue
+		}
+
+		return false
+	}
+
+	return true
+}
+
+func isDecimal(b byte) bool {
+	return '0' <= b && b <= '9'
 }
 
 func ToDatetime(p Primary, formats []string) Primary {
 	switch p.(type) {
 	case *Integer:
-		dt := timeFromUnixTime(p.(*Integer).Raw(), 0)
-		return NewDatetime(dt)
+		return NewDatetime(timeFromUnixTime(p.(*Integer).Raw(), 0))
 	case *Float:
-		dt := Float64ToTime(p.(*Float).Raw())
-		return NewDatetime(dt)
+		return NewDatetime(Float64ToTime(p.(*Float).Raw()))
 	case *Datetime:
-		return p
+		return NewDatetime(p.(*Datetime).Raw())
 	case *String:
-		s := strings.TrimSpace(p.(*String).Raw())
+		s := cmd.TrimSpace(p.(*String).Raw())
 		if dt, ok := StrToTime(s, formats); ok {
 			return NewDatetime(dt)
 		}
-		if maybeNumber(s) {
+		if MaybeInteger(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 				dt := timeFromUnixTime(i, 0)
 				return NewDatetime(dt)
 			}
+		}
+		if MaybeNumber(s) {
 			if f, e := strconv.ParseFloat(s, 64); e == nil {
 				dt := Float64ToTime(f)
 				return NewDatetime(dt)
@@ -347,7 +398,7 @@ func timeFromUnixTime(sec int64, nano int64) time.Time {
 func ToBoolean(p Primary) Primary {
 	switch p.(type) {
 	case *Boolean:
-		return p
+		return NewBoolean(p.(*Boolean).Raw())
 	case *String, *Integer, *Float, *Ternary:
 		if p.Ternary() != ternary.UNKNOWN {
 			return NewBoolean(p.Ternary().ParseBool())
@@ -359,7 +410,7 @@ func ToBoolean(p Primary) Primary {
 func ToString(p Primary) Primary {
 	switch p.(type) {
 	case *String:
-		return p
+		return NewString(p.(*String).Raw())
 	case *Integer:
 		return NewString(Int64ToStr(p.(*Integer).Raw()))
 	case *Float:

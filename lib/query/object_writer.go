@@ -138,7 +138,7 @@ func (w *ObjectWriter) WriteWithAutoLineBreak(s string) {
 		}
 
 		line := scanner.Text()
-		if strings.TrimSpace(line) == "```" {
+		if cmd.TrimSpace(line) == "```" {
 			preformatted = !preformatted
 			continue
 		} else {

@@ -70,7 +70,7 @@ func (values SortValues) EquivalentTo(compareValues SortValues) bool {
 func (values SortValues) Serialize(buf *bytes.Buffer) {
 	for i, val := range values {
 		if 0 < i {
-			buf.WriteRune(':')
+			buf.WriteByte(58)
 		}
 
 		switch val.Type {
@@ -112,12 +112,16 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		sortValue.Float = float64(sortValue.Integer)
 		sortValue.Datetime = sortValue.Integer * 1e9
 		sortValue.String = s.(*value.String).Raw()
+		value.Discard(i)
+		value.Discard(s)
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
 		s := value.ToString(val)
 		sortValue.Type = FloatType
 		sortValue.Float = f.(*value.Float).Raw()
 		sortValue.Datetime = int64(sortValue.Float * 1e9)
 		sortValue.String = s.(*value.String).Raw()
+		value.Discard(f)
+		value.Discard(s)
 	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
 		t := dt.(*value.Datetime).Raw()
 		if t.Nanosecond() > 0 {
@@ -140,6 +144,7 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 			sortValue.Datetime = t.UnixNano()
 			sortValue.String = value.Int64ToStr(i)
 		}
+		value.Discard(dt)
 	} else if b := value.ToBoolean(val); !value.IsNull(b) {
 		sortValue.Type = BooleanType
 		sortValue.Boolean = b.(*value.Boolean).Raw()
@@ -150,7 +155,7 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		}
 	} else if s, ok := val.(*value.String); ok {
 		sortValue.Type = StringType
-		sortValue.String = strings.ToUpper(strings.TrimSpace(s.Raw()))
+		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.Raw()))
 	} else {
 		sortValue.Type = NullType
 	}

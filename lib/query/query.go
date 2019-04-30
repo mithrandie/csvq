@@ -26,6 +26,7 @@ func FetchCursor(ctx context.Context, scope *ReferenceScope, name parser.Identif
 				return false, NewInvalidFetchPositionError(fetchPosition)
 			}
 			number = int(i.(*value.Integer).Raw())
+			value.Discard(i)
 		}
 	}
 
@@ -71,12 +72,15 @@ func DeclareView(ctx context.Context, scope *ReferenceScope, expr parser.ViewDec
 		}
 	} else {
 		fields := make([]string, len(expr.Fields))
-		for i, v := range expr.Fields {
-			f, _ := v.(parser.Identifier)
-			if InStrSliceWithCaseInsensitive(f.Literal, fields) {
-				return NewDuplicateFieldNameError(f)
+		fieldsMap := make(map[string]bool, len(expr.Fields))
+		for i := range expr.Fields {
+			lit := expr.Fields[i].(parser.Identifier).Literal
+			ulit := strings.ToUpper(lit)
+			if _, ok := fieldsMap[ulit]; ok {
+				return NewDuplicateFieldNameError(expr.Fields[i].(parser.Identifier))
 			}
-			fields[i] = f.Literal
+			fields[i] = lit
+			fieldsMap[ulit] = true
 		}
 		header := NewHeader(expr.View.Literal, fields)
 		view = NewView()
@@ -162,7 +166,7 @@ func Select(ctx context.Context, scope *ReferenceScope, query parser.SelectQuery
 			}
 		case 1:
 			for i, v := range intoVars {
-				if _, err := scope.SubstituteVariableDirectly(v, view.RecordSet[0][i].Value()); err != nil {
+				if _, err := scope.SubstituteVariableDirectly(v, view.RecordSet[0][i][0]); err != nil {
 					return view, err
 				}
 			}
@@ -183,8 +187,7 @@ func selectEntity(ctx context.Context, scope *ReferenceScope, expr parser.QueryE
 	if entity.FromClause == nil {
 		entity.FromClause = parser.FromClause{}
 	}
-	view := NewView()
-	err := view.Load(ctx, scope, entity.FromClause.(parser.FromClause).Tables, forUpdate, false)
+	view, err := LoadView(ctx, scope, entity.FromClause.(parser.FromClause).Tables, forUpdate, false)
 	if err != nil {
 		return nil, err
 	}
@@ -351,8 +354,7 @@ func Insert(ctx context.Context, scope *ReferenceScope, query parser.InsertQuery
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
-	view := NewView()
-	err := view.Load(ctx, queryScope, tables, true, false)
+	view, err := LoadView(ctx, queryScope, tables, true, false)
 	if err != nil {
 		return nil, insertRecords, err
 	}
@@ -402,8 +404,7 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
-	view := NewView()
-	err := view.Load(ctx, queryScope, query.FromClause.(parser.FromClause).Tables, true, true)
+	view, err := LoadView(ctx, queryScope, query.FromClause.(parser.FromClause).Tables, true, true)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -434,11 +435,12 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 		}
 	}
 
-	updatesList := make(map[string]map[int][]int)
+	updatesList := make(map[string]map[int]*UintPool)
 	seqScope := queryScope.CreateScopeForSequentialEvaluation(view)
 	for i := range view.RecordSet {
 		seqScope.Records[0].recordIndex = i
 		internalIds := make(map[string]int)
+		setListLen := len(query.SetList)
 
 		for _, uset := range query.SetList {
 			val, err := Evaluate(ctx, seqScope, uset.Value)
@@ -471,16 +473,16 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 
 			fieldIdx, _ := viewsToUpdate[viewref].Header.SearchIndex(uset.Field)
 			if _, ok := updatesList[viewref]; !ok {
-				updatesList[viewref] = make(map[int][]int)
+				updatesList[viewref] = make(map[int]*UintPool)
 			}
 			if _, ok := updatesList[viewref][internalId]; !ok {
-				updatesList[viewref][internalId] = []int{}
+				updatesList[viewref][internalId] = NewUintPool(setListLen, LimitToUseUintSlicePool)
 				updatedCount[viewref]++
 			}
-			if InIntSlice(fieldIdx, updatesList[viewref][internalId]) {
+			if updatesList[viewref][internalId].Exists(uint(fieldIdx)) {
 				return nil, nil, NewUpdateValueAmbiguousError(uset.Field, uset.Value)
 			}
-			updatesList[viewref][internalId] = append(updatesList[viewref][internalId], fieldIdx)
+			updatesList[viewref][internalId].Add(uint(fieldIdx))
 			viewsToUpdate[viewref].RecordSet[internalId][fieldIdx] = NewCell(val)
 		}
 	}
@@ -524,8 +526,7 @@ func Replace(ctx context.Context, scope *ReferenceScope, query parser.ReplaceQue
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
-	view := NewView()
-	err := view.Load(ctx, queryScope, tables, true, false)
+	view, err := LoadView(ctx, queryScope, tables, true, false)
 	if err != nil {
 		return nil, replaceRecords, err
 	}
@@ -585,8 +586,7 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
-	view := NewView()
-	err := view.Load(ctx, queryScope, tables, true, true)
+	view, err := LoadView(ctx, queryScope, tables, true, true)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -704,13 +704,16 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 		}
 	} else {
 		fields := make([]string, len(query.Fields))
-		for i, v := range query.Fields {
-			f, _ := v.(parser.Identifier)
-			if InStrSliceWithCaseInsensitive(f.Literal, fields) {
-				err = NewDuplicateFieldNameError(f)
+		fieldsMap := make(map[string]bool, len(query.Fields))
+		for i := range query.Fields {
+			lit := query.Fields[i].(parser.Identifier).Literal
+			ulit := strings.ToUpper(lit)
+			if _, ok := fieldsMap[ulit]; ok {
+				err = NewDuplicateFieldNameError(query.Fields[i].(parser.Identifier))
 				return nil, appendCompositeError(err, queryScope.Tx.FileContainer.Close(fileInfo.Handler))
 			}
-			fields[i] = f.Literal
+			fields[i] = lit
+			fieldsMap[ulit] = true
 		}
 		header := NewHeader(parser.FormatTableName(fileInfo.Path), fields)
 		view = &View{
@@ -739,8 +742,7 @@ func AddColumns(ctx context.Context, scope *ReferenceScope, query parser.AddColu
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
-	view := NewView()
-	err := view.LoadFromTableIdentifier(ctx, queryScope, query.Table, true, false)
+	view, err := LoadViewFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -765,17 +767,24 @@ func AddColumns(ctx context.Context, scope *ReferenceScope, query parser.AddColu
 		}
 	}
 
+	newFieldLen := view.FieldLen() + len(query.Columns)
 	columnNames := view.Header.TableColumnNames()
+	columnNamesMap := make(map[string]bool, newFieldLen)
+	for i := range columnNames {
+		columnNamesMap[strings.ToUpper(columnNames[i])] = true
+	}
+
 	fields := make([]string, len(query.Columns))
 	defaults := make([]parser.QueryExpression, len(query.Columns))
 	for i, coldef := range query.Columns {
-		if InStrSliceWithCaseInsensitive(coldef.Column.Literal, columnNames) || InStrSliceWithCaseInsensitive(coldef.Column.Literal, fields) {
+		ulit := strings.ToUpper(coldef.Column.Literal)
+		if _, ok := columnNamesMap[ulit]; ok {
 			return nil, 0, NewDuplicateFieldNameError(coldef.Column)
 		}
 		fields[i] = coldef.Column.Literal
 		defaults[i] = coldef.Value
+		columnNamesMap[ulit] = true
 	}
-	newFieldLen := view.FieldLen() + len(query.Columns)
 
 	addHeader := NewHeader(parser.FormatTableName(view.FileInfo.Path), fields)
 	header := make(Header, newFieldLen)
@@ -846,24 +855,25 @@ func DropColumns(ctx context.Context, scope *ReferenceScope, query parser.DropCo
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
-	view := NewView()
-	err := view.LoadFromTableIdentifier(ctx, queryScope, query.Table, true, false)
+	view, err := LoadViewFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	dropIndices := make([]int, len(query.Columns))
-	for i, v := range query.Columns {
+	dropIndices := NewUintPool(len(query.Columns), LimitToUseUintSlicePool)
+	for _, v := range query.Columns {
 		idx, err := view.FieldIndex(v)
 		if err != nil {
 			return nil, 0, err
 		}
-		dropIndices[i] = idx
+		if !dropIndices.Exists(uint(idx)) {
+			dropIndices.Add(uint(idx))
+		}
 	}
 
 	view.selectFields = []int{}
 	for i := 0; i < view.FieldLen(); i++ {
-		if view.Header[i].IsFromTable && !InIntSlice(i, dropIndices) {
+		if view.Header[i].IsFromTable && !dropIndices.Exists(uint(i)) {
 			view.selectFields = append(view.selectFields, i)
 		}
 	}
@@ -878,7 +888,7 @@ func DropColumns(ctx context.Context, scope *ReferenceScope, query parser.DropCo
 		scope.Tx.cachedViews.Set(view)
 	}
 
-	return view.FileInfo, len(dropIndices), err
+	return view.FileInfo, dropIndices.Len(), err
 
 }
 
@@ -889,14 +899,17 @@ func RenameColumn(ctx context.Context, scope *ReferenceScope, query parser.Renam
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
-	view := NewView()
-	err := view.LoadFromTableIdentifier(ctx, queryScope, query.Table, true, false)
+	view, err := LoadViewFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, err
 	}
 
 	columnNames := view.Header.TableColumnNames()
-	if InStrSliceWithCaseInsensitive(query.New.Literal, columnNames) {
+	columnNamesMap := make(map[string]bool, len(columnNames))
+	for i := range columnNames {
+		columnNamesMap[strings.ToUpper(columnNames[i])] = true
+	}
+	if _, ok := columnNamesMap[strings.ToUpper(query.New.Literal)]; ok {
 		return nil, NewDuplicateFieldNameError(query.New)
 	}
 
@@ -925,8 +938,7 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 	queryScope.Tx.operationMutex.Lock()
 	defer queryScope.Tx.operationMutex.Unlock()
 
-	view := NewView()
-	err := view.LoadFromTableIdentifier(ctx, queryScope, query.Table, true, false)
+	view, err := LoadViewFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, log, err
 	}
@@ -966,6 +978,7 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 		case TableJsonEscape:
 			err = fileInfo.SetJsonEscape(s.(*value.String).Raw())
 		}
+		value.Discard(s)
 	case TableHeader, TableEncloseAll, TablePrettyPrint:
 		b := value.ToBoolean(p)
 		if value.IsNull(b) {

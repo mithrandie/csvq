@@ -28,8 +28,7 @@ func Calc(ctx context.Context, proc *query.Processor, expr string) error {
 	scope := query.NewReferenceScope(proc.Tx)
 	queryScope := scope.CreateNode()
 
-	view := query.NewView()
-	err = view.Load(ctx, queryScope, selectEntity.FromClause.(parser.FromClause).Tables, false, false)
+	view, err := query.LoadView(ctx, queryScope, selectEntity.FromClause.(parser.FromClause).Tables, false, false)
 	if err != nil {
 		if appErr, ok := err.(query.Error); ok {
 			err = errors.New(appErr.Message())

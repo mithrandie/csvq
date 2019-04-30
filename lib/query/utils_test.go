@@ -2,12 +2,71 @@ package query
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"
 )
+
+func TestUintPool_Exists(t *testing.T) {
+	pool := &UintPool{
+		limitToUseSlice: 2,
+		m: map[uint]bool{
+			1: true,
+			2: true,
+			3: true,
+		},
+		values: []uint{1, 2, 3},
+	}
+
+	result := pool.Exists(1)
+	if !result {
+		t.Errorf("result = %t, want %t", false, true)
+	}
+
+	result = pool.Exists(9)
+	if result {
+		t.Errorf("result = %t, want %t", true, false)
+	}
+
+	pool = &UintPool{
+		limitToUseSlice: 2,
+		m: map[uint]bool{
+			1: true,
+		},
+		values: []uint{1},
+	}
+
+	result = pool.Exists(1)
+	if !result {
+		t.Errorf("result = %t, want %t", false, true)
+	}
+
+	result = pool.Exists(9)
+	if result {
+		t.Errorf("result = %t, want %t", true, false)
+	}
+}
+
+func TestUintPool_Add(t *testing.T) {
+	pool := NewUintPool(1, 2)
+
+	pool.Add(1)
+	expect := &UintPool{
+		limitToUseSlice: 2,
+		m: map[uint]bool{
+			1: true,
+		},
+		values: []uint{1},
+	}
+
+	if !reflect.DeepEqual(pool, expect) {
+		t.Errorf("pool = %v, want %v", pool, expect)
+	}
+}
 
 func TestSerializeComparisonKeys(t *testing.T) {
 	values := []value.Primary{
@@ -24,7 +83,7 @@ func TestSerializeComparisonKeys(t *testing.T) {
 		value.NewTernary(ternary.UNKNOWN),
 		value.NewNull(),
 	}
-	expect := "[S]STR:[I]1[B]true:[I]0[B]false:[I]3:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]1[B]true:[I]0[B]false:[N]:[N]"
+	expect := "[S]STR:[I]1[B]t:[I]0[B]f:[I]3:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]1[B]t:[I]0[B]f:[N]:[N]"
 
 	buf := &bytes.Buffer{}
 	SerializeComparisonKeys(buf, values, TestTx.Flags)
@@ -49,12 +108,7 @@ func BenchmarkDistinguish(b *testing.B) {
 	}
 }
 
-func BenchmarkSerializeKey(b *testing.B) {
-	plist := []value.Primary{
-		value.NewString("str"),
-		value.NewInteger(123),
-	}
-
+func benchmarkComparisonKeys(b *testing.B, plist []value.Primary) {
 	buf := &bytes.Buffer{}
 
 	b.ResetTimer()
@@ -62,4 +116,67 @@ func BenchmarkSerializeKey(b *testing.B) {
 		buf.Reset()
 		SerializeComparisonKeys(buf, plist, TestTx.Flags)
 	}
+}
+
+func BenchmarkComparisonKeysString(b *testing.B) {
+	plist := []value.Primary{
+		value.NewString("abcdefghi"),
+		value.NewString("jklmn"),
+	}
+
+	benchmarkComparisonKeys(b, plist)
+}
+
+func BenchmarkComparisonKeysInteger(b *testing.B) {
+	plist := []value.Primary{
+		value.NewInteger(123456789),
+		value.NewInteger(1),
+	}
+
+	benchmarkComparisonKeys(b, plist)
+}
+
+func BenchmarkComparisonKeysFlaot(b *testing.B) {
+	plist := []value.Primary{
+		value.NewFloat(1.234e-9),
+		value.NewFloat(123456.7890123),
+	}
+
+	benchmarkComparisonKeys(b, plist)
+}
+
+func BenchmarkComparisonKeysDatetime(b *testing.B) {
+	plist := []value.Primary{
+		value.NewDatetime(time.Date(2012, 2, 4, 9, 18, 15, 0, time.Local)),
+		value.NewDatetime(time.Date(2015, 3, 4, 9, 17, 15, 0, time.Local)),
+	}
+
+	benchmarkComparisonKeys(b, plist)
+}
+
+func BenchmarkComparisonKeysBoolean(b *testing.B) {
+	plist := []value.Primary{
+		value.NewBoolean(true),
+		value.NewBoolean(false),
+	}
+
+	benchmarkComparisonKeys(b, plist)
+}
+
+func BenchmarkComparisonKeysTernary(b *testing.B) {
+	plist := []value.Primary{
+		value.NewTernary(ternary.TRUE),
+		value.NewTernary(ternary.FALSE),
+		value.NewTernary(ternary.UNKNOWN),
+	}
+
+	benchmarkComparisonKeys(b, plist)
+}
+
+func BenchmarkComparisonKeysNull(b *testing.B) {
+	plist := []value.Primary{
+		value.NewNull(),
+	}
+
+	benchmarkComparisonKeys(b, plist)
 }
