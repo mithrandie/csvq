@@ -229,7 +229,7 @@ func Float64ToTime(f float64) time.Time {
 		s = s + strings.Repeat("0", 9)
 	}
 	nsec, _ := strconv.ParseInt(s, 10, 64)
-	return timeFromUnixTime(0, nsec)
+	return TimeFromUnixTime(0, nsec)
 }
 
 func Int64ToStr(i int64) string {
@@ -363,35 +363,18 @@ func isDecimal(b byte) bool {
 
 func ToDatetime(p Primary, formats []string) Primary {
 	switch p.(type) {
-	case *Integer:
-		return NewDatetime(timeFromUnixTime(p.(*Integer).Raw(), 0))
-	case *Float:
-		return NewDatetime(Float64ToTime(p.(*Float).Raw()))
 	case *Datetime:
 		return NewDatetime(p.(*Datetime).Raw())
 	case *String:
-		s := cmd.TrimSpace(p.(*String).Raw())
-		if dt, ok := StrToTime(s, formats); ok {
+		if dt, ok := StrToTime(p.(*String).Raw(), formats); ok {
 			return NewDatetime(dt)
-		}
-		if MaybeInteger(s) {
-			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-				dt := timeFromUnixTime(i, 0)
-				return NewDatetime(dt)
-			}
-		}
-		if MaybeNumber(s) {
-			if f, e := strconv.ParseFloat(s, 64); e == nil {
-				dt := Float64ToTime(f)
-				return NewDatetime(dt)
-			}
 		}
 	}
 
 	return NewNull()
 }
 
-func timeFromUnixTime(sec int64, nano int64) time.Time {
+func TimeFromUnixTime(sec int64, nano int64) time.Time {
 	return time.Unix(sec, nano).In(cmd.GetLocation())
 }
 

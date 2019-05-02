@@ -3278,6 +3278,36 @@ func TestTernary(t *testing.T) {
 
 var datetimeTests = []functionTest{
 	{
+		Name: "Datetime",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+		},
+		Result: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+	},
+	{
+		Name: "Datetime from Integer",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewInteger(1136181845),
+		},
+		Result: value.NewDatetime(time.Date(2006, 1, 2, 6, 4, 5, 0, GetTestLocation())),
+	},
+	{
+		Name: "Datetime from Float",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewFloat(1136181845.123),
+		},
+		Result: value.NewDatetime(time.Date(2006, 1, 2, 6, 4, 5, 123000000, GetTestLocation())),
+	},
+	{
 		Name: "Datetime from String",
 		Function: parser.Function{
 			Name: "datetime",
@@ -3286,6 +3316,36 @@ var datetimeTests = []functionTest{
 			value.NewString("2012-02-03 09:18:15"),
 		},
 		Result: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+	},
+	{
+		Name: "Datetime from String representing Integer",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewString("1136181845"),
+		},
+		Result: value.NewDatetime(time.Date(2006, 1, 2, 6, 4, 5, 0, GetTestLocation())),
+	},
+	{
+		Name: "Datetime from String representing Float",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewString("1136181845.123"),
+		},
+		Result: value.NewDatetime(time.Date(2006, 1, 2, 6, 4, 5, 123000000, GetTestLocation())),
+	},
+	{
+		Name: "Datetime Invalid String",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewString("abcde"),
+		},
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Datetime Arguments Error",

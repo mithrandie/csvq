@@ -76,14 +76,12 @@ func (values SortValues) Serialize(buf *bytes.Buffer) {
 		switch val.Type {
 		case NullType:
 			serializeNull(buf)
-		case IntegerType:
+		case IntegerType, BooleanType:
 			serializeInteger(buf, val.Integer)
 		case FloatType:
-			serializeFlaot(buf, val.Float)
+			serializeFloat(buf, val.Float)
 		case DatetimeType:
 			serializeDatetimeFromUnixNano(buf, val.Datetime)
-		case BooleanType:
-			serializeBoolean(buf, val.Boolean)
 		case StringType:
 			serializeString(buf, val.String)
 		}
@@ -97,7 +95,6 @@ type SortValue struct {
 	Float    float64
 	Datetime int64
 	String   string
-	Boolean  bool
 }
 
 func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
@@ -110,45 +107,24 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		sortValue.Type = IntegerType
 		sortValue.Integer = i.(*value.Integer).Raw()
 		sortValue.Float = float64(sortValue.Integer)
-		sortValue.Datetime = sortValue.Integer * 1e9
-		sortValue.String = s.(*value.String).Raw()
+		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.(*value.String).Raw()))
 		value.Discard(i)
 		value.Discard(s)
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
 		s := value.ToString(val)
 		sortValue.Type = FloatType
 		sortValue.Float = f.(*value.Float).Raw()
-		sortValue.Datetime = int64(sortValue.Float * 1e9)
-		sortValue.String = s.(*value.String).Raw()
+		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.(*value.String).Raw()))
 		value.Discard(f)
 		value.Discard(s)
 	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
 		t := dt.(*value.Datetime).Raw()
-		if t.Nanosecond() > 0 {
-			f := float64(t.Unix()) + float64(t.Nanosecond())/1e9
-			t2 := value.Float64ToTime(f)
-			if t.Equal(t2) {
-				sortValue.Type = FloatType
-				sortValue.Float = f
-				sortValue.Datetime = t.UnixNano()
-				sortValue.String = value.Float64ToStr(f)
-			} else {
-				sortValue.Type = DatetimeType
-				sortValue.Datetime = t.UnixNano()
-			}
-		} else {
-			sortValue.Type = IntegerType
-			i := t.Unix()
-			sortValue.Integer = i
-			sortValue.Float = float64(i)
-			sortValue.Datetime = t.UnixNano()
-			sortValue.String = value.Int64ToStr(i)
-		}
+		sortValue.Type = DatetimeType
+		sortValue.Datetime = t.UnixNano()
 		value.Discard(dt)
 	} else if b := value.ToBoolean(val); !value.IsNull(b) {
 		sortValue.Type = BooleanType
-		sortValue.Boolean = b.(*value.Boolean).Raw()
-		if sortValue.Boolean {
+		if b.(*value.Boolean).Raw() {
 			sortValue.Integer = 1
 		} else {
 			sortValue.Integer = 0
@@ -174,8 +150,6 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 			return ternary.ConvertFromBool(v.Integer < compareValue.Integer)
 		case FloatType:
 			return ternary.ConvertFromBool(v.Float < compareValue.Float)
-		case DatetimeType:
-			return ternary.ConvertFromBool(v.Datetime < compareValue.Datetime)
 		case StringType:
 			return ternary.ConvertFromBool(v.String < compareValue.String)
 		}
@@ -186,14 +160,12 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 				return ternary.UNKNOWN
 			}
 			return ternary.ConvertFromBool(v.Float < compareValue.Float)
-		case DatetimeType:
-			return ternary.ConvertFromBool(v.Datetime < compareValue.Datetime)
 		case StringType:
 			return ternary.ConvertFromBool(v.String < compareValue.String)
 		}
 	case DatetimeType:
 		switch compareValue.Type {
-		case IntegerType, FloatType, DatetimeType:
+		case DatetimeType:
 			if v.Datetime == compareValue.Datetime {
 				return ternary.UNKNOWN
 			}
@@ -231,10 +203,8 @@ func (v *SortValue) EquivalentTo(compareValue *SortValue) bool {
 		}
 	case BooleanType:
 		switch compareValue.Type {
-		case IntegerType:
+		case BooleanType, IntegerType:
 			return v.Integer == compareValue.Integer
-		case BooleanType:
-			return v.Boolean == compareValue.Boolean
 		}
 	case StringType:
 		switch compareValue.Type {

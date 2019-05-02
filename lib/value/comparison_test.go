@@ -68,6 +68,11 @@ var compareCombinedlyTests = []struct {
 		Result: IsGreater,
 	},
 	{
+		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
+		RHS:    NewString("abc"),
+		Result: IsIncommensurable,
+	},
+	{
 		LHS:    NewBoolean(true),
 		RHS:    NewBoolean(true),
 		Result: IsBoolEqual,

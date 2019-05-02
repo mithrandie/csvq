@@ -254,6 +254,29 @@ func TestConvertDatetimeFormat(t *testing.T) {
 	}
 }
 
+func TestFloat64ToTime(t *testing.T) {
+	f := float64(1136181845)
+	expect := time.Date(2006, 1, 2, 6, 4, 5, 0, time.UTC).In(cmd.GetLocation())
+	result := Float64ToTime(f)
+	if !result.Equal(expect) {
+		t.Errorf("result = %q, want %q for %f", result, expect, f)
+	}
+
+	f = 1136181845.123
+	expect = time.Date(2006, 1, 2, 6, 4, 5, 123000000, time.UTC).In(cmd.GetLocation())
+	result = Float64ToTime(f)
+	if !result.Equal(expect) {
+		t.Errorf("result = %q, want %q for %f", result, expect, f)
+	}
+
+	f = 1.123456789012
+	expect = time.Date(1970, 1, 1, 0, 0, 1, 123456789, time.UTC).In(cmd.GetLocation())
+	result = Float64ToTime(f)
+	if !result.Equal(expect) {
+		t.Errorf("result = %q, want %q for %f", result, expect, f)
+	}
+}
+
 func TestParseFloat64(t *testing.T) {
 	var p Primary
 	var f float64
@@ -399,37 +422,7 @@ func TestToDatetime(t *testing.T) {
 		}
 	}
 
-	p = NewInteger(1136181845)
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
-	p = NewFloat(1136181845)
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
-	p = NewFloat(1.123456789123)
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
 	p = NewDatetimeFromString("2006-01-02 15:04:05", nil)
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
-	p = NewString("1136181845")
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
-	p = NewString("1136181845.12345")
 	dt = ToDatetime(p, nil)
 	if _, ok := dt.(*Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)

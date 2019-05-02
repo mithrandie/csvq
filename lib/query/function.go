@@ -1578,26 +1578,13 @@ func Integer(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prim
 	}
 
 	switch args[0].(type) {
-	case *value.Integer:
-		return args[0], nil
 	case *value.Float:
 		return value.NewInteger(int64(round(args[0].(*value.Float).Raw(), 0))), nil
-	case *value.String:
-		s := cmd.TrimSpace(args[0].(*value.String).Raw())
-		if value.MaybeInteger(s) {
-			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-				return value.NewInteger(i), nil
-			}
-		}
-		if value.MaybeNumber(s) {
-			if f, e := strconv.ParseFloat(s, 64); e == nil {
-				return value.NewInteger(int64(round(f, 0))), nil
-			}
-		}
 	case *value.Datetime:
 		return value.NewInteger(args[0].(*value.Datetime).Raw().Unix()), nil
+	default:
+		return value.ToInteger(args[0]), nil
 	}
-	return value.NewNull(), nil
 }
 
 func Float(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -1639,7 +1626,32 @@ func Datetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	return value.ToDatetime(args[0], flags.DatetimeFormat), nil
+	switch args[0].(type) {
+	case *value.Integer:
+		return value.NewDatetime(value.TimeFromUnixTime(args[0].(*value.Integer).Raw(), 0)), nil
+	case *value.Float:
+		return value.NewDatetime(value.Float64ToTime(args[0].(*value.Float).Raw())), nil
+	case *value.String:
+		s := cmd.TrimSpace(args[0].(*value.String).Raw())
+		if dt, ok := value.StrToTime(s, flags.DatetimeFormat); ok {
+			return value.NewDatetime(dt), nil
+		}
+		if value.MaybeInteger(s) {
+			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
+				dt := value.TimeFromUnixTime(i, 0)
+				return value.NewDatetime(dt), nil
+			}
+		}
+		if value.MaybeNumber(s) {
+			if f, e := strconv.ParseFloat(s, 64); e == nil {
+				dt := value.Float64ToTime(f)
+				return value.NewDatetime(dt), nil
+			}
+		}
+		return value.NewNull(), nil
+	default:
+		return value.ToDatetime(args[0], flags.DatetimeFormat), nil
+	}
 }
 
 func Call(ctx context.Context, fn parser.Function, args []value.Primary) (value.Primary, error) {
