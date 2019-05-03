@@ -5,6 +5,17 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.10.2
+
+Released on May 3, 2019
+
+- Add the following built-in funciton.
+  - NANO_TO_DATETIME
+- Fix the following bug.
+  - Timezone not set correctly on second change.
+- Disable automatic type conversion from number to datetime.
+- Improve execusion performance.
+
 ## Version 1.10.1
 
 Released on April 28, 2019
