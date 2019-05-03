@@ -5,6 +5,13 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.10.4
+
+Released on May 3, 2019
+
+- Fix the following bug.
+  - Panic occurrs when a subquery in comparison returns empty set.
+
 ## Version 1.10.3
 
 Released on May 3, 2019
