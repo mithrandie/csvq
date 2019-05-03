@@ -270,13 +270,13 @@ func (f *Flags) SetLocation(s string) error {
 		s = "UTC"
 	}
 
-	location, err := time.LoadLocation(s)
+	loc, err := time.LoadLocation(s)
 	if err != nil {
 		return errors.New(fmt.Sprintf("timezone %q does not exist", s))
 	}
 
 	f.Location = s
-	time.Local = location
+	location = loc
 	return nil
 }
 
@@ -350,7 +350,7 @@ func (f *Flags) SetDelimiterPositions(s string) error {
 }
 
 func (f *Flags) SetJsonQuery(s string) {
-	f.JsonQuery = strings.TrimSpace(s)
+	f.JsonQuery = TrimSpace(s)
 }
 
 func (f *Flags) SetEncoding(s string) error {

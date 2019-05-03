@@ -74,7 +74,7 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, li
 		}
 
 		for j := range view.RecordSet[i] {
-			str, effect, _ := ConvertFieldContents(view.RecordSet[i][j].Value(), false)
+			str, effect, _ := ConvertFieldContents(view.RecordSet[i][j][0], false)
 			quote := false
 			if encloseAll && (effect == cmd.StringEffect || effect == cmd.DatetimeEffect) {
 				quote = true
@@ -121,7 +121,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 
 			fields := make([]fixedlen.Field, fieldLen)
 			for j := range view.RecordSet[i] {
-				str, _, a := ConvertFieldContents(view.RecordSet[i][j].Value(), false)
+				str, _, a := ConvertFieldContents(view.RecordSet[i][j][0], false)
 				fields[j] = fixedlen.NewField(str, a)
 			}
 			fieldList[i+recordStartPos] = fields
@@ -171,7 +171,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 			}
 
 			for j := range view.RecordSet[i] {
-				str, _, a := ConvertFieldContents(view.RecordSet[i][j].Value(), false)
+				str, _, a := ConvertFieldContents(view.RecordSet[i][j][0], false)
 				fields[j] = fixedlen.NewField(str, a)
 			}
 			if err := w.Write(fields); err != nil {
@@ -195,7 +195,7 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 
 		row := make([]value.Primary, view.FieldLen())
 		for j := range view.RecordSet[i] {
-			row[j] = view.RecordSet[i][j].Value()
+			row[j] = view.RecordSet[i][j][0]
 		}
 		records[i] = row
 	}
@@ -277,7 +277,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 
 		rfields := make([]table.Field, fieldLen)
 		for j := range view.RecordSet[i] {
-			str, effect, align := ConvertFieldContents(view.RecordSet[i][j].Value(), isPlainTable)
+			str, effect, align := ConvertFieldContents(view.RecordSet[i][j][0], isPlainTable)
 			if format == cmd.TEXT {
 				textStrBuf.Reset()
 				textLineBuf.Reset()
@@ -358,7 +358,7 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.Li
 		}
 
 		for j := range view.RecordSet[i] {
-			fields[j], _, _ = ConvertFieldContents(view.RecordSet[i][j].Value(), false)
+			fields[j], _, _ = ConvertFieldContents(view.RecordSet[i][j][0], false)
 		}
 		if err := w.Write(fields); err != nil {
 			return NewDataEncodingError(err.Error())

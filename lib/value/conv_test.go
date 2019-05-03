@@ -13,148 +13,148 @@ func TestStrToTime(t *testing.T) {
 	formats := []string{"01/02/2006"}
 
 	s := "01/02/2006"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 -08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 PST"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/11/2 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 PST"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 -08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 PST"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 -08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 -0800"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 PST"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "02 Jan 06 15:04 PDT"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "02 Jan 06 15:04 -0700"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05-08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05+08:00"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05"
-	if _, err := StrToTime(s, formats); err != nil {
-		t.Errorf("unexpected error %q for %q", err, s)
+	if _, ok := StrToTime(s, formats); !ok {
+		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "e"
-	if _, err := StrToTime(s, formats); err == nil {
-		t.Errorf("no errors, want error for %q", s)
+	if _, ok := StrToTime(s, formats); ok {
+		t.Errorf("successeded, want to fail for %q", s)
 	}
 }
 
@@ -254,6 +254,29 @@ func TestConvertDatetimeFormat(t *testing.T) {
 	}
 }
 
+func TestFloat64ToTime(t *testing.T) {
+	f := float64(1136181845)
+	expect := time.Date(2006, 1, 2, 6, 4, 5, 0, time.UTC).In(cmd.GetLocation())
+	result := Float64ToTime(f)
+	if !result.Equal(expect) {
+		t.Errorf("result = %q, want %q for %f", result, expect, f)
+	}
+
+	f = 1136181845.123
+	expect = time.Date(2006, 1, 2, 6, 4, 5, 123000000, time.UTC).In(cmd.GetLocation())
+	result = Float64ToTime(f)
+	if !result.Equal(expect) {
+		t.Errorf("result = %q, want %q for %f", result, expect, f)
+	}
+
+	f = 1.123456789012
+	expect = time.Date(1970, 1, 1, 0, 0, 1, 123456789, time.UTC).In(cmd.GetLocation())
+	result = Float64ToTime(f)
+	if !result.Equal(expect) {
+		t.Errorf("result = %q, want %q for %f", result, expect, f)
+	}
+}
+
 func TestParseFloat64(t *testing.T) {
 	var p Primary
 	var f float64
@@ -293,7 +316,7 @@ func TestToInteger(t *testing.T) {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
-	p = NewString("1")
+	p = NewString(" 1")
 	i = ToInteger(p)
 	if _, ok := i.(*Integer); !ok {
 		t.Errorf("primary type = %T, want Integer for %#v", i, p)
@@ -346,6 +369,12 @@ func TestToInteger(t *testing.T) {
 	if _, ok := i.(*Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
+
+	p = NewString("")
+	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
 }
 
 func TestToFloat(t *testing.T) {
@@ -393,37 +422,7 @@ func TestToDatetime(t *testing.T) {
 		}
 	}
 
-	p = NewInteger(1136181845)
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
-	p = NewFloat(1136181845)
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
-	p = NewFloat(1.123456789123)
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
 	p = NewDatetimeFromString("2006-01-02 15:04:05", nil)
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
-	p = NewString("1136181845")
-	dt = ToDatetime(p, nil)
-	if _, ok := dt.(*Datetime); !ok {
-		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
-	}
-
-	p = NewString("1136181845.12345")
 	dt = ToDatetime(p, nil)
 	if _, ok := dt.(*Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
@@ -518,6 +517,65 @@ func TestToString(t *testing.T) {
 	}
 }
 
+var maybeNumberTests = []struct {
+	Input  string
+	Expect bool
+}{
+	{
+		Input:  "",
+		Expect: false,
+	},
+	{
+		Input:  "12345",
+		Expect: true,
+	},
+	{
+		Input:  "+1234567",
+		Expect: true,
+	},
+	{
+		Input:  "12.345",
+		Expect: true,
+	},
+	{
+		Input:  "1e+02",
+		Expect: true,
+	},
+	{
+		Input:  "1.123e-3",
+		Expect: true,
+	},
+	{
+		Input:  "12345.",
+		Expect: false,
+	},
+	{
+		Input:  "1e",
+		Expect: false,
+	},
+	{
+		Input:  "1ea",
+		Expect: false,
+	},
+	{
+		Input:  "abc",
+		Expect: false,
+	},
+	{
+		Input:  "+",
+		Expect: false,
+	},
+}
+
+func TestMaybeNumber(t *testing.T) {
+	for _, v := range maybeNumberTests {
+		result := MaybeNumber(v.Input)
+		if result != v.Expect {
+			t.Errorf("result = %t, want %t for %q", result, v.Expect, v.Input)
+		}
+	}
+}
+
 func BenchmarkStrToTime1(b *testing.B) {
 	formats := []string{"01/02/2006"}
 
@@ -582,16 +640,37 @@ func BenchmarkStrToTime7(b *testing.B) {
 }
 
 func BenchmarkToInteger(b *testing.B) {
+	p := NewString("a")
 	for i := 0; i < b.N; i++ {
-		p := NewString("a")
-		ToInteger(p)
+		_ = ToInteger(p)
 	}
 }
 
 func BenchmarkToInteger2(b *testing.B) {
+	p := NewString("2012-02-02")
 	for i := 0; i < b.N; i++ {
-		p := NewString("2012-02-02")
-		ToInteger(p)
+		_ = ToInteger(p)
+	}
+}
+
+func BenchmarkToInteger3(b *testing.B) {
+	p := NewString(" 12345")
+	for i := 0; i < b.N; i++ {
+		_ = ToInteger(p)
+	}
+}
+
+func BenchmarkToInteger4(b *testing.B) {
+	p := NewString(" 123.456")
+	for i := 0; i < b.N; i++ {
+		_ = ToInteger(p)
+	}
+}
+
+func BenchmarkToInteger5(b *testing.B) {
+	p := NewFloat(123.456)
+	for i := 0; i < b.N; i++ {
+		_ = ToInteger(p)
 	}
 }
 

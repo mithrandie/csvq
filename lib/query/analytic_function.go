@@ -86,7 +86,7 @@ func Analyze(ctx context.Context, scope *ReferenceScope, view *View, fn parser.A
 				if idx < len(view.sortValuesInEachCell[index]) && view.sortValuesInEachCell[index][idx] != nil {
 					sortValues[j] = view.sortValuesInEachCell[index][idx]
 				} else {
-					sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), scope.Tx.Flags)
+					sortValues[j] = NewSortValue(view.RecordSet[index][idx][0], scope.Tx.Flags)
 					if idx < len(view.sortValuesInEachCell[index]) {
 						view.sortValuesInEachCell[index][idx] = sortValues[j]
 					}
@@ -507,6 +507,7 @@ func (fn NTile) Execute(ctx context.Context, scope *ReferenceScope, partition Pa
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be an integer")
 	}
 	tileNumber = int(i.(*value.Integer).Raw())
+	value.Discard(i)
 	if tileNumber < 1 {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the first argument must be greater than 0")
 	}
@@ -582,6 +583,7 @@ func (fn NthValue) Execute(ctx context.Context, scope *ReferenceScope, partition
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 	}
 	n = int(pi.(*value.Integer).Raw())
+	value.Discard(pi)
 	if n < 1 {
 		return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be greater than 0")
 	}
@@ -668,6 +670,7 @@ func setLag(ctx context.Context, scope *ReferenceScope, partition Partition, exp
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be an integer")
 		}
 		offset = int(i.(*value.Integer).Raw())
+		value.Discard(i)
 	}
 
 	var defaultValue value.Primary = value.NewNull()
@@ -726,6 +729,7 @@ func (fn AnalyticListAgg) Execute(ctx context.Context, scope *ReferenceScope, pa
 			return nil, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}
 		separator = s.(*value.String).Raw()
+		value.Discard(s)
 	}
 
 	anScope := scope.CreateScopeForAnalytics()

@@ -174,6 +174,9 @@ func InnerJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 				if primary.Ternary() == ternary.TRUE {
 					records = append(records, mergedRecord)
 				} else {
+					for i := range mergedRecord {
+						mergedRecord[i] = nil
+					}
 					recordPool.Put(mergedRecord)
 				}
 			}
@@ -283,6 +286,9 @@ func OuterJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 					records = append(records, mergedRecord)
 					match = true
 				} else {
+					for i := range mergedRecord {
+						mergedRecord[i] = nil
+					}
 					recordPool.Put(mergedRecord)
 				}
 			}

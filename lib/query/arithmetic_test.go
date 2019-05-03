@@ -20,6 +20,12 @@ var calculateTests = []struct {
 		Result:   value.NewNull(),
 	},
 	{
+		LHS:      value.NewNull(),
+		RHS:      value.NewString("9"),
+		Operator: '+',
+		Result:   value.NewNull(),
+	},
+	{
 		LHS:      value.NewString("9"),
 		RHS:      value.NewString("2"),
 		Operator: '+',

@@ -65,7 +65,7 @@ var viewLoadTests = []struct {
 		},
 	},
 	{
-		Name: "Load File",
+		Name: "LoadView File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -99,7 +99,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load File ForUpdate",
+		Name: "LoadView File ForUpdate",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -139,7 +139,7 @@ var viewLoadTests = []struct {
 		}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load File with UTF-8 BOM",
+		Name: "LoadView File with UTF-8 BOM",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -173,7 +173,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load with Parentheses",
+		Name: "LoadView with Parentheses",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Parentheses{
@@ -209,7 +209,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load From Stdin",
+		Name: "LoadView From Stdin",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
@@ -243,7 +243,7 @@ var viewLoadTests = []struct {
 		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load From Stdin ForUpdate",
+		Name: "LoadView From Stdin ForUpdate",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
@@ -284,7 +284,7 @@ var viewLoadTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "Load From Stdin With Internal Id",
+		Name: "LoadView From Stdin With Internal Id",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
@@ -319,7 +319,7 @@ var viewLoadTests = []struct {
 		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load Json From Stdin",
+		Name: "LoadView Json From Stdin",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
@@ -357,7 +357,7 @@ var viewLoadTests = []struct {
 		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load JsonH From Stdin",
+		Name: "LoadView JsonH From Stdin",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
@@ -400,7 +400,7 @@ var viewLoadTests = []struct {
 		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load JsonA From Stdin",
+		Name: "LoadView JsonA From Stdin",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
@@ -446,7 +446,7 @@ var viewLoadTests = []struct {
 		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load Json From Stdin Json Query Error",
+		Name: "LoadView Json From Stdin Json Query Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
@@ -458,7 +458,7 @@ var viewLoadTests = []struct {
 		Error:        "json loading error: column 4: unexpected termination",
 	},
 	{
-		Name:         "Load Fixed-Length Text File",
+		Name:         "LoadView Fixed-Length Text File",
 		ImportFormat: cmd.FIXED,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -496,7 +496,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name:         "Load Fixed-Length Text File NoHeader",
+		Name:         "LoadView Fixed-Length Text File NoHeader",
 		NoHeader:     true,
 		ImportFormat: cmd.FIXED,
 		From: parser.FromClause{
@@ -539,7 +539,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name:               "Load Fixed-Length Text File Position Error",
+		Name:               "LoadView Fixed-Length Text File Position Error",
 		ImportFormat:       cmd.FIXED,
 		DelimiterPositions: []int{6, 2},
 		From: parser.FromClause{
@@ -552,7 +552,7 @@ var viewLoadTests = []struct {
 		Error: fmt.Sprintf("data parse error in file %s: invalid delimiter position: [6, 2]", GetTestFilePath("fixed_length.txt")),
 	},
 	{
-		Name:  "Load From Stdin With Omitted FromClause",
+		Name:  "LoadView From Stdin With Omitted FromClause",
 		From:  parser.FromClause{},
 		Stdin: "column1,column2\n1,\"str1\"",
 		Result: &View{
@@ -582,7 +582,7 @@ var viewLoadTests = []struct {
 		}, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load From Stdin Broken CSV Error",
+		Name: "LoadView From Stdin Broken CSV Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Stdin{Stdin: "stdin"}, Alias: parser.Identifier{Literal: "t"}},
@@ -592,7 +592,7 @@ var viewLoadTests = []struct {
 		Error: "data parse error in file stdin: line 1, column 8: wrong number of fields in line",
 	},
 	{
-		Name: "Load From Stdin Duplicate Table Name Error",
+		Name: "LoadView From Stdin Duplicate Table Name Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
@@ -603,7 +603,7 @@ var viewLoadTests = []struct {
 		Error: "table name t is a duplicate",
 	},
 	{
-		Name: "Load From Stdin ForUpdate Duplicate Table Name Error",
+		Name: "LoadView From Stdin ForUpdate Duplicate Table Name Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
@@ -626,7 +626,7 @@ var viewLoadTests = []struct {
 		Error: "stdin is empty",
 	},
 	{
-		Name: "Load TableObject From CSV File",
+		Name: "LoadView TableObject From CSV File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -672,7 +672,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From TSV File",
+		Name: "LoadView TableObject From TSV File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -711,7 +711,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From CSV File FormatElement Evaluate Error",
+		Name: "LoadView TableObject From CSV File FormatElement Evaluate Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -727,7 +727,7 @@ var viewLoadTests = []struct {
 		Error: "field notexist does not exist",
 	},
 	{
-		Name: "Load TableObject From CSV File FormatElement Is Not Specified",
+		Name: "LoadView TableObject From CSV File FormatElement Is Not Specified",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -742,7 +742,7 @@ var viewLoadTests = []struct {
 		Error: "invalid argument for csv: delimiter is not specified",
 	},
 	{
-		Name: "Load TableObject From CSV File FormatElement is Null",
+		Name: "LoadView TableObject From CSV File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -758,7 +758,7 @@ var viewLoadTests = []struct {
 		Error: "invalid delimiter: null",
 	},
 	{
-		Name: "Load TableObject From CSV File FormatElement Invalid Delimiter",
+		Name: "LoadView TableObject From CSV File FormatElement Invalid Delimiter",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -774,7 +774,7 @@ var viewLoadTests = []struct {
 		Error: "invalid delimiter: 'invalid'",
 	},
 	{
-		Name: "Load TableObject From CSV File Arguments Length Error",
+		Name: "LoadView TableObject From CSV File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -796,7 +796,7 @@ var viewLoadTests = []struct {
 		Error: "table object csv takes at most 5 arguments",
 	},
 	{
-		Name: "Load TableObject From CSV File 3rd Argument Error",
+		Name: "LoadView TableObject From CSV File 3rd Argument Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -815,7 +815,7 @@ var viewLoadTests = []struct {
 		Error: "invalid argument for csv: cannot be converted as a encoding value: true",
 	},
 	{
-		Name: "Load TableObject From CSV File 4th Argument Error",
+		Name: "LoadView TableObject From CSV File 4th Argument Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -835,7 +835,7 @@ var viewLoadTests = []struct {
 		Error: "invalid argument for csv: cannot be converted as a no-header value: 'SJIS'",
 	},
 	{
-		Name: "Load TableObject From CSV File 5th Argument Error",
+		Name: "LoadView TableObject From CSV File 5th Argument Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -856,7 +856,7 @@ var viewLoadTests = []struct {
 		Error: "invalid argument for csv: cannot be converted as a without-null value: 'SJIS'",
 	},
 	{
-		Name: "Load TableObject From CSV File Invalid Encoding Type",
+		Name: "LoadView TableObject From CSV File Invalid Encoding Type",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -875,7 +875,7 @@ var viewLoadTests = []struct {
 		Error: "invalid argument for csv: encoding must be one of AUTO|UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS",
 	},
 	{
-		Name: "Load TableObject From Fixed-Length File",
+		Name: "LoadView TableObject From Fixed-Length File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -916,7 +916,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From Fixed-Length File with UTF-8 BOM",
+		Name: "LoadView TableObject From Fixed-Length File with UTF-8 BOM",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -957,7 +957,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From Single-Line Fixed-Length File",
+		Name: "LoadView TableObject From Single-Line Fixed-Length File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -999,7 +999,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From Fixed-Length File FormatElement Is Not Specified",
+		Name: "LoadView TableObject From Fixed-Length File FormatElement Is Not Specified",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1014,7 +1014,7 @@ var viewLoadTests = []struct {
 		Error: "invalid argument for fixed: delimiter positions are not specified",
 	},
 	{
-		Name: "Load TableObject From Fixed-Length File FormatElement is Null",
+		Name: "LoadView TableObject From Fixed-Length File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1030,7 +1030,7 @@ var viewLoadTests = []struct {
 		Error: "invalid delimiter positions: null",
 	},
 	{
-		Name: "Load TableObject From Fixed-Length File Invalid Delimiter Positions",
+		Name: "LoadView TableObject From Fixed-Length File Invalid Delimiter Positions",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1046,7 +1046,7 @@ var viewLoadTests = []struct {
 		Error: "invalid delimiter positions: 'invalid'",
 	},
 	{
-		Name: "Load TableObject From Fixed-Length File Arguments Length Error",
+		Name: "LoadView TableObject From Fixed-Length File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1068,7 +1068,7 @@ var viewLoadTests = []struct {
 		Error: "table object fixed takes at most 5 arguments",
 	},
 	{
-		Name: "Load TableObject From Json File",
+		Name: "LoadView TableObject From Json File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1105,7 +1105,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From JsonH File",
+		Name: "LoadView TableObject From JsonH File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1143,7 +1143,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From JsonA File",
+		Name: "LoadView TableObject From JsonA File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1181,7 +1181,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From Json File FormatElement Is Not Specified",
+		Name: "LoadView TableObject From Json File FormatElement Is Not Specified",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1196,7 +1196,7 @@ var viewLoadTests = []struct {
 		Error: "invalid argument for json: json query is not specified",
 	},
 	{
-		Name: "Load TableObject From Json File FormatElement is Null",
+		Name: "LoadView TableObject From Json File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1212,7 +1212,7 @@ var viewLoadTests = []struct {
 		Error: "invalid json query: null",
 	},
 	{
-		Name: "Load Table Object From Json File Path Error",
+		Name: "LoadView Table Object From Json File Path Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1228,7 +1228,7 @@ var viewLoadTests = []struct {
 		Error: "file notexist does not exist",
 	},
 	{
-		Name: "Load TableObject From LTSV File",
+		Name: "LoadView TableObject From LTSV File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1267,7 +1267,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From LTSV File Without Null",
+		Name: "LoadView TableObject From LTSV File Without Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1310,7 +1310,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From LTSV File with UTF-8 BOM",
+		Name: "LoadView TableObject From LTSV File with UTF-8 BOM",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1349,7 +1349,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load TableObject From LTSV File Arguments Length Error",
+		Name: "LoadView TableObject From LTSV File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1369,7 +1369,7 @@ var viewLoadTests = []struct {
 		Error: "table object ltsv takes exactly 3 arguments",
 	},
 	{
-		Name: "Load TableObject Invalid Object Type",
+		Name: "LoadView TableObject Invalid Object Type",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1385,7 +1385,7 @@ var viewLoadTests = []struct {
 		Error: "invalid table object: invalid",
 	},
 	{
-		Name: "Load TableObject From Json File Arguments Length Error",
+		Name: "LoadView TableObject From Json File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1404,7 +1404,7 @@ var viewLoadTests = []struct {
 		Error: "table object json takes exactly 2 arguments",
 	},
 	{
-		Name: "Load File Error",
+		Name: "LoadView File Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1415,7 +1415,7 @@ var viewLoadTests = []struct {
 		Error: "file notexist does not exist",
 	},
 	{
-		Name: "Load From File Duplicate Table Name Error",
+		Name: "LoadView From File Duplicate Table Name Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
@@ -1425,7 +1425,7 @@ var viewLoadTests = []struct {
 		Error: "table name t is a duplicate",
 	},
 	{
-		Name: "Load From File ForUpdate Duplicate Table Name Error",
+		Name: "LoadView From File ForUpdate Duplicate Table Name Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
@@ -1436,7 +1436,7 @@ var viewLoadTests = []struct {
 		Error:     "table name t is a duplicate",
 	},
 	{
-		Name: "Load From File Inline Table",
+		Name: "LoadView From File Inline Table",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "it"}, Alias: parser.Identifier{Literal: "t"}},
@@ -1517,7 +1517,7 @@ var viewLoadTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "Load From File Inline Table Duplicate Table Name Error",
+		Name: "LoadView From File Inline Table Duplicate Table Name Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
@@ -1553,7 +1553,7 @@ var viewLoadTests = []struct {
 		Error: "table name t is a duplicate",
 	},
 	{
-		Name:     "Load SJIS File",
+		Name:     "LoadView SJIS File",
 		Encoding: text.SJIS,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -1578,7 +1578,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name:     "Load No Header File",
+		Name:     "LoadView No Header File",
 		NoHeader: true,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -1603,7 +1603,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load Multiple File",
+		Name: "LoadView Multiple File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -1999,7 +1999,7 @@ var viewLoadTests = []struct {
 		Error: "file notexist does not exist",
 	},
 	{
-		Name: "Load Json Table",
+		Name: "LoadView Json Table",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2035,7 +2035,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load Json Table Query Evaluation Error",
+		Name: "LoadView Json Table Query Evaluation Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2050,7 +2050,7 @@ var viewLoadTests = []struct {
 		Error: "field notexists does not exist",
 	},
 	{
-		Name: "Load Json Table JsonText Evaluation Error",
+		Name: "LoadView Json Table JsonText Evaluation Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2065,7 +2065,7 @@ var viewLoadTests = []struct {
 		Error: "field notexists does not exist",
 	},
 	{
-		Name: "Load Json Table Query is Null",
+		Name: "LoadView Json Table Query is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2080,7 +2080,7 @@ var viewLoadTests = []struct {
 		Error: "json query is empty",
 	},
 	{
-		Name: "Load Json Table JsonText is Null",
+		Name: "LoadView Json Table JsonText is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2095,7 +2095,7 @@ var viewLoadTests = []struct {
 		Error: "json table is empty",
 	},
 	{
-		Name: "Load Json Table Loading Error",
+		Name: "LoadView Json Table Loading Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2110,7 +2110,7 @@ var viewLoadTests = []struct {
 		Error: "json loading error: column 17: unexpected termination",
 	},
 	{
-		Name: "Load Json Table From File",
+		Name: "LoadView Json Table From File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2146,7 +2146,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load Json Table From File Path Error",
+		Name: "LoadView Json Table From File Path Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2161,7 +2161,7 @@ var viewLoadTests = []struct {
 		Error: "file notexist does not exist",
 	},
 	{
-		Name: "Load Subquery",
+		Name: "LoadView Subquery",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2207,7 +2207,7 @@ var viewLoadTests = []struct {
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
 	},
 	{
-		Name: "Load Subquery Duplicate Table Name Error",
+		Name: "LoadView Subquery Duplicate Table Name Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}, Alias: parser.Identifier{Literal: "t"}},
@@ -2237,7 +2237,7 @@ var viewLoadTests = []struct {
 		Error: "table name t is a duplicate",
 	},
 	{
-		Name: "Load CSV Parse Error",
+		Name: "LoadView CSV Parse Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -2360,13 +2360,12 @@ func TestView_Load(t *testing.T) {
 			_ = TestTx.Session.SetStdin(nil)
 		}
 
-		view := NewView()
 		if v.Scope == nil {
 			v.Scope = NewReferenceScope(TestTx)
 		}
 
 		queryScope := v.Scope.CreateNode()
-		err := view.Load(ctx, queryScope, v.From.Tables, v.ForUpdate, v.UseInternalId)
+		view, err := LoadView(ctx, queryScope, v.From.Tables, v.ForUpdate, v.UseInternalId)
 
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -2454,6 +2453,7 @@ func TestNewViewFromGroupedRecord(t *testing.T) {
 			},
 		},
 		recordIndex: 0,
+		cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
 	}
 	expect := &View{
 		Header: NewHeaderWithId("table1", []string{"column1", "column2"}),

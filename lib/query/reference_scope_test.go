@@ -13,6 +13,87 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
+func TestFieldIndexCache_Get(t *testing.T) {
+	cache := &FieldIndexCache{
+		limitToUseSlice: 2,
+		m:               nil,
+		exprs:           []parser.QueryExpression{parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}},
+		indices:         []int{1},
+	}
+
+	_, ok := cache.Get(parser.FieldReference{Column: parser.Identifier{Literal: "c9"}})
+	if ok {
+		t.Error("Get() is succeeded, want to be failed")
+	}
+
+	expect := 1
+	idx, ok := cache.Get(parser.FieldReference{Column: parser.Identifier{Literal: "c1"}})
+	if !ok {
+		t.Error("Get() is failed, want to be succeeded")
+	}
+	if idx != expect {
+		t.Errorf("result = %d, want %d", idx, expect)
+	}
+
+	cache = &FieldIndexCache{
+		limitToUseSlice: 2,
+		m: map[parser.QueryExpression]int{
+			parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}: 1,
+			parser.FieldReference{Column: parser.Identifier{Literal: "c2"}}: 2,
+			parser.FieldReference{Column: parser.Identifier{Literal: "c3"}}: 3,
+		},
+		exprs:   nil,
+		indices: nil,
+	}
+
+	_, ok = cache.Get(parser.FieldReference{Column: parser.Identifier{Literal: "c9"}})
+	if ok {
+		t.Error("Get() is succeeded, want to be failed")
+	}
+
+	expect = 2
+	idx, ok = cache.Get(parser.FieldReference{Column: parser.Identifier{Literal: "c2"}})
+	if !ok {
+		t.Error("Get() is failed, want to be succeeded")
+	}
+	if idx != expect {
+		t.Errorf("result = %d, want %d", idx, expect)
+	}
+}
+
+func TestFieldIndexCache_Add(t *testing.T) {
+	cache := NewFieldIndexCache(1, 2)
+
+	cache.Add(parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}, 1)
+	expect := &FieldIndexCache{
+		limitToUseSlice: 2,
+		m:               nil,
+		exprs:           []parser.QueryExpression{parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}},
+		indices:         []int{1},
+	}
+
+	if !reflect.DeepEqual(cache, expect) {
+		t.Errorf("cache = %v, want %v", cache, expect)
+	}
+
+	cache.Add(parser.FieldReference{Column: parser.Identifier{Literal: "c2"}}, 2)
+	cache.Add(parser.FieldReference{Column: parser.Identifier{Literal: "c3"}}, 3)
+	expect = &FieldIndexCache{
+		limitToUseSlice: 2,
+		m: map[parser.QueryExpression]int{
+			parser.FieldReference{Column: parser.Identifier{Literal: "c1"}}: 1,
+			parser.FieldReference{Column: parser.Identifier{Literal: "c2"}}: 2,
+			parser.FieldReference{Column: parser.Identifier{Literal: "c3"}}: 3,
+		},
+		exprs:   nil,
+		indices: nil,
+	}
+
+	if !reflect.DeepEqual(cache, expect) {
+		t.Errorf("cache = %v, want %v", cache, expect)
+	}
+}
+
 var testVariablesReferenceScope = GenerateReferenceScope([]map[string]map[string]interface{}{
 	{
 		scopeNameVariables: {

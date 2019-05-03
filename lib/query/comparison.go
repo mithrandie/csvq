@@ -27,15 +27,17 @@ func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
 	if value.IsNull(s1) {
 		return ternary.UNKNOWN
 	}
+	str := strings.ToUpper(s1.(*value.String).Raw())
+	value.Discard(s1)
+
 	s2 := value.ToString(p2)
 	if value.IsNull(s2) {
 		return ternary.UNKNOWN
 	}
+	pattern := strings.ToUpper(s2.(*value.String).Raw())
+	value.Discard(s2)
 
-	s := strings.ToUpper(p1.(*value.String).Raw())
-	pattern := strings.ToUpper(p2.(*value.String).Raw())
-
-	if s == pattern {
+	if str == pattern {
 		return ternary.TRUE
 	}
 	if len(pattern) < 1 {
@@ -49,13 +51,13 @@ func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
 		anyRunesMinLen, anyRunexMaxLen, search, pos := stringPattern(patternRunes, patternPos)
 		patternPos = pos
 
-		anyString := s
+		anyString := str
 		if 0 < len(search) {
-			idx := strings.Index(s, search)
+			idx := strings.Index(str, search)
 			if idx < 0 {
 				return ternary.FALSE
 			}
-			anyString = s[:idx]
+			anyString = str[:idx]
 		}
 
 		if utf8.RuneCountInString(anyString) < anyRunesMinLen {
@@ -66,13 +68,13 @@ func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
 		}
 
 		if len(patternRunes) <= patternPos {
-			if len(anyString+search) < len(s) {
+			if len(anyString+search) < len(str) {
 				return ternary.FALSE
 			}
 			break
 		}
 
-		s = s[len(anyString+search):]
+		str = str[len(anyString+search):]
 	}
 
 	return ternary.TRUE
@@ -81,7 +83,7 @@ func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
 func stringPattern(pattern []rune, position int) (int, int, string, int) {
 	anyRunesMinLen := 0
 	anyRunesMaxLen := 0
-	search := make([]rune, 0)
+	search := make([]rune, 0, len(pattern)+4)
 	returnPostion := position
 
 	escaped := false

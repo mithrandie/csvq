@@ -147,34 +147,28 @@ func EvaluateSequentially(ctx context.Context, scope *ReferenceScope, view *View
 }
 
 func evalFieldReference(expr parser.QueryExpression, scope *ReferenceScope) (value.Primary, error) {
-	exprStr := expr.String()
-
 	var p value.Primary
-	for _, record := range scope.Records {
-		if record.fieldReferenceIndices != nil {
-			if idx, ok := record.fieldReferenceIndices[exprStr]; ok {
-				if record.IsInRange() {
-					p = record.view.RecordSet[record.recordIndex][idx].Value()
-				} else {
-					p = value.NewNull()
-				}
-				break
-			}
-		}
-
-		idx, err := record.view.Header.SearchIndex(expr)
-		if err == nil {
-			if record.view.isGrouped && record.view.Header[idx].IsFromTable && !record.view.Header[idx].IsGroupKey {
-				return nil, NewFieldNotGroupKeyError(expr)
-			}
-			if record.IsInRange() {
-				p = record.view.RecordSet[record.recordIndex][idx].Value()
+	for i := range scope.Records {
+		if idx, ok := scope.Records[i].cache.Get(expr); ok {
+			if scope.Records[i].IsInRange() {
+				p = scope.Records[i].view.RecordSet[scope.Records[i].recordIndex][idx][0]
 			} else {
 				p = value.NewNull()
 			}
-			if record.fieldReferenceIndices != nil {
-				record.fieldReferenceIndices[exprStr] = idx
+			break
+		}
+
+		idx, err := scope.Records[i].view.Header.SearchIndex(expr)
+		if err == nil {
+			if scope.Records[i].view.isGrouped && scope.Records[i].view.Header[idx].IsFromTable && !scope.Records[i].view.Header[idx].IsGroupKey {
+				return nil, NewFieldNotGroupKeyError(expr)
 			}
+			if scope.Records[i].IsInRange() {
+				p = scope.Records[i].view.RecordSet[scope.Records[i].recordIndex][idx][0]
+			} else {
+				p = value.NewNull()
+			}
+			scope.Records[i].cache.Add(expr, idx)
 			break
 		} else if err == errFieldAmbiguous {
 			return nil, NewFieldAmbiguousError(expr)
@@ -211,6 +205,7 @@ func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser
 
 	if pi := value.ToInteger(ope); !value.IsNull(pi) {
 		val := pi.(*value.Integer).Raw()
+		value.Discard(pi)
 		switch expr.Operator.Token {
 		case '-':
 			val = val * -1
@@ -224,6 +219,7 @@ func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser
 	}
 
 	val := pf.(*value.Float).Raw()
+	value.Discard(pf)
 
 	switch expr.Operator.Token {
 	case '-':
@@ -236,34 +232,56 @@ func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser
 func evalConcat(ctx context.Context, scope *ReferenceScope, expr parser.Concat) (value.Primary, error) {
 	items := make([]string, len(expr.Items))
 	for i, v := range expr.Items {
-		s, err := Evaluate(ctx, scope, v)
+		p, err := Evaluate(ctx, scope, v)
 		if err != nil {
 			return nil, err
 		}
-		s = value.ToString(s)
+		s := value.ToString(p)
 		if value.IsNull(s) {
 			return value.NewNull(), nil
 		}
 		items[i] = s.(*value.String).Raw()
+		value.Discard(s)
 	}
 	return value.NewString(strings.Join(items, "")), nil
+}
+
+func evalRowOrSingleValue(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression) (value.RowValue, value.Primary, error) {
+	var rv value.RowValue
+	var sv value.Primary
+
+	switch expr.(type) {
+	case parser.Subquery, parser.JsonQuery, parser.ValueList, parser.RowValue:
+		row, err := EvalRowValue(ctx, scope, expr)
+		if err != nil {
+			return nil, nil, err
+		}
+		if 1 == len(row) {
+			sv = row[0]
+		} else {
+			rv = row
+		}
+	default:
+		val, err := Evaluate(ctx, scope, expr)
+		if err != nil {
+			return nil, nil, err
+		}
+		sv = val
+	}
+
+	return rv, sv, nil
 }
 
 func evalComparison(ctx context.Context, scope *ReferenceScope, expr parser.Comparison) (value.Primary, error) {
 	var t ternary.Value
 
-	lhs, err := EvalRowValue(ctx, scope, expr.LHS)
+	rv, sv, err := evalRowOrSingleValue(ctx, scope, expr.LHS)
 	if err != nil {
 		return nil, err
 	}
-	if lhs == nil {
-		return value.NewTernary(ternary.UNKNOWN), nil
-	}
 
-	if 1 == len(lhs) {
-		lhsVal := lhs[0]
-
-		if value.IsNull(lhsVal) {
+	if sv != nil {
+		if value.IsNull(sv) {
 			return value.NewTernary(ternary.UNKNOWN), nil
 		}
 
@@ -272,16 +290,16 @@ func evalComparison(ctx context.Context, scope *ReferenceScope, expr parser.Comp
 			return nil, err
 		}
 
-		t = value.Compare(lhsVal, rhs, expr.Operator, scope.Tx.Flags.DatetimeFormat)
+		t = value.Compare(sv, rhs, expr.Operator, scope.Tx.Flags.DatetimeFormat)
 	} else {
 		rhs, err := EvalRowValue(ctx, scope, expr.RHS.(parser.RowValue))
 		if err != nil {
 			return nil, err
 		}
 
-		t, err = value.CompareRowValues(lhs, rhs, expr.Operator, scope.Tx.Flags.DatetimeFormat)
+		t, err = value.CompareRowValues(rv, rhs, expr.Operator, scope.Tx.Flags.DatetimeFormat)
 		if err != nil {
-			return nil, NewRowValueLengthInComparisonError(expr.RHS.(parser.RowValue), len(lhs))
+			return nil, NewRowValueLengthInComparisonError(expr.RHS.(parser.RowValue), len(rv))
 		}
 	}
 
@@ -308,18 +326,13 @@ func evalIs(ctx context.Context, scope *ReferenceScope, expr parser.Is) (value.P
 func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between) (value.Primary, error) {
 	var t ternary.Value
 
-	lhs, err := EvalRowValue(ctx, scope, expr.LHS)
+	rv, sv, err := evalRowOrSingleValue(ctx, scope, expr.LHS)
 	if err != nil {
 		return nil, err
 	}
-	if lhs == nil {
-		return value.NewTernary(ternary.UNKNOWN), nil
-	}
 
-	if 1 == len(lhs) {
-		lhsVal := lhs[0]
-
-		if value.IsNull(lhsVal) {
+	if sv != nil {
+		if value.IsNull(sv) {
 			return value.NewTernary(ternary.UNKNOWN), nil
 		}
 
@@ -328,7 +341,7 @@ func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between
 			return nil, err
 		}
 
-		lowResult := value.GreaterOrEqual(lhsVal, low, scope.Tx.Flags.DatetimeFormat)
+		lowResult := value.GreaterOrEqual(sv, low, scope.Tx.Flags.DatetimeFormat)
 		if lowResult == ternary.FALSE {
 			t = ternary.FALSE
 		} else {
@@ -337,7 +350,7 @@ func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between
 				return nil, err
 			}
 
-			highResult := value.LessOrEqual(lhsVal, high, scope.Tx.Flags.DatetimeFormat)
+			highResult := value.LessOrEqual(sv, high, scope.Tx.Flags.DatetimeFormat)
 			t = ternary.And(lowResult, highResult)
 		}
 	} else {
@@ -345,9 +358,9 @@ func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between
 		if err != nil {
 			return nil, err
 		}
-		lowResult, err := value.CompareRowValues(lhs, low, ">=", scope.Tx.Flags.DatetimeFormat)
+		lowResult, err := value.CompareRowValues(rv, low, ">=", scope.Tx.Flags.DatetimeFormat)
 		if err != nil {
-			return nil, NewRowValueLengthInComparisonError(expr.Low.(parser.RowValue), len(lhs))
+			return nil, NewRowValueLengthInComparisonError(expr.Low.(parser.RowValue), len(rv))
 		}
 
 		if lowResult == ternary.FALSE {
@@ -358,9 +371,9 @@ func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between
 				return nil, err
 			}
 
-			highResult, err := value.CompareRowValues(lhs, high, "<=", scope.Tx.Flags.DatetimeFormat)
+			highResult, err := value.CompareRowValues(rv, high, "<=", scope.Tx.Flags.DatetimeFormat)
 			if err != nil {
-				return nil, NewRowValueLengthInComparisonError(expr.High.(parser.RowValue), len(lhs))
+				return nil, NewRowValueLengthInComparisonError(expr.High.(parser.RowValue), len(rv))
 			}
 
 			t = ternary.And(lowResult, highResult)
@@ -505,7 +518,7 @@ func evalSubqueryForValue(ctx context.Context, scope *ReferenceScope, expr parse
 		return value.NewNull(), nil
 	}
 
-	return view.RecordSet[0][0].Value(), nil
+	return view.RecordSet[0][0][0], nil
 }
 
 func evalFunction(ctx context.Context, scope *ReferenceScope, expr parser.Function) (value.Primary, error) {
@@ -696,6 +709,7 @@ func checkArgsForListFunction(ctx context.Context, scope *ReferenceScope, expr p
 			return separator, NewFunctionInvalidArgumentError(expr, expr.Name, "the second argument must be a string")
 		}
 		separator = s.(*value.String).Raw()
+		value.Discard(s)
 	}
 	return separator, nil
 }
@@ -953,8 +967,8 @@ func evalSubqueryForRowValue(ctx context.Context, scope *ReferenceScope, expr pa
 	}
 
 	rowValue := make(value.RowValue, view.FieldLen())
-	for i, cell := range view.RecordSet[0] {
-		rowValue[i] = cell.Value()
+	for i := range view.RecordSet[0] {
+		rowValue[i] = view.RecordSet[0][i][0]
 	}
 
 	return rowValue, nil
@@ -1016,8 +1030,8 @@ func evalSubqueryForRowValueList(ctx context.Context, scope *ReferenceScope, exp
 	list := make([]value.RowValue, view.RecordLen())
 	for i, r := range view.RecordSet {
 		rowValue := make(value.RowValue, view.FieldLen())
-		for j, cell := range r {
-			rowValue[j] = cell.Value()
+		for j := range r {
+			rowValue[j] = r[j][0]
 		}
 		list[i] = rowValue
 	}
@@ -1067,8 +1081,8 @@ func evalSubqueryForArray(ctx context.Context, scope *ReferenceScope, expr parse
 	}
 
 	list := make([]value.RowValue, view.RecordLen())
-	for i, r := range view.RecordSet {
-		list[i] = value.RowValue{r[0].Value()}
+	for i := range view.RecordSet {
+		list[i] = value.RowValue{view.RecordSet[i][0][0]}
 	}
 
 	return list, nil

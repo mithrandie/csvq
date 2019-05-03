@@ -2,7 +2,6 @@ package value
 
 import (
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -49,9 +48,9 @@ func (s String) String() string {
 }
 
 func NewString(s string) *String {
-	return &String{
-		literal: s,
-	}
+	p := getString()
+	p.literal = s
+	return p
 }
 
 func (s String) Raw() string {
@@ -59,7 +58,7 @@ func (s String) Raw() string {
 }
 
 func (s String) Ternary() ternary.Value {
-	lit := strings.TrimSpace(s.Raw())
+	lit := cmd.TrimSpace(s.Raw())
 	if b, err := strconv.ParseBool(lit); err == nil {
 		return ternary.ConvertFromBool(b)
 	}
@@ -72,15 +71,13 @@ type Integer struct {
 
 func NewIntegerFromString(s string) *Integer {
 	i, _ := strconv.ParseInt(s, 10, 64)
-	return &Integer{
-		value: i,
-	}
+	return NewInteger(i)
 }
 
 func NewInteger(i int64) *Integer {
-	return &Integer{
-		value: i,
-	}
+	p := getInteger()
+	p.value = i
+	return p
 }
 
 func (i Integer) String() string {
@@ -108,15 +105,13 @@ type Float struct {
 
 func NewFloatFromString(s string) *Float {
 	f, _ := strconv.ParseFloat(s, 64)
-	return &Float{
-		value: f,
-	}
+	return NewFloat(f)
 }
 
 func NewFloat(f float64) *Float {
-	return &Float{
-		value: f,
-	}
+	p := getFloat()
+	p.value = f
+	return p
 }
 
 func (f Float) String() string {
@@ -169,9 +164,7 @@ type Ternary struct {
 
 func NewTernaryFromString(s string) *Ternary {
 	t, _ := ternary.ConvertFromString(s)
-	return &Ternary{
-		value: t,
-	}
+	return NewTernary(t)
 }
 
 func NewTernary(t ternary.Value) *Ternary {
@@ -199,15 +192,13 @@ type Datetime struct {
 
 func NewDatetimeFromString(s string, formats []string) *Datetime {
 	t, _ := StrToTime(s, formats)
-	return &Datetime{
-		value: t,
-	}
+	return NewDatetime(t)
 }
 
 func NewDatetime(t time.Time) *Datetime {
-	return &Datetime{
-		value: t,
-	}
+	p := getDatetime()
+	p.value = t
+	return p
 }
 
 func (dt Datetime) String() string {

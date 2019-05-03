@@ -129,6 +129,7 @@ var Functions = map[string]BuiltInFunction{
 	"TIME_DIFF":        TimeDiff,
 	"TIME_NANO_DIFF":   TimeNanoDiff,
 	"UTC":              UTC,
+	"NANO_TO_DATETIME": NanoToDatetime,
 	"STRING":           String,
 	"INTEGER":          Integer,
 	"FLOAT":            Float,
@@ -210,14 +211,16 @@ func roundParams(args []value.Primary) (number float64, place float64, isnull bo
 		return
 	}
 	number = f.(*value.Float).Raw()
+	value.Discard(f)
 
 	if len(args) == 2 {
-		f := value.ToInteger(args[1])
-		if value.IsNull(f) {
+		i := value.ToInteger(args[1])
+		if value.IsNull(i) {
 			isnull = true
 			return
 		}
-		place = float64(f.(*value.Integer).Raw())
+		place = float64(i.(*value.Integer).Raw())
+		value.Discard(i)
 	}
 	return
 }
@@ -282,8 +285,9 @@ func execMath1Arg(fn parser.Function, args []value.Primary, mathf func(float64) 
 	if value.IsNull(f) {
 		return value.NewNull(), nil
 	}
-
 	result := mathf(f.(*value.Float).Raw())
+	value.Discard(f)
+
 	if math.IsInf(result, 0) || math.IsNaN(result) {
 		return value.NewNull(), nil
 	}
@@ -302,10 +306,13 @@ func execMath2Args(fn parser.Function, args []value.Primary, mathf func(float64,
 
 	f2 := value.ToFloat(args[1])
 	if value.IsNull(f2) {
+		value.Discard(f1)
 		return value.NewNull(), nil
 	}
-
 	result := mathf(f1.(*value.Float).Raw(), f2.(*value.Float).Raw())
+	value.Discard(f1)
+	value.Discard(f2)
+
 	if math.IsInf(result, 0) || math.IsNaN(result) {
 		return value.NewNull(), nil
 	}
@@ -389,8 +396,9 @@ func execParseInt(fn parser.Function, args []value.Primary, base int) (value.Pri
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
-
 	s := p.(*value.String).Raw()
+	value.Discard(p)
+
 	if base == 16 {
 		s = ltrim(s, "0x")
 	}
@@ -412,8 +420,9 @@ func execFormatInt(fn parser.Function, args []value.Primary, base int) (value.Pr
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
-
 	s := strconv.FormatInt(p.(*value.Integer).Raw(), base)
+	value.Discard(p)
+
 	return value.NewString(s), nil
 }
 
@@ -439,9 +448,8 @@ func EnotationToDec(fn parser.Function, args []value.Primary, _ *cmd.Flags) (val
 		return value.NewNull(), nil
 	}
 
-	s := p.(*value.String).Raw()
-
-	f, err := strconv.ParseFloat(s, 64)
+	f, err := strconv.ParseFloat(p.(*value.String).Raw(), 64)
+	value.Discard(p)
 	if err != nil {
 		return value.NewNull(), nil
 	}
@@ -470,8 +478,9 @@ func Enotation(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Pr
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
-
 	s := strconv.FormatFloat(p.(*value.Float).Raw(), 'e', -1, 64)
+	value.Discard(p)
+
 	return value.NewString(s), nil
 }
 
@@ -494,28 +503,34 @@ func NumberFormat(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value
 		i := value.ToInteger(args[1])
 		if !value.IsNull(i) {
 			precision = int(i.(*value.Integer).Raw())
+			value.Discard(i)
 		}
 	}
 	if 2 < len(args) {
 		i := value.ToString(args[2])
 		if !value.IsNull(i) {
 			decimalPoint = i.(*value.String).Raw()
+			value.Discard(i)
 		}
 	}
 	if 3 < len(args) {
 		i := value.ToString(args[3])
 		if !value.IsNull(i) {
 			thousandsSeparator = i.(*value.String).Raw()
+			value.Discard(i)
 		}
 	}
 	if 4 < len(args) {
 		i := value.ToString(args[4])
 		if !value.IsNull(i) {
 			decimalSeparator = i.(*value.String).Raw()
+			value.Discard(i)
 		}
 	}
 
 	s := cmd.FormatNumber(p.(*value.Float).Raw(), precision, decimalPoint, thousandsSeparator, decimalSeparator)
+	value.Discard(p)
+
 	return value.NewString(s), nil
 }
 
@@ -534,13 +549,16 @@ func Rand(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary
 	if value.IsNull(p1) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be an integer")
 	}
+	low := p1.(*value.Integer).Raw()
+	value.Discard(p1)
+
 	p2 := value.ToInteger(args[1])
 	if value.IsNull(p2) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be an integer")
 	}
-
-	low := p1.(*value.Integer).Raw()
 	high := p2.(*value.Integer).Raw()
+	value.Discard(p2)
+
 	if high <= low {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the second argument must be greater than the first argument")
 	}
@@ -559,6 +577,8 @@ func execStrings1Arg(fn parser.Function, args []value.Primary, stringsf func(str
 	}
 
 	result := stringsf(s.(*value.String).Raw())
+	value.Discard(s)
+
 	return value.NewString(result), nil
 }
 
@@ -576,12 +596,16 @@ func execStringsTrim(fn parser.Function, args []value.Primary, stringsf func(str
 	if 2 == len(args) {
 		cs := value.ToString(args[1])
 		if value.IsNull(cs) {
+			value.Discard(s)
 			return value.NewNull(), nil
 		}
 		cutset = cs.(*value.String).Raw()
+		value.Discard(cs)
 	}
 
 	result := stringsf(s.(*value.String).Raw(), cutset)
+	value.Discard(s)
+
 	return value.NewString(result), nil
 }
 
@@ -633,8 +657,9 @@ func execStringsLen(fn parser.Function, args []value.Primary, stringsf func(stri
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
-
 	result := stringsf(s.(*value.String).Raw())
+	value.Discard(s)
+
 	return value.NewInteger(int64(result)), nil
 }
 
@@ -648,18 +673,21 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 		return value.NewNull(), nil
 	}
 	str := s.(*value.String).Raw()
+	value.Discard(s)
 
 	l := value.ToInteger(args[1])
 	if value.IsNull(l) {
 		return value.NewNull(), nil
 	}
 	length := int(l.(*value.Integer).Raw())
+	value.Discard(l)
 
 	p := value.ToString(args[2])
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
 	padstr := p.(*value.String).Raw()
+	value.Discard(p)
 
 	padType := PaddingRuneCount
 	if 3 < len(args) {
@@ -675,6 +703,7 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 			default:
 				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "padding type must be one of LEN|BYTE|WIDTH")
 			}
+			value.Discard(t)
 		}
 	}
 
@@ -683,6 +712,8 @@ func execStringsPadding(fn parser.Function, args []value.Primary, direction Dire
 		encs := value.ToString(args[4])
 		if !value.IsNull(encs) {
 			e, err := cmd.ParseEncoding(encs.(*value.String).Raw())
+			value.Discard(encs)
+
 			if err != nil || e == text.AUTO {
 				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "encoding must be one of UTF8|UTF16|SJIS")
 			}
@@ -758,6 +789,8 @@ func execCrypto(fn parser.Function, args []value.Primary, cryptof func() hash.Ha
 	h := cryptof()
 	h.Write([]byte(s.(*value.String).Raw()))
 	r := hex.EncodeToString(h.Sum(nil))
+	value.Discard(s)
+
 	return value.NewString(r), nil
 
 }
@@ -774,12 +807,16 @@ func execCryptoHMAC(fn parser.Function, args []value.Primary, cryptof func() has
 
 	key := value.ToString(args[1])
 	if value.IsNull(key) {
+		value.Discard(s)
 		return value.NewNull(), nil
 	}
 
 	h := hmac.New(cryptof, []byte(key.(*value.String).Raw()))
 	h.Write([]byte(s.(*value.String).Raw()))
 	r := hex.EncodeToString(h.Sum(nil))
+	value.Discard(s)
+	value.Discard(key)
+
 	return value.NewString(r), nil
 }
 
@@ -838,14 +875,20 @@ func ByteLen(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prim
 		encs := value.ToString(args[1])
 		if !value.IsNull(encs) {
 			e, err := cmd.ParseEncoding(encs.(*value.String).Raw())
+			value.Discard(encs)
+
 			if err != nil || e == text.AUTO {
+				value.Discard(s)
 				return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "encoding must be one of UTF8|UTF16|SJIS")
 			}
 			enc = e
 		}
 	}
 
-	return value.NewInteger(int64(text.ByteSize(s.(*value.String).Raw(), enc))), nil
+	i := int64(text.ByteSize(s.(*value.String).Raw(), enc))
+	value.Discard(s)
+
+	return value.NewInteger(i), nil
 }
 
 func Width(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
@@ -857,8 +900,9 @@ func Width(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Pr
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
-
 	result := cmd.TextWidth(s.(*value.String).Raw(), flags)
+	value.Discard(s)
+
 	return value.NewInteger(int64(result)), nil
 }
 
@@ -879,8 +923,9 @@ func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
-
 	runes := []rune(s.(*value.String).Raw())
+	value.Discard(s)
+
 	strlen := len(runes)
 	start := 0
 	end := strlen
@@ -890,6 +935,8 @@ func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 		return value.NewNull(), nil
 	}
 	start = int(i.(*value.Integer).Raw())
+	value.Discard(i)
+
 	if start < 0 {
 		start = strlen + start
 	}
@@ -903,6 +950,8 @@ func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 			return value.NewNull(), nil
 		}
 		sublen := int(i.(*value.Integer).Raw())
+		value.Discard(i)
+
 		if sublen < 0 {
 			return value.NewNull(), nil
 		}
@@ -927,10 +976,13 @@ func Instr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primar
 
 	substr := value.ToString(args[1])
 	if value.IsNull(substr) {
+		value.Discard(s)
 		return value.NewNull(), nil
 	}
 
 	index := strings.Index(s.(*value.String).Raw(), substr.(*value.String).Raw())
+	value.Discard(s)
+	value.Discard(substr)
 
 	if index < 0 {
 		return value.NewNull(), nil
@@ -947,22 +999,28 @@ func ListElem(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Pri
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
+	str := s.(*value.String).Raw()
+	value.Discard(s)
 
 	sep := value.ToString(args[1])
 	if value.IsNull(sep) {
 		return value.NewNull(), nil
 	}
+	sepStr := sep.(*value.String).Raw()
+	value.Discard(sep)
 
 	i := value.ToInteger(args[2])
 	if value.IsNull(i) {
 		return value.NewNull(), nil
 	}
 	index := int(i.(*value.Integer).Raw())
+	value.Discard(i)
+
 	if index < 0 {
 		return value.NewNull(), nil
 	}
 
-	list := strings.Split(s.(*value.String).Raw(), sep.(*value.String).Raw())
+	list := strings.Split(str, sepStr)
 
 	if len(list) <= index {
 		return value.NewNull(), nil
@@ -979,18 +1037,24 @@ func ReplaceFn(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Pr
 	if value.IsNull(s) {
 		return value.NewNull(), nil
 	}
+	str := s.(*value.String).Raw()
+	value.Discard(s)
 
 	oldstr := value.ToString(args[1])
 	if value.IsNull(oldstr) {
 		return value.NewNull(), nil
 	}
+	oldStr := oldstr.(*value.String).Raw()
+	value.Discard(oldstr)
 
 	newstr := value.ToString(args[2])
 	if value.IsNull(newstr) {
 		return value.NewNull(), nil
 	}
+	newStr := newstr.(*value.String).Raw()
+	value.Discard(newstr)
 
-	r := strings.Replace(s.(*value.String).Raw(), oldstr.(*value.String).Raw(), newstr.(*value.String).Raw(), -1)
+	r := strings.Replace(str, oldStr, newStr, -1)
 	return value.NewString(r), nil
 }
 
@@ -1003,8 +1067,9 @@ func Format(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 	if value.IsNull(format) {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
 	}
-
 	str, err := NewStringFormatter().Format(format.(*value.String).Raw(), args[1:])
+	value.Discard(format)
+
 	if err != nil {
 		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.(Error).Message())
 	}
@@ -1023,10 +1088,14 @@ func JsonValue(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Pr
 
 	jsonText := value.ToString(args[1])
 	if value.IsNull(jsonText) {
+		value.Discard(query)
 		return value.NewNull(), nil
 	}
 
 	v, err := json.LoadValue(query.(*value.String).Raw(), jsonText.(*value.String).Raw())
+	value.Discard(query)
+	value.Discard(jsonText)
+
 	if err != nil {
 		return v, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
 	}
@@ -1074,13 +1143,18 @@ func DatetimeFormat(fn parser.Function, args []value.Primary, flags *cmd.Flags) 
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
+
 	format := value.ToString(args[1])
 	if value.IsNull(format) {
+		value.Discard(p)
 		return value.NewNull(), nil
 	}
 
-	dt := p.(*value.Datetime)
-	return value.NewString(dt.Format(value.DatetimeFormats.Get(format.(*value.String).Raw()))), nil
+	str := p.(*value.Datetime).Format(value.DatetimeFormats.Get(format.(*value.String).Raw()))
+	value.Discard(p)
+	value.Discard(format)
+
+	return value.NewString(str), nil
 }
 
 func execDatetimeToInt(fn parser.Function, args []value.Primary, timef func(time.Time) int64, flags *cmd.Flags) (value.Primary, error) {
@@ -1092,8 +1166,9 @@ func execDatetimeToInt(fn parser.Function, args []value.Primary, timef func(time
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
-
 	result := timef(dt.(*value.Datetime).Raw())
+	value.Discard(dt)
+
 	return value.NewInteger(result), nil
 }
 
@@ -1106,13 +1181,17 @@ func execDatetimeAdd(fn parser.Function, args []value.Primary, timef func(time.T
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
+
 	p2 := value.ToInteger(args[1])
 	if value.IsNull(p2) {
+		value.Discard(p1)
 		return value.NewNull(), nil
 	}
 
 	dt := p1.(*value.Datetime).Raw()
 	i := int(p2.(*value.Integer).Raw())
+	value.Discard(p1)
+	value.Discard(p2)
 	return value.NewDatetime(timef(dt, i)), nil
 }
 
@@ -1316,8 +1395,9 @@ func truncateDate(fn parser.Function, args []value.Primary, place int8, flags *c
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
-
 	t := dt.(*value.Datetime).Raw()
+	value.Discard(dt)
+
 	y, m, d := t.Date()
 	switch place {
 	case 1:
@@ -1350,8 +1430,10 @@ func truncateDuration(fn parser.Function, args []value.Primary, dur time.Duratio
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
+	t := dt.(*value.Datetime).Raw().Truncate(dur)
+	value.Discard(dt)
 
-	return value.NewDatetime(dt.(*value.Datetime).Raw().Truncate(dur)), nil
+	return value.NewDatetime(t), nil
 }
 
 func TruncMinute(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
@@ -1383,13 +1465,17 @@ func DateDiff(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
+
 	p2 := value.ToDatetime(args[1], flags.DatetimeFormat)
 	if value.IsNull(p2) {
+		value.Discard(p1)
 		return value.NewNull(), nil
 	}
 
 	dt1 := p1.(*value.Datetime).Raw()
 	dt2 := p2.(*value.Datetime).Raw()
+	value.Discard(p1)
+	value.Discard(p2)
 
 	subdt1 := time.Date(dt1.Year(), dt1.Month(), dt1.Day(), 0, 0, 0, 0, cmd.GetLocation())
 	subdt2 := time.Date(dt2.Year(), dt2.Month(), dt2.Day(), 0, 0, 0, 0, cmd.GetLocation())
@@ -1407,13 +1493,17 @@ func timeDiff(fn parser.Function, args []value.Primary, durf func(time.Duration)
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
+
 	p2 := value.ToDatetime(args[1], flags.DatetimeFormat)
 	if value.IsNull(p2) {
+		value.Discard(p1)
 		return value.NewNull(), nil
 	}
 
 	dt1 := p1.(*value.Datetime).Raw()
 	dt2 := p2.(*value.Datetime).Raw()
+	value.Discard(p1)
+	value.Discard(p2)
 
 	dur := dt1.Sub(dt2)
 	return durf(dur), nil
@@ -1444,8 +1534,25 @@ func UTC(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Prim
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
+	t := dt.(*value.Datetime).Raw().UTC()
+	value.Discard(dt)
 
-	return value.NewDatetime(dt.(*value.Datetime).Raw().UTC()), nil
+	return value.NewDatetime(t), nil
+}
+
+func NanoToDatetime(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	p := value.ToInteger(args[0])
+	if value.IsNull(p) {
+		return value.NewNull(), nil
+	}
+	i := p.(*value.Integer).Raw()
+	value.Discard(p)
+
+	return value.NewDatetime(time.Unix(0, i).In(cmd.GetLocation())), nil
 }
 
 func String(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -1471,22 +1578,13 @@ func Integer(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prim
 	}
 
 	switch args[0].(type) {
-	case *value.Integer:
-		return args[0], nil
 	case *value.Float:
 		return value.NewInteger(int64(round(args[0].(*value.Float).Raw(), 0))), nil
-	case *value.String:
-		s := strings.TrimSpace(args[0].(*value.String).Raw())
-		if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-			return value.NewInteger(i), nil
-		}
-		if f, e := strconv.ParseFloat(s, 64); e == nil {
-			return value.NewInteger(int64(round(f, 0))), nil
-		}
 	case *value.Datetime:
 		return value.NewInteger(args[0].(*value.Datetime).Raw().Unix()), nil
+	default:
+		return value.ToInteger(args[0]), nil
 	}
-	return value.NewNull(), nil
 }
 
 func Float(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -1528,7 +1626,32 @@ func Datetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	return value.ToDatetime(args[0], flags.DatetimeFormat), nil
+	switch args[0].(type) {
+	case *value.Integer:
+		return value.NewDatetime(value.TimeFromUnixTime(args[0].(*value.Integer).Raw(), 0)), nil
+	case *value.Float:
+		return value.NewDatetime(value.Float64ToTime(args[0].(*value.Float).Raw())), nil
+	case *value.String:
+		s := cmd.TrimSpace(args[0].(*value.String).Raw())
+		if dt, ok := value.StrToTime(s, flags.DatetimeFormat); ok {
+			return value.NewDatetime(dt), nil
+		}
+		if value.MaybeInteger(s) {
+			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
+				dt := value.TimeFromUnixTime(i, 0)
+				return value.NewDatetime(dt), nil
+			}
+		}
+		if value.MaybeNumber(s) {
+			if f, e := strconv.ParseFloat(s, 64); e == nil {
+				dt := value.Float64ToTime(f)
+				return value.NewDatetime(dt), nil
+			}
+		}
+		return value.NewNull(), nil
+	default:
+		return value.ToDatetime(args[0], flags.DatetimeFormat), nil
+	}
 }
 
 func Call(ctx context.Context, fn parser.Function, args []value.Primary) (value.Primary, error) {
@@ -1563,7 +1686,7 @@ func JsonObject(ctx context.Context, scope *ReferenceScope, fn parser.Function) 
 
 	view := NewView()
 	view.Header = scope.Records[0].view.Header.Copy()
-	view.RecordSet = RecordSet{scope.Records[0].view.RecordSet[scope.Records[0].recordIndex]}
+	view.RecordSet = RecordSet{scope.Records[0].view.RecordSet[scope.Records[0].recordIndex].Copy()}
 
 	if len(fn.Args) < 1 {
 		if err := view.SelectAllColumns(ctx, scope); err != nil {
@@ -1588,7 +1711,7 @@ func JsonObject(ctx context.Context, scope *ReferenceScope, fn parser.Function) 
 
 	record := make([]value.Primary, view.FieldLen())
 	for i := range view.RecordSet[0] {
-		record[i] = view.RecordSet[0][i].Value()
+		record[i] = view.RecordSet[0][i][0]
 	}
 	structure, _ := json.ConvertRecordValueToJsonStructure(pathes, record)
 	return value.NewString(structure.Encode()), nil

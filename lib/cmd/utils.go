@@ -371,3 +371,10 @@ func TextWidth(s string, flags *Flags) int {
 func RuneWidth(r rune, flags *Flags) int {
 	return text.RuneWidth(r, flags.EastAsianEncoding, flags.CountDiacriticalSign, flags.CountFormatCode)
 }
+
+func TrimSpace(s string) string {
+	if 0 < len(s) && (unicode.IsSpace(rune(s[0])) || unicode.IsSpace(rune(s[len(s)-1]))) {
+		s = strings.TrimSpace(s)
+	}
+	return s
+}

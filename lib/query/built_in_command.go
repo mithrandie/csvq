@@ -82,6 +82,7 @@ func Printf(ctx context.Context, scope *ReferenceScope, expr parser.Printf) (str
 	formatString := value.ToString(formatValue)
 	if !value.IsNull(formatString) {
 		format = formatString.(*value.String).Raw()
+		value.Discard(formatString)
 	}
 
 	args := make([]value.Primary, len(expr.Values))
@@ -115,6 +116,7 @@ func Source(ctx context.Context, scope *ReferenceScope, expr parser.Source) ([]p
 			return nil, NewSourceInvalidFilePathError(expr, expr.FilePath)
 		}
 		fpath = s.(*value.String).Raw()
+		value.Discard(s)
 	}
 
 	if len(fpath) < 1 {
@@ -173,6 +175,7 @@ func ParseExecuteStatements(ctx context.Context, scope *ReferenceScope, expr par
 	stmt = value.ToString(stmt)
 	if !value.IsNull(stmt) {
 		input = stmt.(*value.String).Raw()
+		value.Discard(stmt)
 	}
 
 	args := make([]value.Primary, len(expr.Values))
@@ -197,13 +200,14 @@ func ParseExecuteStatements(ctx context.Context, scope *ReferenceScope, expr par
 
 func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) error {
 	var val interface{}
+	var v value.Primary
 	var p value.Primary
 	var err error
 
 	if ident, ok := expr.Value.(parser.Identifier); ok {
-		p = value.NewString(ident.Literal)
+		v = value.NewString(ident.Literal)
 	} else {
-		p, err = Evaluate(ctx, scope, expr.Value)
+		v, err = Evaluate(ctx, scope, expr.Value)
 		if err != nil {
 			return err
 		}
@@ -213,26 +217,26 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag, cmd.LineBreakFlag, cmd.JsonEscapeFlag:
-		p = value.ToString(p)
+		p = value.ToString(v)
 		if value.IsNull(p) {
 			return NewFlagValueNotAllowedFormatError(expr)
 		}
 		val = p.(*value.String).Raw()
 	case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
 		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
-		p = value.ToBoolean(p)
+		p = value.ToBoolean(v)
 		if value.IsNull(p) {
 			return NewFlagValueNotAllowedFormatError(expr)
 		}
 		val = p.(*value.Boolean).Raw()
 	case cmd.WaitTimeoutFlag:
-		p = value.ToFloat(p)
+		p = value.ToFloat(v)
 		if value.IsNull(p) {
 			return NewFlagValueNotAllowedFormatError(expr)
 		}
 		val = p.(*value.Float).Raw()
 	case cmd.LimitRecursion, cmd.CPUFlag:
-		p = value.ToInteger(p)
+		p = value.ToInteger(v)
 		if value.IsNull(p) {
 			return NewFlagValueNotAllowedFormatError(expr)
 		}
@@ -240,6 +244,8 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 	default:
 		return NewInvalidFlagNameError(expr.Flag)
 	}
+
+	value.Discard(p)
 
 	if err = scope.Tx.SetFlag(expr.Flag.Name, val); err != nil {
 		return NewInvalidFlagValueError(expr, err.Error())
@@ -282,12 +288,15 @@ func RemoveFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.R
 	case cmd.DatetimeFormatFlag:
 		if i := value.ToInteger(p); !value.IsNull(i) {
 			idx := int(i.(*value.Integer).Raw())
+			value.Discard(i)
+
 			if -1 < idx && idx < len(scope.Tx.Flags.DatetimeFormat) {
 				scope.Tx.Flags.DatetimeFormat = append(scope.Tx.Flags.DatetimeFormat[:idx], scope.Tx.Flags.DatetimeFormat[idx+1:]...)
 			}
-
 		} else if s := value.ToString(p); !value.IsNull(s) {
 			val := s.(*value.String).Raw()
+			value.Discard(s)
+
 			formats := make([]string, 0, len(scope.Tx.Flags.DatetimeFormat))
 			for _, v := range scope.Tx.Flags.DatetimeFormat {
 				if val != v {
@@ -846,8 +855,7 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 	queryScope := scope.CreateNode()
 	defer queryScope.CloseCurrentNode()
 
-	view := NewView()
-	err := view.LoadFromTableIdentifier(ctx, queryScope, expr.Table, false, false)
+	view, err := LoadViewFromTableIdentifier(ctx, queryScope, expr.Table, false, false)
 	if err != nil {
 		return "", err
 	}
@@ -948,6 +956,7 @@ func SetEnvVar(ctx context.Context, scope *ReferenceScope, expr parser.SetEnvVar
 
 	if ident, ok := expr.Value.(parser.Identifier); ok {
 		p = value.NewString(ident.Literal)
+		defer value.Discard(p)
 	} else {
 		p, err = Evaluate(ctx, scope, expr.Value)
 		if err != nil {
@@ -956,8 +965,9 @@ func SetEnvVar(ctx context.Context, scope *ReferenceScope, expr parser.SetEnvVar
 	}
 
 	var val string
-	if p = value.ToString(p); !value.IsNull(p) {
-		val = p.(*value.String).Raw()
+	if s := value.ToString(p); !value.IsNull(s) {
+		val = s.(*value.String).Raw()
+		value.Discard(s)
 	}
 	return os.Setenv(expr.EnvVar.Name, val)
 }
@@ -982,6 +992,7 @@ func Chdir(ctx context.Context, scope *ReferenceScope, expr parser.Chdir) error 
 			return NewInvalidPathError(expr, expr.DirPath.String(), "invalid directory path")
 		}
 		dirpath = s.(*value.String).Raw()
+		value.Discard(s)
 	}
 
 	if err = os.Chdir(dirpath); err != nil {
@@ -1044,14 +1055,15 @@ func Syntax(ctx context.Context, scope *ReferenceScope, expr parser.Syntax) (str
 			if p, err := Evaluate(ctx, scope, key); err == nil {
 				if s := value.ToString(p); !value.IsNull(s) {
 					keystr = s.(*value.String).Raw()
+					value.Discard(s)
 				}
 			}
 		}
 
 		if 0 < len(keystr) {
-			words := strings.Split(strings.TrimSpace(keystr), " ")
+			words := strings.Split(cmd.TrimSpace(keystr), " ")
 			for _, w := range words {
-				w = strings.TrimSpace(w)
+				w = cmd.TrimSpace(w)
 				if 0 < len(w) {
 					keys = append(keys, w)
 				}

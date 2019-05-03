@@ -66,7 +66,7 @@ func getTableName(texpr parser.QueryExpression) parser.Identifier {
 	return texpr.(parser.Table).Name()
 }
 
-func (view *View) Load(ctx context.Context, scope *ReferenceScope, tables []parser.QueryExpression, forUpdate bool, useInternalId bool) error {
+func LoadView(ctx context.Context, scope *ReferenceScope, tables []parser.QueryExpression, forUpdate bool, useInternalId bool) (*View, error) {
 	if tables == nil {
 		var obj parser.QueryExpression
 		if scope.Tx.Session.CanReadStdin {
@@ -78,40 +78,39 @@ func (view *View) Load(ctx context.Context, scope *ReferenceScope, tables []pars
 	}
 
 	views := make([]*View, len(tables))
-	tableNames := make([]string, 0, len(tables))
+	tableNames := make(map[string]bool, len(tables))
 	for i, v := range tables {
 		loaded, err := loadView(ctx, scope, v, forUpdate, useInternalId)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if 0 < loaded.FieldLen() && 0 < len(loaded.Header[0].View) {
-			if InStrSliceWithCaseInsensitive(loaded.Header[0].View, tableNames) {
-				return NewDuplicateTableNameError(getTableName(v))
+			ulit := strings.ToUpper(loaded.Header[0].View)
+			if _, ok := tableNames[ulit]; ok {
+				return nil, NewDuplicateTableNameError(getTableName(v))
 			}
-			tableNames = append(tableNames, loaded.Header[0].View)
+			tableNames[ulit] = true
 		}
 		views[i] = loaded
 	}
 
-	view.Header = views[0].Header
-	view.RecordSet = views[0].RecordSet
-	view.FileInfo = views[0].FileInfo
+	view := views[0]
 
 	for i := 1; i < len(views); i++ {
 		if err := CrossJoin(ctx, scope, view, views[i]); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return view, nil
 }
 
-func (view *View) LoadFromTableIdentifier(ctx context.Context, scope *ReferenceScope, table parser.QueryExpression, forUpdate bool, useInternalId bool) error {
+func LoadViewFromTableIdentifier(ctx context.Context, scope *ReferenceScope, table parser.QueryExpression, forUpdate bool, useInternalId bool) (*View, error) {
 	tables := []parser.QueryExpression{
 		parser.Table{Object: table},
 	}
 
-	return view.Load(ctx, scope, tables, forUpdate, useInternalId)
+	return LoadView(ctx, scope, tables, forUpdate, useInternalId)
 }
 
 func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.QueryExpression, forUpdate bool, useInternalId bool) (view *View, err error) {
@@ -143,6 +142,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				return nil, err
 			}
 			felem = value.ToString(felem)
+			defer value.Discard(felem)
 		}
 
 		encodingIdx := 0
@@ -220,6 +220,14 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 		args := make([]value.Primary, 3)
+		defer func() {
+			for i := range args {
+				if args[i] != nil {
+					value.Discard(args[i])
+				}
+			}
+		}()
+
 		for i, a := range tableObject.Args {
 			if pt, ok := a.(parser.PrimitiveType); ok && value.IsNull(pt.Value) {
 				continue
@@ -356,37 +364,39 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 		}
 
-		includeIndices := make([]int, 0, len(includeFields))
-		excludeIndices := make([]int, 0, len(includeFields))
+		includeIndices := NewUintPool(len(includeFields), LimitToUseUintSlicePool)
+		excludeIndices := NewUintPool(view.FieldLen()-len(includeFields), LimitToUseUintSlicePool)
 		if includeFields != nil {
 			for i := range includeFields {
 				idx, _ := view.Header.SearchIndex(includeFields[i])
-				includeIndices = append(includeIndices, idx)
+				includeIndices.Add(uint(idx))
 
 				idx, _ = view.Header.SearchIndex(excludeFields[i])
-				excludeIndices = append(excludeIndices, idx)
+				excludeIndices.Add(uint(idx))
 			}
 
-			fieldIndices := make([]int, 0, view.FieldLen())
-			header := make(Header, 0, view.FieldLen()-len(excludeIndices))
-			for _, idx := range includeIndices {
-				view.Header[idx].View = ""
-				view.Header[idx].Number = 0
-				view.Header[idx].IsJoinColumn = true
-				header = append(header, view.Header[idx])
-				fieldIndices = append(fieldIndices, idx)
-			}
+			fieldIndices := make([]int, 0, view.FieldLen()-excludeIndices.Len())
+			header := make(Header, 0, view.FieldLen()-excludeIndices.Len())
+			_ = includeIndices.Range(func(_ int, fidx uint) error {
+				view.Header[fidx].View = ""
+				view.Header[fidx].Number = 0
+				view.Header[fidx].IsJoinColumn = true
+				header = append(header, view.Header[fidx])
+				fieldIndices = append(fieldIndices, int(fidx))
+				return nil
+			})
 			for i := range view.Header {
-				if InIntSlice(i, excludeIndices) || InIntSlice(i, includeIndices) {
+				if excludeIndices.Exists(uint(i)) || includeIndices.Exists(uint(i)) {
 					continue
 				}
 				header = append(header, view.Header[i])
 				fieldIndices = append(fieldIndices, i)
 			}
 			view.Header = header
+			fieldLen := len(fieldIndices)
 
 			if err = NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
-				record := make(Record, len(fieldIndices))
+				record := make(Record, fieldLen)
 				for i, idx := range fieldIndices {
 					record[i] = view.RecordSet[index][idx]
 				}
@@ -408,11 +418,12 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		if err != nil {
 			return nil, err
 		}
-		queryValue = value.ToString(queryValue)
-
-		if value.IsNull(queryValue) {
+		jq := value.ToString(queryValue)
+		if value.IsNull(jq) {
 			return nil, NewEmptyJsonQueryError(jsonQuery)
 		}
+		jqStr := jq.(*value.String).Raw()
+		value.Discard(jq)
 
 		var reader io.Reader
 
@@ -436,19 +447,20 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			if err != nil {
 				return nil, err
 			}
-			jsonTextValue = value.ToString(jsonTextValue)
+			jsonText := value.ToString(jsonTextValue)
 
-			if value.IsNull(jsonTextValue) {
+			if value.IsNull(jsonText) {
 				return nil, NewEmptyJsonTableError(jsonQuery)
 			}
 
-			reader = strings.NewReader(jsonTextValue.(*value.String).Raw())
+			reader = strings.NewReader(jsonText.(*value.String).Raw())
+			value.Discard(jsonText)
 		}
 
 		fileInfo := &FileInfo{
 			Path:      alias,
 			Format:    cmd.JSON,
-			JsonQuery: queryValue.(*value.String).Raw(),
+			JsonQuery: jqStr,
 			Encoding:  text.UTF8,
 			LineBreak: scope.Tx.Flags.LineBreak,
 			ViewType:  ViewTypeTemporaryTable,
@@ -717,7 +729,7 @@ func cacheViewFromFile(
 		if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 			fileInfo.DelimiterPositions = delimiterPositions
 			fileInfo.SingleLine = singleLine
-			fileInfo.JsonQuery = strings.TrimSpace(jsonQuery)
+			fileInfo.JsonQuery = cmd.TrimSpace(jsonQuery)
 			fileInfo.LineBreak = lineBreak
 			fileInfo.NoHeader = noHeader
 			fileInfo.EncloseAll = encloseAll
@@ -1067,12 +1079,12 @@ func NewViewFromGroupedRecord(ctx context.Context, flags *cmd.Flags, referenceRe
 
 	if err := NewGoroutineTaskManager(record.GroupLen(), -1, flags.CPU).Run(ctx, func(index int) error {
 		view.RecordSet[index] = make(Record, view.FieldLen())
-		for j, cell := range record {
+		for j := range record {
 			grpIdx := index
-			if cell.Len() < 2 {
+			if len(record[j]) < 2 {
 				grpIdx = 0
 			}
-			view.RecordSet[index][j] = NewCell(cell.GroupedValue(grpIdx))
+			view.RecordSet[index][j] = record[j][grpIdx : grpIdx+1]
 		}
 		return nil
 	}); err != nil {
@@ -1122,56 +1134,116 @@ func (view *View) GroupBy(ctx context.Context, scope *ReferenceScope, clause par
 
 func (view *View) group(ctx context.Context, scope *ReferenceScope, items []parser.QueryExpression) error {
 	if items == nil {
-		return view.groupAll()
+		return view.groupAll(ctx, scope.Tx.Flags)
 	}
 
-	keys := make([]string, view.RecordLen())
+	gm := NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU)
+	groupsList := make([]map[string][]int, gm.Number)
+	groupKeyCnt := make(map[string]int, 20)
+	groupKeys := make([]string, 0, 20)
+	mtx := &sync.Mutex{}
 
-	if err := EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
-		values := make([]value.Primary, len(items))
-		keyBuf := GetComparisonKeysBuf()
+	var grpFn = func(thIdx int) {
+		start, end := gm.RecordRange(thIdx)
+		seqScope := scope.CreateScopeForSequentialEvaluation(view)
+		groups := make(map[string][]int, 20)
 
-		for i, item := range items {
-			p, e := Evaluate(ctx, seqScope, item)
-			if e != nil {
-				PutComparisonkeysBuf(keyBuf)
-				return e
+	GroupKeyLoop:
+		for i := start; i < end; i++ {
+			if gm.HasError() {
+				break GroupKeyLoop
 			}
-			values[i] = p
+			if i&15 == 0 && ctx.Err() != nil {
+				break GroupKeyLoop
+			}
+
+			seqScope.Records[0].recordIndex = i
+
+			values := make([]value.Primary, len(items))
+			for i, item := range items {
+				p, e := Evaluate(ctx, seqScope, item)
+				if e != nil {
+					gm.SetError(e)
+					break GroupKeyLoop
+				}
+				values[i] = p
+			}
+			keyBuf := GetComparisonKeysBuf()
+			SerializeComparisonKeys(keyBuf, values, seqScope.Tx.Flags)
+			key := keyBuf.String()
+			PutComparisonkeysBuf(keyBuf)
+
+			if _, ok := groups[key]; ok {
+				groups[key] = append(groups[key], i)
+			} else {
+				groups[key] = make([]int, 0, view.RecordLen()/18)
+				groups[key] = append(groups[key], i)
+				mtx.Lock()
+				if _, ok := groupKeyCnt[key]; !ok {
+					groupKeyCnt[key] = 0
+					groupKeys = append(groupKeys, key)
+				}
+				mtx.Unlock()
+			}
 		}
-		SerializeComparisonKeys(keyBuf, values, seqScope.Tx.Flags)
-		keys[rIdx] = keyBuf.String()
-		PutComparisonkeysBuf(keyBuf)
-		return nil
-	}); err != nil {
-		return err
+
+		groupsList[thIdx] = groups
+
+		if 1 < gm.Number {
+			gm.Done()
+		}
 	}
 
-	groups := make(map[string][]int)
-	groupKeys := make([]string, 0)
-	for i, key := range keys {
-		if _, ok := groups[key]; ok {
-			groups[key] = append(groups[key], i)
-		} else {
-			groups[key] = []int{i}
-			groupKeys = append(groupKeys, key)
+	if 1 < gm.Number {
+		for i := 0; i < gm.Number; i++ {
+			gm.Add()
+			go grpFn(i)
+		}
+		gm.Wait()
+	} else {
+		grpFn(0)
+	}
+
+	if gm.HasError() {
+		return gm.Err()
+	}
+	if ctx.Err() != nil {
+		return ConvertContextError(ctx.Err())
+	}
+
+	for i := range groupsList {
+		for k := range groupsList[i] {
+			groupKeyCnt[k] = groupKeyCnt[k] + len(groupsList[i][k])
 		}
 	}
 
 	records := make(RecordSet, len(groupKeys))
-	for i, groupKey := range groupKeys {
+	calcCnt := view.RecordLen() * len(groupKeys)
+	minReq := -1
+	if MinimumRequiredPerCPUCore < calcCnt {
+		minReq = int(math.Ceil(float64(len(groupKeys)) / (math.Floor(float64(calcCnt) / MinimumRequiredPerCPUCore))))
+	}
+	if err := NewGoroutineTaskManager(len(groupKeys), minReq, scope.Tx.Flags.CPU).Run(ctx, func(gIdx int) error {
 		record := make(Record, view.FieldLen())
-		indices := groups[groupKey]
 
-		for j := 0; j < view.FieldLen(); j++ {
-			primaries := make(Cell, len(indices))
-			for k, idx := range indices {
-				primaries[k] = view.RecordSet[idx][j].Value()
+		for i := 0; i < view.FieldLen(); i++ {
+			primaries := make(Cell, groupKeyCnt[groupKeys[gIdx]])
+			pos := 0
+			for j := range groupsList {
+				if indices, ok := groupsList[j][groupKeys[gIdx]]; ok {
+					for k := range indices {
+						primaries[pos+k] = view.RecordSet[indices[k]][i][0]
+					}
+					pos += len(indices)
+				}
 			}
-			record[j] = primaries
+			record[i] = primaries
 		}
 
-		records[i] = record
+		records[gIdx] = record
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	view.RecordSet = records
@@ -1186,19 +1258,28 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 	return nil
 }
 
-func (view *View) groupAll() error {
+func (view *View) groupAll(ctx context.Context, flags *cmd.Flags) error {
 	if 0 < view.RecordLen() {
-		records := make(RecordSet, 1)
 		record := make(Record, view.FieldLen())
-		for i := 0; i < view.FieldLen(); i++ {
+
+		calcCnt := view.RecordLen() * view.FieldLen()
+		minReq := -1
+		if MinimumRequiredPerCPUCore < calcCnt {
+			minReq = int(math.Ceil(float64(view.FieldLen()) / (math.Floor(float64(calcCnt) / MinimumRequiredPerCPUCore))))
+		}
+		if err := NewGoroutineTaskManager(view.FieldLen(), minReq, flags.CPU).Run(ctx, func(fIdx int) error {
 			primaries := make(Cell, len(view.RecordSet))
 			for j := range view.RecordSet {
-				primaries[j] = view.RecordSet[j][i].Value()
+				primaries[j] = view.RecordSet[j][fIdx][0]
 			}
-			record[i] = primaries
+			record[fIdx] = primaries
+			return nil
+		}); err != nil {
+			return err
 		}
-		records[0] = record
-		view.RecordSet = records
+
+		view.RecordSet = view.RecordSet[:1]
+		view.RecordSet[0] = record
 	}
 
 	view.isGrouped = true
@@ -1325,8 +1406,8 @@ func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause pars
 		if err = view.GenerateComparisonKeys(ctx, scope.Tx.Flags); err != nil {
 			return err
 		}
-		records := make(RecordSet, 0, view.RecordLen())
-		values := make(map[string]bool)
+		records := make(RecordSet, 0, 40)
+		values := make(map[string]bool, 40)
 		for i, v := range view.RecordSet {
 			if !values[view.comparisonKeysInEachRecord[i]] {
 				values[view.comparisonKeysInEachRecord[i]] = true
@@ -1363,7 +1444,7 @@ func (view *View) GenerateComparisonKeys(ctx context.Context, flags *cmd.Flags) 
 		if view.selectFields != nil {
 			primaries := make([]value.Primary, len(view.selectFields))
 			for j, idx := range view.selectFields {
-				primaries[j] = view.RecordSet[index][idx].Value()
+				primaries[j] = view.RecordSet[index][idx][0]
 			}
 			SerializeComparisonKeys(buf, primaries, flags)
 		} else {
@@ -1437,7 +1518,7 @@ func (view *View) OrderBy(ctx context.Context, scope *ReferenceScope, clause par
 			if view.sortValuesInEachCell != nil && idx < len(view.sortValuesInEachCell[index]) && view.sortValuesInEachCell[index][idx] != nil {
 				sortValues[j] = view.sortValuesInEachCell[index][idx]
 			} else {
-				sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), scope.Tx.Flags)
+				sortValues[j] = NewSortValue(view.RecordSet[index][idx][0], scope.Tx.Flags)
 				if view.sortValuesInEachCell != nil && idx < len(view.sortValuesInEachCell[index]) {
 					view.sortValuesInEachCell[index][idx] = sortValues[j]
 				}
@@ -1453,8 +1534,8 @@ func (view *View) OrderBy(ctx context.Context, scope *ReferenceScope, clause par
 	return nil
 }
 
-func (view *View) additionalColumns(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression) ([]string, error) {
-	list := make([]string, 0)
+func (view *View) additionalColumns(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression) (map[string]bool, error) {
+	m := make(map[string]bool, 5)
 
 	switch expr.(type) {
 	case parser.FieldReference, parser.ColumnNumber:
@@ -1487,9 +1568,9 @@ func (view *View) additionalColumns(ctx context.Context, scope *ReferenceScope, 
 				if err != nil {
 					return nil, err
 				}
-				for _, s := range columns {
-					if !InStrSliceWithCaseInsensitive(s, list) {
-						list = append(list, s)
+				for k := range columns {
+					if _, ok := m[k]; !ok {
+						m[k] = true
 					}
 				}
 			}
@@ -1501,9 +1582,9 @@ func (view *View) additionalColumns(ctx context.Context, scope *ReferenceScope, 
 				if err != nil {
 					return nil, err
 				}
-				for _, s := range columns {
-					if !InStrSliceWithCaseInsensitive(s, list) {
-						list = append(list, s)
+				for k := range columns {
+					if _, ok := m[k]; !ok {
+						m[k] = true
 					}
 				}
 			}
@@ -1512,24 +1593,24 @@ func (view *View) additionalColumns(ctx context.Context, scope *ReferenceScope, 
 
 	if _, ok := view.Header.ContainsObject(expr); !ok {
 		s := expr.String()
-		if !InStrSliceWithCaseInsensitive(s, list) {
-			list = append(list, s)
+		if _, ok := m[s]; !ok {
+			m[s] = true
 		}
 	}
 
-	return list, nil
+	return m, nil
 }
 
 func (view *View) ExtendRecordCapacity(ctx context.Context, scope *ReferenceScope, exprs []parser.QueryExpression) error {
-	additions := make([]string, 0)
+	additions := make(map[string]bool, 5)
 	for _, expr := range exprs {
 		columns, err := view.additionalColumns(ctx, scope, expr)
 		if err != nil {
 			return err
 		}
-		for _, s := range columns {
-			if !InStrSliceWithCaseInsensitive(s, additions) {
-				additions = append(additions, s)
+		for k := range columns {
+			if _, ok := additions[k]; !ok {
+				additions[k] = true
 			}
 		}
 	}
@@ -1653,6 +1734,8 @@ func (view *View) Offset(ctx context.Context, scope *ReferenceScope, clause pars
 		return NewInvalidOffsetNumberError(clause)
 	}
 	view.offset = int(number.(*value.Integer).Raw())
+	value.Discard(number)
+
 	if view.offset < 0 {
 		view.offset = 0
 	}
@@ -1682,6 +1765,8 @@ func (view *View) Limit(ctx context.Context, scope *ReferenceScope, clause parse
 			return NewInvalidLimitPercentageError(clause)
 		}
 		percentage := number.(*value.Float).Raw()
+		value.Discard(number)
+
 		if 100 < percentage {
 			limit = 100
 		} else if percentage < 0 {
@@ -1695,6 +1780,8 @@ func (view *View) Limit(ctx context.Context, scope *ReferenceScope, clause parse
 			return NewInvalidLimitNumberError(clause)
 		}
 		limit = int(number.(*value.Integer).Raw())
+		value.Discard(number)
+
 		if limit < 0 {
 			limit = 0
 		}
@@ -1788,7 +1875,7 @@ func (view *View) convertResultSetToRecordValues(ctx context.Context, scope *Ref
 
 		values := make([]value.Primary, selectedView.FieldLen())
 		for j, cell := range record {
-			values[j] = cell.Value()
+			values[j] = cell[0]
 		}
 		recordValues[i] = values
 	}
@@ -1849,18 +1936,28 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 	if err != nil {
 		return 0, err
 	}
+	fieldIndicesMap := make(map[uint]bool, len(fieldIndices))
+	for _, v := range fieldIndices {
+		fieldIndicesMap[uint(v)] = true
+	}
+
 	keyIndices, err := view.FieldIndices(keys)
 	if err != nil {
 		return 0, err
 	}
+	keyIndicesMap := make(map[uint]bool, len(keyIndices))
+	for _, v := range keyIndices {
+		keyIndicesMap[uint(v)] = true
+	}
+
 	for idx, i := range keyIndices {
-		if !InIntSlice(i, fieldIndices) {
+		if _, ok := fieldIndicesMap[uint(i)]; !ok {
 			return 0, NewReplaceKeyNotSetError(keys[idx])
 		}
 	}
 	updateIndices := make([]int, 0, len(fieldIndices)-len(keyIndices))
 	for _, i := range fieldIndices {
-		if !InIntSlice(i, keyIndices) {
+		if _, ok := keyIndicesMap[uint(i)]; !ok {
 			updateIndices = append(updateIndices, i)
 		}
 	}
@@ -1874,7 +1971,7 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 	if err := NewGoroutineTaskManager(view.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
 		sortValues := make(SortValues, len(keyIndices))
 		for j, idx := range keyIndices {
-			sortValues[j] = NewSortValue(view.RecordSet[index][idx].Value(), flags)
+			sortValues[j] = NewSortValue(view.RecordSet[index][idx][0], flags)
 		}
 		sortValuesInEachRecord[index] = sortValues
 		return nil
@@ -1886,7 +1983,7 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 	if err := NewGoroutineTaskManager(len(records), -1, flags.CPU).Run(ctx, func(index int) error {
 		sortValues := make(SortValues, len(keyIndices))
 		for j, idx := range keyIndices {
-			sortValues[j] = NewSortValue(records[index][idx].Value(), flags)
+			sortValues[j] = NewSortValue(records[index][idx][0], flags)
 		}
 		sortValuesInInsertRecords[index] = sortValues
 		return nil
@@ -1949,7 +2046,7 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 		if err := NewGoroutineTaskManager(view.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
 			record := make(Record, fieldLen)
 			for j, idx := range view.selectFields {
-				record[j] = view.RecordSet[index][idx].ConvertToNewCell()
+				record[j] = view.RecordSet[index][idx][:1]
 			}
 
 			if len(view.RecordSet[index]) < fieldLen {
@@ -1999,7 +2096,7 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 }
 
 func (view *View) Union(ctx context.Context, flags *cmd.Flags, calcView *View, all bool) (err error) {
-	view.RecordSet = append(view.RecordSet, calcView.RecordSet...)
+	view.RecordSet = view.RecordSet.Merge(calcView.RecordSet)
 	view.FileInfo = nil
 
 	if !all {
@@ -2156,7 +2253,7 @@ func (view *View) InternalRecordId(ref string, recordIndex int) (int, error) {
 	if err != nil {
 		return -1, NewInternalRecordIdNotExistError()
 	}
-	internalId, ok := view.RecordSet[recordIndex][idx].Value().(*value.Integer)
+	internalId, ok := view.RecordSet[recordIndex][idx][0].(*value.Integer)
 	if !ok {
 		return -1, NewInternalRecordIdEmptyError()
 	}

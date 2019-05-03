@@ -2,7 +2,6 @@ package value
 
 import (
 	"bytes"
-	"errors"
 	"math"
 	"strconv"
 	"strings"
@@ -47,12 +46,13 @@ func (dfmap DatetimeFormatMap) Get(s string) string {
 	return f
 }
 
-func StrToTime(s string, formats []string) (time.Time, error) {
-	s = strings.TrimSpace(s)
+func StrToTime(s string, formats []string) (time.Time, bool) {
+	s = cmd.TrimSpace(s)
+	location := cmd.GetLocation()
 
 	for _, format := range formats {
-		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, cmd.GetLocation()); e == nil {
-			return t, nil
+		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, location); e == nil {
+			return t, true
 		}
 	}
 
@@ -60,83 +60,83 @@ func StrToTime(s string, formats []string) (time.Time, error) {
 		switch {
 		case s[4] == '-':
 			if len(s) < 10 {
-				if t, e := time.ParseInLocation("2006-1-2", s, cmd.GetLocation()); e == nil {
-					return t, nil
+				if t, e := time.ParseInLocation("2006-1-2", s, location); e == nil {
+					return t, true
 				}
 			} else if len(s) == 10 {
-				if t, e := time.ParseInLocation("2006-01-02", s, cmd.GetLocation()); e == nil {
-					return t, nil
+				if t, e := time.ParseInLocation("2006-01-02", s, location); e == nil {
+					return t, true
 				}
 			} else if s[10] == 'T' {
 				if s[len(s)-6] == '+' || s[len(s)-6] == '-' || s[len(s)-1] == 'Z' {
 					if t, e := time.Parse(time.RFC3339Nano, s); e == nil {
-						return t, nil
+						return t, true
 					}
 				} else {
-					if t, e := time.ParseInLocation("2006-01-02T15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-						return t, nil
+					if t, e := time.ParseInLocation("2006-01-02T15:04:05.999999999", s, location); e == nil {
+						return t, true
 					}
 				}
 			} else if s[10] == ' ' {
-				if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-					return t, nil
-				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -07:00", s); e == nil {
-					return t, nil
+				if t, e := time.ParseInLocation("2006-01-02 15:04:05.999999999", s, location); e == nil {
+					return t, true
+				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 Z07:00", s); e == nil {
+					return t, true
 				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 -0700", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006-01-02 15:04:05.999999999 MST", s); e == nil {
-					return t, nil
+					return t, true
 				}
 			} else {
-				if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-					return t, nil
-				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -07:00", s); e == nil {
-					return t, nil
+				if t, e := time.ParseInLocation("2006-1-2 15:04:05.999999999", s, location); e == nil {
+					return t, true
+				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 Z07:00", s); e == nil {
+					return t, true
 				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 -0700", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006-1-2 15:04:05.999999999 MST", s); e == nil {
-					return t, nil
+					return t, true
 				}
 			}
 		case s[4] == '/':
 			if len(s) < 10 {
-				if t, e := time.ParseInLocation("2006/1/2", s, cmd.GetLocation()); e == nil {
-					return t, nil
+				if t, e := time.ParseInLocation("2006/1/2", s, location); e == nil {
+					return t, true
 				}
 			} else if len(s) == 10 {
-				if t, e := time.ParseInLocation("2006/01/02", s, cmd.GetLocation()); e == nil {
-					return t, nil
+				if t, e := time.ParseInLocation("2006/01/02", s, location); e == nil {
+					return t, true
 				}
 			} else if s[10] == ' ' {
-				if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-					return t, nil
+				if t, e := time.ParseInLocation("2006/01/02 15:04:05.999999999", s, location); e == nil {
+					return t, true
 				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 Z07:00", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 -0700", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/01/02 15:04:05.999999999 MST", s); e == nil {
-					return t, nil
+					return t, true
 				}
 			} else {
-				if t, e := time.ParseInLocation("2006/1/2 15:04:05.999999999", s, cmd.GetLocation()); e == nil {
-					return t, nil
+				if t, e := time.ParseInLocation("2006/1/2 15:04:05.999999999", s, location); e == nil {
+					return t, true
 				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 Z07:00", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 -0700", s); e == nil {
-					return t, nil
+					return t, true
 				} else if t, e := time.Parse("2006/1/2 15:04:05.999999999 MST", s); e == nil {
-					return t, nil
+					return t, true
 				}
 			}
 		default:
 			if t, e := time.Parse(time.RFC822, s); e == nil {
-				return t, nil
+				return t, true
 			} else if t, e := time.Parse(time.RFC822Z, s); e == nil {
-				return t, nil
+				return t, true
 			}
 		}
 	}
-	return time.Time{}, errors.New("conversion failed")
+	return time.Time{}, false
 }
 
 func ConvertDatetimeFormat(format string) string {
@@ -217,16 +217,19 @@ func ConvertDatetimeFormat(format string) string {
 
 func Float64ToTime(f float64) time.Time {
 	s := Float64ToStr(f)
-	ns := strings.Split(s, ".")
-	sec, _ := strconv.ParseInt(ns[0], 10, 64)
-	var nsec int64
-	if 1 < len(ns) {
-		if 9 < len(ns[1]) {
-			ns[1] = ns[1][:9]
+	pointIdx := strings.Index(s, ".")
+	if -1 < pointIdx {
+		afterPLen := len(s) - 1 - pointIdx
+		if 9 < afterPLen {
+			s = s[:pointIdx+10]
+			afterPLen = 9
 		}
-		nsec, _ = strconv.ParseInt(ns[1]+strings.Repeat("0", 9-len(ns[1])), 10, 64)
+		s = s[:pointIdx] + s[pointIdx+1:] + strings.Repeat("0", 9-afterPLen)
+	} else {
+		s = s + strings.Repeat("0", 9)
 	}
-	return time.Unix(sec, nsec)
+	nsec, _ := strconv.ParseInt(s, 10, 64)
+	return TimeFromUnixTime(0, nsec)
 }
 
 func Int64ToStr(i int64) string {
@@ -247,18 +250,20 @@ func ParseFloat64(f float64) Primary {
 func ToInteger(p Primary) Primary {
 	switch p.(type) {
 	case *Integer:
-		return p
+		return NewInteger(p.(*Integer).Raw())
 	case *Float:
 		f := p.(*Float).Raw()
 		if math.Remainder(f, 1) == 0 {
 			return NewInteger(int64(f))
 		}
 	case *String:
-		s := strings.TrimSpace(p.(*String).Raw())
-		if maybeNumber(s) {
+		s := cmd.TrimSpace(p.(*String).Raw())
+		if MaybeInteger(s) {
 			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 				return NewInteger(i)
 			}
+		}
+		if MaybeNumber(s) {
 			if f, e := strconv.ParseFloat(s, 64); e == nil {
 				if math.Remainder(f, 1) == 0 {
 					return NewInteger(int64(f))
@@ -275,10 +280,10 @@ func ToFloat(p Primary) Primary {
 	case *Integer:
 		return NewFloat(float64(p.(*Integer).Raw()))
 	case *Float:
-		return p
+		return NewFloat(p.(*Float).Raw())
 	case *String:
-		s := strings.TrimSpace(p.(*String).Raw())
-		if maybeNumber(s) {
+		s := cmd.TrimSpace(p.(*String).Raw())
+		if MaybeNumber(s) {
 			if f, e := strconv.ParseFloat(p.(*String).Raw(), 64); e == nil {
 				return NewFloat(f)
 			}
@@ -288,62 +293,95 @@ func ToFloat(p Primary) Primary {
 	return NewNull()
 }
 
-func maybeNumber(s string) bool {
-	slen := len(s)
-	if 1 < slen && (s[0] == '-' || s[0] == '+') && '0' <= s[1] && s[1] <= '9' {
-		return true
+func MaybeInteger(s string) bool {
+	if len(s) < 1 {
+		return false
 	}
-	if 0 < slen && '0' <= s[0] && s[0] <= '9' {
-		if 8 <= slen {
-			if s[4] == '-' && (s[6] == '-' || s[7] == '-') {
-				return false
-			}
-			if s[4] == '/' && (s[6] == '/' || s[7] == '/') {
-				return false
-			}
-			if s[2] == ' ' {
-				return false
-			}
+
+	start := 0
+	if s[start] == '+' || s[start] == '-' {
+		start++
+	}
+
+	for i := start; i < len(s); i++ {
+		if !isDecimal(s[i]) {
+			return false
 		}
-		return true
 	}
-	return false
+	return true
+}
+
+func MaybeNumber(s string) bool {
+	if len(s) < 1 {
+		return false
+	}
+
+	start := 0
+	if s[start] == '+' || s[start] == '-' {
+		start++
+	}
+	if len(s) < start+1 {
+		return false
+	}
+
+	pointExists := false
+	eExists := false
+	for i := start; i < len(s); i++ {
+		if !pointExists && s[i] == '.' {
+			if len(s) < i+2 {
+				return false
+			}
+			pointExists = true
+			continue
+		}
+
+		if !eExists && (s[i] == 'e' || s[i] == 'E') {
+			i++
+			if len(s) < i+2 {
+				return false
+			}
+			if s[i] != '+' && s[i] != '-' {
+				return false
+			}
+			eExists = true
+			continue
+		}
+
+		if isDecimal(s[i]) {
+			continue
+		}
+
+		return false
+	}
+
+	return true
+}
+
+func isDecimal(b byte) bool {
+	return '0' <= b && b <= '9'
 }
 
 func ToDatetime(p Primary, formats []string) Primary {
 	switch p.(type) {
-	case *Integer:
-		dt := time.Unix(p.(*Integer).Raw(), 0)
-		return NewDatetime(dt)
-	case *Float:
-		dt := Float64ToTime(p.(*Float).Raw())
-		return NewDatetime(dt)
 	case *Datetime:
-		return p
+		return NewDatetime(p.(*Datetime).Raw())
 	case *String:
-		s := strings.TrimSpace(p.(*String).Raw())
-		if dt, e := StrToTime(s, formats); e == nil {
+		if dt, ok := StrToTime(p.(*String).Raw(), formats); ok {
 			return NewDatetime(dt)
-		}
-		if maybeNumber(s) {
-			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-				dt := time.Unix(i, 0)
-				return NewDatetime(dt)
-			}
-			if f, e := strconv.ParseFloat(s, 64); e == nil {
-				dt := Float64ToTime(f)
-				return NewDatetime(dt)
-			}
 		}
 	}
 
 	return NewNull()
 }
 
+func TimeFromUnixTime(sec int64, nano int64) time.Time {
+	return time.Unix(sec, nano).In(cmd.GetLocation())
+}
+
 func ToBoolean(p Primary) Primary {
 	switch p.(type) {
 	case *Boolean:
-		return p
+		return NewBoolean(p.(*Boolean).Raw())
 	case *String, *Integer, *Float, *Ternary:
 		if p.Ternary() != ternary.UNKNOWN {
 			return NewBoolean(p.Ternary().ParseBool())
@@ -355,7 +393,7 @@ func ToBoolean(p Primary) Primary {
 func ToString(p Primary) Primary {
 	switch p.(type) {
 	case *String:
-		return p
+		return NewString(p.(*String).Raw())
 	case *Integer:
 		return NewString(Int64ToStr(p.(*Integer).Raw()))
 	case *Float:

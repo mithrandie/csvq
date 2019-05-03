@@ -21,7 +21,7 @@ func TestSortValues_Serialize(t *testing.T) {
 		NewSortValue(value.NewBoolean(false), TestTx.Flags),
 		NewSortValue(value.NewString("str"), TestTx.Flags),
 	}
-	expect := "[N]:[I]1[B]true:[F]1.234:[I]1328289495:[F]1328289495.123:[D]1328289495123456789:[I]0[B]false:[S]STR"
+	expect := "[N]:[I]1:[F]\x58\x39\xb4\xc8\x76\xbe\xf3\x3f:[D]\x00\xa6\x5b\x14\x42\x08\x6f\x12:[D]\xc0\x7a\xb0\x1b\x42\x08\x6f\x12:[D]\x15\x73\xb7\x1b\x42\x08\x6f\x12:[I]0:[S]STR"
 
 	buf := &bytes.Buffer{}
 	values.Serialize(buf)
@@ -59,7 +59,7 @@ var sortValueLessTests = []struct {
 		Name:         "SortValue Less Integer and Datetime",
 		SortValue:    NewSortValue(value.NewInteger(3), TestTx.Flags),
 		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
-		Result:       ternary.TRUE,
+		Result:       ternary.UNKNOWN,
 	},
 	{
 		Name:         "SortValue Less Integer and String",
@@ -83,7 +83,7 @@ var sortValueLessTests = []struct {
 		Name:         "SortValue Less Float and Datetime",
 		SortValue:    NewSortValue(value.NewFloat(3.4), TestTx.Flags),
 		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
-		Result:       ternary.TRUE,
+		Result:       ternary.UNKNOWN,
 	},
 	{
 		Name:         "SortValue Less Float and String",
@@ -160,7 +160,7 @@ var sortValueEquivalentToTests = []struct {
 		Name:         "SortValue EquivalentTo Integer and DateTime",
 		SortValue:    NewSortValue(value.NewInteger(1328260695), TestTx.Flags),
 		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())), TestTx.Flags),
-		Result:       true,
+		Result:       false,
 	},
 	{
 		Name:         "SortValue EquivalentTo Float",
@@ -172,7 +172,7 @@ var sortValueEquivalentToTests = []struct {
 		Name:         "SortValue EquivalentTo Float and DateTime",
 		SortValue:    NewSortValue(value.NewFloat(1328260695.0001), TestTx.Flags),
 		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 100000, GetTestLocation())), TestTx.Flags),
-		Result:       true,
+		Result:       false,
 	},
 	{
 		Name:         "SortValue EquivalentTo Datetime",
