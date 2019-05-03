@@ -256,10 +256,14 @@ func evalRowOrSingleValue(ctx context.Context, scope *ReferenceScope, expr parse
 		if err != nil {
 			return nil, nil, err
 		}
-		if 1 == len(row) {
-			sv = row[0]
+		if row == nil {
+			sv = value.NewNull()
 		} else {
-			rv = row
+			if 1 == len(row) {
+				sv = row[0]
+			} else {
+				rv = row
+			}
 		}
 	default:
 		val, err := Evaluate(ctx, scope, expr)
