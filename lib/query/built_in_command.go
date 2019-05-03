@@ -172,10 +172,10 @@ func ParseExecuteStatements(ctx context.Context, scope *ReferenceScope, expr par
 	if err != nil {
 		return nil, err
 	}
-	stmt = value.ToString(stmt)
-	if !value.IsNull(stmt) {
+	stmtStr := value.ToString(stmt)
+	if !value.IsNull(stmtStr) {
 		input = stmt.(*value.String).Raw()
-		value.Discard(stmt)
+		value.Discard(stmtStr)
 	}
 
 	args := make([]value.Primary, len(expr.Values))
