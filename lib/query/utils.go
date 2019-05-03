@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"strings"
 	"sync"
@@ -146,7 +147,11 @@ func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
 		serializeDatetime(buf, dt.(*value.Datetime).Raw())
 		value.Discard(dt)
 	} else if b := value.ToBoolean(val); !value.IsNull(b) {
-		serializeBoolean(buf, b.(*value.Boolean).Raw())
+		if b.(*value.Boolean).Raw() {
+			serializeInteger(buf, 1)
+		} else {
+			serializeInteger(buf, 0)
+		}
 	} else if s, ok := val.(*value.String); ok {
 		serializeString(buf, s.Raw())
 	} else {
@@ -160,18 +165,18 @@ func serializeNull(buf *bytes.Buffer) {
 
 func serializeInteger(buf *bytes.Buffer, i int64) {
 	if i == 0 {
-		buf.Write([]byte{91, 73, 93, 48, 91, 66, 93, 102})
+		buf.Write([]byte{91, 73, 93, 48})
 	} else if i == 1 {
-		buf.Write([]byte{91, 73, 93, 49, 91, 66, 93, 116})
+		buf.Write([]byte{91, 73, 93, 49})
 	} else {
 		buf.Write([]byte{91, 73, 93})
-		buf.WriteString(value.Int64ToStr(i))
+		_ = binary.Write(buf, binary.LittleEndian, i)
 	}
 }
 
 func serializeFloat(buf *bytes.Buffer, f float64) {
 	buf.Write([]byte{91, 70, 93})
-	buf.WriteString(value.Float64ToStr(f))
+	_ = binary.Write(buf, binary.LittleEndian, f)
 }
 
 func serializeDatetime(buf *bytes.Buffer, t time.Time) {
@@ -180,15 +185,7 @@ func serializeDatetime(buf *bytes.Buffer, t time.Time) {
 
 func serializeDatetimeFromUnixNano(buf *bytes.Buffer, t int64) {
 	buf.Write([]byte{91, 68, 93})
-	buf.WriteString(value.Int64ToStr(t))
-}
-
-func serializeBoolean(buf *bytes.Buffer, b bool) {
-	if b {
-		buf.Write([]byte{91, 73, 93, 49, 91, 66, 93, 116})
-	} else {
-		buf.Write([]byte{91, 73, 93, 48, 91, 66, 93, 102})
-	}
+	_ = binary.Write(buf, binary.LittleEndian, t)
 }
 
 func serializeString(buf *bytes.Buffer, s string) {

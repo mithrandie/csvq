@@ -83,7 +83,7 @@ func TestSerializeComparisonKeys(t *testing.T) {
 		value.NewTernary(ternary.UNKNOWN),
 		value.NewNull(),
 	}
-	expect := "[S]STR:[I]1[B]t:[I]0[B]f:[I]3:[F]1.234:[D]1328289495000000000:[D]1328289495123000000:[D]1328289495123456789:[I]1[B]t:[I]0[B]f:[N]:[N]"
+	expect := "[S]STR:[I]1:[I]0:[I]\x03\x00\x00\x00\x00\x00\x00\x00:[F]\x58\x39\xb4\xc8\x76\xbe\xf3\x3f:[D]\x00\xa6\x5b\x14\x42\x08\x6f\x12:[D]\xc0\x7a\xb0\x1b\x42\x08\x6f\x12:[D]\x15\x73\xb7\x1b\x42\x08\x6f\x12:[I]1:[I]0:[N]:[N]"
 
 	buf := &bytes.Buffer{}
 	SerializeComparisonKeys(buf, values, TestTx.Flags)
