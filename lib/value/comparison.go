@@ -102,8 +102,6 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 		if s2, ok := p2.(*String); ok {
 			v1 := strings.ToUpper(cmd.TrimSpace(s1.Raw()))
 			v2 := strings.ToUpper(cmd.TrimSpace(s2.Raw()))
-			Discard(s1)
-			Discard(s2)
 
 			if v1 == v2 {
 				return IsEqual
@@ -112,7 +110,6 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 			}
 			return IsGreater
 		}
-		Discard(s1)
 	}
 
 	return IsIncommensurable

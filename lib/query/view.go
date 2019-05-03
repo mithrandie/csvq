@@ -137,11 +137,11 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 		var felem value.Primary
 		if tableObject.FormatElement != nil {
-			felem, err = Evaluate(ctx, scope, tableObject.FormatElement)
+			p, err := Evaluate(ctx, scope, tableObject.FormatElement)
 			if err != nil {
 				return nil, err
 			}
-			felem = value.ToString(felem)
+			felem = value.ToString(p)
 			defer value.Discard(felem)
 		}
 
