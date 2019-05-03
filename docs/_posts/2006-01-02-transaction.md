@@ -62,7 +62,7 @@ However, as an exception, when trying to update a file that has been loaded by a
 In that case, there is a probability the data is changed in tha same transaction.
 You can use [FOR UPDATE]({{ '/reference/select-query.html' | relative_url }}) keywords in SELECT queries to use exclusive locks and prevent the probability. 
 
-### Recover files lockings
+### Recover file locking
 
 Program panics and unterminated transactions remain lock files.
 In that case, you must manually remove following hidden files created by csvq.
