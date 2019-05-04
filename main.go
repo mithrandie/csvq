@@ -206,7 +206,7 @@ func main() {
 		{
 			Name:      "check-update",
 			Usage:     "Check for updates",
-			ArgsUsage: "[subcommand options]",
+			ArgsUsage: " ",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "include-pre-release",
