@@ -27,6 +27,7 @@ deploy:
     skip_cleanup: true
     file_glob: true
     file: 'dist/*.tar.gz'
+    prerelease: false
     on:
       branch: master
       tags: true
