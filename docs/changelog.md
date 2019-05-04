@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.10.6
+
+Released on May 4, 2019
+
+- Add subcommand option "--include-pre-release" to check-update subcommand.
+
 ## Version 1.10.4
 
 Released on May 3, 2019
