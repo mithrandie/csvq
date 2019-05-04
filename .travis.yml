@@ -30,7 +30,7 @@ deploy:
     file: 'dist/*.tar.gz'
     prerelease: false
     on:
-      condition: branch = master AND tags = true
+      condition: branch = master AND tags IS present
   - provider: releases
     api_key: $GITHUB_API_TOKEN
     skip_cleanup: true
@@ -39,4 +39,4 @@ deploy:
     file: 'dist/*.tar.gz'
     prerelease: true
     on:
-      condition: branch = pre-release AND tags = true
+      condition: branch = pre-release AND tags IS present
