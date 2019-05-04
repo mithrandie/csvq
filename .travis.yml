@@ -14,10 +14,10 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:
-  - if [ "$TRAVIS_BRANCH" == "draft" ]; then
-      env GO111MODULE=on make build-draft
+  - if [ "$(echo $TRAVIS_TAG | cut -d '-' -f 2 | cut -d '.' -f 1)" = "pr" ]; then
+      env GO111MODULE=on make build-pre-release;
     else
-      env GO111MODULE=on make build-all
+      env GO111MODULE=on make build-all;
     fi
   - make dist
 
@@ -30,12 +30,12 @@ deploy:
     on:
       branch: master
       tags: true
-  - provider: draft
+  - provider: releases
     api_key: $GITHUB_API_TOKEN
     skip_cleanup: true
-    draft: true
     file_glob: true
     file: 'dist/*.tar.gz'
+    prerelease: true
     on:
-      branch: draft
+      branch: pre-release
       tags: true
