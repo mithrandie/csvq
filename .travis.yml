@@ -14,14 +14,28 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:
-  - env GO111MODULE=on make build-all
+  - if [ "$TRAVIS_BRANCH" == "draft" ]; then
+      env GO111MODULE=on make build-draft
+    else
+      env GO111MODULE=on make build-all
+    fi
   - make dist
 
 deploy:
-  provider: releases
-  api_key: $GITHUB_API_TOKEN
-  skip_cleanup: true
-  file_glob: true
-  file: 'dist/*.{tar.gz, zip}'
-  on:
-    tags: true
+  - provider: releases
+    api_key: $GITHUB_API_TOKEN
+    skip_cleanup: true
+    file_glob: true
+    file: 'dist/*.tar.gz'
+    on:
+      branch: master
+      tags: true
+  - provider: draft
+    api_key: $GITHUB_API_TOKEN
+    skip_cleanup: true
+    draft: true
+    file_glob: true
+    file: 'dist/*.tar.gz'
+    on:
+      branch: draft
+      tags: true
