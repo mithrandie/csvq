@@ -46,6 +46,10 @@ endif
 build-all: install-gox
 	gox $(LDFLAGS) -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
+.PHONY: build-pre-release
+build-pre-release: install-gox
+	gox $(LDFLAGS) --osarch="darwin/amd64 linux/amd64 windows/amd64" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+
 .PHONY: dist
 dist:
 	cd dist && \
