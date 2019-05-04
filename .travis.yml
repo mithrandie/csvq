@@ -25,18 +25,18 @@ deploy:
   - provider: releases
     api_key: $GITHUB_API_TOKEN
     skip_cleanup: true
+    overwrite: true
     file_glob: true
     file: 'dist/*.tar.gz'
     prerelease: false
     on:
-      branch: master
-      tags: true
+      condition: branch = master AND tags = true
   - provider: releases
     api_key: $GITHUB_API_TOKEN
     skip_cleanup: true
+    overwrite: true
     file_glob: true
     file: 'dist/*.tar.gz'
     prerelease: true
     on:
-      branch: pre-release
-      tags: true
+      condition: branch = pre-release AND tags = true
