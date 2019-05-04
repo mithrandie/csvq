@@ -30,7 +30,8 @@ deploy:
     file: 'dist/*.tar.gz'
     prerelease: false
     on:
-      condition: branch = master AND tag IS present
+      branch: master
+      condition: tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+$
   - provider: releases
     api_key: $GITHUB_API_TOKEN
     skip_cleanup: true
@@ -39,4 +40,5 @@ deploy:
     file: 'dist/*.tar.gz'
     prerelease: true
     on:
-      condition: branch = pre-release AND tag IS present
+      branch: pre-release
+      condition: tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+-pr.[0-9]+$
