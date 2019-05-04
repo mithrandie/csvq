@@ -15,6 +15,8 @@ import (
 )
 
 const githubApiLatestReleaseURL = "https://api.github.com/repos/mithrandie/csvq/releases/latest"
+const githubApiLatestPreReleaseURL = "https://api.github.com/repos/mithrandie/csvq/releases?per_page=1"
+const preReleaseIdentifier = "pr"
 
 type GithubRelease struct {
 	HTMLURL     string               `json:"html_url"`
@@ -31,13 +33,14 @@ type GithubReleaseAsset struct {
 var CurrentVersion = &Version{}
 
 type Version struct {
-	Major int
-	Minor int
-	Patch int
+	Major      int
+	Minor      int
+	Patch      int
+	PreRelease int
 }
 
 func (v *Version) IsEmpty() bool {
-	return v.Major == 0 && v.Minor == 0 && v.Patch == 0
+	return v.Major == 0 && v.Minor == 0 && v.Patch == 0 && v.PreRelease == 0
 }
 
 func (v *Version) IsLaterThan(v2 *Version) bool {
@@ -54,46 +57,73 @@ func (v *Version) IsLaterThan(v2 *Version) bool {
 	if v.Patch > v2.Patch {
 		return true
 	}
+	if 0 < v2.PreRelease && v.PreRelease > v2.PreRelease {
+		return true
+	}
 	return false
 }
 
 func (v *Version) String() string {
-	return strings.Join([]string{strconv.Itoa(v.Major), strconv.Itoa(v.Minor), strconv.Itoa(v.Patch)}, ".")
+	if v.PreRelease == 0 {
+		return strings.Join([]string{strconv.Itoa(v.Major), strconv.Itoa(v.Minor), strconv.Itoa(v.Patch)}, ".")
+	}
+	return strings.Join([]string{strconv.Itoa(v.Major), strconv.Itoa(v.Minor), strconv.Itoa(v.Patch)}, ".") +
+		"-" +
+		strings.Join([]string{preReleaseIdentifier, strconv.Itoa(v.PreRelease)}, ".")
+
 }
 
 func ParseVersion(s string) (*Version, error) {
 	v := &Version{}
 
 	s = PickVersionNumber(s)
-	a := strings.Split(s, ".")
+	words := strings.Split(s, "-")
+	rVer := strings.Split(words[0], ".")
 
-	if len(a) != 3 {
+	if len(rVer) != 3 {
 		return v, errors.New("cannot parse to version")
 	}
 
-	major, err := strconv.Atoi(a[0])
+	major, err := strconv.Atoi(rVer[0])
 	if err != nil {
 		return v, errors.New("cannot parse to version")
 	}
 
-	minor, err := strconv.Atoi(a[1])
+	minor, err := strconv.Atoi(rVer[1])
 	if err != nil {
 		return v, errors.New("cannot parse to version")
 	}
 
-	patch, err := strconv.Atoi(a[2])
+	patch, err := strconv.Atoi(rVer[2])
 	if err != nil {
 		return v, errors.New("cannot parse to version")
+	}
+
+	preRelease := 0
+	if 1 < len(words) {
+		prVer := strings.Split(words[1], ".")
+		if len(prVer) != 2 {
+			return v, errors.New("cannot parse to version")
+		}
+		if prVer[0] != preReleaseIdentifier {
+			return v, errors.New("cannot parse to version")
+		}
+		preRelease, err = strconv.Atoi(prVer[1])
+		if err != nil {
+			return v, errors.New("cannot parse to version")
+		}
 	}
 
 	v.Major = major
 	v.Minor = minor
 	v.Patch = patch
+	v.PreRelease = preRelease
 	return v, nil
 }
 
 type GithubClient interface {
 	GetLatestRelease() (*GithubRelease, error)
+	GetLatestReleaseIncludingPreRelease() (*GithubRelease, error)
 }
 
 type Client struct{}
@@ -110,8 +140,20 @@ func (c Client) GetLatestRelease() (*GithubRelease, error) {
 
 	release := &GithubRelease{}
 	body, _ := ioutil.ReadAll(res.Body)
-	err = json.Unmarshal(body, release)
+	err = json.Unmarshal(body, &release)
 	return release, err
+}
+
+func (c Client) GetLatestReleaseIncludingPreRelease() (*GithubRelease, error) {
+	res, err := http.Get(githubApiLatestPreReleaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	release := []*GithubRelease{{}}
+	body, _ := ioutil.ReadAll(res.Body)
+	err = json.Unmarshal(body, &release)
+	return release[0], err
 }
 
 func PickVersionNumber(s string) string {
@@ -121,8 +163,8 @@ func PickVersionNumber(s string) string {
 	return s
 }
 
-func CheckUpdate() error {
-	msg, err := CheckForUpdates(NewClient(), runtime.GOOS, runtime.GOARCH)
+func CheckUpdate(includePreRelaese bool) error {
+	msg, err := CheckForUpdates(includePreRelaese, NewClient(), runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		return err
 	}
@@ -130,8 +172,15 @@ func CheckUpdate() error {
 	return query.NewSession().WriteToStdoutWithLineBreak(msg)
 }
 
-func CheckForUpdates(client GithubClient, goos string, goarch string) (string, error) {
-	rel, err := client.GetLatestRelease()
+func CheckForUpdates(includePreRelease bool, client GithubClient, goos string, goarch string) (string, error) {
+	var rel *GithubRelease
+	var err error
+
+	if includePreRelease {
+		rel, err = client.GetLatestReleaseIncludingPreRelease()
+	} else {
+		rel, err = client.GetLatestRelease()
+	}
 	if err != nil {
 		return "", err
 	}
