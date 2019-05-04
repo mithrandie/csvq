@@ -123,6 +123,15 @@ var parseVersionTests = []struct {
 		},
 	},
 	{
+		Input: "v1.2.3-pr.1",
+		Result: &Version{
+			Major:      1,
+			Minor:      2,
+			Patch:      3,
+			PreRelease: 1,
+		},
+	},
+	{
 		Input: "",
 		Error: "cannot parse to version",
 	},
@@ -168,6 +177,7 @@ func TestParseVersion(t *testing.T) {
 var checkForUpdatesTests = []struct {
 	Name           string
 	CurrentVersion string
+	IncludePR      bool
 	GoOS           string
 	GoArch         string
 	ClientError    string
@@ -236,6 +246,41 @@ var checkForUpdatesTests = []struct {
 			"  Release Date: Feb 13, 2019\n" +
 			"  Release URL:  https://example.com",
 	},
+	{
+		Name:           "Latest pre-release version is available",
+		CurrentVersion: "v1.2.3",
+		IncludePR:      true,
+		GoOS:           "darwin",
+		GoArch:         "amd64",
+		LatestVersion:  "v1.2.4-pr.1",
+		PublishedAt:    "2019-02-13T00:00:00Z",
+		Result: "Version 1.2.4-pr.1 is now available.\n" +
+			"  Release Date: Feb 13, 2019\n" +
+			"  Release URL:  https://example.com\n" +
+			"  Download URL: https://example.com/download",
+	},
+	{
+		Name:           "Latest pre-release version is available and executable binary does not exist",
+		CurrentVersion: "v1.2.3",
+		IncludePR:      true,
+		GoOS:           "unknown",
+		GoArch:         "amd64",
+		LatestVersion:  "v1.2.4-pr.1",
+		PublishedAt:    "2019-02-13T00:00:00Z",
+		Result: "Version 1.2.4-pr.1 is now available.\n" +
+			"  Release Date: Feb 13, 2019\n" +
+			"  Release URL:  https://example.com",
+	},
+	{
+		Name:           "Latest pre-release version does not exist",
+		CurrentVersion: "v1.2.4",
+		IncludePR:      true,
+		GoOS:           "darwin",
+		GoArch:         "amd64",
+		LatestVersion:  "v1.2.4-pr.1",
+		PublishedAt:    "2019-02-13T00:00:00Z",
+		Result:         "The current version 1.2.4 is up to date.",
+	},
 }
 
 type GithubClientMock struct {
@@ -265,6 +310,27 @@ func (c GithubClientMock) GetLatestRelease() (*GithubRelease, error) {
 	}, nil
 }
 
+func (c GithubClientMock) GetLatestReleaseIncludingPreRelease() (*GithubRelease, error) {
+	if 0 < len(c.Error) {
+		return nil, errors.New(c.Error)
+	}
+
+	htmlurl := "https://example.com"
+	assetName := "csvq-v1.2.4-pr.1-darwin-amd64.tar.gz"
+	downloadURL := htmlurl + "/download"
+	return &GithubRelease{
+		TagName:     c.LatestVersion,
+		PublishedAt: c.PublishedAt,
+		HTMLURL:     htmlurl,
+		Assets: []GithubReleaseAsset{
+			{
+				Name:               assetName,
+				BrowserDownloadURL: downloadURL,
+			},
+		},
+	}, nil
+}
+
 func TestCheckForUpdates(t *testing.T) {
 	for _, v := range checkForUpdatesTests {
 		CurrentVersion, _ = ParseVersion(v.CurrentVersion)
@@ -274,7 +340,7 @@ func TestCheckForUpdates(t *testing.T) {
 			Error:         v.ClientError,
 		}
 
-		result, err := CheckForUpdates(client, v.GoOS, v.GoArch)
+		result, err := CheckForUpdates(v.IncludePR, client, v.GoOS, v.GoArch)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

@@ -206,12 +206,23 @@ func main() {
 		{
 			Name:      "check-update",
 			Usage:     "Check for updates",
-			ArgsUsage: " ",
+			ArgsUsage: "[subcommand options]",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "include-pre-release",
+					Usage: "check including pre-release version",
+				},
+			},
 			Action: commandAction(func(ctx context.Context, c *cli.Context, proc *query.Processor) error {
 				if 0 < c.NArg() {
 					return query.NewIncorrectCommandUsageError("check-update subcommand takes no argument")
 				}
-				return action.CheckUpdate()
+
+				includePreRelease := false
+				if c.IsSet("include-pre-release") {
+					includePreRelease = c.Bool("include-pre-release")
+				}
+				return action.CheckUpdate(includePreRelease)
 			}),
 		},
 	}
