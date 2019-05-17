@@ -789,7 +789,7 @@ func writeFields(w *ObjectWriter, fields []string) {
 	w.BeginSubBlock()
 	lastIdx := len(fields) - 1
 	for i, f := range fields {
-		escaped := cmd.EscapeString(f)
+		escaped := cmd.EscapeIdentifier(f)
 		if i < lastIdx && !w.FitInLine(escaped+", ") {
 			w.NewLine()
 		}

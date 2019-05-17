@@ -9,7 +9,7 @@ import (
 
 func TestEscapeString(t *testing.T) {
 	str := "fo\\o\a\b\f\n\r\t\v\\\\'\"bar\\"
-	expect := "fo\\\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\\\'\\\"bar\\\\"
+	expect := "fo\\\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\\\'\"bar\\\\"
 	unescaped := EscapeString(str)
 	if unescaped != expect {
 		t.Errorf("escaped string = %q, want %q", unescaped, expect)

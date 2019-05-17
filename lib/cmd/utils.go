@@ -33,8 +33,6 @@ func EscapeString(s string) string {
 			buf.WriteString("\\t")
 		case '\v':
 			buf.WriteString("\\v")
-		case '"':
-			buf.WriteString("\\\"")
 		case '\'':
 			buf.WriteString("\\'")
 		case '\\':
