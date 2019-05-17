@@ -327,6 +327,7 @@ func (s *Scanner) scanString(quote rune) error {
 		if ch == '\\' {
 			switch s.peek() {
 			case '\\', quote:
+				s.literal.WriteRune(ch)
 				ch = s.next()
 			}
 		}

@@ -73,6 +73,26 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "QuotedString Escape Mark",
+		Input: "\"string\\t\"",
+		Output: []scanResult{
+			{
+				Token:   STRING,
+				Literal: "string\t",
+			},
+		},
+	},
+	{
+		Name:  "QuotedString Double Escape Mark",
+		Input: "\"string\\\\t\"",
+		Output: []scanResult{
+			{
+				Token:   STRING,
+				Literal: "string\\t",
+			},
+		},
+	},
+	{
 		Name:  "Integer",
 		Input: "1",
 		Output: []scanResult{

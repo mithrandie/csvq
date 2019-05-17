@@ -131,6 +131,7 @@ func (s *ArgsSplitter) scanQuotedString(quote rune) {
 		if ch == '\\' {
 			switch s.peek() {
 			case '\\', quote:
+				s.text.WriteRune(ch)
 				ch = s.next()
 			}
 		}
@@ -162,7 +163,7 @@ func (s *ArgsSplitter) scanExternalCommand() {
 
 		if ch == '\\' {
 			switch s.peek() {
-			case '\\', parser.BeginExpression, parser.EndExpression:
+			case parser.BeginExpression, parser.EndExpression:
 				ch = s.next()
 			}
 		}

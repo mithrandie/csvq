@@ -17,8 +17,8 @@ var argsSplitterScanTests = []struct {
 			"-opt",
 			"arg1",
 			"arg  2",
-			"arg'3",
-			"arg\\4",
+			"arg\\'3",
+			"arg\\\\4",
 		},
 	},
 	{
@@ -78,11 +78,11 @@ var argsSplitterScanTests = []struct {
 		},
 	},
 	{
-		Args: "sh -c ${format('echo \"${\\}\"')}",
+		Args: "sh -c ${format('echo \"${\\\\\\}\"')}",
 		Expect: []string{
 			"sh",
 			"-c",
-			"${format('echo \"${}\"')}",
+			"${format('echo \"${\\\\}\"')}",
 		},
 	},
 	{

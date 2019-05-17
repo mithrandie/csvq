@@ -1143,7 +1143,7 @@ func EvaluateEmbeddedString(ctx context.Context, scope *ReferenceScope, embedded
 	for scanner.Scan() {
 		switch scanner.ElementType() {
 		case excmd.FixedString:
-			buf.WriteString(scanner.Text())
+			buf.WriteString(cmd.UnescapeString(scanner.Text()))
 		case excmd.Variable:
 			if err = writeEmbeddedExpression(ctx, scope, buf, parser.Variable{Name: scanner.Text()}); err != nil {
 				return buf.String(), err
