@@ -263,7 +263,7 @@ func (s *Scanner) Scan() (Token, error) {
 
 		if token == ENVIRONMENT_VARIABLE && s.peek() == '`' {
 			err = s.scanString(s.next())
-			literal = cmd.UnescapeIdentifier(s.literal.String())
+			literal = cmd.UnescapeIdentifier(s.literal.String(), '`')
 			quoted = true
 		} else {
 			if s.isIdentRune(s.peek()) {
@@ -293,7 +293,7 @@ func (s *Scanner) Scan() (Token, error) {
 			break
 		case '"', '\'':
 			err = s.scanString(ch)
-			literal = cmd.UnescapeString(s.literal.String())
+			literal = cmd.UnescapeString(s.literal.String(), ch)
 			if _, ok := value.StrToTime(literal, s.datetimeFormats); ok {
 				token = DATETIME
 			} else {
@@ -301,7 +301,7 @@ func (s *Scanner) Scan() (Token, error) {
 			}
 		case '`':
 			err = s.scanString(ch)
-			literal = cmd.UnescapeIdentifier(s.literal.String())
+			literal = cmd.UnescapeIdentifier(s.literal.String(), ch)
 			token = IDENTIFIER
 			quoted = true
 		}
@@ -321,7 +321,12 @@ func (s *Scanner) scanString(quote rune) error {
 		}
 
 		if ch == quote {
-			break
+			if s.peek() == quote {
+				s.literal.WriteRune(ch)
+				ch = s.next()
+			} else {
+				break
+			}
 		}
 
 		if ch == '\\' {

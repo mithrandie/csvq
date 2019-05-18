@@ -16,9 +16,9 @@ var argsSplitterScanTests = []struct {
 			"cmd",
 			"-opt",
 			"arg1",
-			"arg  2",
-			"arg\\'3",
-			"arg\\\\4",
+			"'arg  2'",
+			"'arg\\'3'",
+			"\"arg\\\\4\"",
 		},
 	},
 	{
@@ -34,7 +34,15 @@ var argsSplitterScanTests = []struct {
 		Expect: []string{
 			"cmd",
 			"arg1",
-			"arg 2",
+			"'arg 2'",
+		},
+	},
+	{
+		Args: "cmd arg1 'arg''2'",
+		Expect: []string{
+			"cmd",
+			"arg1",
+			"'arg''2'",
 		},
 	},
 	{
@@ -67,6 +75,14 @@ var argsSplitterScanTests = []struct {
 			"cmd",
 			"arg1",
 			"@#var",
+		},
+	},
+	{
+		Args: "cmd arg1 ${'arg''2'}",
+		Expect: []string{
+			"cmd",
+			"arg1",
+			"${'arg''2'}",
 		},
 	},
 	{

@@ -337,8 +337,6 @@ func (f *Flags) SetDelimiterPositions(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
-	s = UnescapeString(s)
-
 	delimiterPositions, singleLine, err := ParseDelimiterPositions(s)
 	if err != nil {
 		return err
@@ -441,8 +439,6 @@ func (f *Flags) SetWriteDelimiterPositions(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
-	s = UnescapeString(s)
-
 	delimiterPositions, singleLine, err := ParseDelimiterPositions(s)
 	if err != nil {
 		return errors.New(fmt.Sprintf("write-delimiter-positions must be %q or a JSON array of integers", DelimitAutomatically))

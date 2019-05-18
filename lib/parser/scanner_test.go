@@ -93,6 +93,16 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "QuotedString Double Quotation Mark",
+		Input: "\"string\"\"string\"",
+		Output: []scanResult{
+			{
+				Token:   STRING,
+				Literal: "string\"string",
+			},
+		},
+	},
+	{
 		Name:  "Integer",
 		Input: "1",
 		Output: []scanResult{

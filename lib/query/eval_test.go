@@ -4131,6 +4131,18 @@ var evaluateEmbeddedStringTests = []struct {
 		Expect: "str\\tstr",
 	},
 	{
+		Input:  "str''str",
+		Expect: "str''str",
+	},
+	{
+		Input:  "'str''str'",
+		Expect: "str'str",
+	},
+	{
+		Input:  "\"str\"\"str\"",
+		Expect: "str\"str",
+	},
+	{
 		Input:  "@var",
 		Expect: "1",
 	},
