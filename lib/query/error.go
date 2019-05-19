@@ -89,6 +89,7 @@ const (
 	ErrMsgInvalidOffsetNumber                  = "offset number %s is not an integer value"
 	ErrMsgCombinedSetFieldLength               = "result set to be combined should contain exactly %s"
 	ErrMsgRecursionExceededLimit               = "iteration of recursive query exceeded the limit %d"
+	ErrMsgNestedRecursion                      = "recursive queries are nested"
 	ErrMsgInsertRowValueLength                 = "row value should contain exactly %s"
 	ErrMsgInsertSelectFieldLength              = "select query should return exactly %s"
 	ErrMsgUpdateFieldNotExist                  = "field %s does not exist in the tables to update"
@@ -1058,6 +1059,16 @@ func NewRecursionExceededLimitError(selectEntity parser.QueryExpression, limit i
 
 	return &RecursionExceededLimitError{
 		NewBaseError(selectClause, fmt.Sprintf(ErrMsgRecursionExceededLimit, limit), ReturnCodeApplicationError, ErrorRecursionExceededLimit),
+	}
+}
+
+type NestedRecursionError struct {
+	*BaseError
+}
+
+func NewNestedRecursionError(expr parser.QueryExpression) error {
+	return &RecursionExceededLimitError{
+		NewBaseError(expr, ErrMsgNestedRecursion, ReturnCodeApplicationError, ErrorNestedRecursion),
 	}
 }
 

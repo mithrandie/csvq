@@ -70,6 +70,7 @@ const (
 	ErrorInvalidOffsetNumber                  = 11901
 	ErrorCombinedSetFieldLength               = 12001
 	ErrorRecursionExceededLimit               = 12002
+	ErrorNestedRecursion                      = 12003
 	ErrorInsertRowValueLength                 = 12101
 	ErrorInsertSelectFieldLength              = 12102
 	ErrorUpdateFieldNotExist                  = 12201

@@ -206,12 +206,15 @@ func (rs *ReferenceScope) CreateScopeForAnalytics() *ReferenceScope {
 
 func (rs *ReferenceScope) createScope(referenceRecords []ReferenceRecord) *ReferenceScope {
 	return &ReferenceScope{
-		Tx:             rs.Tx,
-		blocks:         rs.blocks,
-		nodes:          rs.nodes,
-		cachedFilePath: rs.cachedFilePath,
-		now:            rs.now,
-		Records:        referenceRecords,
+		Tx:               rs.Tx,
+		blocks:           rs.blocks,
+		nodes:            rs.nodes,
+		cachedFilePath:   rs.cachedFilePath,
+		now:              rs.now,
+		Records:          referenceRecords,
+		RecursiveTable:   rs.RecursiveTable,
+		RecursiveTmpView: rs.RecursiveTmpView,
+		RecursiveCount:   rs.RecursiveCount,
 	}
 }
 
@@ -223,11 +226,14 @@ func (rs *ReferenceScope) CreateChild() *ReferenceScope {
 	}
 
 	return &ReferenceScope{
-		Tx:             rs.Tx,
-		blocks:         blocks,
-		nodes:          nil,
-		cachedFilePath: rs.cachedFilePath,
-		now:            rs.now,
+		Tx:               rs.Tx,
+		blocks:           blocks,
+		nodes:            nil,
+		cachedFilePath:   rs.cachedFilePath,
+		now:              rs.now,
+		RecursiveTable:   rs.RecursiveTable,
+		RecursiveTmpView: rs.RecursiveTmpView,
+		RecursiveCount:   rs.RecursiveCount,
 	}
 }
 

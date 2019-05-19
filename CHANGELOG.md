@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.11.1
+
+Released on May 19, 2019
+
+- Fix the following bugs.
+  - Subqueries in recursive queries cannot reference that temporary tables.
+
 ## Version 1.11.0
 
 Released on May 19, 2019
