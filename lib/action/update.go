@@ -48,17 +48,23 @@ func (v *Version) IsLaterThan(v2 *Version) bool {
 		return false
 	}
 
-	if v.Major > v2.Major {
-		return true
+	if v.Major != v2.Major {
+		return v.Major > v2.Major
 	}
-	if v.Minor > v2.Minor {
-		return true
+	if v.Minor != v2.Minor {
+		return v.Minor > v2.Minor
 	}
-	if v.Patch > v2.Patch {
-		return true
+	if v.Patch != v2.Patch {
+		return v.Patch > v2.Patch
 	}
-	if 0 < v2.PreRelease && v.PreRelease > v2.PreRelease {
-		return true
+	if v.PreRelease != v2.PreRelease {
+		if v.PreRelease == 0 {
+			return true
+		}
+		if v2.PreRelease == 0 {
+			return false
+		}
+		return v.PreRelease > v2.PreRelease
 	}
 	return false
 }
