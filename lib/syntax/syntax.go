@@ -993,6 +993,8 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Datetime Format to parse strings.\n" +
 				"%s  <type::%s>\n" +
+				"  > Use double quotation mark(U+0022 \") as identifier enclosure.\n" +
+				"%s  <type::%s>\n" +
 				"  > Limit of the waiting time in seconds to wait for locked files to be released.\n" +
 				"%s  <type::%s>\n" +
 				"  > Default format to load files.\n" +
@@ -1045,6 +1047,7 @@ var CsvqSyntax = []Expression{
 				Flag("@@REPOSITORY"), String("string"),
 				Flag("@@TIMEZONE"), String("string"), Link("Timezone"),
 				Flag("@@DATETIME_FORMAT"), String("string"),
+				Flag("@@ANSI_QUOTES"), String("boolean"),
 				Flag("@@WAIT_TIMEOUT"), Float("float"),
 				Flag("@@IMPORT_FORMAT"), String("string"),
 				Flag("@@DELIMITER"), String("string"),
@@ -2675,14 +2678,16 @@ var CsvqSyntax = []Expression{
 				Description: Description{
 					Template: "" +
 						"%s\n" +
-						"  > A identifier is a word starting with any unicode letter or" +
+						"  > An identifier is a word starting with any unicode letter or" +
 						"    a Low Line(U+005F _) and followed by a character string that" +
-						"    contains any unicode letters, any digits  or Low Lines(U+005F _)." +
-						"    You cannot use %s as  a identifier.\n" +
+						"    contains any unicode letters, any digits or Low Lines(U+005F _)." +
+						"    You cannot use %s as an identifier.\n" +
 						"\n" +
 						"  > Notwithstanding above naming restriction, you can use most" +
-						"    character strings as a identifier by enclosing in" +
-						"    Grave Accents(U+0060 `). Back quotes are escaped by back slashes.\n" +
+						"    character strings as an identifier by enclosing in" +
+						"    Grave Accents(U+0060 `) or Quotation Marks(U+0022 \") if" +
+						"    --ansi-quotes is specified. Enclosure characters are escaped by" +
+						"    back slashes or double enclosures.\n" +
 						"\n" +
 						"  > Identifiers represent tables, columns, functions or cursors." +
 						"    Character case is insensitive except file paths, and whether file" +
@@ -2690,8 +2695,9 @@ var CsvqSyntax = []Expression{
 						"\n" +
 						"%s\n" +
 						"  > A string is a character string enclosed in Apostrophes(U+0027 ') or" +
-						"    Quotation Marks(U+0022 \"). In a string, single quotes or double" +
-						"    quotes are escaped by back slashes.\n" +
+						"    Quotation Marks(U+0022 \") if --ansi-quotes is not specified." +
+						"    In a string, enclosure characters are escaped by back slashes or" +
+						"    double enclosures.\n" +
 						"\n" +
 						"%s\n" +
 						"  > An integer is a word that contains only [0-9].\n" +
@@ -2774,7 +2780,7 @@ var CsvqSyntax = []Expression{
 						"  | \\r | U+000D Carriage Return                    |\n" +
 						"  | \\t | U+0009 Horizontal Tab                     |\n" +
 						"  | \\v | U+000b Vertical Tab                       |\n" +
-						"  | \\\" | U+0022 Double Quote (in strings only)     |\n" +
+						"  | \\\" | U+0022 Double Quote                       |\n" +
 						"  | \\' | U+0027 Single Quote (in strings only)     |\n" +
 						"  | \\` | U+0060 Grave Accent (in identifiers only) |\n" +
 						"  | \\\\ | U+005c Backslash                          |\n" +
