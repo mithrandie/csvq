@@ -88,18 +88,18 @@ csvq > EXIT;
 You can use following types in statements.
 
 Identifier
-: A identifier is a word starting with any unicode letter or a Low Line(U+005F `_`) and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`).
-  You cannot use [reserved words](#reserved_words) as a identifier.
+: An identifier is a word starting with any unicode letter or a Low Line(U+005F `_`) and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`).
+  You cannot use [reserved words](#reserved_words) as an identifier.
 
-  Notwithstanding above naming restriction, you can use most character strings as a identifier by enclosing in Grave Accents(U+0060 ` ).
-  Back quotes are escaped by back slashes.
+  Notwithstanding above naming restriction, you can use most character strings as an identifier by enclosing in Grave Accents(U+0060 \` ) or Quotation Marks(U+0022 `"`) if [--ansi-quotes]({{ '/reference/command.html#options' | relative_url }}) is specified. 
+  Enclosure characters are escaped by back slashes or double enclosures.
   
   Identifiers represent tables, columns, functions or cursors.
   Character case is insensitive except file paths, and whether file paths are case insensitive or not depends on your file system.
   
 String
-: A string is a character string enclosed in Apostrophes(U+0027 `'`) or Quotation Marks(U+0022 `"`).
-  In a string, single quotes or double quotes are escaped by back slashes.
+: A string is a character string enclosed in Apostrophes(U+0027 `'`) or Quotation Marks(U+0022 `"`) if [--ansi-quotes]({{ '/reference/command.html#options' | relative_url }}) is not specified.
+  In a string, enclosure characters are escaped by back slashes or double enclosures.
 
 Integer
 : An integer is a word that contains only \[0-9\].
@@ -159,9 +159,10 @@ Runtime Information
 ```sql
 abcde                 -- identifier
 識別子                 -- identifier
-`ab+c\`de`            -- identifier
+`abc\`de`             -- identifier
+`abc``de`             -- identifier
 'abcd\'e'             -- string
-"abcd\"e"             -- string
+'abcd''e'             -- string
 123                   -- integer
 123.456               -- float
 true                  -- ternary
@@ -172,6 +173,14 @@ null                  -- null
 @%ENV_VAR             -- environment variable
 @%`ENV_VAR`           -- environment variable
 @#INFO                -- runtime information
+
+/* if --ansi-quotes is specified */
+"abcd\"e"             -- identifier
+"abcd""e"             -- identifier
+
+/* if --ansi-quotes is not specified */
+"abcd\"e"             -- string
+"abcd""e"             -- string
 ```
 
 ## Comments

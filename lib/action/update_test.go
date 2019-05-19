@@ -40,6 +40,19 @@ var versionIsLaterThanTests = []struct {
 	},
 	{
 		Version1: &Version{
+			Major: 1,
+			Minor: 2,
+			Patch: 1,
+		},
+		Version2: &Version{
+			Major: 1,
+			Minor: 3,
+			Patch: 0,
+		},
+		Result: false,
+	},
+	{
+		Version1: &Version{
 			Major: 2,
 			Minor: 2,
 			Patch: 3,
@@ -76,6 +89,51 @@ var versionIsLaterThanTests = []struct {
 			Patch: 3,
 		},
 		Result: true,
+	},
+	{
+		Version1: &Version{
+			Major:      1,
+			Minor:      2,
+			Patch:      3,
+			PreRelease: 0,
+		},
+		Version2: &Version{
+			Major:      1,
+			Minor:      2,
+			Patch:      3,
+			PreRelease: 4,
+		},
+		Result: true,
+	},
+	{
+		Version1: &Version{
+			Major:      1,
+			Minor:      2,
+			Patch:      3,
+			PreRelease: 4,
+		},
+		Version2: &Version{
+			Major:      1,
+			Minor:      2,
+			Patch:      3,
+			PreRelease: 0,
+		},
+		Result: false,
+	},
+	{
+		Version1: &Version{
+			Major:      1,
+			Minor:      2,
+			Patch:      3,
+			PreRelease: 4,
+		},
+		Version2: &Version{
+			Major:      1,
+			Minor:      2,
+			Patch:      3,
+			PreRelease: 5,
+		},
+		Result: false,
 	},
 }
 

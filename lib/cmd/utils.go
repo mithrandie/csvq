@@ -33,8 +33,6 @@ func EscapeString(s string) string {
 			buf.WriteString("\\t")
 		case '\v':
 			buf.WriteString("\\v")
-		case '"':
-			buf.WriteString("\\\"")
 		case '\'':
 			buf.WriteString("\\'")
 		case '\\':
@@ -46,12 +44,22 @@ func EscapeString(s string) string {
 	return buf.String()
 }
 
-func UnescapeString(s string) string {
+func UnescapeString(s string, quote rune) string {
 	runes := []rune(s)
 	var buf bytes.Buffer
 
 	escaped := false
+	quoteRune := rune(0)
 	for _, r := range runes {
+		if 0 < quoteRune {
+			buf.WriteRune(quoteRune)
+			if r == quoteRune {
+				quoteRune = 0
+				continue
+			}
+			quoteRune = 0
+		}
+
 		if escaped {
 			switch r {
 			case 'a':
@@ -78,12 +86,14 @@ func UnescapeString(s string) string {
 			continue
 		}
 
-		if r == '\\' {
+		switch r {
+		case '\\':
 			escaped = true
-			continue
+		case quote:
+			quoteRune = r
+		default:
+			buf.WriteRune(r)
 		}
-
-		buf.WriteRune(r)
 	}
 	if escaped {
 		buf.WriteRune('\\')
@@ -123,12 +133,22 @@ func EscapeIdentifier(s string) string {
 	return buf.String()
 }
 
-func UnescapeIdentifier(s string) string {
+func UnescapeIdentifier(s string, quote rune) string {
 	runes := []rune(s)
 	var buf bytes.Buffer
 
 	escaped := false
+	quoteRune := rune(0)
 	for _, r := range runes {
+		if 0 < quoteRune {
+			buf.WriteRune(quoteRune)
+			if r == quoteRune {
+				quoteRune = 0
+				continue
+			}
+			quoteRune = 0
+		}
+
 		if escaped {
 			switch r {
 			case 'a':
@@ -145,7 +165,7 @@ func UnescapeIdentifier(s string) string {
 				buf.WriteRune('\t')
 			case 'v':
 				buf.WriteRune('\v')
-			case '`', '\\':
+			case '"', '`', '\\':
 				buf.WriteRune(r)
 			default:
 				buf.WriteRune('\\')
@@ -155,12 +175,14 @@ func UnescapeIdentifier(s string) string {
 			continue
 		}
 
-		if r == '\\' {
+		switch r {
+		case '\\':
 			escaped = true
-			continue
+		case quote:
+			quoteRune = r
+		default:
+			buf.WriteRune(r)
 		}
-
-		buf.WriteRune(r)
 	}
 	if escaped {
 		buf.WriteRune('\\')
@@ -281,7 +303,7 @@ func ParseLineBreak(s string) (text.LineBreak, error) {
 	return lb, err
 }
 func ParseDelimiter(s string) (rune, error) {
-	r := []rune(UnescapeString(s))
+	r := []rune(UnescapeString(s, '\''))
 	if len(r) != 1 {
 		return 0, errors.New("delimiter must be one character")
 	}
@@ -289,7 +311,7 @@ func ParseDelimiter(s string) (rune, error) {
 }
 
 func ParseDelimiterPositions(s string) ([]int, bool, error) {
-	s = UnescapeString(s)
+	s = UnescapeString(s, '\'')
 	var delimiterPositions []int = nil
 	singleLine := false
 

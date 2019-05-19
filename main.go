@@ -45,6 +45,10 @@ func main() {
 			Name:  "datetime-format, t",
 			Usage: "datetime format to parse strings",
 		},
+		cli.BoolFlag{
+			Name:  "ansi-quotes, k",
+			Usage: "use double quotation mark as identifier enclosure",
+		},
 		cli.Float64Flag{
 			Name:  "wait-timeout, w",
 			Value: 10,
@@ -334,6 +338,9 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	}
 	if c.GlobalIsSet("datetime-format") {
 		_ = tx.SetFlag(cmd.DatetimeFormatFlag, c.GlobalString("datetime-format"))
+	}
+	if c.GlobalIsSet("ansi-quotes") {
+		_ = tx.SetFlag(cmd.AnsiQuotesFlag, c.GlobalBool("ansi-quotes"))
 	}
 
 	if c.GlobalIsSet("wait-timeout") {

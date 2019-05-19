@@ -40,7 +40,7 @@ var argumentScannerScanTests = []struct {
 	{
 		Input: "arg\\@arg\\\\\\$arg\\arg",
 		Expect: []argumentScannerResult{
-			{Text: "arg@arg\\$arg\\arg", ElementType: FixedString},
+			{Text: "arg@arg\\\\$arg\\arg", ElementType: FixedString},
 		},
 	},
 	{
@@ -74,9 +74,9 @@ var argumentScannerScanTests = []struct {
 		},
 	},
 	{
-		Input: "${print 'a\\{bc\\}de'}",
+		Input: "${print 'a\\{bc\\\\\\}de'}",
 		Expect: []argumentScannerResult{
-			{Text: "print 'a{bc}de'", ElementType: CsvqExpression},
+			{Text: "print 'a{bc\\\\}de'", ElementType: CsvqExpression},
 		},
 	},
 	{

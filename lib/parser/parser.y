@@ -2572,9 +2572,9 @@ func SetDebugLevel(level int, verbose bool) {
 	yyErrorVerbose = verbose
 }
 
-func Parse(s string, sourceFile string, datetimeFormats []string, forPrepared bool) ([]Statement, int, error) {
+func Parse(s string, sourceFile string, datetimeFormats []string, forPrepared bool, ansiQuotes bool) ([]Statement, int, error) {
     l := new(Lexer)
-    l.Init(s, sourceFile, datetimeFormats, forPrepared)
+    l.Init(s, sourceFile, datetimeFormats, forPrepared, ansiQuotes)
     yyParse(l)
     return l.program, l.HolderNumber(), l.err
 }

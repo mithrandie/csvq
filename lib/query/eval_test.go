@@ -4123,6 +4123,26 @@ var evaluateEmbeddedStringTests = []struct {
 		Expect: "str",
 	},
 	{
+		Input:  "str\\tstr",
+		Expect: "str\tstr",
+	},
+	{
+		Input:  "str\\\\tstr",
+		Expect: "str\\tstr",
+	},
+	{
+		Input:  "str''str",
+		Expect: "str''str",
+	},
+	{
+		Input:  "'str''str'",
+		Expect: "str'str",
+	},
+	{
+		Input:  "\"str\"\"str\"",
+		Expect: "str\"str",
+	},
+	{
 		Input:  "@var",
 		Expect: "1",
 	},
@@ -4141,6 +4161,14 @@ var evaluateEmbeddedStringTests = []struct {
 	{
 		Input:  "abc${@var}def",
 		Expect: "abc1def",
+	},
+	{
+		Input:  "abc${'a\\tb'}def",
+		Expect: "abca\tbdef",
+	},
+	{
+		Input:  "abc${'a\\\\tb'}def",
+		Expect: "abca\\tbdef",
 	},
 	{
 		Input: "@notexist",

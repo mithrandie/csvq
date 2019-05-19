@@ -1,5 +1,17 @@
 # Change Log
 
+## Version 1.11.0
+
+Released on May 19, 2019
+
+- Enable enclosure characters to be escaped with double enclosures.
+- Add the command option "--ansi-quotes".
+- Add the Flag "@@ANSI_QUOTES".
+- Fix the following bugs.
+  - Double backspaches in a string cannot be parsed correctly.
+  - Escaping in external command syntax cannot be parsed correctly.
+  - Versions are not compared correctly in check-update subcommand.
+
 ## Version 1.10.6
 
 Released on May 4, 2019

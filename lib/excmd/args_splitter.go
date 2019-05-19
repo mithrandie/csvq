@@ -84,6 +84,7 @@ func (s *ArgsSplitter) Scan() bool {
 			s.scanExternalCommand()
 		}
 	case '"', '\'':
+		s.text.WriteRune(ch)
 		s.scanQuotedString(ch)
 	default:
 		s.text.WriteRune(ch)
@@ -124,16 +125,21 @@ func (s *ArgsSplitter) scanQuotedString(quote rune) {
 			break
 		}
 
-		if ch == quote {
-			break
-		}
-
 		if ch == '\\' {
 			switch s.peek() {
 			case '\\', quote:
+				s.text.WriteRune(ch)
 				ch = s.next()
 			}
+		} else if ch == quote {
+			s.text.WriteRune(ch)
+			if s.peek() == quote {
+				ch = s.next()
+			} else {
+				break
+			}
 		}
+
 		s.text.WriteRune(ch)
 	}
 }
@@ -162,7 +168,7 @@ func (s *ArgsSplitter) scanExternalCommand() {
 
 		if ch == '\\' {
 			switch s.peek() {
-			case '\\', parser.BeginExpression, parser.EndExpression:
+			case parser.BeginExpression, parser.EndExpression:
 				ch = s.next()
 			}
 		}
