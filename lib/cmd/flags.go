@@ -26,6 +26,7 @@ const (
 	RepositoryFlag              = "REPOSITORY"
 	TimezoneFlag                = "TIMEZONE"
 	DatetimeFormatFlag          = "DATETIME_FORMAT"
+	AnsiQuotesFlag              = "ANSI_QUOTES"
 	WaitTimeoutFlag             = "WAIT_TIMEOUT"
 	ImportFormatFlag            = "IMPORT_FORMAT"
 	DelimiterFlag               = "DELIMITER"
@@ -57,6 +58,7 @@ var FlagList = []string{
 	RepositoryFlag,
 	TimezoneFlag,
 	DatetimeFormatFlag,
+	AnsiQuotesFlag,
 	WaitTimeoutFlag,
 	ImportFormatFlag,
 	DelimiterFlag,
@@ -148,6 +150,7 @@ type Flags struct {
 	Repository     string
 	Location       string
 	DatetimeFormat []string
+	AnsiQuotes     bool
 
 	// Must be updated from Transaction
 	WaitTimeout float64
@@ -210,6 +213,7 @@ func NewFlags(env *Environment) *Flags {
 		Repository:              "",
 		Location:                "Local",
 		DatetimeFormat:          datetimeFormat,
+		AnsiQuotes:              false,
 		WaitTimeout:             10,
 		Color:                   false,
 		ImportFormat:            CSV,
@@ -295,6 +299,10 @@ func (f *Flags) SetDatetimeFormat(s string) {
 	}
 }
 
+func (f *Flags) SetAnsiQuotes(b bool) {
+	f.AnsiQuotes = b
+}
+
 func (f *Flags) SetWaitTimeout(t float64) {
 	if t < 0 {
 		t = 0
@@ -337,8 +345,6 @@ func (f *Flags) SetDelimiterPositions(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
-	s = UnescapeString(s)
-
 	delimiterPositions, singleLine, err := ParseDelimiterPositions(s)
 	if err != nil {
 		return err
@@ -441,8 +447,6 @@ func (f *Flags) SetWriteDelimiterPositions(s string) error {
 	if len(s) < 1 {
 		return nil
 	}
-	s = UnescapeString(s)
-
 	delimiterPositions, singleLine, err := ParseDelimiterPositions(s)
 	if err != nil {
 		return errors.New(fmt.Sprintf("write-delimiter-positions must be %q or a JSON array of integers", DelimitAutomatically))

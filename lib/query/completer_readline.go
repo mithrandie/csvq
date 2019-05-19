@@ -1716,7 +1716,7 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList(c.encodingList(), false), true
 					case cmd.WriteEncodingFlag:
 						return nil, c.candidateList(exportEncodingsCandidates, false), true
-					case cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
+					case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
 						cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
 						cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 						return nil, c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false), true
@@ -2340,7 +2340,7 @@ func (c *Completer) completeArgs(
 func (c *Completer) UpdateTokens(line string, origLine string) {
 	c.tokens = c.tokens[:0]
 	s := new(parser.Scanner)
-	s.Init(origLine, "", c.scope.Tx.Flags.DatetimeFormat, false)
+	s.Init(origLine, "", c.scope.Tx.Flags.DatetimeFormat, false, c.scope.Tx.Flags.AnsiQuotes)
 	for {
 		t, _ := s.Scan()
 		if t.Token == parser.EOF {

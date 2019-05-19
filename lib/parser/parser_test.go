@@ -10,6 +10,7 @@ import (
 var parseTests = []struct {
 	Input       string
 	ForPrepared bool
+	AnsiQuotes  bool
 	Output      []Statement
 	SourceFile  string
 	HolderNum   int
@@ -6154,7 +6155,7 @@ var parseTests = []struct {
 
 func TestParse(t *testing.T) {
 	for _, v := range parseTests {
-		prog, holderNum, err := Parse(v.Input, v.SourceFile, nil, v.ForPrepared)
+		prog, holderNum, err := Parse(v.Input, v.SourceFile, nil, v.ForPrepared, v.AnsiQuotes)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q", err, v.Input)

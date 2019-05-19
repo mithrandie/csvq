@@ -139,7 +139,7 @@ func (s *ArgumentScanner) scanString() {
 
 		s.next()
 		switch s.peek() {
-		case parser.VariableSign, parser.ExternalCommandSign, '\\':
+		case parser.VariableSign, parser.ExternalCommandSign:
 			s.text.WriteRune(s.next())
 		default:
 			s.text.WriteRune('\\')
@@ -171,7 +171,7 @@ func (s *ArgumentScanner) scanCsvqExpression() {
 
 		if ch == '\\' {
 			switch s.peek() {
-			case '\\', parser.BeginExpression, parser.EndExpression:
+			case parser.BeginExpression, parser.EndExpression:
 				ch = s.next()
 			}
 		}

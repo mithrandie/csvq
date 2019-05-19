@@ -151,7 +151,7 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 		case excmd.CsvqExpression:
 			if 0 < len(element.Text) {
 				command := element.Text
-				statements, _, err := parser.Parse(command, "", p.scope.Tx.Flags.DatetimeFormat, false)
+				statements, _, err := parser.Parse(command, "", p.scope.Tx.Flags.DatetimeFormat, false, p.scope.Tx.Flags.AnsiQuotes)
 				if err != nil {
 					syntaxErr := err.(*parser.SyntaxError)
 					return "", NewPromptEvaluationError(syntaxErr.Message)

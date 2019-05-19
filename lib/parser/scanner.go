@@ -102,13 +102,14 @@ type Scanner struct {
 
 	datetimeFormats []string
 	forPrepared     bool
+	ansiQuotes      bool
 
 	holderOrdinal int
 	holderNames   []string
 	holderNumber  int
 }
 
-func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, forPrepared bool) *Scanner {
+func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, forPrepared bool, ansiQuotes bool) *Scanner {
 	s.src = []rune(src)
 	s.srcPos = 0
 	s.line = 1
@@ -116,6 +117,7 @@ func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, 
 	s.sourceFile = sourceFile
 	s.datetimeFormats = datetimeFormats
 	s.forPrepared = forPrepared
+	s.ansiQuotes = ansiQuotes
 	s.holderOrdinal = 0
 	s.holderNames = make([]string, 0, 10)
 	s.holderNumber = 0
@@ -263,7 +265,7 @@ func (s *Scanner) Scan() (Token, error) {
 
 		if token == ENVIRONMENT_VARIABLE && s.peek() == '`' {
 			err = s.scanString(s.next())
-			literal = cmd.UnescapeIdentifier(s.literal.String())
+			literal = cmd.UnescapeIdentifier(s.literal.String(), '`')
 			quoted = true
 		} else {
 			if s.isIdentRune(s.peek()) {
@@ -288,20 +290,17 @@ func (s *Scanner) Scan() (Token, error) {
 		s.scanLineComment()
 		return s.Scan()
 	default:
-		switch ch {
-		case EOF:
-			break
-		case '"', '\'':
+		if ch == '\'' || (!s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
-			literal = cmd.UnescapeString(s.literal.String())
+			literal = cmd.UnescapeString(s.literal.String(), ch)
 			if _, ok := value.StrToTime(literal, s.datetimeFormats); ok {
 				token = DATETIME
 			} else {
 				token = STRING
 			}
-		case '`':
+		} else if ch == '`' || (s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
-			literal = cmd.UnescapeIdentifier(s.literal.String())
+			literal = cmd.UnescapeIdentifier(s.literal.String(), ch)
 			token = IDENTIFIER
 			quoted = true
 		}
@@ -321,12 +320,18 @@ func (s *Scanner) scanString(quote rune) error {
 		}
 
 		if ch == quote {
-			break
+			if s.peek() == quote {
+				s.literal.WriteRune(ch)
+				ch = s.next()
+			} else {
+				break
+			}
 		}
 
 		if ch == '\\' {
 			switch s.peek() {
 			case '\\', quote:
+				s.literal.WriteRune(ch)
 				ch = s.next()
 			}
 		}

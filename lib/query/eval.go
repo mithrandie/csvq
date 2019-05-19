@@ -1136,6 +1136,17 @@ func evalJsonQueryParameters(ctx context.Context, scope *ReferenceScope, expr pa
 }
 
 func EvaluateEmbeddedString(ctx context.Context, scope *ReferenceScope, embedded string) (string, error) {
+	enclosure := rune(0)
+	if 1 < len(embedded) {
+		if embedded[0] == '\'' && embedded[len(embedded)-1] == '\'' {
+			embedded = embedded[1 : len(embedded)-1]
+			enclosure = '\''
+		} else if embedded[0] == '"' && embedded[len(embedded)-1] == '"' {
+			embedded = embedded[1 : len(embedded)-1]
+			enclosure = '"'
+		}
+	}
+
 	scanner := new(excmd.ArgumentScanner).Init(embedded)
 	buf := &bytes.Buffer{}
 	var err error
@@ -1143,7 +1154,7 @@ func EvaluateEmbeddedString(ctx context.Context, scope *ReferenceScope, embedded
 	for scanner.Scan() {
 		switch scanner.ElementType() {
 		case excmd.FixedString:
-			buf.WriteString(scanner.Text())
+			buf.WriteString(cmd.UnescapeString(scanner.Text(), enclosure))
 		case excmd.Variable:
 			if err = writeEmbeddedExpression(ctx, scope, buf, parser.Variable{Name: scanner.Text()}); err != nil {
 				return buf.String(), err
@@ -1157,7 +1168,7 @@ func EvaluateEmbeddedString(ctx context.Context, scope *ReferenceScope, embedded
 		case excmd.CsvqExpression:
 			expr := scanner.Text()
 			if 0 < len(expr) {
-				statements, _, err := parser.Parse(expr, expr, scope.Tx.Flags.DatetimeFormat, false)
+				statements, _, err := parser.Parse(expr, expr, scope.Tx.Flags.DatetimeFormat, false, scope.Tx.Flags.AnsiQuotes)
 				if err != nil {
 					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
 						err = NewSyntaxError(syntaxErr)
