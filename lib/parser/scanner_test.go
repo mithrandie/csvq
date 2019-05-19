@@ -18,6 +18,7 @@ var scanTests = []struct {
 	Input       string
 	DTFormats   []string
 	ForPrepared bool
+	AnsiQuotes  bool
 	Output      []scanResult
 	Error       string
 }{
@@ -33,11 +34,11 @@ var scanTests = []struct {
 	},
 	{
 		Name:  "QuotedIdentifier",
-		Input: "`id\\enti\\`fier`",
+		Input: "`id\\enti\\`fier```",
 		Output: []scanResult{
 			{
 				Token:   IDENTIFIER,
-				Literal: "id\\enti`fier",
+				Literal: "id\\enti`fier`",
 				Quoted:  true,
 			},
 		},
@@ -99,6 +100,18 @@ var scanTests = []struct {
 			{
 				Token:   STRING,
 				Literal: "string\"string",
+			},
+		},
+	},
+	{
+		Name:       "AnsiQuotes",
+		Input:      "\"identifier\"",
+		AnsiQuotes: true,
+		Output: []scanResult{
+			{
+				Token:   IDENTIFIER,
+				Literal: "identifier",
+				Quoted:  true,
 			},
 		},
 	},
@@ -567,7 +580,7 @@ var scanTests = []struct {
 
 func TestScanner_Scan(t *testing.T) {
 	for _, v := range scanTests {
-		s := new(Scanner).Init(v.Input, "", v.DTFormats, v.ForPrepared)
+		s := new(Scanner).Init(v.Input, "", v.DTFormats, v.ForPrepared, v.AnsiQuotes)
 
 		tokenCount := 0
 		for {

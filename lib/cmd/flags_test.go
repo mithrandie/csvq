@@ -105,6 +105,15 @@ func TestFlags_SetDatetimeFormat(t *testing.T) {
 	}
 }
 
+func TestFlags_SetAnsiQuotes(t *testing.T) {
+	flags := NewFlags(nil)
+
+	flags.SetAnsiQuotes(true)
+	if !flags.AnsiQuotes {
+		t.Errorf("ansi_quotes = %t, expect to set %t", flags.AnsiQuotes, true)
+	}
+}
+
 func TestFlags_SetWaitTimeout(t *testing.T) {
 	flags := NewFlags(nil)
 
@@ -574,7 +583,7 @@ func TestFlags_SetQuiet(t *testing.T) {
 
 	flags.SetQuiet(true)
 	if !flags.Quiet {
-		t.Errorf("silent = %t, expect to set %t", flags.Quiet, true)
+		t.Errorf("quiet = %t, expect to set %t", flags.Quiet, true)
 	}
 }
 

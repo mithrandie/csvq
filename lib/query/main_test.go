@@ -202,6 +202,7 @@ func initFlag(flags *cmd.Flags) {
 	flags.Repository = "."
 	flags.Location = TestLocation
 	flags.DatetimeFormat = []string{}
+	flags.AnsiQuotes = false
 	flags.WaitTimeout = 15
 	flags.ImportFormat = cmd.CSV
 	flags.Delimiter = ','

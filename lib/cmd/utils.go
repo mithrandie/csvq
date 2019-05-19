@@ -165,7 +165,7 @@ func UnescapeIdentifier(s string, quote rune) string {
 				buf.WriteRune('\t')
 			case 'v':
 				buf.WriteRune('\v')
-			case '`', '\\':
+			case '"', '`', '\\':
 				buf.WriteRune(r)
 			default:
 				buf.WriteRune('\\')

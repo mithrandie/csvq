@@ -1168,7 +1168,7 @@ func EvaluateEmbeddedString(ctx context.Context, scope *ReferenceScope, embedded
 		case excmd.CsvqExpression:
 			expr := scanner.Text()
 			if 0 < len(expr) {
-				statements, _, err := parser.Parse(expr, expr, scope.Tx.Flags.DatetimeFormat, false)
+				statements, _, err := parser.Parse(expr, expr, scope.Tx.Flags.DatetimeFormat, false, scope.Tx.Flags.AnsiQuotes)
 				if err != nil {
 					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
 						err = NewSyntaxError(syntaxErr)
