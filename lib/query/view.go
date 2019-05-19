@@ -157,7 +157,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			if value.IsNull(felem) {
 				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
 			}
-			s := cmd.UnescapeString(felem.(*value.String).Raw())
+			s := felem.(*value.String).Raw()
 			d := []rune(s)
 			if 1 != len(d) {
 				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())

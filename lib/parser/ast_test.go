@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"
@@ -127,8 +128,8 @@ func TestIdentifier_String(t *testing.T) {
 
 	s = "abcde"
 	e = Identifier{Literal: s, Quoted: true}
-	if e.String() != quoteIdentifier(s) {
-		t.Errorf("string = %q, want %q for %#v", e.String(), quoteIdentifier(s), e)
+	if e.String() != cmd.QuoteIdentifier(s) {
+		t.Errorf("string = %q, want %q for %#v", e.String(), cmd.QuoteIdentifier(s), e)
 	}
 }
 

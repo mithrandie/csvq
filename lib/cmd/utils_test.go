@@ -9,7 +9,7 @@ import (
 
 func TestEscapeString(t *testing.T) {
 	str := "fo\\o\a\b\f\n\r\t\v\\\\'\"bar\\"
-	expect := "fo\\\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\\\'\\\"bar\\\\"
+	expect := "fo\\\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\\\'\"bar\\\\"
 	unescaped := EscapeString(str)
 	if unescaped != expect {
 		t.Errorf("escaped string = %q, want %q", unescaped, expect)
@@ -17,9 +17,9 @@ func TestEscapeString(t *testing.T) {
 }
 
 func TestUnescapeString(t *testing.T) {
-	str := "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\'\\\"bar\\"
-	expect := "fo\\o\a\b\f\n\r\t\v\\\\'\"bar\\"
-	unescaped := UnescapeString(str)
+	str := "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\'\\\"bar''\"\"\\"
+	expect := "fo\\o\a\b\f\n\r\t\v\\\\'\"bar'\"\"\\"
+	unescaped := UnescapeString(str, '\'')
 	if unescaped != expect {
 		t.Errorf("unescaped string = %q, want %q", unescaped, expect)
 	}
@@ -35,9 +35,9 @@ func TestEscapeIdentifier(t *testing.T) {
 }
 
 func TestUnescapeIdentifier(t *testing.T) {
-	str := "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\`bar\\"
-	expect := "fo\\o\a\b\f\n\r\t\v\\\\`bar\\"
-	unescaped := UnescapeIdentifier(str)
+	str := "fo\\o\\a\\b\\f\\n\\r\\t\\v\\\\\\\\`bar``\\"
+	expect := "fo\\o\a\b\f\n\r\t\v\\\\`bar`\\"
+	unescaped := UnescapeIdentifier(str, '`')
 	if unescaped != expect {
 		t.Errorf("unescaped identifier = %q, want %q", unescaped, expect)
 	}
@@ -317,12 +317,12 @@ var unescapeStringBenchString2 = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrst
 
 func BenchmarkUnescapeString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = UnescapeString(unescapeStringBenchString)
+		_ = UnescapeString(unescapeStringBenchString, '\'')
 	}
 }
 
 func BenchmarkUnescapeString2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = UnescapeString(unescapeStringBenchString2)
+		_ = UnescapeString(unescapeStringBenchString2, '\'')
 	}
 }

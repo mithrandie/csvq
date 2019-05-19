@@ -152,7 +152,7 @@ func (e PrimitiveType) String() string {
 	if 0 < len(e.Literal) {
 		switch e.Value.(type) {
 		case *value.String, *value.Datetime:
-			return quoteString(e.Literal)
+			return cmd.QuoteString(e.Literal)
 		default:
 			return e.Literal
 		}
@@ -1586,12 +1586,4 @@ func listQueryExpressions(exprs []QueryExpression) string {
 		s[i] = v.String()
 	}
 	return strings.Join(s, ", ")
-}
-
-func quoteString(s string) string {
-	return "'" + s + "'"
-}
-
-func quoteIdentifier(s string) string {
-	return "`" + s + "`"
 }

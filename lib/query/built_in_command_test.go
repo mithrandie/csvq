@@ -403,6 +403,13 @@ var setFlagTests = []struct {
 		},
 	},
 	{
+		Name: "Set AnsiQuotes",
+		Expr: parser.SetFlag{
+			Flag:  parser.Flag{Name: "ansi_quotes"},
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
 		Name: "Set WaitTimeout",
 		Expr: parser.SetFlag{
 			Flag:  parser.Flag{Name: "wait_timeout"},
@@ -896,6 +903,19 @@ var showFlagTests = []struct {
 			},
 		},
 		Result: "\033[34;1m@@DATETIME_FORMAT:\033[0m \033[32m[\"%Y%m%d\", \"%Y%m%d %H%i%s\"]\033[0m",
+	},
+	{
+		Name: "Show AnsiQuotes",
+		Expr: parser.ShowFlag{
+			Flag: parser.Flag{Name: "ansi_quotes"},
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Flag:  parser.Flag{Name: "ansi_quotes"},
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+		},
+		Result: "\033[34;1m@@ANSI_QUOTES:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Show WaitTimeout",
@@ -2103,6 +2123,7 @@ var showObjectsTests = []struct {
 			"                @@REPOSITORY: .\n" +
 			"                  @@TIMEZONE: UTC\n" +
 			"           @@DATETIME_FORMAT: (not set)\n" +
+			"               @@ANSI_QUOTES: false\n" +
 			"              @@WAIT_TIMEOUT: 15\n" +
 			"             @@IMPORT_FORMAT: CSV\n" +
 			"                 @@DELIMITER: ','\n" +

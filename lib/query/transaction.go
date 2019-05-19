@@ -352,6 +352,12 @@ func (tx *Transaction) setFlag(key string, value interface{}, outFile string) er
 		} else {
 			err = errNotAllowdFlagFormat
 		}
+	case cmd.AnsiQuotesFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetAnsiQuotes(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
 	case cmd.WaitTimeoutFlag:
 		if f, ok := value.(float64); ok {
 			tx.UpdateWaitTimeout(f, file.DefaultRetryDelay)
@@ -531,6 +537,8 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 			s = "[" + strings.Join(list, ", ") + "]"
 		}
 		val = value.NewString(s)
+	case cmd.AnsiQuotesFlag:
+		val = value.NewBoolean(tx.Flags.AnsiQuotes)
 	case cmd.WaitTimeoutFlag:
 		val = value.NewFloat(tx.Flags.WaitTimeout)
 	case cmd.ImportFormatFlag:
