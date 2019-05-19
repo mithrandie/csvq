@@ -308,6 +308,24 @@ func TestInlineTableMap_Set(t *testing.T) {
 			t.Errorf("%s: result = %v, want %v", v.Name, it, v.Result)
 		}
 	}
+
+	recursiveExpr := parser.InlineTable{
+		Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
+		Name:      parser.Identifier{Literal: "nested_error"},
+		Fields: []parser.QueryExpression{
+			parser.Identifier{Literal: "n"},
+		},
+		As:    "as",
+		Query: parser.SelectQuery{},
+	}
+	scope.RecursiveTable = &recursiveExpr
+	expectErr := "recursive queries are nested"
+	err := it.Set(ctx, scope, recursiveExpr)
+	if err == nil {
+		t.Errorf("no error, want error %q", expectErr)
+	} else if err.Error() != expectErr {
+		t.Errorf("error %q, want error %q", err.Error(), expectErr)
+	}
 }
 
 var inlineTableMapGetTests = []struct {
