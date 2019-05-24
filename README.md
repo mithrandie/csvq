@@ -50,6 +50,12 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 1. Download an archive file from [release page](https://github.com/mithrandie/csvq/releases).
 2. Extract the downloaded archive and add a binary file in it to your path.
 
+### Homebrew
+
+```sh
+brew install csvq
+```
+
 ### Build from source
 
 #### Requirements
