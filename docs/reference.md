@@ -5,7 +5,7 @@ title: Reference Manual - csvq
 
 # Reference Manual
 
-* [Install]({{ '/reference/install.html' | relative_url }})
+* [Installation]({{ '/reference/install.html' | relative_url }})
 * [Command Usage]({{ '/reference/command.html' | relative_url }})
 * [Statements]({{ '/reference/statement.html' | relative_url }})
 * [Values]({{ '/reference/value.html' | relative_url }})

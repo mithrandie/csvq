@@ -43,7 +43,7 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 [Reference Manual - csvq](https://mithrandie.github.io/csvq/reference)
 
-## Install
+## Installation
 
 ### Install executable binary
 
@@ -68,6 +68,14 @@ Go 1.11 or later (ref. [Getting Started - The Go Programming Language](https://g
 2. Change directory to `$GOPATH/src/github.com/mithrandie/csvq`
 3. ```$ env GO111MODULE=on go install```
 
+### Install using package manager (Unofficial)
+
+Installing using a package manager does not ensure that you always get the latest version, but it may make installation and updating easier.
+
+#### macOS or Linux
+
+1. Install homebrew (ref. [The missing package manager for macOS (or Linux) — Homebrew](https://brew.sh))
+2. ```$ brew install csvq```
 
 ## Usage
 
