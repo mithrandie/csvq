@@ -47,9 +47,9 @@ Version 1.11.1
 
   > JSON Format supports only UTF-8.
 
-## Install
+## Installation
 
-[Install - Reference Manual - csvq]({{ '/reference/install.html' | relative_url }})
+[Installation - Reference Manual - csvq]({{ '/reference/install.html' | relative_url }})
 
 ## Command Usage
 
