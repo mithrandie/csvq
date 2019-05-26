@@ -16,14 +16,18 @@ Aggregate Functions can be used only in [Select Clause]({{ '/reference/select-qu
 
 | name | description |
 | :- | :- |
-| [COUNT](#count) | Return a number of values |
-| [MIN](#min) | Return a minimum value |
-| [MAX](#max) | Return a maximum value |
-| [SUM](#sum) | Return a sum of values |
-| [AVG](#avg) | Return a average of values |
-| [MEDIAN](#median) | Return a median of values |
-| [LISTAGG](#listagg) | Return a concatenated string of values |
-| [JSON_AGG](#json_agg) | Return a string formatted in JSON array |
+| [COUNT](#count)       | Return the number of values |
+| [MIN](#min)           | Return the minimum value |
+| [MAX](#max)           | Return the maximum value |
+| [SUM](#sum)           | Return the sum of values |
+| [AVG](#avg)           | Return the average of values |
+| [STDEV](#stdev)       | Return the sample standard deviation of values |
+| [STDEVP](#stdevp)     | Return the population standard deviation of values |
+| [VAR](#var)           | Return the sample variance of values |
+| [VARP](#varp)         | Return the population variance of values |
+| [MEDIAN](#median)     | Return the median of values |
+| [LISTAGG](#listagg)   | Return the concatenated string of values |
+| [JSON_AGG](#json_agg) | Return the string formatted in JSON array |
 
 ## Definitions
 
@@ -114,6 +118,72 @@ _return_
 
 Returns the average of float values of _expr_.
 If all values are null, then returns a null.
+
+### STDEV
+{: #stdev}
+
+```
+STDEV([DISTINCT] expr)
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the sample standard deviation of float values of _expr_.
+If all values are null, then returns a null.
+
+### STDEVP
+{: #stdevp}
+
+```
+STDEVP([DISTINCT] expr)
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the population standard deviation of float values of _expr_.
+If all values are null, then returns a null.
+
+### VAR
+{: #var}
+
+```
+VAR([DISTINCT] expr)
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the sample variance of float values of _expr_.
+If all values are null, then returns a null.
+
+
+### VARP
+{: #varp}
+
+```
+VARP([DISTINCT] expr)
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the population variance of float values of _expr_.
+If all values are null, then returns a null.
+
 
 ### MEDIAN
 {: #median}

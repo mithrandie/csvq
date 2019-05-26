@@ -2372,6 +2372,50 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
+						Name: "stdev",
+						Group: []Grammar{
+							{Function{Name: "STDEV", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the sample standard deviation of float values of %s. " +
+								"If all values are null, then returns %s.",
+							Values: []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "stdevp",
+						Group: []Grammar{
+							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the population population deviation of float values of %s. " +
+								"If all values are null, then returns %s.",
+							Values: []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "var",
+						Group: []Grammar{
+							{Function{Name: "VAR", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the sample variance of float values of %s. " +
+								"If all values are null, then returns %s.",
+							Values: []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "varp",
+						Group: []Grammar{
+							{Function{Name: "VARP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the population variance of float values of %s. " +
+								"If all values are null, then returns %s.",
+							Values: []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
 						Name: "median",
 						Group: []Grammar{
 							{Function{Name: "MEDIAN", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
@@ -2577,6 +2621,46 @@ var CsvqSyntax = []Expression{
 						},
 						Description: Description{
 							Template: "Returns the average of float values of %s. If all values are null, then returns %s.",
+							Values:   []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "stdev",
+						Group: []Grammar{
+							{Function{Name: "STDEV", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the sample standard deviation of float values of %s. If all values are null, then returns %s.",
+							Values:   []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "stdevp",
+						Group: []Grammar{
+							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the population standard deviation of float values of %s. If all values are null, then returns %s.",
+							Values:   []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "var",
+						Group: []Grammar{
+							{Function{Name: "VAR", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the sample variance of float values of %s. If all values are null, then returns %s.",
+							Values:   []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "varp",
+						Group: []Grammar{
+							{Function{Name: "VARP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the population variance of float values of %s. If all values are null, then returns %s.",
 							Values:   []Element{Link("value"), Null("NULL")},
 						},
 					},
@@ -2803,8 +2887,9 @@ var CsvqSyntax = []Expression{
 						"NTILE NULL OFFSET ON OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
 						"PERCENT_RANK PRECEDING PREPARE PRINT PRINTF PRIOR PWD RANGE RANK RECURSIVE " +
 						"RELATIVE RELOAD REMOVE RENAME REPLACE RETURN RIGHT ROLLBACK ROW ROW_NUMBER " +
-						"SELECT SEPARATOR SET SHOW SOURCE STDIN SUM SYNTAX TABLE THEN TO TRIGGER TRUE " +
-						"UNBOUNDED UNION UNKNOWN UNSET UPDATE USING VALUES VAR VIEW WHEN WHERE " +
+						"SELECT SEPARATOR SET SHOW SOURCE STDEV STDEVP STDIN SUM SYNTAX TABLE " +
+						"THEN TO TRIGGER TRUE " +
+						"UNBOUNDED UNION UNKNOWN UNSET UPDATE USING VALUES VAR VARP VIEW WHEN WHERE " +
 						"WHILE WITH WITHIN",
 				},
 			},

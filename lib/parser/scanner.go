@@ -56,6 +56,9 @@ var aggregateFunctions = []string{
 	"MAX",
 	"SUM",
 	"AVG",
+	"STDEV",
+	"STDEVP",
+	"VARP",
 	"MEDIAN",
 }
 
