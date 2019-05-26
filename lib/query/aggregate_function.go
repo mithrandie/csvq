@@ -1,6 +1,7 @@
 package query
 
 import (
+	"math"
 	"sort"
 	"strings"
 
@@ -21,6 +22,10 @@ var AggregateFunctions = map[string]AggregateFunction{
 	"MIN":    Min,
 	"SUM":    Sum,
 	"AVG":    Avg,
+	"STDEV":  StdEV,
+	"STDEVP": StdEVP,
+	"VAR":    Var,
+	"VARP":   VarP,
 	"MEDIAN": Median,
 }
 
@@ -80,45 +85,103 @@ func Min(list []value.Primary, flags *cmd.Flags) value.Primary {
 }
 
 func Sum(list []value.Primary, _ *cmd.Flags) value.Primary {
-	var sum float64
-	var count int
-
-	for _, v := range list {
-		f := value.ToFloat(v)
-		if value.IsNull(f) {
-			continue
-		}
-
-		sum += f.(*value.Float).Raw()
-		count++
-	}
-
-	if count < 1 {
+	values := floatList(list)
+	if len(values) < 1 {
 		return value.NewNull()
 	}
-	return value.ParseFloat64(sum)
+	return value.ParseFloat64(sum(values))
 }
 
 func Avg(list []value.Primary, _ *cmd.Flags) value.Primary {
-	var sum float64
-	var count int
-
-	for _, v := range list {
-		f := value.ToFloat(v)
-		if value.IsNull(f) {
-			continue
-		}
-
-		sum += f.(*value.Float).Raw()
-		count++
-	}
-
-	if count < 1 {
+	values := floatList(list)
+	if len(values) < 1 {
 		return value.NewNull()
 	}
+	return value.ParseFloat64(average(values))
+}
 
-	avg := sum / float64(count)
-	return value.ParseFloat64(avg)
+func StdEV(list []value.Primary, _ *cmd.Flags) value.Primary {
+	values := floatList(list)
+	if len(values) < 2 {
+		return value.NewNull()
+	}
+	return value.ParseFloat64(standardDeviation(values, false))
+}
+
+func StdEVP(list []value.Primary, _ *cmd.Flags) value.Primary {
+	values := floatList(list)
+	if len(values) < 1 {
+		return value.NewNull()
+	}
+	return value.ParseFloat64(standardDeviation(values, true))
+}
+
+func Var(list []value.Primary, _ *cmd.Flags) value.Primary {
+	values := floatList(list)
+	if len(values) < 2 {
+		return value.NewNull()
+	}
+	return value.ParseFloat64(variance(values, false))
+}
+
+func VarP(list []value.Primary, _ *cmd.Flags) value.Primary {
+	values := floatList(list)
+	if len(values) < 1 {
+		return value.NewNull()
+	}
+	return value.ParseFloat64(variance(values, true))
+}
+
+func floatList(list []value.Primary) []float64 {
+	values := make([]float64, 0, len(list))
+	for _, v := range list {
+		if f := value.ToFloat(v); !value.IsNull(f) {
+			values = append(values, f.(*value.Float).Raw())
+		}
+	}
+	return values
+}
+
+func sum(list []float64) float64 {
+	var sum float64
+	for _, v := range list {
+		sum += v
+	}
+	return sum
+}
+
+func average(list []float64) float64 {
+	denom := float64(len(list))
+	sum := sum(list)
+
+	if denom == 0 || sum == 0 {
+		return 0
+	}
+
+	return sum / denom
+}
+
+func variance(list []float64, isP bool) float64 {
+	avg := average(list)
+	denom := float64(len(list))
+	if !isP {
+		denom = denom - 1
+	}
+
+	var sum float64
+	for _, v := range list {
+		sum += math.Pow(v-avg, 2)
+	}
+
+	if denom == 0 || sum == 0 {
+		return 0
+	}
+
+	return sum / denom
+}
+
+func standardDeviation(list []float64, isP bool) float64 {
+	return math.Sqrt(variance(list, isP))
 }
 
 func Median(list []value.Primary, flags *cmd.Flags) value.Primary {
