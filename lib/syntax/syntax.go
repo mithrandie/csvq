@@ -2388,7 +2388,7 @@ var CsvqSyntax = []Expression{
 							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
 						},
 						Description: Description{
-							Template: "Returns the population population deviation of float values of %s. " +
+							Template: "Returns the population standard deviation of float values of %s. " +
 								"If all values are null, then returns %s.",
 							Values: []Element{Link("value"), Null("NULL")},
 						},
