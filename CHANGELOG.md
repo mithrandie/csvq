@@ -1,5 +1,21 @@
 # Change Log
 
+## Version 1.11.2
+
+Released on May 26, 2019
+
+- Add built-in functions.
+  - Aggregate Functions
+    - STDEV
+    - STDEVP
+    - VAR
+    - VARP
+  - Analytic Functions
+    - STDEV
+    - STDEVP
+    - VAR
+    - VARP
+
 ## Version 1.11.1
 
 Released on May 19, 2019
