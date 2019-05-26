@@ -27,6 +27,10 @@ Analytic Functions can be used only in [Select Clause]({{ '/reference/select-que
 | [MAX](#max)                   | Return the maximum value in a group |
 | [SUM](#sum)                   | Return the sum of values in a group |
 | [AVG](#avg)                   | Return the average of values in a group |
+| [STDEV](#stdev)               | Return the sample standard deviation of values |
+| [STDEVP](#stdevp)             | Return the population standard deviation of values |
+| [VAR](#var)                   | Return the sample variance of values |
+| [VARP](#varp)                 | Return the population variance of values |
 | [MEDIAN](#median)             | Return the median of values in a group |
 | [LISTAGG](#listagg)           | Return the concatenated string of values in a group |
 | [JSON_AGG](#json_agg)         | Return the string formatted in JSON array of values in a group |
@@ -441,6 +445,86 @@ _return_
 : [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
 
 Returns the average of float values of _expr_.
+If all values are null, then returns a null.
+
+
+### STDEV
+{: #stdev}
+
+```
+STDEV([DISTINCT] expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the sample standard deviation of float values of _expr_.
+If all values are null, then returns a null.
+
+
+### STDEVP
+{: #stdevp}
+
+```
+STDEVP([DISTINCT] expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the population standard deviation of float values of _expr_.
+If all values are null, then returns a null.
+
+
+### VAR
+{: #var}
+
+```
+VAR([DISTINCT] expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the sample variance of float values of _expr_.
+If all values are null, then returns a null.
+
+
+### VARP
+{: #varp}
+
+```
+VARP([DISTINCT] expr) OVER ([partition_clause] [order_by_clause [windowing_clause]])
+```
+
+_expr_
+: [value]({{ '/reference/value.html' | relative_url }})
+
+_partition_clause_
+: [Partition Clause](#syntax)
+
+_return_
+: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+Returns the population variance of float values of _expr_.
 If all values are null, then returns a null.
 
 

@@ -1701,6 +1701,10 @@ aggregate_function
     {
         $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
     }
+    | VAR '(' distinct arguments ')'
+    {
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
+    }
     | COUNT '(' distinct arguments ')'
     {
         $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
@@ -1734,6 +1738,10 @@ analytic_function
         $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
     | AGGREGATE_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+    }
+    | VAR '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }

@@ -158,6 +158,150 @@ func TestAvg(t *testing.T) {
 	}
 }
 
+var stdEVTests = []aggregateTests{
+	{
+		List: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewInteger(3),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewInteger(5),
+		},
+		Result: value.NewFloat(1.5811388300841898),
+	},
+	{
+		List: []value.Primary{
+			value.NewInteger(0),
+			value.NewInteger(0),
+		},
+		Result: value.NewInteger(0),
+	},
+	{
+		List: []value.Primary{
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+}
+
+func TestStdEV(t *testing.T) {
+	for _, v := range stdEVTests {
+		r := StdEV(v.List, TestTx.Flags)
+		if !reflect.DeepEqual(r, v.Result) {
+			t.Errorf("stdev list = %s: result = %s, want %s", v.List, r, v.Result)
+		}
+	}
+}
+
+var stdEVPTests = []aggregateTests{
+	{
+		List: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewInteger(3),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewInteger(5),
+		},
+		Result: value.NewFloat(1.4142135623730951),
+	},
+	{
+		List: []value.Primary{
+			value.NewInteger(0),
+			value.NewInteger(0),
+		},
+		Result: value.NewInteger(0),
+	},
+	{
+		List: []value.Primary{
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+}
+
+func TestStdEVP(t *testing.T) {
+	for _, v := range stdEVPTests {
+		r := StdEVP(v.List, TestTx.Flags)
+		if !reflect.DeepEqual(r, v.Result) {
+			t.Errorf("stdevp list = %s: result = %s, want %s", v.List, r, v.Result)
+		}
+	}
+}
+
+var varTests = []aggregateTests{
+	{
+		List: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewInteger(3),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewInteger(5),
+		},
+		Result: value.NewFloat(2.5),
+	},
+	{
+		List: []value.Primary{
+			value.NewInteger(0),
+			value.NewInteger(0),
+		},
+		Result: value.NewInteger(0),
+	},
+	{
+		List: []value.Primary{
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+}
+
+func TestVar(t *testing.T) {
+	for _, v := range varTests {
+		r := Var(v.List, TestTx.Flags)
+		if !reflect.DeepEqual(r, v.Result) {
+			t.Errorf("var list = %s: result = %s, want %s", v.List, r, v.Result)
+		}
+	}
+}
+
+var varPTests = []aggregateTests{
+	{
+		List: []value.Primary{
+			value.NewInteger(1),
+			value.NewInteger(2),
+			value.NewInteger(3),
+			value.NewNull(),
+			value.NewInteger(4),
+			value.NewInteger(5),
+		},
+		Result: value.NewInteger(2),
+	},
+	{
+		List: []value.Primary{
+			value.NewInteger(0),
+			value.NewInteger(0),
+		},
+		Result: value.NewInteger(0),
+	},
+	{
+		List: []value.Primary{
+			value.NewNull(),
+		},
+		Result: value.NewNull(),
+	},
+}
+
+func TestVarP(t *testing.T) {
+	for _, v := range varPTests {
+		r := VarP(v.List, TestTx.Flags)
+		if !reflect.DeepEqual(r, v.Result) {
+			t.Errorf("varp list = %s: result = %s, want %s", v.List, r, v.Result)
+		}
+	}
+}
+
 var medianTests = []aggregateTests{
 	{
 		List: []value.Primary{

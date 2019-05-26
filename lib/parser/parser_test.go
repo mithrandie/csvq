@@ -2174,6 +2174,28 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select var(column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AggregateFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "var",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select count(*)",
 		Output: []Statement{
 			SelectQuery{
@@ -2809,6 +2831,52 @@ var parseTests = []struct {
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "min",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									PartitionClause: PartitionClause{
+										PartitionBy: "partition by",
+										Values: []QueryExpression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select var(column1) over (partition by column1 order by column2 rows current row)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "var",
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
 								},
