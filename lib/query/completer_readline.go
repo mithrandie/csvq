@@ -958,15 +958,6 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 					customList.Sort()
 				}
 				return nil, customList, true
-			case parser.OFFSET:
-				if i < c.lastIdx {
-					customList = append(customList, c.candidateList([]string{
-						"FOR UPDATE",
-					}, false)...)
-				}
-				customList = append(customList, c.SearchValues(line, origLine, index)...)
-				customList.Sort()
-				return nil, customList, true
 			case parser.LIMIT:
 				if i < c.lastIdx {
 					switch c.tokens[c.lastIdx].Token {
@@ -1001,6 +992,97 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 				}
 				customList.Sort()
 				return keywords, customList, true
+			case parser.FETCH:
+				if i == c.lastIdx {
+					afterOffset := false
+
+				CompleterSelectArgsSearchOffsetLoop:
+					for j := c.lastIdx - 1; j >= 0; j-- {
+						switch c.tokens[j].Token {
+						case parser.OFFSET:
+							afterOffset = true
+							break CompleterSelectArgsSearchOffsetLoop
+						case parser.ORDER, parser.HAVING, parser.GROUP, parser.FROM, parser.SELECT:
+							break CompleterSelectArgsSearchOffsetLoop
+						}
+					}
+
+					if afterOffset {
+						keywords = append(keywords, "NEXT")
+					} else {
+						keywords = append(keywords, "FIRST")
+					}
+				} else {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.ROW, parser.ROWS, parser.PERCENT:
+						customList = append(customList, c.candidateList([]string{
+							"ONLY",
+							"WITH TIES",
+							"FOR UPDATE",
+						}, false)...)
+					case parser.WITH:
+						customList = append(customList, c.candidateList([]string{
+							"TIES",
+						}, false)...)
+					case parser.ONLY, parser.TIES:
+						customList = append(customList, c.candidateList([]string{
+							"FOR UPDATE",
+						}, false)...)
+					case parser.FIRST, parser.NEXT:
+						//Do nothing
+					default:
+						if c.tokens[c.lastIdx].Literal == "1" {
+							keywords = append(keywords, "ROW")
+						} else {
+							keywords = append(keywords, "ROWS")
+						}
+						keywords = append(keywords, "PERCENT")
+					}
+				}
+
+				if customList != nil {
+					customList.Sort()
+				}
+				return keywords, customList, true
+			case parser.OFFSET:
+				if i < c.lastIdx {
+					afterLimit := false
+
+				CompleterSelectArgsSearchLimitLoop:
+					for j := c.lastIdx - 1; j >= 0; j-- {
+						switch c.tokens[j].Token {
+						case parser.LIMIT:
+							afterLimit = true
+							break CompleterSelectArgsSearchLimitLoop
+						case parser.ORDER, parser.HAVING, parser.GROUP, parser.FROM, parser.SELECT:
+							break CompleterSelectArgsSearchLimitLoop
+						}
+					}
+
+					if !afterLimit {
+						customList = append(customList, c.candidateList([]string{
+							"FETCH",
+						}, true)...)
+					}
+
+					customList = append(customList, c.candidateList([]string{
+						"FOR UPDATE",
+					}, false)...)
+					if c.tokens[c.lastIdx].Token != parser.ROW && c.tokens[c.lastIdx].Token != parser.ROWS {
+						if c.tokens[c.lastIdx].Literal == "1" {
+							customList = append(customList, c.candidateList([]string{
+								"ROW",
+							}, false)...)
+						} else {
+							customList = append(customList, c.candidateList([]string{
+								"ROWS",
+							}, false)...)
+						}
+					}
+				}
+				customList = append(customList, c.SearchValues(line, origLine, index)...)
+				customList.Sort()
+				return nil, customList, true
 			case parser.ORDER:
 				if i == c.lastIdx {
 					keywords = append(keywords, "BY")
@@ -1013,8 +1095,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"FOR UPDATE",
 						}, false)...)
 						customList = append(customList, c.candidateList([]string{
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 					case parser.NULLS:
 						customList = append(customList, c.candidateList([]string{
@@ -1023,8 +1106,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						}, false)...)
 					case parser.FIRST, parser.LAST:
 						customList = append(customList, c.candidateList([]string{
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 						customList = append(customList, c.candidateList([]string{
 							"FOR UPDATE",
@@ -1038,8 +1122,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"FOR UPDATE",
 						}, false)...)
 						customList = append(customList, c.candidateList([]string{
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 						customList = append(customList, c.SearchValues(line, origLine, index)...)
 						customList = append(customList, c.aggregateFunctionCandidateList(line)...)
@@ -1077,8 +1162,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 				if i < c.lastIdx {
 					customList = append(customList, c.candidateList([]string{
 						"ORDER BY",
-						"LIMIT",
 						"OFFSET",
+						"FETCH",
+						"LIMIT",
 					}, true)...)
 					if !isSelectInto {
 						customList = append(customList, c.candidateList([]string{
@@ -1102,8 +1188,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						customList = append(customList, c.candidateList([]string{
 							"HAVING",
 							"ORDER BY",
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 						if !isSelectInto {
 							customList = append(customList, c.candidateList([]string{
@@ -1126,8 +1213,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						"GROUP BY",
 						"HAVING",
 						"ORDER BY",
-						"LIMIT",
 						"OFFSET",
+						"FETCH",
+						"LIMIT",
 					}, true)...)
 					if !isSelectInto {
 						customList = append(customList, c.candidateList([]string{
@@ -1151,8 +1239,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"GROUP BY",
 							"HAVING",
 							"ORDER BY",
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 						if !isSelectInto {
 							clist = append(clist, c.candidateList([]string{
@@ -1179,8 +1268,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						"GROUP BY",
 						"HAVING",
 						"ORDER BY",
-						"LIMIT",
 						"OFFSET",
+						"FETCH",
+						"LIMIT",
 					}, true)...)
 					customList = append(customList, c.candidateList([]string{
 						"FOR UPDATE",
@@ -1208,8 +1298,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"GROUP BY",
 							"HAVING",
 							"ORDER BY",
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 							"UNION",
 							"EXCEPT",
 							"INTERSECT",

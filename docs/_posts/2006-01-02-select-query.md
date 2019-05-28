@@ -14,7 +14,6 @@ select_query
       select_entity
       [order_by_clause]
       [limit_clause]
-      [offset_clause]
       [FOR UPDATE]
 
 select_entity
@@ -53,9 +52,6 @@ _order_by_clause_
 
 _limit_clause_
 : [Limit Clause](#limit_clause)
-
-_offset_clause_
-: [Offset Clause](#offset_clause)
 
 _set_operator_
 : [Set Operators]({{ '/reference/set-operators.html' | relative_url }})
@@ -313,12 +309,18 @@ _null_position_
 ## Limit Clause
 {: #limit_clause}
 
-The Limit clause is used to specify the maximum number of records to return.
+The Limit clause is used to specify the maximum number of records to return and exclude the first set of records.
 
 ```sql
 limit_clause
-  : LIMIT number_of_records [WITH TIES]
-  | LIMIT percent PERCENT [WITH TIES]
+  : LIMIT number_of_records [{ROW|ROWS}] [{ONLY|WITH TIES}] [offset_clause]
+  | LIMIT percentage PERCENT [{ONLY|WITH TIES}] [offset_clause]
+  | [offset_clause] FETCH {FIRST|NEXT} number_of_records {ROW|ROWS} [{ONLY|WITH TIES}]
+  | [offset_clause] FETCH {FIRST|NEXT} percentage PERCENT [{ONLY|WITH TIES}]
+  | offset_clause
+
+offset_clause
+  : OFFSET number_of_records [{ROW|ROWS}]
 ```
 
 _number_of_records_
@@ -327,19 +329,10 @@ _number_of_records_
 _percent_
 : [float]({{ '/reference/value.html#integer' | relative_url }})
 
-If _PERCENT_ keyword is specified, maximum number of records is _percent_ percent of the result set that includes the excluded records by _Offset Clause_. 
+_ROW_ and _ROWS_ after _number_of_records_, _FIRST_ and _NEXT_ after _FETCH_, and _ONLY_ keyword does not affect the result.
+
+If _PERCENT_ keyword is specified, maximum number of records is _percentage_ percent of the result set that includes the excluded records by _offset_clause_. 
 
 If _WITH TIES_ keywords are specified, all records that have the same sort keys specified by _Order By Clause_ as the last record of the limited records are included in the records to return.
 If there is no _Order By Clause_ in the query, _WITH TIES_ keywords are ignored.
 
-## Offset Clause
-{: #offset_clause}
-
-The Offset clause is used to exclude the first set of records.
-
-```sql
-OFFSET row_number
-```
-
-_row_number_
-: [integer]({{ '/reference/value.html#integer' | relative_url }})

@@ -16,13 +16,13 @@ var CsvqSyntax = []Expression{
 			{
 				Name: "select_query",
 				Group: []Grammar{
-					{Option{Link("with_clause")}, Link("select_entity"), Option{Link("order_by_clause")}, Option{Link("limit_clause")}, Option{Link("offset_clause")}, Option{Keyword("FOR"), Keyword("UPDATE")}},
+					{Option{Link("with_clause")}, Link("select_entity"), Option{Link("order_by_clause")}, Option{Link("limit_clause")}, Option{Keyword("FOR"), Keyword("UPDATE")}},
 				},
 			},
 			{
 				Name: "select_entity",
 				Group: []Grammar{
-					{Link("select_clause"), Option{Link("from_clause")}, Option{Link("where_clause")}, Option{Link("group_by_clause")}, Option{Link("having_clause")}},
+					{Link("select_clause"), Option{Link("from_clause")}, Option{Link("where_clause")}, Option{Link("group_by_clause")}},
 					{Link("select_set_entity"), Link("Set Operators"), Option{Keyword("ALL")}, Link("select_set_entity")},
 				},
 			},
@@ -228,19 +228,17 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "limit_clause",
 						Group: []Grammar{
-							{Keyword("LIMIT"), Integer("number_of_records"), Option{Keyword("WITH"), Keyword("TIES")}},
-							{Keyword("LIMIT"), Float("percent"), Keyword("PERCENT"), Option{Keyword("WITH"), Keyword("TIES")}},
+							{Keyword("LIMIT"), Integer("number_of_records"), Option{AnyOne{Keyword("ROW"), Keyword("ROWS")}}, Option{AnyOne{Keyword("ONLY"), Keyword("WITH TIES")}}, Option{Link("offset_clause")}},
+							{Keyword("LIMIT"), Float("percentage"), Keyword("PERCENT"), Option{AnyOne{Keyword("ONLY"), Keyword("WITH TIES")}}, Option{Link("offset_clause")}},
+							{Option{Link("offset_clause")}, Keyword("FETCH"), AnyOne{Keyword("FIRST"), Keyword("NEXT")}, Integer("number_of_records"), AnyOne{Keyword("ROW"), Keyword("ROWS")}, Option{AnyOne{Keyword("ONLY"), Keyword("WITH TIES")}}},
+							{Option{Link("offset_clause")}, Keyword("FETCH"), AnyOne{Keyword("FIRST"), Keyword("NEXT")}, Float("percentage"), Keyword("PERCENT"), Option{AnyOne{Keyword("ONLY"), Keyword("WITH TIES")}}},
+							{Link("offset_clause")},
 						},
 					},
-				},
-			},
-			{
-				Label: "OFFSET Clause",
-				Grammar: []Definition{
 					{
 						Name: "offset_clause",
 						Group: []Grammar{
-							{Keyword("OFFSET"), Integer("row_number")},
+							{Keyword("OFFSET"), Integer("number_of_records"), Option{AnyOne{Keyword("ROW"), Keyword("ROWS")}}},
 						},
 					},
 				},
@@ -2884,7 +2882,7 @@ var CsvqSyntax = []Expression{
 						"GROUP HAVING IF IGNORE IN INNER INSERT INTERSECT INTO IS JOIN " +
 						"JSON_AGG JSON_OBJECT JSON_ROW JSON_TABLE LAG LAST LAST_VALUE LEAD " +
 						"LEFT LIKE LIMIT LISTAGG MAX MEDIAN MIN NATURAL NEXT NOT NTH_VALUE " +
-						"NTILE NULL OFFSET ON OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
+						"NTILE NULL OFFSET ON ONLY OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
 						"PERCENT_RANK PRECEDING PREPARE PRINT PRINTF PRIOR PWD RANGE RANK RECURSIVE " +
 						"RELATIVE RELOAD REMOVE RENAME REPLACE RETURN RIGHT ROLLBACK ROW ROW_NUMBER " +
 						"SELECT SEPARATOR SET SHOW SOURCE STDEV STDEVP STDIN SUM SYNTAX TABLE " +
