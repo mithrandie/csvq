@@ -164,9 +164,9 @@ _multiple_fields_subquery_
 
 Check if _value_ or _row_value_ is in within the set of _values_ or the result set of _select_query_.
 
-_IN_ is equivalent to [ANY](#any) operator that _relational_operator_ is specified as "=".
+_IN_ is equivalent to [= ANY](#any).
 
-_NOT IN_ is equivalent to [ALL](#all) operator that _relational_operator_ is specified as "<>".
+_NOT IN_ is equivalent to [<> ALL](#all).
 
 ## ANY
 {: #any}
