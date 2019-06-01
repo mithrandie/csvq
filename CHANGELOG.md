@@ -1,12 +1,19 @@
 # Change Log
 
+## Version 1.11.4
+
+Released on Jun 1, 2019
+
+- Fix the following bug.
+  - NOT IN operator returns incorrect result in some cases.
+
 ## Version 1.11.3
 
 Released on Jun 1, 2019
 
 - Implement FETCH clause that can be used in place of LIMIT clause in SELECT query.
 - Fix the following bug.
-  - FALSE takes precedence over UNKNOWN in NOT IN expression.
+  - FALSE takes precedence over UNKNOWN in NOT IN operation.
 
 ## Version 1.11.2
 
