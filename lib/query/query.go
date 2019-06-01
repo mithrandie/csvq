@@ -136,17 +136,20 @@ func Select(ctx context.Context, scope *ReferenceScope, query parser.SelectQuery
 		}
 	}
 
-	if query.OffsetClause != nil {
-		if err := view.Offset(ctx, queryScope, query.OffsetClause.(parser.OffsetClause)); err != nil {
-			queryScope.CloseCurrentNode()
-			return nil, err
-		}
-	}
-
 	if query.LimitClause != nil {
-		if err := view.Limit(ctx, queryScope, query.LimitClause.(parser.LimitClause)); err != nil {
-			queryScope.CloseCurrentNode()
-			return nil, err
+		limitClause := query.LimitClause.(parser.LimitClause)
+		if limitClause.OffsetClause != nil {
+			if err := view.Offset(ctx, queryScope, limitClause.OffsetClause.(parser.OffsetClause)); err != nil {
+				queryScope.CloseCurrentNode()
+				return nil, err
+			}
+		}
+
+		if !limitClause.Type.IsEmpty() {
+			if err := view.Limit(ctx, queryScope, limitClause); err != nil {
+				queryScope.CloseCurrentNode()
+				return nil, err
+			}
 		}
 	}
 

@@ -1,16 +1,24 @@
 # Change Log
 
+## Version 1.11.3
+
+Released on Jun 1, 2019
+
+- Implement FETCH clause that can be used in place of LIMIT clause in SELECT query.
+- Fix the following bug.
+  - FALSE takes precedence over UNKNOWN in NOT IN expression.
+
 ## Version 1.11.2
 
 Released on May 26, 2019
 
 - Add built-in functions.
-  - Aggregate Functions
+  - Aggregate Function
     - STDEV
     - STDEVP
     - VAR
     - VARP
-  - Analytic Functions
+  - Analytic Function
     - STDEV
     - STDEVP
     - VAR

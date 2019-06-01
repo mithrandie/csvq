@@ -415,7 +415,12 @@ func evalIn(ctx context.Context, scope *ReferenceScope, expr parser.In) (value.P
 		return nil, err
 	}
 
-	t, err := Any(val, list, "=", scope.Tx.Flags.DatetimeFormat)
+	var t ternary.Value
+	if expr.IsNegated() {
+		t, err = NotInRowValueList(val, list, scope.Tx.Flags.DatetimeFormat)
+	} else {
+		t, err = Any(val, list, "=", scope.Tx.Flags.DatetimeFormat)
+	}
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -426,10 +431,6 @@ func evalIn(ctx context.Context, scope *ReferenceScope, expr parser.In) (value.P
 		rvlist, _ := expr.Values.(parser.RowValueList)
 		rverr, _ := err.(*RowValueLengthInListError)
 		return nil, NewRowValueLengthInComparisonError(rvlist.RowValues[rverr.Index], len(val))
-	}
-
-	if expr.IsNegated() {
-		t = ternary.Not(t)
 	}
 	return value.NewTernary(t), nil
 }

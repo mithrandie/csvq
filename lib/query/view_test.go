@@ -4698,7 +4698,7 @@ var viewLimitTests = []struct {
 				},
 			},
 		},
-		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("2"), With: parser.LimitWith{Type: parser.Token{Token: parser.TIES}}},
+		Limit: parser.LimitClause{Value: parser.NewIntegerValueFromString("2"), Restriction: parser.Token{Token: parser.TIES}},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: InternalIdColumn},
@@ -4771,7 +4771,7 @@ var viewLimitTests = []struct {
 			},
 			offset: 1,
 		},
-		Limit: parser.LimitClause{Value: parser.NewFloatValue(50.5), Percent: "percent"},
+		Limit: parser.LimitClause{Value: parser.NewFloatValue(50.5), Unit: parser.Token{Token: parser.PERCENT}},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: InternalIdColumn},
@@ -4826,7 +4826,7 @@ var viewLimitTests = []struct {
 				}),
 			},
 		},
-		Limit: parser.LimitClause{Value: parser.NewFloatValue(150), Percent: "percent"},
+		Limit: parser.LimitClause{Value: parser.NewFloatValue(150), Unit: parser.Token{Token: parser.PERCENT}},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: InternalIdColumn},
@@ -4888,7 +4888,7 @@ var viewLimitTests = []struct {
 				}),
 			},
 		},
-		Limit: parser.LimitClause{Value: parser.NewFloatValue(-10), Percent: "percent"},
+		Limit: parser.LimitClause{Value: parser.NewFloatValue(-10), Unit: parser.Token{Token: parser.PERCENT}},
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: InternalIdColumn},
@@ -5028,7 +5028,7 @@ var viewLimitTests = []struct {
 				}),
 			},
 		},
-		Limit: parser.LimitClause{Value: parser.NewStringValue("str"), Percent: "percent"},
+		Limit: parser.LimitClause{Value: parser.NewStringValue("str"), Unit: parser.Token{Token: parser.PERCENT}},
 		Error: "limit percentage 'str' is not a float value",
 	},
 }

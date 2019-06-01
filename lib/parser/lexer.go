@@ -46,7 +46,7 @@ type Token struct {
 }
 
 func (t *Token) IsEmpty() bool {
-	return len(t.Literal) < 1
+	return t.Token == 0
 }
 
 type SyntaxError struct {

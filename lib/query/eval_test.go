@@ -1141,9 +1141,25 @@ var evaluateTests = []struct {
 					},
 				},
 			},
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Not In",
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
+						parser.NewNullValue(),
+					},
+				},
+			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
-		Result: value.NewTernary(ternary.FALSE),
+		Result: value.NewTernary(ternary.UNKNOWN),
 	},
 	{
 		Name: "In LHS Error",
