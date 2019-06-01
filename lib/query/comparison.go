@@ -158,29 +158,6 @@ func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType in
 	}
 }
 
-func NotInRowValueList(rowValue value.RowValue, list []value.RowValue, datetimeFormats []string) (ternary.Value, error) {
-	results := make([]ternary.Value, len(list))
-
-	for i, v := range list {
-		t, err := value.CompareRowValues(rowValue, v, "=", datetimeFormats)
-		if err != nil {
-			return ternary.FALSE, NewRowValueLengthInListError(i)
-		}
-		results[i] = t
-	}
-
-	ret := ternary.Not(ternary.Any(results))
-	if ret == ternary.FALSE {
-		for _, v := range results {
-			if v == ternary.UNKNOWN {
-				ret = ternary.UNKNOWN
-				break
-			}
-		}
-	}
-	return ret, nil
-}
-
 func Any(rowValue value.RowValue, list []value.RowValue, operator string, datetimeFormats []string) (ternary.Value, error) {
 	return InRowValueList(rowValue, list, parser.ANY, operator, datetimeFormats)
 }
