@@ -417,7 +417,7 @@ func evalIn(ctx context.Context, scope *ReferenceScope, expr parser.In) (value.P
 
 	var t ternary.Value
 	if expr.IsNegated() {
-		t, err = NotInRowValueList(val, list, scope.Tx.Flags.DatetimeFormat)
+		t, err = All(val, list, "<>", scope.Tx.Flags.DatetimeFormat)
 	} else {
 		t, err = Any(val, list, "=", scope.Tx.Flags.DatetimeFormat)
 	}
