@@ -937,6 +937,9 @@ func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 	start = int(i.(*value.Integer).Raw())
 	value.Discard(i)
 
+	if start > 0 {
+		start = start - 1
+	}
 	if start < 0 {
 		start = strlen + start
 	}

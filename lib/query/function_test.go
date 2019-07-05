@@ -1615,6 +1615,40 @@ func TestRpad(t *testing.T) {
 
 var substrTests = []functionTest{
 	{
+		Name: "Substr with a positive argument",
+		Function: parser.Function{
+			Name: "substr",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(5),
+		},
+		Result: value.NewString("efghijklmn"),
+	},
+	{
+		Name: "Substr with a negative argument",
+		Function: parser.Function{
+			Name: "substr",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(-5),
+		},
+		Result: value.NewString("jklmn"),
+	},
+	{
+		Name: "Substr with two positive argument",
+		Function: parser.Function{
+			Name: "substr",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(5),
+			value.NewInteger(3),
+		},
+		Result: value.NewString("efg"),
+	},
+	{
 		Name: "Substr",
 		Function: parser.Function{
 			Name: "substr",
