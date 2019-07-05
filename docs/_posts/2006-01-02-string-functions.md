@@ -22,7 +22,8 @@ category: reference
 | [WIDTH](#width) | Return the string width of a string |
 | [LPAD](#lpad) | Return a string left-side padded |
 | [RPAD](#rpad) | Return a string right-side padded |
-| [SUBSTR](#substr) | Return the substring of a string |
+| [SUBSTRING](#substring) | Return the substring of a string |
+| [SUBSTR](#substr) | Return the substring of a string using zero-based indexing |
 | [INSTR](#instr) | Return the index of the first occurrence of a substring |
 | [LIST_ELEM](#list_elem) | Return a element of a list |
 | [REPLACE](#replace) | Return a string replaced the substrings with another string |
@@ -327,27 +328,13 @@ _return_
 
 Returns the string value of _str_ padded with trailing _padstr_ to a length specified by _len_.
 
-### SUBSTR
-{: #substr}
+
+### SUBSTRING
+{: #substring}
 
 ```
-SUBSTR(str, position)
-```
-
-_str_
-: [string]({{ '/reference/value.html#string' | relative_url }})
-
-_position_
-: [integer]({{ '/reference/value.html#integer' | relative_url }})
-
-_return_
-: [string]({{ '/reference/value.html#string' | relative_url }})
-
-Returns the substring of _str_ from at _position_ to the end.
-If _position_ is negative, then starting position is _position_ from the end of the _str_.
-
-```
-SUBSTR(str, position, len)
+SUBSTRING(str FROM position [FOR len])
+SUBSTRING(str, position [, len])
 ```
 
 _str_
@@ -362,8 +349,34 @@ _len_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Returns the _len_ characters in _str_ from at _position_.
-if _len_ is less than the length from _position_ to the end, then returns the substring from _position_ to the end. 
+Returns the _len_ characters in _str_ starting from the _position_-th character using one-based positional indexing.
+
+If _position_ is 0, then it is treated as 1.<br />
+if _len_ is not specified or _len_ is longer than the length from _position_ to the end, then returns the substring from _position_ to the end.<br /> 
+If _position_ is negative, then starting position is _position_ from the end of the _str_.
+
+
+### SUBSTR
+{: #substr}
+
+```
+SUBSTR(str, position [, len])
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_position_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_len_
+: [integer]({{ '/reference/value.html#integer' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+This function behaves the same as [SUBSTRING](#substring), but uses zero-based positional indexing.
+
 
 ### INSTR
 {: #instr}

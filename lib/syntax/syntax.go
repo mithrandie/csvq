@@ -2108,15 +2108,32 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
+						Name: "substring",
+						Group: []Grammar{
+							{Function{Name: "SUBSTRING", CustomArgs: []Element{String("str"), Keyword("FROM"), Integer("pos")}, Return: Return("string")}},
+							{Function{Name: "SUBSTRING", CustomArgs: []Element{String("str"), Keyword("FROM"), Integer("pos"), Keyword("FOR"), Integer("len")}, Return: Return("string")}},
+							{Function{Name: "SUBSTRING", Args: []Element{String("str"), Integer("pos")}, Return: Return("string")}},
+							{Function{Name: "SUBSTRING", Args: []Element{String("str"), Integer("pos"), Integer("len")}, Return: Return("string")}},
+						},
+						Description: Description{
+							Template: "Returns the %s characters in %s starting from the %s-th character using one-based positional indexing.\n" +
+								"\n" +
+								"If %s is 0, then it is treated as 1.\n" +
+								"If %s is not specified or %s is longer than the length from %s to the end, then returns the substring from %s to the end.\n" +
+								"If %s is negative, then starting position is %s from the end of the %s.",
+							Values: []Element{Integer("len"), String("str"), Integer("pos"), Integer("pos"), Integer("len"), Integer("len"), Integer("pos"), Integer("pos"), Integer("pos"), Integer("pos"), String("str")},
+						},
+					},
+					{
 						Name: "substr",
 						Group: []Grammar{
 							{Function{Name: "SUBSTR", Args: []Element{String("str"), Integer("pos")}, Return: Return("string")}},
 							{Function{Name: "SUBSTR", Args: []Element{String("str"), Integer("pos"), Integer("len")}, Return: Return("string")}},
 						},
 						Description: Description{
-							Template: "Returns the %s characters in %s from at %s. " +
-								"If %s is not specified or %s is less than the length from %s to the end, then returns the substring from %s to the end.",
-							Values: []Element{Integer("len"), String("str"), Integer("pos"), Integer("len"), Integer("len"), Integer("pos"), Integer("pos")},
+							Template: "Returns the %s characters in %s starting from the %s-th character. \n" +
+								"This function behaves the same as %s function, but uses zero-based positional indexing.",
+							Values: []Element{Integer("len"), String("str"), Integer("pos"), Link("substring")},
 						},
 					},
 					{

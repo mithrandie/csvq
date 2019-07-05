@@ -492,6 +492,43 @@ func (c *Completer) TableObjectArgs(line string, origLine string, index int) rea
 }
 
 func (c *Completer) FunctionArgs(line string, origLine string, index int) readline.CandidateList {
+	if c.tokens[0].Token == parser.SUBSTRING {
+		return c.substringArgs(line, origLine, index)
+	} else {
+		return c.functionArgs(line, origLine, index)
+	}
+}
+
+func (c *Completer) substringArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			customList = append(customList, c.SearchValues(line, origLine, index)...)
+			customList.Sort()
+
+			switch c.tokens[i].Token {
+			case parser.FOR:
+				//Do nothing
+			case parser.FROM:
+				if i < c.lastIdx {
+					keywords = append(keywords, "FOR")
+				}
+			case parser.SUBSTRING:
+				if i < c.lastIdx-1 {
+					keywords = append(keywords, "FROM")
+				}
+			default:
+				return keywords, customList, false
+			}
+
+			return keywords, customList, true
+		},
+	)
+}
+
+func (c *Completer) functionArgs(line string, origLine string, index int) readline.CandidateList {
 	return c.completeArgs(
 		line,
 		origLine,
@@ -789,13 +826,6 @@ func (c *Completer) allTableCandidatesForUpdate(line string, origLine string, in
 	list := c.candidateList(tableObjectCandidates, false)
 	list.Sort()
 	list = append(list, c.SearchAllTables(line, origLine, index)...)
-	return list
-}
-
-func (c *Completer) allTableCandidatesWithSpace(line string, origLine string, index int) readline.CandidateList {
-	list := c.candidateList(append(tableObjectCandidates, "JSON_TABLE()"), true)
-	list.Sort()
-	list = append(list, c.SearchAllTablesWithSpace(line, origLine, index)...)
 	return list
 }
 
@@ -2617,7 +2647,8 @@ func (c *Completer) isFunction(token parser.Token) bool {
 		return InStrSliceWithCaseInsensitive(token.Literal, c.userFuncList)
 	}
 
-	return token.Token == parser.JSON_OBJECT ||
+	return token.Token == parser.SUBSTRING ||
+		token.Token == parser.JSON_OBJECT ||
 		token.Token == parser.IF ||
 		token.Token == parser.AGGREGATE_FUNCTION ||
 		token.Token == parser.COUNT ||

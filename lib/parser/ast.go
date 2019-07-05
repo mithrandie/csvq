@@ -762,10 +762,23 @@ type Function struct {
 	*BaseExpr
 	Name string
 	Args []QueryExpression
+	From string
+	For  string
 }
 
 func (e Function) String() string {
-	return e.Name + "(" + listQueryExpressions(e.Args) + ")"
+	var args string
+	if strings.EqualFold(e.Name, TokenLiteral(SUBSTRING)) && 0 < len(e.From) {
+		elems := make([]string, 0, 5)
+		elems = append(elems, e.Args[0].String(), e.From, e.Args[1].String())
+		if 0 < len(e.For) {
+			elems = append(elems, e.For, e.Args[2].String())
+		}
+		args = joinWithSpace(elems)
+	} else {
+		args = listQueryExpressions(e.Args)
+	}
+	return e.Name + "(" + args + ")"
 }
 
 type AggregateFunction struct {

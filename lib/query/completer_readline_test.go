@@ -986,6 +986,31 @@ var completerFunctionArgs = []completerTest{
 			{Name: []rune("PRECEDING")},
 		},
 	},
+	{
+		Name:     "FunctionArgs Substring After Extraction String",
+		Line:     "",
+		OrigLine: "substring('abc' ",
+		Index:    16,
+		Expect: readline.CandidateList{
+			{Name: []rune("FROM"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs Substring After Position",
+		Line:     "",
+		OrigLine: "substring('abc' from 2 ",
+		Index:    23,
+		Expect: readline.CandidateList{
+			{Name: []rune("FOR"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs Substring After FOR",
+		Line:     "",
+		OrigLine: "substring('abc' from 2 for ",
+		Index:    27,
+		Expect:   readline.CandidateList{},
+	},
 }
 
 func TestCompleter_FunctionArgs(t *testing.T) {
@@ -4092,10 +4117,28 @@ var completerUpdateTokensTests = []struct {
 	},
 	{
 		SearchWord: "",
-		Statements: "select trim(",
+		Statements: "select trim('a')",
 		Expect: []parser.Token{
-			{Token: parser.IDENTIFIER, Literal: "trim", Line: 1, Char: 8},
-			{Token: '(', Literal: "(", Line: 1, Char: 12},
+			{Token: parser.SELECT, Literal: "select", Line: 1, Char: 1},
+			{Token: parser.FUNCTION, Literal: "trim"},
+		},
+		LastIdx: 1,
+	},
+	{
+		SearchWord: "",
+		Statements: "select substring(",
+		Expect: []parser.Token{
+			{Token: parser.SUBSTRING, Literal: "substring", Line: 1, Char: 8},
+			{Token: '(', Literal: "(", Line: 1, Char: 17},
+		},
+		LastIdx: 1,
+	},
+	{
+		SearchWord: "",
+		Statements: "select substring('abc' from 2 for 1)",
+		Expect: []parser.Token{
+			{Token: parser.SELECT, Literal: "select", Line: 1, Char: 1},
+			{Token: parser.FUNCTION, Literal: "substring"},
 		},
 		LastIdx: 1,
 	},

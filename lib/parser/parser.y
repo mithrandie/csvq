@@ -219,7 +219,7 @@ import (
 %token<token> TIES NULLS ROWS ONLY
 %token<token> CSV JSON FIXED LTSV
 %token<token> JSON_ROW JSON_TABLE
-%token<token> COUNT JSON_OBJECT
+%token<token> SUBSTRING COUNT JSON_OBJECT
 %token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
@@ -1737,6 +1737,18 @@ function
     : identifier '(' arguments ')'
     {
         $$ = Function{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3}
+    }
+    | SUBSTRING '(' arguments ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3}
+    }
+    | SUBSTRING '(' value FROM value ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: []QueryExpression{$3, $5}, From: $4.Literal}
+    }
+    | SUBSTRING '(' value FROM value FOR value ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: []QueryExpression{$3, $5, $7}, From: $4.Literal, For: $6.Literal}
     }
     | JSON_OBJECT '(' ')'
     {

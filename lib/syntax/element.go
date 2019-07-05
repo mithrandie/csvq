@@ -171,34 +171,46 @@ func (e ConnectedGroup) Format(p *color.Palette) string {
 }
 
 type Function struct {
-	Name      string
-	Args      []Element
-	AfterArgs []Element
-	Return    Element
+	Name       string
+	Args       []Element
+	AfterArgs  []Element
+	CustomArgs []Element
+	Return     Element
 }
 
 func (e Function) Format(p *color.Palette) string {
-	args := make([]string, 0, len(e.Args))
-	var opstr string
-	var prevOpt string
-	for i, v := range e.Args {
-		if op, ok := v.(Option); ok {
-			if i == 0 {
-				prevOpt = formatArg(v, p) + " "
-			} else {
-				for i := len(op) - 1; i >= 0; i-- {
-					opstr = " [, " + formatArg(op[i], p) + opstr + "]"
-				}
-			}
-		} else {
-			args = append(args, formatArg(v, p))
-		}
-	}
 	name := e.Name
 	if p != nil {
 		name = p.Render(KeywordEffect, name)
 	}
-	s := name + "(" + prevOpt + strings.Join(args, ", ") + opstr + ")"
+
+	var fnargs string
+	if 0 < len(e.CustomArgs) {
+		args := make([]string, 0, len(e.CustomArgs))
+		for _, v := range e.CustomArgs {
+			args = append(args, formatArg(v, p))
+		}
+		fnargs = strings.Join(args, " ")
+	} else {
+		args := make([]string, 0, len(e.Args))
+		var opstr string
+		var prevOpt string
+		for i, v := range e.Args {
+			if op, ok := v.(Option); ok {
+				if i == 0 {
+					prevOpt = formatArg(v, p) + " "
+				} else {
+					for i := len(op) - 1; i >= 0; i-- {
+						opstr = " [, " + formatArg(op[i], p) + opstr + "]"
+					}
+				}
+			} else {
+				args = append(args, formatArg(v, p))
+			}
+		}
+		fnargs = prevOpt + strings.Join(args, ", ") + opstr
+	}
+	s := name + "(" + fnargs + ")"
 
 	if e.AfterArgs != nil {
 		afterArgs := make([]string, 0, len(e.AfterArgs))
