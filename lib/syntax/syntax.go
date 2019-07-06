@@ -2147,17 +2147,6 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
-						Name: "instr",
-						Group: []Grammar{
-							{Function{Name: "INSTR", Args: []Element{String("str"), Integer("substr")}, Return: Return("integer")}},
-						},
-						Description: Description{
-							Template: "Returns the index of the first occurrence of %s in %s. " +
-								"If %s is not present in %s, returns null.",
-							Values: []Element{String("substr"), String("str"), String("substr"), String("str")},
-						},
-					},
-					{
 						Name: "list_elem",
 						Group: []Grammar{
 							{Function{Name: "LIST_ELEM", Args: []Element{String("str"), String("sep"), Integer("index")}, Return: Return("string")}},
