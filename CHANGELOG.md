@@ -1,5 +1,13 @@
 # Change Log
 
+## Version 1.11.5
+
+Released on July 6, 2019
+
+- Add a built-in function. ([Github #10](https://github.com/mithrandie/csvq/pull/10))
+  - String Function
+    - SUBSTRING
+
 ## Version 1.11.4
 
 Released on Jun 1, 2019
