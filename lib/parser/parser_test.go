@@ -2292,6 +2292,86 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select substring(column1, 2, 5)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "substring",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column1"}},
+									NewIntegerValueFromString("2"),
+									NewIntegerValueFromString("5"),
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select substring(column1 from 2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "substring",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column1"}},
+									NewIntegerValueFromString("2"),
+								},
+								From: "from",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select substring(column1 from 2 for 5)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "substring",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column1"}},
+									NewIntegerValueFromString("2"),
+									NewIntegerValueFromString("5"),
+								},
+								From: "from",
+								For:  "for",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input:     "select substring(column1 from 2, 5)",
+		Error:     "syntax error: unexpected token \",\"",
+		ErrorLine: 1,
+		ErrorChar: 32,
+	},
+	{
 		Input: "select json_object()",
 		Output: []Statement{
 			SelectQuery{

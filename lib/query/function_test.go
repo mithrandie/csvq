@@ -1613,11 +1613,57 @@ func TestRpad(t *testing.T) {
 	testFunction(t, Rpad, rpadTests)
 }
 
-var substrTests = []functionTest{
+var substringTests = []functionTest{
 	{
-		Name: "Substr",
+		Name: "Substring with a positive argument",
 		Function: parser.Function{
-			Name: "substr",
+			Name: "substring",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(5),
+		},
+		Result: value.NewString("efghijklmn"),
+	},
+	{
+		Name: "Substring with a negative argument",
+		Function: parser.Function{
+			Name: "substring",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(-5),
+		},
+		Result: value.NewString("jklmn"),
+	},
+	{
+		Name: "Substring with two positive argument",
+		Function: parser.Function{
+			Name: "substring",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(5),
+			value.NewInteger(3),
+		},
+		Result: value.NewString("efg"),
+	},
+	{
+		Name: "Substring starting with zero",
+		Function: parser.Function{
+			Name: "substring",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(0),
+			value.NewInteger(3),
+		},
+		Result: value.NewString("abc"),
+	},
+	{
+		Name: "Substring",
+		Function: parser.Function{
+			Name: "substring",
 		},
 		Args: []value.Primary{
 			value.NewString("abcdefghijklmn"),
@@ -1627,9 +1673,9 @@ var substrTests = []functionTest{
 		Result: value.NewString("jklmn"),
 	},
 	{
-		Name: "Substr String is Null",
+		Name: "Substring String is Null",
 		Function: parser.Function{
-			Name: "substr",
+			Name: "substring",
 		},
 		Args: []value.Primary{
 			value.NewNull(),
@@ -1639,9 +1685,9 @@ var substrTests = []functionTest{
 		Result: value.NewNull(),
 	},
 	{
-		Name: "Substr StartIndex is Null",
+		Name: "Substring StartIndex is Null",
 		Function: parser.Function{
-			Name: "substr",
+			Name: "substring",
 		},
 		Args: []value.Primary{
 			value.NewString("abcdefghijklmn"),
@@ -1650,9 +1696,9 @@ var substrTests = []functionTest{
 		Result: value.NewNull(),
 	},
 	{
-		Name: "Substr Length is Null",
+		Name: "Substring Length is Null",
 		Function: parser.Function{
-			Name: "substr",
+			Name: "substring",
 		},
 		Args: []value.Primary{
 			value.NewString("abcdefghijklmn"),
@@ -1662,9 +1708,9 @@ var substrTests = []functionTest{
 		Result: value.NewNull(),
 	},
 	{
-		Name: "Substr Length is Negative",
+		Name: "Substring Length is Negative",
 		Function: parser.Function{
-			Name: "substr",
+			Name: "substring",
 		},
 		Args: []value.Primary{
 			value.NewString("abcdefghijklmn"),
@@ -1674,9 +1720,9 @@ var substrTests = []functionTest{
 		Result: value.NewNull(),
 	},
 	{
-		Name: "Substr StartIndex is Out Of Index",
+		Name: "Substring StartIndex is Out Of Index",
 		Function: parser.Function{
-			Name: "substr",
+			Name: "substring",
 		},
 		Args: []value.Primary{
 			value.NewString("abcdefghijklmn"),
@@ -1686,12 +1732,53 @@ var substrTests = []functionTest{
 		Result: value.NewNull(),
 	},
 	{
-		Name: "Substr Arguments Error",
+		Name: "Substring Arguments Error",
+		Function: parser.Function{
+			Name: "substring",
+		},
+		Args:  []value.Primary{},
+		Error: "function substring takes 2 or 3 arguments",
+	},
+}
+
+func TestSubstring(t *testing.T) {
+	testFunction(t, Substring, substringTests)
+}
+
+var substrTests = []functionTest{
+	{
+		Name: "Substr with a positive argument",
 		Function: parser.Function{
 			Name: "substr",
 		},
-		Args:  []value.Primary{},
-		Error: "function substr takes 2 or 3 arguments",
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(5),
+		},
+		Result: value.NewString("fghijklmn"),
+	},
+	{
+		Name: "Substr with a negative argument",
+		Function: parser.Function{
+			Name: "substr",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(-5),
+		},
+		Result: value.NewString("jklmn"),
+	},
+	{
+		Name: "Substr with two positive argument",
+		Function: parser.Function{
+			Name: "substr",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefghijklmn"),
+			value.NewInteger(5),
+			value.NewInteger(3),
+		},
+		Result: value.NewString("fgh"),
 	},
 }
 

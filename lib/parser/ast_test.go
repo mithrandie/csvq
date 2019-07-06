@@ -1024,6 +1024,47 @@ func TestFunction_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
+
+	e = Function{
+		Name: "substring",
+		Args: []QueryExpression{
+			Identifier{Literal: "column"},
+			NewIntegerValue(2),
+			NewIntegerValue(5),
+		},
+	}
+	expect = "substring(column, 2, 5)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = Function{
+		Name: "substring",
+		Args: []QueryExpression{
+			Identifier{Literal: "column"},
+			NewIntegerValue(2),
+		},
+		From: "from",
+	}
+	expect = "substring(column from 2)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = Function{
+		Name: "substring",
+		Args: []QueryExpression{
+			Identifier{Literal: "column"},
+			NewIntegerValue(2),
+			NewIntegerValue(5),
+		},
+		From: "from",
+		For:  "for",
+	}
+	expect = "substring(column from 2 for 5)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
 }
 
 func TestAggregateFunction_String(t *testing.T) {

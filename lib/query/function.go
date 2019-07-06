@@ -78,6 +78,7 @@ var Functions = map[string]BuiltInFunction{
 	"WIDTH":            Width,
 	"LPAD":             Lpad,
 	"RPAD":             Rpad,
+	"SUBSTRING":        Substring,
 	"SUBSTR":           Substr,
 	"INSTR":            Instr,
 	"LIST_ELEM":        ListElem,
@@ -914,7 +915,7 @@ func Rpad(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Pri
 	return execStringsPadding(fn, args, RightDirection, flags)
 }
 
-func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+func substr(fn parser.Function, args []value.Primary, zeroBasedIndex bool) (value.Primary, error) {
 	if len(args) < 2 || 3 < len(args) {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2, 3})
 	}
@@ -937,6 +938,9 @@ func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 	start = int(i.(*value.Integer).Raw())
 	value.Discard(i)
 
+	if !zeroBasedIndex && start > 0 {
+		start = start - 1
+	}
 	if start < 0 {
 		start = strlen + start
 	}
@@ -962,6 +966,14 @@ func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 	}
 
 	return value.NewString(string(runes[start:end])), nil
+}
+
+func Substring(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return substr(fn, args, false)
+}
+
+func Substr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return substr(fn, args, true)
 }
 
 func Instr(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {

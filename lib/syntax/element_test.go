@@ -127,6 +127,11 @@ var grammarFormatTests = []struct {
 		Expect:     "fn(str::string, int::integer, float::float, bool::boolean, ternary::ternary, dt::datetime, <link>)",
 	},
 	{
+		Grammar:    []Element{Function{Name: "fn", CustomArgs: Grammar{String("str"), Keyword("FROM"), Integer("num")}}},
+		UsePalette: false,
+		Expect:     "fn(str::string FROM num::integer)",
+	},
+	{
 		Grammar:    []Element{ArgWithDefValue{Arg: String("str"), Default: String("1")}},
 		UsePalette: false,
 		Expect:     "str::string DEFAULT 1",
