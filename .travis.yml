@@ -33,6 +33,7 @@ deploy:
     on:
       tags: true
       condition: $TRAVIS_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$
+      go: '1.12.x'
   - provider: releases
     api_key: $GITHUB_API_TOKEN
     skip_cleanup: true
@@ -43,3 +44,4 @@ deploy:
     on:
       tags: true
       condition: $TRAVIS_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+\-pr\.[0-9]+$
+      go: '1.12.x'
