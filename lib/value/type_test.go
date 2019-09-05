@@ -141,7 +141,7 @@ func TestFloat_String(t *testing.T) {
 
 func TestFloat_Value(t *testing.T) {
 	f := NewFloat(1.234)
-	expect := float64(1.234)
+	expect := 1.234
 
 	if f.Raw() != expect {
 		t.Errorf("value = %f, want %f for %#v", f.Raw(), expect, f)
