@@ -50,6 +50,14 @@ var readlineListenerOnChangeTests = []struct {
 		OK:      false,
 	},
 	{
+		Line:    "abcd'fg''hi",
+		Pos:     8,
+		Key:     '\'',
+		NewLine: "abcd'fg'hi",
+		NewPos:  8,
+		OK:      true,
+	},
+	{
 		Line:    "abcd(fghi",
 		Pos:     5,
 		Key:     '(',
@@ -58,12 +66,28 @@ var readlineListenerOnChangeTests = []struct {
 		OK:      true,
 	},
 	{
+		Line:    "abcd()fghi",
+		Pos:     5,
+		Key:     '(',
+		NewLine: "abcd()fghi",
+		NewPos:  5,
+		OK:      false,
+	},
+	{
 		Line:    "abcd(fghi)",
 		Pos:     5,
 		Key:     '(',
 		NewLine: "abcd(fghi)",
 		NewPos:  5,
 		OK:      false,
+	},
+	{
+		Line:    "abcd(fghi))",
+		Pos:     10,
+		Key:     ')',
+		NewLine: "abcd(fghi)",
+		NewPos:  10,
+		OK:      true,
 	},
 }
 
