@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.11.6
+
+Released on October 31, 2019
+
+- Modify the behavior of enclosures completion on the interactive shell. [Github #12](https://github.com/mithrandie/csvq/issues/12)
+
 ## Version 1.11.5
 
 Released on July 6, 2019
