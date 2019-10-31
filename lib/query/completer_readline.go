@@ -101,12 +101,38 @@ type ReadlineListener struct {
 	scanner parser.Scanner
 }
 
-func (l ReadlineListener) OnChange(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
-	if (readline.IsQuotationMark(key) && !readline.LiteralIsEnclosed(key, line)) || (readline.IsBracket(key) && !readline.BracketIsEnclosed(key, line)) {
-		tail := append([]rune{readline.EncloseMark[key]}, line[pos:]...)
-		line = append(line[:pos], tail...)
-		return line, pos, true
+func skipInputtingEnclosure(line []rune, pos int) []rune {
+	tail := line[pos:]
+	line = append(line[:pos-1], tail...)
+	return line
+}
+
+func completeEnclosure(line []rune, pos int, rightEnclosure rune) []rune {
+	tail := append([]rune{rightEnclosure}, line[pos:]...)
+	line = append(line[:pos], tail...)
+	return line
+}
+
+func (l ReadlineListener) OnChange(line []rune, pos int, key rune) ([]rune, int, bool) {
+	switch {
+	case readline.IsQuotationMark(key):
+		if !readline.LiteralIsEnclosed(key, line) {
+			if pos < len(line) && key == line[pos] {
+				return skipInputtingEnclosure(line, pos), pos, true
+			} else {
+				return completeEnclosure(line, pos, key), pos, true
+			}
+		}
+	case readline.IsBracket(key):
+		if !readline.BracketIsEnclosed(key, line) {
+			return completeEnclosure(line, pos, readline.RightBracket[key]), pos, true
+		}
+	case readline.IsRightBracket(key):
+		if pos < len(line) && readline.IsRightBracket(line[pos]) && readline.BracketIsEnclosedByRightBracket(key, line) {
+			return skipInputtingEnclosure(line, pos), pos, true
+		}
 	}
+
 	return line, pos, false
 }
 

@@ -1065,7 +1065,7 @@ func evalJsonQueryForRowValueList(ctx context.Context, scope *ReferenceScope, ex
 
 	list := make([]value.RowValue, len(values))
 	for i, row := range values {
-		list[i] = value.RowValue(row)
+		list[i] = row
 	}
 
 	return list, nil

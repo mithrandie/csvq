@@ -78,8 +78,8 @@ func TestCalc(t *testing.T) {
 			continue
 		}
 
-		if string(stdout) != v.Output {
-			t.Errorf("%s: output = %q, want %q", v.Input, string(stdout), v.Output)
+		if stdout != v.Output {
+			t.Errorf("%s: output = %q, want %q", v.Input, stdout, v.Output)
 		}
 	}
 }

@@ -93,8 +93,8 @@ func TestTransaction_Commit(t *testing.T) {
 
 	log := out.String()
 
-	if string(log) != expect {
-		t.Errorf("Commit: log = %q, want %q", string(log), expect)
+	if log != expect {
+		t.Errorf("Commit: log = %q, want %q", log, expect)
 	}
 }
 
@@ -133,7 +133,7 @@ func TestTransaction_Rollback(t *testing.T) {
 
 	log := out.String()
 
-	if string(log) != expect {
-		t.Errorf("Rollback: log = %q, want %q", string(log), expect)
+	if log != expect {
+		t.Errorf("Rollback: log = %q, want %q", log, expect)
 	}
 }

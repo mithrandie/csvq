@@ -1006,12 +1006,12 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 			}
 		}
 		if 0 < len(v.Logs) {
-			if string(log) != v.Logs {
-				t.Errorf("logs = %s, want %s for %q", string(log), v.Logs, v.Input)
+			if log != v.Logs {
+				t.Errorf("logs = %s, want %s for %q", log, v.Logs, v.Input)
 			}
 		}
 		if v.SelectLogs != nil {
-			selectLog := string(log)
+			selectLog := log
 			if !reflect.DeepEqual(selectLog, v.SelectLogs) {
 				t.Errorf("select logs = %s, want %s for %q", selectLog, v.SelectLogs, v.Input)
 			}
@@ -1169,8 +1169,8 @@ func TestProcessor_IfStmt(t *testing.T) {
 		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
 			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
-		if string(log) != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		if log != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, log, v.Result)
 		}
 	}
 }
@@ -1342,8 +1342,8 @@ func TestProcessor_Case(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if string(log) != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		if log != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, log, v.Result)
 		}
 	}
 }
@@ -1624,8 +1624,8 @@ func TestProcessor_While(t *testing.T) {
 		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
 			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
-		if string(log) != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		if log != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, log, v.Result)
 		}
 	}
 }
@@ -1862,8 +1862,8 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
 			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
-		if string(log) != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		if log != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, log, v.Result)
 		}
 	}
 }
