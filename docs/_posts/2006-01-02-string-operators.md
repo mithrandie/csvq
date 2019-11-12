@@ -8,7 +8,7 @@ category: reference
 
 | operator | description |
 | :- | :- |
-| \|\| | Concatnation |
+| \|\| | Concatenation |
 
 ## Syntax
 
