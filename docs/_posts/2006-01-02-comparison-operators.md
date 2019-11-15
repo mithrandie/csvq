@@ -44,7 +44,7 @@ _value_
 _row_value_
 : [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
-Except for identical operator("=="), at first, the relational operator attempts to convert both of operands to integer values, and if both convertions are successful then compares them.
+Except for identical operator("=="), at first, the relational operator attempts to convert both of operands to integer values, and if both conversions are successful then compares them.
 If conversions failed, next the relational operater attempts to convert the values to float, and next to datetime, boolean, at last to string.
 
 If either of operands is null or all conversions failed, then the comparison returns UNKNOWN.
