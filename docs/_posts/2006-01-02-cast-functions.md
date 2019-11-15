@@ -32,7 +32,7 @@ _return_
 
 Convert _value_ to a string.
 
-| value type | descriptin |
+| value type | description |
 | :- | :- |
 | Integer  | An integer value is converted to a string representing a decimal integer. |
 | Float    | A float value is converted to a string representing a floating-point decimal. |
@@ -57,7 +57,7 @@ _return_
 
 Convert _value_ to an integer.
 
-| value type | descriptin |
+| value type | description |
 | :- | :- |
 | String   | If a string is a representation of a decimal integer or its exponential notation, then it is converted to an integer. If a string is a representation of a floating-point decimal or its exponential notation, then it is converted and rounded to an integer. Otherwise it is converted to a null. |
 | Float    | A float value is rounded to an integer. |
@@ -81,7 +81,7 @@ _return_
 
 Convert _value_ to a float.
 
-| value type | descriptin |
+| value type | description |
 | :- | :- |
 | String   | If a string is a representation of a floating-point decimal or its exponential notation, then it is converted to a float. Otherwise it is converted to a null. |
 | Integer  | An integer value is converted to a float. |
@@ -105,7 +105,7 @@ _return_
 
 Convert _value_ to a datetime.
 
-| value type | descriptin |
+| value type | description |
 | :- | :- |
 | String   | If a string value is a representation of an integer or a float value, then it is converted to a datetime represented by the number as a unix time. If a string value is formatted as a datetime, then it is convered to a datetime. Otherwise it is converted to a null. |
 | Integer  | An integer value is converted to a datetime represented by the integer value as a unix time. |
@@ -129,7 +129,7 @@ _boolean_
 
 Convert _value_ to a boolean.
 
-| value type | descriptin |
+| value type | description |
 | :- | :- |
 | String   | If a string value is any of '1', 't', 'T', 'TRUE', 'true' and 'True', then it is converted to true. If a string value is any of '0', 'f', 'F', 'FALSE' and 'false', then it is converted to false. Otherwise it is converted to a null. |
 | Integer  | If an integer value is 1, then it is converted to true. If an integer value is 0, then it is converted to false. Otherwise it is converted to a null. |
@@ -153,7 +153,7 @@ _return_
 
 Convert _value_ to a ternary.
 
-| value type | descriptin |
+| value type | description |
 | :- | :- |
 | String   | If a string value is any of '1', 't', 'T', 'TRUE', 'true' and 'True', then it is converted to TRUE. If a string value is any of '0', 'f', 'F', 'FALSE' and 'false', then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
 | Integer  | If an integer value is 1, then it is converted to TRUE. If an integer value is 0, then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
