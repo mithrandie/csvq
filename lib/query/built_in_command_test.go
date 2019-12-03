@@ -2038,7 +2038,7 @@ var showObjectsTests = []struct {
 			},
 		}, nil, time.Time{}, nil),
 		Expect: "\n" +
-			"  Scala Functions\n" +
+			" Scalar Functions\n" +
 			"-------------------\n" +
 			" userfunc1 (@arg1)\n" +
 			"\n" +

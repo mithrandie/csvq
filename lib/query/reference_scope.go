@@ -636,7 +636,7 @@ func (rs *ReferenceScope) DisposeFunction(name parser.Identifier) error {
 }
 
 func (rs *ReferenceScope) AllFunctions() (UserDefinedFunctionMap, UserDefinedFunctionMap) {
-	scalaAll := NewUserDefinedFunctionMap()
+	scalarAll := NewUserDefinedFunctionMap()
 	aggregateAll := NewUserDefinedFunctionMap()
 
 	for i := range rs.blocks {
@@ -647,15 +647,15 @@ func (rs *ReferenceScope) AllFunctions() (UserDefinedFunctionMap, UserDefinedFun
 					aggregateAll.Store(key.(string), fn)
 				}
 			} else {
-				if !scalaAll.Exists(key.(string)) {
-					scalaAll.Store(key.(string), fn)
+				if !scalarAll.Exists(key.(string)) {
+					scalarAll.Store(key.(string), fn)
 				}
 			}
 			return true
 		})
 	}
 
-	return scalaAll, aggregateAll
+	return scalarAll, aggregateAll
 }
 
 func (rs *ReferenceScope) SetInlineTable(ctx context.Context, inlineTable parser.InlineTable) error {

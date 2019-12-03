@@ -119,7 +119,7 @@ func TestCompleter_Update(t *testing.T) {
 		Header:   NewHeader("view1", []string{"col3", "col4"}),
 	})
 	_ = scope.DeclareCursor(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
-	_ = scope.DeclareFunction(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
+	_ = scope.DeclareFunction(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalarfunc"}})
 	_ = scope.DeclareAggregateFunction(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
 	_ = scope.DeclareVariable(ctx, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
 
@@ -152,7 +152,7 @@ func TestCompleter_Update(t *testing.T) {
 	if !reflect.DeepEqual(c.cursorList, []string{"cur1"}) {
 		t.Error("cursors are not set correctly")
 	}
-	if !reflect.DeepEqual(c.userFuncList, []string{"aggfunc", "scalafunc"}) {
+	if !reflect.DeepEqual(c.userFuncList, []string{"aggfunc", "scalarfunc"}) {
 		t.Error("user defined functions are not set correctly")
 	}
 	if len(c.statementList) != 1 {
