@@ -47,7 +47,7 @@ _parameter_
 _value_
 : [value]({{ '/reference/statement.html' | relative_url }})
 
-A scala function takes some arguments, and return a value.
+A scala function takes some arguments, and returns a value.
 In the statements, arguments are set to variables specified in the declaration as _parameters_.
 
 
@@ -97,7 +97,7 @@ _parameter_
 _value_
 : [value]({{ '/reference/statement.html' | relative_url }})
 
-An aggregate function takes at least one argument, and return a value.
+An aggregate function takes at least one argument, and returns a value.
 The first argument is a representation of grouped values, and the following arguments are parameters.
 
 In the statements, grouped values represented by the first argument can be referred with a pseudo cursor named as _cursor_name_, 
