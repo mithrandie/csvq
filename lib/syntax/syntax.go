@@ -544,7 +544,7 @@ var CsvqSyntax = []Expression{
 		Label: "User Defined Functions",
 		Grammar: []Definition{
 			{
-				Name: "declare_scala_function_statement",
+				Name: "declare_scalar_function_statement",
 				Group: []Grammar{
 					{Keyword("DECLARE"), Identifier("function_name"), Keyword("FUNCTION"), Parentheses{Link("function_parameters")}, Keyword("AS"), Keyword("BEGIN"), Token("statements"), Keyword("END")},
 				},
@@ -587,7 +587,7 @@ var CsvqSyntax = []Expression{
 				},
 			},
 			{
-				Name: "scala_function_call",
+				Name: "scalar_function_call",
 				Group: []Grammar{
 					{Identifier("function_name"), Parentheses{ContinuousOption{Link("argument")}}},
 				},

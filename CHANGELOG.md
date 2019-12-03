@@ -1,10 +1,16 @@
 # Change Log
 
+## Version 1.11.7
+
+Released on December 3, 2019
+
+- Fix misspellings in the syntax subcommand.
+
 ## Version 1.11.6
 
 Released on October 31, 2019
 
-- Modify the behavior of enclosures completion on the interactive shell. [Github #12](https://github.com/mithrandie/csvq/issues/12)
+- Modify the behavior of enclosures completion on the interactive shell. ([Github #12](https://github.com/mithrandie/csvq/issues/12))
 
 ## Version 1.11.5
 

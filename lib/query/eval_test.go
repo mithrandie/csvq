@@ -3078,7 +3078,7 @@ var evaluateTests = []struct {
 		Error: "field notexist does not exist",
 	},
 	{
-		Name: "Aggregate Function Execute User Defined Aggregate Function Passed As Scala Function",
+		Name: "Aggregate Function Execute User Defined Aggregate Function Passed As Scalar Function",
 		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
 			{
 				scopeNameFunctions: {

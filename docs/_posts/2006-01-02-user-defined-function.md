@@ -12,19 +12,19 @@ A function has some input parameters, and [returns](#return) a single value.
 Functions create local scopes.
 [Variables]({{ '/reference/variable.html' | relative_url }}), [cursors]({{ '/reference/cursor.html' | relative_url }}), [temporary tables]({{ '/reference/temporary-table.html' | relative_url }}), and [functions]({{ '/reference/user-defined-function.html' | relative_url }}) declared in user defined functions can be refered only within the functions. 
 
-* [Scala Function](#scala)
+* [Scalar Function](#scalar)
 * [Aggregate Function](#aggregate)
 * [DISPOSE FUNCTION Statement](#dispose)
 * [RETURN Statement](#return)
 
-## Scala Function
-{: #scala}
+## Scalar Function
+{: #scalar}
 
 ### Declaration
-{: #scala_declaration}
+{: #scalar_declaration}
 
 ```sql
-scala_function_declaration
+scalar_function_declaration
   : DECLARE function_name FUNCTION ([parameter [, parameter ...] [, optional_parameter ...]])
     AS
     BEGIN
@@ -47,7 +47,7 @@ _parameter_
 _value_
 : [value]({{ '/reference/statement.html' | relative_url }})
 
-A scala function takes some arguments, and return a value.
+A scalar function takes some arguments, and returns a value.
 In the statements, arguments are set to variables specified in the declaration as _parameters_.
 
 
@@ -97,7 +97,7 @@ _parameter_
 _value_
 : [value]({{ '/reference/statement.html' | relative_url }})
 
-An aggregate function takes at least one argument, and return a value.
+An aggregate function takes at least one argument, and returns a value.
 The first argument is a representation of grouped values, and the following arguments are parameters.
 
 In the statements, grouped values represented by the first argument can be referred with a pseudo cursor named as _cursor_name_, 

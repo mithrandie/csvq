@@ -588,14 +588,14 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 			s = "\n" + w.String() + "\n"
 		}
 	case ShowFunctions:
-		scalas, aggs := scope.AllFunctions()
-		if scalas.Len() < 1 && aggs.Len() < 1 {
+		scalars, aggs := scope.AllFunctions()
+		if scalars.Len() < 1 && aggs.Len() < 1 {
 			s = scope.Tx.Warn("No function is declared")
 		} else {
-			if 0 < scalas.Len() {
+			if 0 < scalars.Len() {
 				w.Clear()
-				writeFunctions(w, scalas)
-				w.Title1 = "Scala Functions"
+				writeFunctions(w, scalars)
+				w.Title1 = "Scalar Functions"
 				s += "\n" + w.String()
 			}
 			if 0 < aggs.Len() {
