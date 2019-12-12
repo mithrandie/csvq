@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"strconv"
 	"time"
@@ -21,15 +22,8 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-type EmptyResultSetError struct{}
-
-func (e EmptyResultSetError) Error() string {
-	return "empty result set"
-}
-
-func NewEmptyResultSetError() *EmptyResultSetError {
-	return &EmptyResultSetError{}
-}
+var EmptyResultSetError = errors.New("empty result set")
+var DataEmpty = errors.New("data empty")
 
 func EncodeView(ctx context.Context, fp io.Writer, view *View, fileInfo *FileInfo, tx *Transaction) (string, error) {
 	switch fileInfo.Format {
@@ -65,6 +59,8 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, delimiter rune, li
 		if err := w.Write(fields); err != nil {
 			return NewSystemError(err.Error())
 		}
+	} else if view.RecordLen() < 1 {
+		return DataEmpty
 	}
 
 	for i := range view.RecordSet {
@@ -101,6 +97,9 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 		var fieldLen = view.FieldLen()
 
 		if withoutHeader {
+			if view.RecordLen() < 1 {
+				return DataEmpty
+			}
 			fieldList = make([][]fixedlen.Field, view.RecordLen())
 		} else {
 			fieldList = make([][]fixedlen.Field, view.RecordLen()+1)
@@ -156,7 +155,11 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, posi
 
 		fields := make([]fixedlen.Field, view.FieldLen())
 
-		if !withoutHeader && !singleLine {
+		if withoutHeader {
+			if view.RecordLen() < 1 {
+				return DataEmpty
+			}
+		} else if !singleLine {
 			for i := range view.Header {
 				fields[i] = fixedlen.NewField(view.Header[i].Column, text.NotAligned)
 			}
@@ -240,10 +243,10 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 		tableFormat = table.OrgTable
 	default:
 		if view.FieldLen() < 1 {
-			return "Empty Fields", NewEmptyResultSetError()
+			return "Empty Fields", EmptyResultSetError
 		}
 		if view.RecordLen() < 1 {
-			return "Empty RecordSet", NewEmptyResultSetError()
+			return "Empty RecordSet", EmptyResultSetError
 		}
 		isPlainTable = true
 	}
@@ -264,6 +267,8 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 			hfields[i] = table.NewField(view.Header[i].Column, text.Centering)
 		}
 		e.SetHeader(hfields)
+	} else if view.RecordLen() < 1 {
+		return "", DataEmpty
 	}
 
 	aligns := make([]text.FieldAlignment, fieldLen)
@@ -341,6 +346,10 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, format cmd.Format
 }
 
 func encodeLTSV(ctx context.Context, fp io.Writer, view *View, lineBreak text.LineBreak, encoding text.Encoding) error {
+	if view.RecordLen() < 1 {
+		return DataEmpty
+	}
+
 	hfields := make([]string, view.FieldLen())
 	for i := range view.Header {
 		hfields[i] = view.Header[i].Column
