@@ -377,6 +377,84 @@ var processorExecuteStatementTests = []struct {
 		Logs: "column1,column2\n1,2\n",
 	},
 	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "format"},
+			Value: parser.NewStringValue("text"),
+		},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "tbl"}},
+					},
+				},
+				WhereClause: parser.WhereClause{
+					BaseExpr: nil,
+					Where:    "where",
+					Filter:   parser.NewTernaryValueFromString("false"),
+				},
+			},
+		},
+		Logs: "Empty RecordSet\n",
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "without_header"},
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "format"},
+			Value: parser.NewStringValue("csv"),
+		},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "tbl"}},
+					},
+				},
+				WhereClause: parser.WhereClause{
+					BaseExpr: nil,
+					Where:    "where",
+					Filter:   parser.NewTernaryValueFromString("false"),
+				},
+			},
+		},
+		Logs: "",
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "without_header"},
+			Value: parser.NewTernaryValueFromString("false"),
+		},
+	},
+	{
 		Input: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{

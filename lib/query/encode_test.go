@@ -142,6 +142,28 @@ var encodeViewTests = []struct {
 			"2.0123 2016-02-01T16:00:00.123456-07:00 abcdef",
 	},
 	{
+		Name: "Fixed-Length Format Data Empty",
+		View: &View{
+			Header:    NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{},
+		},
+		Format:                  cmd.FIXED,
+		WriteDelimiterPositions: []int{10, 42, 50},
+		WithoutHeader:           true,
+		Error:                   "data empty",
+	},
+	{
+		Name: "Fixed-Length Format Auto Filled Data Empty",
+		View: &View{
+			Header:    NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{},
+		},
+		Format:                  cmd.FIXED,
+		WriteDelimiterPositions: nil,
+		WithoutHeader:           true,
+		Error:                   "data empty",
+	},
+	{
 		Name: "GFM LineBreak CRLF",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
@@ -157,6 +179,16 @@ var encodeViewTests = []struct {
 			"| -------: | --------------------------------------------------------------------- | ------ |\r\n" +
 			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00                                      | abcdef |\r\n" +
 			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |        |",
+	},
+	{
+		Name: "GFM Data Empty",
+		View: &View{
+			Header:    NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{},
+		},
+		Format:        cmd.GFM,
+		WithoutHeader: true,
+		Error:         "data empty",
 	},
 	{
 		Name: "Org-mode Table",
@@ -176,6 +208,16 @@ var encodeViewTests = []struct {
 			"| 34567890 |  ab\\|cdefghijklmnopqrstuvwxyzabcdefg<br />hi\"jk日本語あアｱＡ（<br />  |        |",
 	},
 	{
+		Name: "Org-mode Table Data Empty",
+		View: &View{
+			Header:    NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{},
+		},
+		Format:        cmd.ORG,
+		WithoutHeader: true,
+		Error:         "data empty",
+	},
+	{
 		Name: "TSV",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
@@ -192,6 +234,17 @@ var encodeViewTests = []struct {
 			"-1\t\ttrue\n" +
 			"2.0123\t\"2016-02-01T16:00:00.123456-07:00\"\t\"abcdef\"\n" +
 			"34567890\t\" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"\"jk\n\"\t",
+	},
+	{
+		Name: "TSV",
+		View: &View{
+			Header:    NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{},
+		},
+		Format:         cmd.TSV,
+		WriteDelimiter: '\t',
+		WithoutHeader:  true,
+		Error:          "data empty",
 	},
 	{
 		Name: "CSV WithoutHeader",
@@ -348,6 +401,15 @@ var encodeViewTests = []struct {
 		Format: cmd.LTSV,
 		Result: "c1:-1\tc2:false\tc3:true\n" +
 			"c1:2.0123\tc2:2016-02-01T16:00:00.123456-07:00\tc3:abcdef",
+	},
+	{
+		Name: "LTSV Data Empty",
+		View: &View{
+			Header:    NewHeader("test", []string{"c1", "c2", "c3"}),
+			RecordSet: []Record{},
+		},
+		Format: cmd.LTSV,
+		Error:  "data empty",
 	},
 	{
 		Name: "Fixed-Length Format Invalid Positions",
