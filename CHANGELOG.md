@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.11.8
+
+Released on December 12, 2019
+
+- Prevent query results from being written when the results is empty. ([Github #21](https://github.com/mithrandie/csvq/issues/21))
+
 ## Version 1.11.7
 
 Released on December 3, 2019
