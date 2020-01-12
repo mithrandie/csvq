@@ -135,6 +135,10 @@ func main() {
 			Usage: "make JSON output easier to read in query results",
 		},
 		cli.BoolFlag{
+			Name:  "strip-ending-line-break, T",
+			Usage: "strip line break from the end of files and query results",
+		},
+		cli.BoolFlag{
 			Name:  "east-asian-encoding, W",
 			Usage: "count ambiguous characters as fullwidth",
 		},
@@ -418,6 +422,9 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	}
 	if c.GlobalIsSet("pretty-print") {
 		_ = tx.SetFlag(cmd.PrettyPrintFlag, c.GlobalBool("pretty-print"))
+	}
+	if c.GlobalIsSet("strip-ending-line-break") {
+		_ = tx.SetFlag(cmd.StripEndingLineBreakFlag, c.GlobalBool("strip-ending-line-break"))
 	}
 
 	if c.GlobalIsSet("east-asian-encoding") {

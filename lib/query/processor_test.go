@@ -583,6 +583,33 @@ var processorExecuteStatementTests = []struct {
 		Logs: "var1\n1\n",
 	},
 	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "strip_ending_line_break"},
+			Value: parser.NewTernaryValue(ternary.TRUE),
+		},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{
+							Object: parser.Variable{Name: "var1"},
+							Alias:  parser.Identifier{Literal: "var1"},
+						},
+					},
+				},
+			},
+		},
+		Logs: "var1\n1",
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "strip_ending_line_break"},
+			Value: parser.NewTernaryValue(ternary.FALSE),
+		},
+	},
+	{
 		Input: parser.VariableDeclaration{
 			Assignments: []parser.VariableAssignment{
 				{

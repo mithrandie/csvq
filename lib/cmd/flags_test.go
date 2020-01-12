@@ -541,6 +541,16 @@ func TestFlags_SetPrettyPrint(t *testing.T) {
 	}
 }
 
+func TestFlags_SetStripEndingLineBreak(t *testing.T) {
+	flags := NewFlags(nil)
+
+	flags.SetStripEndingLineBreak(true)
+	if !flags.StripEndingLineBreak {
+		t.Errorf("strip ending line break = %t, expect to set %t", flags.StripEndingLineBreak, true)
+	}
+	flags.SetStripEndingLineBreak(false)
+}
+
 func TestFlags_SetEastAsianEncoding(t *testing.T) {
 	flags := NewFlags(nil)
 
