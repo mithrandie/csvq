@@ -225,7 +225,8 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 						} else {
 							err = e
 						}
-					} else if !(proc.Tx.Session.OutFile() != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
+					} else if !proc.Tx.Flags.StripEndingLineBreak &&
+						!(proc.Tx.Session.OutFile() != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
 						_, err = writer.Write([]byte(proc.Tx.Flags.LineBreak.Value()))
 					}
 				}

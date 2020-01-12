@@ -44,6 +44,7 @@ const (
 	EncloseAllFlag              = "ENCLOSE_ALL"
 	JsonEscapeFlag              = "JSON_ESCAPE"
 	PrettyPrintFlag             = "PRETTY_PRINT"
+	StripEndingLineBreakFlag    = "STRIP_ENDING_LINE_BREAK"
 	EastAsianEncodingFlag       = "EAST_ASIAN_ENCODING"
 	CountDiacriticalSignFlag    = "COUNT_DIACRITICAL_SIGN"
 	CountFormatCodeFlag         = "COUNT_FORMAT_CODE"
@@ -76,6 +77,7 @@ var FlagList = []string{
 	EncloseAllFlag,
 	JsonEscapeFlag,
 	PrettyPrintFlag,
+	StripEndingLineBreakFlag,
 	EastAsianEncodingFlag,
 	CountDiacriticalSignFlag,
 	CountFormatCodeFlag,
@@ -177,6 +179,7 @@ type Flags struct {
 	EncloseAll              bool
 	JsonEscape              txjson.EscapeType
 	PrettyPrint             bool
+	StripEndingLineBreak    bool
 
 	// For Calculation of String Width
 	EastAsianEncoding    bool
@@ -234,6 +237,7 @@ func NewFlags(env *Environment) *Flags {
 		EncloseAll:              false,
 		JsonEscape:              txjson.Backslash,
 		PrettyPrint:             false,
+		StripEndingLineBreak:    false,
 		EastAsianEncoding:       false,
 		CountDiacriticalSign:    false,
 		CountFormatCode:         false,
@@ -489,6 +493,10 @@ func (f *Flags) SetJsonEscape(s string) error {
 
 func (f *Flags) SetPrettyPrint(b bool) {
 	f.PrettyPrint = b
+}
+
+func (f *Flags) SetStripEndingLineBreak(b bool) {
+	f.StripEndingLineBreak = b
 }
 
 func (f *Flags) SetEncloseAll(b bool) {

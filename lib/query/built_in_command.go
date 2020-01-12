@@ -216,14 +216,17 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 	switch strings.ToUpper(expr.Flag.Name) {
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
-		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag, cmd.LineBreakFlag, cmd.JsonEscapeFlag:
+		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag,
+		cmd.LineBreakFlag, cmd.JsonEscapeFlag:
 		p = value.ToString(v)
 		if value.IsNull(p) {
 			return NewFlagValueNotAllowedFormatError(expr)
 		}
 		val = p.(*value.String).Raw()
-	case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
-		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+	case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag,
+		cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
+		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag,
+		cmd.QuietFlag, cmd.StatsFlag:
 		p = value.ToBoolean(v)
 		if value.IsNull(p) {
 			return NewFlagValueNotAllowedFormatError(expr)
@@ -264,9 +267,11 @@ func AddFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.AddF
 		return SetFlag(ctx, scope, e)
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
-		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag, cmd.LineBreakFlag, cmd.JsonEscapeFlag,
-		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
-		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag,
+		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag,
+		cmd.LineBreakFlag, cmd.JsonEscapeFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag,
+		cmd.EncloseAllFlag, cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
+		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag,
+		cmd.QuietFlag, cmd.StatsFlag,
 		cmd.WaitTimeoutFlag,
 		cmd.LimitRecursion, cmd.CPUFlag:
 
@@ -310,9 +315,11 @@ func RemoveFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.R
 		}
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
-		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag, cmd.LineBreakFlag, cmd.JsonEscapeFlag,
-		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
-		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag,
+		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag,
+		cmd.LineBreakFlag, cmd.JsonEscapeFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag,
+		cmd.EncloseAllFlag, cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
+		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag,
+		cmd.QuietFlag, cmd.StatsFlag,
 		cmd.WaitTimeoutFlag,
 		cmd.LimitRecursion, cmd.CPUFlag:
 
@@ -445,7 +452,8 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 		s = tx.Palette.Render(cmd.NumberEffect, val.(*value.Integer).String())
 	case cmd.WaitTimeoutFlag:
 		s = tx.Palette.Render(cmd.NumberEffect, val.(*value.Float).String())
-	case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+	case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.StripEndingLineBreakFlag,
+		cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 		s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
 	}
 
