@@ -1863,8 +1863,10 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList(c.encodingList(), false), true
 					case cmd.WriteEncodingFlag:
 						return nil, c.candidateList(exportEncodingsCandidates, false), true
-					case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
-						cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
+					case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag,
+						cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
+						cmd.StripEndingLineBreakFlag, cmd.EastAsianEncodingFlag,
+						cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
 						cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 						return nil, c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false), true
 					case cmd.FormatFlag:

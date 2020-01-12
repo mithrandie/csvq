@@ -222,6 +222,7 @@ func initFlag(flags *cmd.Flags) {
 	flags.EncloseAll = false
 	flags.JsonEscape = json.Backslash
 	flags.PrettyPrint = false
+	flags.StripEndingLineBreak = false
 	flags.EastAsianEncoding = false
 	flags.CountDiacriticalSign = false
 	flags.CountFormatCode = false

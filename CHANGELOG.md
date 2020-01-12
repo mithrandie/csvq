@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.12.0
+
+Released on January 12, 2020
+
+- Append a newline at the end of created and updated files. ([Github #22](https://github.com/mithrandie/csvq/issues/22))
+- Add the command option "--strip-ending-line-break".
+
 ## Version 1.11.8
 
 Released on December 12, 2019
