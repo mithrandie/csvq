@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.12.1
+
+Released on January 13, 2020
+
+- Update syntax description about the command option "--strip-ending-line-break".
+
 ## Version 1.12.0
 
 Released on January 12, 2020
