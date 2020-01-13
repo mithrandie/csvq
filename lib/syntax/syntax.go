@@ -1027,6 +1027,8 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Make JSON output easier to read in query results.\n" +
 				"%s  <type::%s>\n" +
+				"  > Strip line break from the end of files and query results.\n" +
+				"%s  <type::%s>\n" +
 				"  > Count ambiguous characters as fullwidth.\n" +
 				"%s  <type::%s>\n" +
 				"  > Count diacritical signs as halfwidth.\n" +
@@ -1063,6 +1065,7 @@ var CsvqSyntax = []Expression{
 				Flag("@@ENCLOSE_ALL"), Boolean("boolean"),
 				Flag("@@JSON_ESCAPE"), String("string"), Link("Json Escape Type"),
 				Flag("@@PRETTY_PRINT"), Boolean("boolean"),
+				Flag("@@STRIP_ENDING_LINE_BREAK"), Boolean("boolean"),
 				Flag("@@EAST_ASIAN_ENCODING"), Boolean("boolean"),
 				Flag("@@COUNT_DIACRITICAL_SIGN"), Boolean("boolean"),
 				Flag("@@COUNT_FORMAT_CODE"), Boolean("boolean"),
