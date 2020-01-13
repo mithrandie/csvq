@@ -2152,6 +2152,7 @@ var showObjectsTests = []struct {
 			"                  @@ENCODING: UTF8\n" +
 			"                 @@NO_HEADER: false\n" +
 			"              @@WITHOUT_NULL: false\n" +
+			"   @@STRIP_ENDING_LINE_BREAK: false\n" +
 			"                    @@FORMAT: CSV\n" +
 			"            @@WRITE_ENCODING: UTF8\n" +
 			"           @@WRITE_DELIMITER: ','\n" +
@@ -2161,7 +2162,6 @@ var showObjectsTests = []struct {
 			"               @@ENCLOSE_ALL: false\n" +
 			"               @@JSON_ESCAPE: (ignored) BACKSLASH\n" +
 			"              @@PRETTY_PRINT: (ignored) false\n" +
-			"   @@STRIP_ENDING_LINE_BREAK: false\n" +
 			"       @@EAST_ASIAN_ENCODING: (ignored) false\n" +
 			"    @@COUNT_DIACRITICAL_SIGN: (ignored) false\n" +
 			"         @@COUNT_FORMAT_CODE: (ignored) false\n" +

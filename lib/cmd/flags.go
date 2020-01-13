@@ -35,6 +35,7 @@ const (
 	EncodingFlag                = "ENCODING"
 	NoHeaderFlag                = "NO_HEADER"
 	WithoutNullFlag             = "WITHOUT_NULL"
+	StripEndingLineBreakFlag    = "STRIP_ENDING_LINE_BREAK"
 	FormatFlag                  = "FORMAT"
 	WriteEncodingFlag           = "WRITE_ENCODING"
 	WriteDelimiterFlag          = "WRITE_DELIMITER"
@@ -44,7 +45,6 @@ const (
 	EncloseAllFlag              = "ENCLOSE_ALL"
 	JsonEscapeFlag              = "JSON_ESCAPE"
 	PrettyPrintFlag             = "PRETTY_PRINT"
-	StripEndingLineBreakFlag    = "STRIP_ENDING_LINE_BREAK"
 	EastAsianEncodingFlag       = "EAST_ASIAN_ENCODING"
 	CountDiacriticalSignFlag    = "COUNT_DIACRITICAL_SIGN"
 	CountFormatCodeFlag         = "COUNT_FORMAT_CODE"
@@ -68,6 +68,7 @@ var FlagList = []string{
 	EncodingFlag,
 	NoHeaderFlag,
 	WithoutNullFlag,
+	StripEndingLineBreakFlag,
 	FormatFlag,
 	WriteEncodingFlag,
 	WriteDelimiterFlag,
@@ -77,7 +78,6 @@ var FlagList = []string{
 	EncloseAllFlag,
 	JsonEscapeFlag,
 	PrettyPrintFlag,
-	StripEndingLineBreakFlag,
 	EastAsianEncodingFlag,
 	CountDiacriticalSignFlag,
 	CountFormatCodeFlag,
@@ -169,6 +169,7 @@ type Flags struct {
 	WithoutNull        bool
 
 	// For Export
+	StripEndingLineBreak    bool
 	Format                  Format
 	WriteEncoding           text.Encoding
 	WriteDelimiter          rune
@@ -179,7 +180,6 @@ type Flags struct {
 	EncloseAll              bool
 	JsonEscape              txjson.EscapeType
 	PrettyPrint             bool
-	StripEndingLineBreak    bool
 
 	// For Calculation of String Width
 	EastAsianEncoding    bool
@@ -227,6 +227,7 @@ func NewFlags(env *Environment) *Flags {
 		Encoding:                text.AUTO,
 		NoHeader:                false,
 		WithoutNull:             false,
+		StripEndingLineBreak:    false,
 		Format:                  TEXT,
 		WriteEncoding:           text.UTF8,
 		WriteDelimiter:          ',',
@@ -237,7 +238,6 @@ func NewFlags(env *Environment) *Flags {
 		EncloseAll:              false,
 		JsonEscape:              txjson.Backslash,
 		PrettyPrint:             false,
-		StripEndingLineBreak:    false,
 		EastAsianEncoding:       false,
 		CountDiacriticalSign:    false,
 		CountFormatCode:         false,
