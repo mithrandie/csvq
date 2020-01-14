@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.12.2
+
+Released on January 14, 2020
+
+- Fix a bug of LIKE operator. ([Github #25](https://github.com/mithrandie/csvq/pull/25))
+
 ## Version 1.12.1
 
 Released on January 13, 2020
