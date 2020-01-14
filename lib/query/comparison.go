@@ -44,50 +44,50 @@ func Like(p1 value.Primary, p2 value.Primary) ternary.Value {
 		return ternary.FALSE
 	}
 
-	patternRunes := []rune(pattern)
-	patternPos := 0
-
-	for {
-		anyRunesMinLen, anyRunexMaxLen, search, pos := stringPattern(patternRunes, patternPos)
-		patternPos = pos
-
-		anyString := str
-		if 0 < len(search) {
-			idx := strings.Index(str, search)
-			if idx < 0 {
-				return ternary.FALSE
-			}
-			anyString = str[:idx]
-		}
-
-		if utf8.RuneCountInString(anyString) < anyRunesMinLen {
-			return ternary.FALSE
-		}
-		if -1 < anyRunexMaxLen && anyRunexMaxLen < utf8.RuneCountInString(anyString) {
-			return ternary.FALSE
-		}
-
-		if len(patternRunes) <= patternPos {
-			if len(anyString+search) < len(str) {
-				return ternary.FALSE
-			}
-			break
-		}
-
-		str = str[len(anyString+search):]
-	}
-
-	return ternary.TRUE
+	return matchString(str, []rune(pattern))
 }
 
-func stringPattern(pattern []rune, position int) (int, int, string, int) {
-	anyRunesMinLen := 0
-	anyRunesMaxLen := 0
+func matchString(str string, pattern []rune) ternary.Value {
+	anyRunesMinLen, anyRunesMaxLen, searchString, restPattern := matchCondition(pattern)
+
+	anyString := str
+	if 0 < len(searchString) {
+		idx := strings.Index(str, searchString)
+		if idx < 0 {
+			return ternary.FALSE
+		}
+
+		if anyRunesMaxLen < 0 && matchString(str[idx+len(searchString):], pattern) == ternary.TRUE {
+			return ternary.TRUE
+		}
+
+		anyString = str[:idx]
+	}
+
+	runeCount := utf8.RuneCountInString(anyString)
+	if runeCount < anyRunesMinLen {
+		return ternary.FALSE
+	}
+	if -1 < anyRunesMaxLen && anyRunesMaxLen < runeCount {
+		return ternary.FALSE
+	}
+
+	if len(restPattern) < 1 {
+		if len(anyString)+len(searchString) < len(str) {
+			return ternary.FALSE
+		}
+		return ternary.TRUE
+	}
+
+	return matchString(str[len(anyString)+len(searchString):], restPattern)
+}
+
+func matchCondition(pattern []rune) (anyRunesMinLen int, anyRunesMaxLen int, searchString string, restPattern []rune) {
 	search := make([]rune, 0, len(pattern)+4)
-	returnPostion := position
+	patternPos := 0
 
 	escaped := false
-	for i := position; i < len(pattern); i++ {
+	for i := 0; i < len(pattern); i++ {
 		r := pattern[i]
 
 		if escaped {
@@ -97,7 +97,7 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 			default:
 				search = append(search, '\\', r)
 			}
-			returnPostion++
+			patternPos++
 			escaped = false
 			continue
 		}
@@ -105,7 +105,7 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 		if (r == '%' || r == '_') && 0 < len(search) {
 			break
 		}
-		returnPostion++
+		patternPos++
 
 		switch r {
 		case '%':
@@ -125,7 +125,7 @@ func stringPattern(pattern []rune, position int) (int, int, string, int) {
 		search = append(search, '\\')
 	}
 
-	return anyRunesMinLen, anyRunesMaxLen, string(search), returnPostion
+	return anyRunesMinLen, anyRunesMaxLen, string(search), pattern[patternPos:]
 }
 
 func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType int, operator string, datetimeFormats []string) (ternary.Value, error) {
