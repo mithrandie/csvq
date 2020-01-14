@@ -4,7 +4,7 @@
 
 Released on January 14, 2020
 
-- Fix a bug of LIKE operator. ([Github #25](https://github.com/mithrandie/csvq/pull/25))
+- Fix a bug of LIKE operator. ([Github #25](https://github.com/mithrandie/csvq/issues/25))
 
 ## Version 1.12.1
 
