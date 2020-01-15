@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.12.3
+
+Released on January 15, 2020
+
+- Fix a bug of LIKE operator.
+
 ## Version 1.12.2
 
 Released on January 14, 2020
