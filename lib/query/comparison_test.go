@@ -140,6 +140,11 @@ var likeTests = []struct {
 		Pattern: value.NewString("%a"),
 		Result:  ternary.TRUE,
 	},
+	{
+		LHS:     value.NewString("abababc"),
+		Pattern: value.NewString("%aba_c"),
+		Result:  ternary.TRUE,
+	},
 }
 
 func TestLike(t *testing.T) {
