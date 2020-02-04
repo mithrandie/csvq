@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.12.4
+
+Released on February 4, 2020
+
+- Fix a bug that arrow keys do not work in the interactive shell on Windows. ([Github #26](https://github.com/mithrandie/csvq/issues/26))
+
 ## Version 1.12.3
 
 Released on January 15, 2020
