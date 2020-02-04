@@ -65,7 +65,9 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 		return query.NewIncorrectCommandUsageError("input from pipe or redirection cannot be used in interactive shell")
 	}
 
-	var err error
+	if err := proc.Tx.Session.SetStdin(query.GetStdinForREPL()); err != nil {
+		return query.NewIOError(nil, err.Error())
+	}
 
 	term, err := query.NewTerminal(ctx, proc.ReferenceScope)
 	if err != nil {

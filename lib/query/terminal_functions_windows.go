@@ -3,9 +3,11 @@
 package query
 
 import (
+	"io"
+
 	"github.com/mithrandie/readline-csvq"
 )
 
-func init() {
-	stdin = readline.NewRawReader()
+func GetStdinForREPL() io.ReadCloser {
+	return readline.NewRawReader()
 }
