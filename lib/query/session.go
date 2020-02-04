@@ -15,6 +15,13 @@ import (
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
+var (
+	screenFd                = os.Stdin.Fd()
+	stdin    io.ReadCloser  = os.Stdin
+	stdout   io.WriteCloser = os.Stdout
+	stderr   io.WriteCloser = os.Stderr
+)
+
 func isReadableFromPipeOrRedirection(fp *os.File) bool {
 	fi, err := fp.Stat()
 	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
@@ -181,10 +188,10 @@ func NewSession() *Session {
 	canReadStdin := isReadableFromPipeOrRedirection(os.Stdin)
 
 	return &Session{
-		screenFd: os.Stdin.Fd(),
-		stdin:    os.Stdin,
-		stdout:   os.Stdout,
-		stderr:   os.Stderr,
+		screenFd: screenFd,
+		stdin:    stdin,
+		stdout:   stdout,
+		stderr:   stderr,
 		outFile:  nil,
 		terminal: nil,
 

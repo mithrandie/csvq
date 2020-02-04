@@ -42,7 +42,7 @@ func NewTerminal(ctx context.Context, scope *ReferenceScope) (VirtualTerminal, e
 		HistoryLimit:           limit,
 		HistorySearchFold:      true,
 		Listener:               new(ReadlineListener),
-		Stdin:                  scope.Tx.Session.Stdin(),
+		Stdin:                  readline.NewCancelableStdin(scope.Tx.Session.Stdin()),
 		Stdout:                 scope.Tx.Session.Stdout(),
 		Stderr:                 scope.Tx.Session.Stderr(),
 	})
