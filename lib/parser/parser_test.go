@@ -187,10 +187,13 @@ var parseTests = []struct {
 						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 26}, Stdin: "stdin"}},
 					}},
 				},
-				OffsetClause: OffsetClause{
+				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 1, char: 32},
-					Offset:   "offset",
-					Value:    NewIntegerValueFromString("1"),
+					OffsetClause: OffsetClause{
+						BaseExpr: &BaseExpr{line: 1, char: 32},
+						Offset:   "offset",
+						Value:    NewIntegerValueFromString("1"),
+					},
 				},
 				ForUpdate:        true,
 				ForUpdateLiteral: "for update",
@@ -612,16 +615,68 @@ var parseTests = []struct {
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 12, char: 2},
-					Limit:    "limit",
+					Type:     Token{Token: LIMIT, Literal: "limit", Line: 12, Char: 2},
 					Value:    NewIntegerValueFromString("10"),
-				},
-				OffsetClause: OffsetClause{
-					BaseExpr: &BaseExpr{line: 13, char: 2},
-					Offset:   "offset",
-					Value:    NewIntegerValueFromString("10"),
+					OffsetClause: OffsetClause{
+						BaseExpr: &BaseExpr{line: 13, char: 2},
+						Offset:   "offset",
+						Value:    NewIntegerValueFromString("10"),
+					},
 				},
 			},
 		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" offset 1 row",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr: &BaseExpr{line: 3, char: 2},
+					OffsetClause: OffsetClause{
+						BaseExpr: &BaseExpr{line: 3, char: 2},
+						Offset:   "offset",
+						Value:    NewIntegerValueFromString("1"),
+						Unit:     Token{Token: ROW, Literal: "row", Line: 3, Char: 11},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" offset 2 rows",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr: &BaseExpr{line: 3, char: 2},
+					OffsetClause: OffsetClause{
+						BaseExpr: &BaseExpr{line: 3, char: 2},
+						Offset:   "offset",
+						Value:    NewIntegerValueFromString("2"),
+						Unit:     Token{Token: ROWS, Literal: "rows", Line: 3, Char: 11},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" offset 1 percent",
+		Error:     "syntax error: unexpected token \"percent\"",
+		ErrorLine: 3,
+		ErrorChar: 11,
 	},
 	{
 		Input: "select 1 \n" +
@@ -635,9 +690,47 @@ var parseTests = []struct {
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 3, char: 2},
-					Limit:    "limit",
+					Type:     Token{Token: LIMIT, Literal: "limit", Line: 3, Char: 2},
 					Value:    NewIntegerValueFromString("10"),
-					Percent:  "percent",
+					Unit:     Token{Token: PERCENT, Literal: "percent", Line: 3, Char: 11},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" limit 10 row",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr: &BaseExpr{line: 3, char: 2},
+					Type:     Token{Token: LIMIT, Literal: "limit", Line: 3, Char: 2},
+					Value:    NewIntegerValueFromString("10"),
+					Unit:     Token{Token: ROW, Literal: "row", Line: 3, Char: 11},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" limit 10 rows",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr: &BaseExpr{line: 3, char: 2},
+					Type:     Token{Token: LIMIT, Literal: "limit", Line: 3, Char: 2},
+					Value:    NewIntegerValueFromString("10"),
+					Unit:     Token{Token: ROWS, Literal: "rows", Line: 3, Char: 11},
 				},
 			},
 		},
@@ -653,13 +746,151 @@ var parseTests = []struct {
 					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
 				},
 				LimitClause: LimitClause{
-					BaseExpr: &BaseExpr{line: 3, char: 2},
-					Limit:    "limit",
-					Value:    NewIntegerValueFromString("10"),
-					With:     LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties", Line: 3, Char: 16}},
+					BaseExpr:    &BaseExpr{line: 3, char: 2},
+					Type:        Token{Token: LIMIT, Literal: "limit", Line: 3, Char: 2},
+					Value:       NewIntegerValueFromString("10"),
+					Restriction: Token{Token: TIES, Literal: "with ties", Line: 3, Char: 16},
 				},
 			},
 		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" limit 10 rows with ties",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr:    &BaseExpr{line: 3, char: 2},
+					Type:        Token{Token: LIMIT, Literal: "limit", Line: 3, Char: 2},
+					Value:       NewIntegerValueFromString("10"),
+					Unit:        Token{Token: ROWS, Literal: "rows", Line: 3, Char: 11},
+					Restriction: Token{Token: TIES, Literal: "with ties", Line: 3, Char: 21},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" limit 10 only \n" +
+			" offset 1",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr:    &BaseExpr{line: 3, char: 2},
+					Type:        Token{Token: LIMIT, Literal: "limit", Line: 3, Char: 2},
+					Value:       NewIntegerValueFromString("10"),
+					Restriction: Token{Token: ONLY, Literal: "only", Line: 3, Char: 11},
+					OffsetClause: OffsetClause{
+						BaseExpr: &BaseExpr{line: 4, char: 2},
+						Offset:   "offset",
+						Value:    NewIntegerValueFromString("1"),
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" offset 10 rows \n" +
+			" fetch first 1 row only",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr:    &BaseExpr{line: 3, char: 2},
+					Type:        Token{Token: FETCH, Literal: "fetch", Line: 4, Char: 2},
+					Position:    Token{Token: FIRST, Literal: "first", Line: 4, Char: 8},
+					Value:       NewIntegerValueFromString("1"),
+					Unit:        Token{Token: ROW, Literal: "row", Line: 4, Char: 16},
+					Restriction: Token{Token: ONLY, Literal: "only", Line: 4, Char: 20},
+					OffsetClause: OffsetClause{
+						BaseExpr: &BaseExpr{line: 3, char: 2},
+						Offset:   "offset",
+						Value:    NewIntegerValueFromString("10"),
+						Unit:     Token{Token: ROWS, Literal: "rows", Line: 3, Char: 12},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" offset 1 row \n" +
+			" fetch next 1 percent with ties",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr:    &BaseExpr{line: 3, char: 2},
+					Type:        Token{Token: FETCH, Literal: "fetch", Line: 4, Char: 2},
+					Position:    Token{Token: NEXT, Literal: "next", Line: 4, Char: 8},
+					Value:       NewIntegerValueFromString("1"),
+					Unit:        Token{Token: PERCENT, Literal: "percent", Line: 4, Char: 15},
+					Restriction: Token{Token: TIES, Literal: "with ties", Line: 4, Char: 28},
+					OffsetClause: OffsetClause{
+						BaseExpr: &BaseExpr{line: 3, char: 2},
+						Offset:   "offset",
+						Value:    NewIntegerValueFromString("1"),
+						Unit:     Token{Token: ROW, Literal: "row", Line: 3, Char: 11},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" fetch next 1 percent with ties",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr:    &BaseExpr{line: 3, char: 2},
+					Type:        Token{Token: FETCH, Literal: "fetch", Line: 3, Char: 2},
+					Position:    Token{Token: NEXT, Literal: "next", Line: 3, Char: 8},
+					Value:       NewIntegerValueFromString("1"),
+					Unit:        Token{Token: PERCENT, Literal: "percent", Line: 3, Char: 15},
+					Restriction: Token{Token: TIES, Literal: "with ties", Line: 3, Char: 28},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" fetch 1 percent with ties",
+		Error:     "syntax error: unexpected token \"1\"",
+		ErrorLine: 3,
+		ErrorChar: 8,
+	},
+	{
+		Input: "select 1 \n" +
+			" from dual \n" +
+			" fetch next 1 with ties",
+		Error:     "syntax error: unexpected token \"with\"",
+		ErrorLine: 3,
+		ErrorChar: 15,
 	},
 	{
 		Input: "select distinct * from dual",
@@ -2061,6 +2292,86 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select substring(column1, 2, 5)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "substring",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column1"}},
+									NewIntegerValueFromString("2"),
+									NewIntegerValueFromString("5"),
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select substring(column1 from 2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "substring",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column1"}},
+									NewIntegerValueFromString("2"),
+								},
+								From: "from",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select substring(column1 from 2 for 5)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: Function{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "substring",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column1"}},
+									NewIntegerValueFromString("2"),
+									NewIntegerValueFromString("5"),
+								},
+								From: "from",
+								For:  "for",
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input:     "select substring(column1 from 2, 5)",
+		Error:     "syntax error: unexpected token \",\"",
+		ErrorLine: 1,
+		ErrorChar: 32,
+	},
+	{
 		Input: "select json_object()",
 		Output: []Statement{
 			SelectQuery{
@@ -2165,6 +2476,28 @@ var parseTests = []struct {
 								Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 16},
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select var(column1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AggregateFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "var",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
 								},
 							}},
 						},
@@ -2809,6 +3142,52 @@ var parseTests = []struct {
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "min",
+								Args: []QueryExpression{
+									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
+								},
+								Over: "over",
+								AnalyticClause: AnalyticClause{
+									PartitionClause: PartitionClause{
+										PartitionBy: "partition by",
+										Values: []QueryExpression{
+											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column1"}},
+										},
+									},
+									OrderByClause: OrderByClause{
+										OrderBy: "order by",
+										Items: []QueryExpression{
+											OrderItem{
+												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column2"}},
+											},
+										},
+									},
+									WindowingClause: WindowingClause{
+										Rows: "rows",
+										FrameLow: WindowFramePosition{
+											Direction: CURRENT,
+											Literal:   "current row",
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select var(column1) over (partition by column1 order by column2 rows current row)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Select:   "select",
+						Fields: []QueryExpression{
+							Field{Object: AnalyticFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Name:     "var",
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
 								},
@@ -6250,9 +6629,6 @@ func TestParse(t *testing.T) {
 				}
 				if !reflect.DeepEqual(parsedStmt.LimitClause, expectStmt.LimitClause) {
 					t.Errorf("limit clause = %#v, want %#v for %q", parsedStmt.LimitClause, expectStmt.LimitClause, v.Input)
-				}
-				if !reflect.DeepEqual(parsedStmt.OffsetClause, expectStmt.OffsetClause) {
-					t.Errorf("offset clause = %#v, want %#v for %q", parsedStmt.OffsetClause, expectStmt.OffsetClause, v.Input)
 				}
 			default:
 				if !reflect.DeepEqual(stmt, expect) {

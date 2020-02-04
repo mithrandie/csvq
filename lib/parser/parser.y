@@ -89,7 +89,11 @@ import (
 %type<queryexpr>   having_clause
 %type<queryexpr>   order_by_clause
 %type<queryexpr>   limit_clause
-%type<queryexpr>   limit_with
+%type<token>       limit_restriction
+%type<token>       limit_fetch_position
+%type<token>       limit_unit
+%type<token>       limit_fetch_unit
+%type<token>       offset_unit
 %type<queryexpr>   offset_clause
 %type<queryexpr>   with_clause
 %type<queryexpr>   inline_table
@@ -212,10 +216,10 @@ import (
 %token<token> FUNCTION AGGREGATE BEGIN RETURN
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
-%token<token> TIES NULLS ROWS
+%token<token> TIES NULLS ROWS ONLY
 %token<token> CSV JSON FIXED LTSV
 %token<token> JSON_ROW JSON_TABLE
-%token<token> COUNT JSON_OBJECT
+%token<token> SUBSTRING COUNT JSON_OBJECT
 %token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
@@ -1022,31 +1026,29 @@ trigger_statement
     }
 
 select_query
-    : with_clause select_entity order_by_clause limit_clause offset_clause
+    : with_clause select_entity order_by_clause limit_clause
     {
         $$ = SelectQuery{
             WithClause:    $1,
             SelectEntity:  $2,
             OrderByClause: $3,
             LimitClause:   $4,
-            OffsetClause:  $5,
         }
     }
-    | with_clause select_entity order_by_clause limit_clause offset_clause FOR UPDATE
+    | with_clause select_entity order_by_clause limit_clause FOR UPDATE
     {
         $$ = SelectQuery{
             WithClause:    $1,
             SelectEntity:  $2,
             OrderByClause: $3,
             LimitClause:   $4,
-            OffsetClause:  $5,
             ForUpdate:     true,
-            ForUpdateLiteral: $6.Literal + " " + $7.Literal,
+            ForUpdateLiteral: $5.Literal + " " + $6.Literal,
         }
     }
 
 select_into_query
-    : with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause offset_clause
+    : with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause
     {
         $$ = SelectQuery{
             WithClause:    $1,
@@ -1060,10 +1062,9 @@ select_into_query
             },
             OrderByClause: $8,
             LimitClause:   $9,
-            OffsetClause:  $10,
         }
     }
-    | with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause offset_clause FOR UPDATE
+    | with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause FOR UPDATE
     {
         $$ = SelectQuery{
             WithClause:    $1,
@@ -1077,9 +1078,8 @@ select_into_query
             },
             OrderByClause: $8,
             LimitClause:   $9,
-            OffsetClause:  $10,
             ForUpdate:     true,
-            ForUpdateLiteral: $11.Literal + " " + $12.Literal,
+            ForUpdateLiteral: $10.Literal + " " + $11.Literal,
         }
     }
 
@@ -1195,27 +1195,91 @@ order_by_clause
     }
 
 limit_clause
-    :
+    : offset_clause
     {
-        $$ = nil
+        if $1 == nil {
+            $$ = $1
+        } else {
+            $$ = LimitClause{BaseExpr: $1.(OffsetClause).BaseExpr, OffsetClause: $1}
+        }
     }
-    | LIMIT substantial_value limit_with
+    | offset_clause FETCH limit_fetch_position substantial_value limit_fetch_unit limit_restriction
     {
-        $$ = LimitClause{BaseExpr: NewBaseExpr($1), Limit: $1.Literal, Value: $2, With: $3}
+        var base *BaseExpr
+        if $1 == nil {
+            base = NewBaseExpr($2)
+        } else {
+            base = $1.(OffsetClause).BaseExpr
+        }
+        $$ = LimitClause{BaseExpr: base, Type: $2, Position: $3, Value: $4, Unit: $5, Restriction: $6, OffsetClause: $1}
     }
-    | LIMIT substantial_value PERCENT limit_with
+    | LIMIT substantial_value limit_unit limit_restriction offset_clause
     {
-        $$ = LimitClause{BaseExpr: NewBaseExpr($1), Limit: $1.Literal, Value: $2, Percent: $3.Literal, With: $4}
+        $$ = LimitClause{BaseExpr: NewBaseExpr($1), Type: $1, Value: $2, Unit: $3, Restriction: $4, OffsetClause: $5}
     }
 
-limit_with
+limit_restriction
     :
     {
-        $$ = nil
+        $$ = Token{}
+    }
+    | ONLY
+    {
+        $$ = $1
     }
     | WITH TIES
     {
-        $$ = LimitWith{With: $1.Literal, Type: $2}
+        tok := $2
+        tok.Literal = joinWithSpace([]string{$1.Literal, tok.Literal})
+        $$ = tok
+    }
+
+limit_fetch_position
+    : FIRST
+    {
+        $$ = $1
+    }
+    | NEXT
+    {
+        $$ = $1
+    }
+
+limit_unit
+    :
+    {
+        $$ = Token{}
+    }
+    | limit_fetch_unit
+    {
+        $$ = $1
+    }
+
+limit_fetch_unit
+    : PERCENT
+    {
+        $$ = $1
+    }
+    | ROW
+    {
+        $$ = $1
+    }
+    | ROWS
+    {
+        $$ = $1
+    }
+
+offset_unit
+    :
+    {
+        $$ = Token{}
+    }
+    | ROW
+    {
+        $$ = $1
+    }
+    | ROWS
+    {
+        $$ = $1
     }
 
 offset_clause
@@ -1223,9 +1287,9 @@ offset_clause
     {
         $$ = nil
     }
-    | OFFSET substantial_value
+    | OFFSET substantial_value offset_unit
     {
-        $$ = OffsetClause{BaseExpr: NewBaseExpr($1), Offset: $1.Literal, Value: $2}
+        $$ = OffsetClause{BaseExpr: NewBaseExpr($1), Offset: $1.Literal, Value: $2, Unit: $3}
     }
 
 with_clause
@@ -1674,6 +1738,18 @@ function
     {
         $$ = Function{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3}
     }
+    | SUBSTRING '(' arguments ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3}
+    }
+    | SUBSTRING '(' value FROM value ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: []QueryExpression{$3, $5}, From: $4.Literal}
+    }
+    | SUBSTRING '(' value FROM value FOR value ')'
+    {
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: []QueryExpression{$3, $5, $7}, From: $4.Literal, For: $6.Literal}
+    }
     | JSON_OBJECT '(' ')'
     {
         $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal}
@@ -1698,6 +1774,10 @@ aggregate_function
         $$ = AggregateFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Distinct: $3, Args: $4}
     }
     | AGGREGATE_FUNCTION '(' distinct arguments ')'
+    {
+        $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
+    }
+    | VAR '(' distinct arguments ')'
     {
         $$ = AggregateFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4}
     }
@@ -1734,6 +1814,10 @@ analytic_function
         $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }
     | AGGREGATE_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
+    {
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+    }
+    | VAR '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
         $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
     }

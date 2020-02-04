@@ -508,6 +508,13 @@ var setFlagTests = []struct {
 		},
 	},
 	{
+		Name: "Set Strip Ending Line Break",
+		Expr: parser.SetFlag{
+			Flag:  parser.Flag{Name: "strip_ending_line_break"},
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
 		Name: "Set EastAsianEncoding",
 		Expr: parser.SetFlag{
 			Flag:  parser.Flag{Name: "east_asian_encoding"},
@@ -1345,6 +1352,19 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@PRETTY_PRINT:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
+		Name: "Show StripEndingLineBreak",
+		Expr: parser.ShowFlag{
+			Flag: parser.Flag{Name: "strip_ending_line_break"},
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Flag:  parser.Flag{Name: "strip_ending_line_break"},
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+		},
+		Result: "\033[34;1m@@STRIP_ENDING_LINE_BREAK:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
 		Name: "Show PrettyPrint Ignored",
 		Expr: parser.ShowFlag{
 			Flag: parser.Flag{Name: "pretty_print"},
@@ -2038,7 +2058,7 @@ var showObjectsTests = []struct {
 			},
 		}, nil, time.Time{}, nil),
 		Expect: "\n" +
-			"  Scala Functions\n" +
+			" Scalar Functions\n" +
 			"-------------------\n" +
 			" userfunc1 (@arg1)\n" +
 			"\n" +
@@ -2132,6 +2152,7 @@ var showObjectsTests = []struct {
 			"                  @@ENCODING: UTF8\n" +
 			"                 @@NO_HEADER: false\n" +
 			"              @@WITHOUT_NULL: false\n" +
+			"   @@STRIP_ENDING_LINE_BREAK: false\n" +
 			"                    @@FORMAT: CSV\n" +
 			"            @@WRITE_ENCODING: UTF8\n" +
 			"           @@WRITE_DELIMITER: ','\n" +

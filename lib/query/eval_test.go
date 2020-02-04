@@ -1141,9 +1141,42 @@ var evaluateTests = []struct {
 					},
 				},
 			},
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "Not In",
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValue(1),
+						parser.NewIntegerValue(2),
+						parser.NewNullValue(),
+					},
+				},
+			},
 			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
 		},
 		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "Not In UNKNOWN",
+		Expr: parser.In{
+			LHS: parser.NewIntegerValue(2),
+			Values: parser.RowValue{
+				Value: parser.ValueList{
+					Values: []parser.QueryExpression{
+						parser.NewIntegerValue(3),
+						parser.NewIntegerValue(4),
+						parser.NewNullValue(),
+					},
+				},
+			},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+		},
+		Result: value.NewTernary(ternary.UNKNOWN),
 	},
 	{
 		Name: "In LHS Error",
@@ -3045,7 +3078,7 @@ var evaluateTests = []struct {
 		Error: "field notexist does not exist",
 	},
 	{
-		Name: "Aggregate Function Execute User Defined Aggregate Function Passed As Scala Function",
+		Name: "Aggregate Function Execute User Defined Aggregate Function Passed As Scalar Function",
 		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
 			{
 				scopeNameFunctions: {

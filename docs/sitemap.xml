@@ -6,23 +6,23 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
         <loc>https://mithrandie.github.io/csvq/</loc>
-        <lastmod>2019-05-19T11:48:05+00:00</lastmod>
+        <lastmod>2020-01-15T02:06:08+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference.html</loc>
-        <lastmod>2019-04-13T14:43:42+00:00</lastmod>
+        <lastmod>2019-05-24T10:47:33+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/install.html</loc>
-        <lastmod>2019-04-25T16:49:11+00:00</lastmod>
+        <lastmod>2019-05-24T10:47:33+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/command.html</loc>
-        <lastmod>2019-05-19T09:32:34+00:00</lastmod>
+        <lastmod>2020-01-13T02:07:03+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/statement.html</loc>
-        <lastmod>2019-05-19T09:32:34+00:00</lastmod>
+        <lastmod>2019-07-06T03:11:57+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/value.html</loc>
@@ -30,7 +30,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/select-query.html</loc>
-        <lastmod>2019-04-25T16:32:19+00:00</lastmod>
+        <lastmod>2019-05-28T17:48:36+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/insert-query.html</loc>
@@ -82,7 +82,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/user-defined-function.html</loc>
-        <lastmod>2017-07-30T20:00:29+00:00</lastmod>
+        <lastmod>2019-12-03T07:13:43+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/control-flow.html</loc>
@@ -102,7 +102,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/flag.html</loc>
-        <lastmod>2019-05-19T09:32:34+00:00</lastmod>
+        <lastmod>2020-01-13T02:07:03+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/environment-variable.html</loc>
@@ -126,7 +126,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/comparison-operators.html</loc>
-        <lastmod>2018-11-24T20:56:09+00:00</lastmod>
+        <lastmod>2019-06-01T12:43:45+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/logic-operators.html</loc>
@@ -142,7 +142,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/aggregate-functions.html</loc>
-        <lastmod>2018-10-13T15:53:22+00:00</lastmod>
+        <lastmod>2019-05-26T15:33:36+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/logical-functions.html</loc>
@@ -150,7 +150,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/string-functions.html</loc>
-        <lastmod>2019-04-25T16:32:19+00:00</lastmod>
+        <lastmod>2019-07-06T02:12:43+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/numeric-functions.html</loc>
@@ -174,11 +174,11 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/analytic-functions.html</loc>
-        <lastmod>2018-10-13T15:53:22+00:00</lastmod>
+        <lastmod>2019-05-26T15:33:36+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/changelog.html</loc>
-        <lastmod>2019-05-19T11:48:05+00:00</lastmod>
+        <lastmod>2019-12-12T17:05:41+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/license.html</loc>

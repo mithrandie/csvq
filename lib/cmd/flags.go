@@ -35,6 +35,7 @@ const (
 	EncodingFlag                = "ENCODING"
 	NoHeaderFlag                = "NO_HEADER"
 	WithoutNullFlag             = "WITHOUT_NULL"
+	StripEndingLineBreakFlag    = "STRIP_ENDING_LINE_BREAK"
 	FormatFlag                  = "FORMAT"
 	WriteEncodingFlag           = "WRITE_ENCODING"
 	WriteDelimiterFlag          = "WRITE_DELIMITER"
@@ -67,6 +68,7 @@ var FlagList = []string{
 	EncodingFlag,
 	NoHeaderFlag,
 	WithoutNullFlag,
+	StripEndingLineBreakFlag,
 	FormatFlag,
 	WriteEncodingFlag,
 	WriteDelimiterFlag,
@@ -167,6 +169,7 @@ type Flags struct {
 	WithoutNull        bool
 
 	// For Export
+	StripEndingLineBreak    bool
 	Format                  Format
 	WriteEncoding           text.Encoding
 	WriteDelimiter          rune
@@ -224,6 +227,7 @@ func NewFlags(env *Environment) *Flags {
 		Encoding:                text.AUTO,
 		NoHeader:                false,
 		WithoutNull:             false,
+		StripEndingLineBreak:    false,
 		Format:                  TEXT,
 		WriteEncoding:           text.UTF8,
 		WriteDelimiter:          ',',
@@ -489,6 +493,10 @@ func (f *Flags) SetJsonEscape(s string) error {
 
 func (f *Flags) SetPrettyPrint(b bool) {
 	f.PrettyPrint = b
+}
+
+func (f *Flags) SetStripEndingLineBreak(b bool) {
+	f.StripEndingLineBreak = b
 }
 
 func (f *Flags) SetEncloseAll(b bool) {

@@ -122,10 +122,16 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 				return NewSystemError(err.Error())
 			}
 
-			_, err := EncodeView(ctx, fp, view, fileinfo, tx)
-			if err != nil {
+			if _, err := EncodeView(ctx, fp, view, fileinfo, tx); err != nil {
 				return NewCommitError(expr, err.Error())
 			}
+
+			if !tx.Flags.StripEndingLineBreak && !(fileinfo.Format == cmd.FIXED && fileinfo.SingleLine) {
+				if _, err := fp.Write([]byte(tx.Flags.LineBreak.Value())); err != nil {
+					return NewCommitError(expr, err.Error())
+				}
+			}
+
 			createFileInfo = append(createFileInfo, view.FileInfo)
 		}
 	}
@@ -144,6 +150,12 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 
 			if _, err := EncodeView(ctx, fp, view, fileinfo, tx); err != nil {
 				return NewCommitError(expr, err.Error())
+			}
+
+			if !tx.Flags.StripEndingLineBreak && !(fileinfo.Format == cmd.FIXED && fileinfo.SingleLine) {
+				if _, err := fp.Write([]byte(tx.Flags.LineBreak.Value())); err != nil {
+					return NewCommitError(expr, err.Error())
+				}
 			}
 
 			updateFileInfo = append(updateFileInfo, view.FileInfo)
@@ -460,6 +472,12 @@ func (tx *Transaction) setFlag(key string, value interface{}, outFile string) er
 		} else {
 			err = errNotAllowdFlagFormat
 		}
+	case cmd.StripEndingLineBreakFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetStripEndingLineBreak(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
 	case cmd.EastAsianEncodingFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetEastAsianEncoding(b)
@@ -581,6 +599,8 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 		val = value.NewString(cmd.JsonEscapeTypeToString(tx.Flags.JsonEscape))
 	case cmd.PrettyPrintFlag:
 		val = value.NewBoolean(tx.Flags.PrettyPrint)
+	case cmd.StripEndingLineBreakFlag:
+		val = value.NewBoolean(tx.Flags.StripEndingLineBreak)
 	case cmd.EastAsianEncodingFlag:
 		val = value.NewBoolean(tx.Flags.EastAsianEncoding)
 	case cmd.CountDiacriticalSignFlag:

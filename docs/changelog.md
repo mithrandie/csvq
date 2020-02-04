@@ -5,6 +5,95 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.12.3
+
+Released on January 15, 2020
+
+- Fix a bug of LIKE operator.
+
+## Version 1.12.2
+
+Released on January 14, 2020
+
+- Fix a bug of LIKE operator. ([Github #25](https://github.com/mithrandie/csvq/issues/25))
+
+## Version 1.12.1
+
+Released on January 13, 2020
+
+- Update syntax description about the command option "--strip-ending-line-break".
+
+## Version 1.12.0
+
+Released on January 12, 2020
+
+- Append a newline at the end of created and updated files. ([Github #22](https://github.com/mithrandie/csvq/issues/22))
+- Add the command option "--strip-ending-line-break".
+
+## Version 1.11.8
+
+Released on December 12, 2019
+
+- Prevent query results from being written when the results is empty. ([Github #21](https://github.com/mithrandie/csvq/issues/21))
+
+## Version 1.11.7
+
+Released on December 3, 2019
+
+- Fix misspellings in the syntax subcommand.
+
+## Version 1.11.6
+
+Released on October 31, 2019
+
+- Modify the behavior of enclosures completion on the interactive shell. ([Github #12](https://github.com/mithrandie/csvq/issues/12))
+
+## Version 1.11.5
+
+Released on July 6, 2019
+
+- Add a built-in function. ([Github #10](https://github.com/mithrandie/csvq/pull/10))
+  - String Function
+    - SUBSTRING
+
+## Version 1.11.4
+
+Released on Jun 1, 2019
+
+- Fix the following bug.
+  - NOT IN operator returns incorrect result in some cases.
+
+## Version 1.11.3
+
+Released on Jun 1, 2019
+
+- Implement FETCH clause that can be used in place of LIMIT clause in SELECT query.
+- Fix the following bug.
+  - FALSE takes precedence over UNKNOWN in NOT IN operation.
+
+## Version 1.11.2
+
+Released on May 26, 2019
+
+- Add built-in functions.
+  - Aggregate Function
+    - STDEV
+    - STDEVP
+    - VAR
+    - VARP
+  - Analytic Function
+    - STDEV
+    - STDEVP
+    - VAR
+    - VARP
+
+## Version 1.11.1
+
+Released on May 19, 2019
+
+- Fix the following bugs.
+  - Subqueries in recursive queries cannot reference that temporary tables.
+
 ## Version 1.11.0
 
 Released on May 19, 2019

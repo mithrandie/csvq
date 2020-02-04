@@ -469,9 +469,9 @@ var selectTests = []struct {
 			},
 			LimitClause: parser.LimitClause{
 				Value: parser.NewIntegerValueFromString("5"),
-			},
-			OffsetClause: parser.OffsetClause{
-				Value: parser.NewIntegerValue(0),
+				OffsetClause: parser.OffsetClause{
+					Value: parser.NewIntegerValue(0),
+				},
 			},
 		},
 		Result: &View{
@@ -524,6 +524,7 @@ var selectTests = []struct {
 				},
 			},
 			LimitClause: parser.LimitClause{
+				Type:  parser.Token{Token: parser.FETCH},
 				Value: parser.NewIntegerValueFromString("1"),
 			},
 		},
@@ -1214,6 +1215,7 @@ var selectTests = []struct {
 				},
 			},
 			LimitClause: parser.LimitClause{
+				Type:  parser.Token{Token: parser.LIMIT},
 				Value: parser.NewIntegerValueFromString("1"),
 			},
 		},

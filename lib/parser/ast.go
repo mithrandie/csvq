@@ -258,7 +258,6 @@ type SelectQuery struct {
 	SelectEntity     QueryExpression
 	OrderByClause    QueryExpression
 	LimitClause      QueryExpression
-	OffsetClause     QueryExpression
 	ForUpdate        bool
 	ForUpdateLiteral string
 }
@@ -274,9 +273,6 @@ func (e SelectQuery) String() string {
 	}
 	if e.LimitClause != nil {
 		s = append(s, e.LimitClause.String())
-	}
-	if e.OffsetClause != nil {
-		s = append(s, e.OffsetClause.String())
 	}
 	if e.ForUpdate {
 		s = append(s, e.ForUpdateLiteral)
@@ -422,53 +418,70 @@ func (ob OrderByClause) String() string {
 
 type LimitClause struct {
 	*BaseExpr
-	Limit   string
-	Value   QueryExpression
-	Percent string
-	With    QueryExpression
+	Type         Token
+	Position     Token
+	Value        QueryExpression
+	Unit         Token
+	Restriction  Token
+	OffsetClause QueryExpression
 }
 
 func (e LimitClause) String() string {
-	s := []string{e.Limit, e.Value.String()}
-	if e.IsPercentage() {
-		s = append(s, e.Percent)
-	}
-	if e.With != nil {
-		s = append(s, e.With.String())
+	s := make([]string, 0, 6)
+
+	if e.Type.Token == LIMIT {
+		s = append(s, e.Type.Literal)
+		s = append(s, e.Value.String())
+		if !e.Unit.IsEmpty() {
+			s = append(s, e.Unit.Literal)
+		}
+		if !e.Restriction.IsEmpty() {
+			s = append(s, e.Restriction.Literal)
+		}
+		if e.OffsetClause != nil {
+			s = append(s, e.OffsetClause.String())
+		}
+	} else if e.Type.Token == FETCH {
+		if e.OffsetClause != nil {
+			s = append(s, e.OffsetClause.String())
+		}
+		s = append(s, e.Type.Literal)
+		s = append(s, e.Position.Literal)
+		s = append(s, e.Value.String())
+		s = append(s, e.Unit.Literal)
+		if !e.Restriction.IsEmpty() {
+			s = append(s, e.Restriction.Literal)
+		}
+	} else {
+		if e.OffsetClause != nil {
+			s = append(s, e.OffsetClause.String())
+		}
 	}
 	return joinWithSpace(s)
 }
 
-func (e LimitClause) IsPercentage() bool {
-	return 0 < len(e.Percent)
+func (e LimitClause) Percentage() bool {
+	return e.Unit.Token == PERCENT
 }
 
-func (e LimitClause) IsWithTies() bool {
-	if e.With == nil {
-		return false
-	}
-	return e.With.(LimitWith).Type.Token == TIES
-}
-
-type LimitWith struct {
-	*BaseExpr
-	With string
-	Type Token
-}
-
-func (e LimitWith) String() string {
-	s := []string{e.With, e.Type.Literal}
-	return joinWithSpace(s)
+func (e LimitClause) WithTies() bool {
+	return e.Restriction.Token == TIES
 }
 
 type OffsetClause struct {
 	*BaseExpr
 	Offset string
 	Value  QueryExpression
+	Unit   Token
 }
 
 func (e OffsetClause) String() string {
-	s := []string{e.Offset, e.Value.String()}
+	s := make([]string, 2, 3)
+	s[0] = e.Offset
+	s[1] = e.Value.String()
+	if !e.Unit.IsEmpty() {
+		s = append(s, e.Unit.Literal)
+	}
 	return joinWithSpace(s)
 }
 
@@ -749,10 +762,23 @@ type Function struct {
 	*BaseExpr
 	Name string
 	Args []QueryExpression
+	From string
+	For  string
 }
 
 func (e Function) String() string {
-	return e.Name + "(" + listQueryExpressions(e.Args) + ")"
+	var args string
+	if strings.EqualFold(e.Name, TokenLiteral(SUBSTRING)) && 0 < len(e.From) {
+		elems := make([]string, 0, 5)
+		elems = append(elems, e.Args[0].String(), e.From, e.Args[1].String())
+		if 0 < len(e.For) {
+			elems = append(elems, e.For, e.Args[2].String())
+		}
+		args = joinWithSpace(elems)
+	} else {
+		args = listQueryExpressions(e.Args)
+	}
+	return e.Name + "(" + args + ")"
 }
 
 type AggregateFunction struct {

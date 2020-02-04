@@ -44,7 +44,7 @@ _value_
 _row_value_
 : [Row Value]({{ '/reference/row-value.html' | relative_url }})
 
-Except for identical operator("=="), at first, the relational operator attempts to convert both of operands to integer values, and if both convertions are successful then compares them.
+Except for identical operator("=="), at first, the relational operator attempts to convert both of operands to integer values, and if both conversions are successful then compares them.
 If conversions failed, next the relational operater attempts to convert the values to float, and next to datetime, boolean, at last to string.
 
 If either of operands is null or all conversions failed, then the comparison returns UNKNOWN.
@@ -128,13 +128,13 @@ _string_
 _pattern_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Return TRUE if a _string_ matches a _pattern_, otherwise return FALSE.
+Returns TRUE if _string_ matches _pattern_, otherwise returns FALSE.
 If _string_ is a null, return UNKNOWN. 
 
-In a pattern, following special characters are used.
+In _pattern_, following special characters can be used.
 
 %
-: any number of characters.
+: any number of characters
 
 _ (U+005F Low Line)
 : exactly one character
@@ -162,9 +162,11 @@ _single_field_subquery_
 _multiple_fields_subquery_
 : [subquery]({{ '/reference/value.html#subquery' | relative_url }})
 
-Check if a _value_ or _row_value_ is in within a set of _values_ or a result set of _select_query_.
+Check if _value_ or _row_value_ is in within the set of _values_ or the result set of _select_query_.
 
-A IN operation is equivalent to a [ANY](#any) operation that _relational_operator_ is specified as "=".
+_IN_ is equivalent to [= ANY](#any).
+
+_NOT IN_ is equivalent to [<> ALL](#all).
 
 ## ANY
 {: #any}
@@ -192,12 +194,12 @@ _single_field_subquery_
 _multiple_fields_subquery_
 : [subquery]({{ '/reference/value.html#subquery' | relative_url }})
 
-Compare a _value_ or _row_value_ to each listed _values_ or each records retrieved by _select_query_.
-If any of comparison results is TRUE, return TRUE.
-If there is no TRUE result and there is at least one UNKNOWN result, return UNKNOWN.
-Otherwise return FALSE.
+Compare _value_ or _row_value_ to each listed _values_ or each records retrieved by _select_query_.
+If any of comparison results is TRUE, returns TRUE.
+If there is no TRUE result and there is at least one UNKNOWN result, returns UNKNOWN.
+Otherwise returns FALSE.
 
-If _select_query_ returns no record, return FALSE.
+If _select_query_ returns no record, returns FALSE.
 
 ## ALL
 {: #all}
@@ -225,12 +227,12 @@ _single_field_subquery_
 _multiple_fields_subquery_
 : [subquery]({{ '/reference/value.html#subquery' | relative_url }})
 
-Compare a _value_ or _row_value_ to every listed _values_ or each records retrieved by _select_query_.
-If any of comparison results is FALSE, return FALSE.
-If there is no FALSE result and there is at least one UNKNOWN result, return UNKNOWN.
-Otherwise return TRUE.
+Compare _value_ or _row_value_ to every listed _values_ or each records retrieved by _select_query_.
+If any of comparison results is FALSE, returns FALSE.
+If there is no FALSE result and there is at least one UNKNOWN result, returns UNKNOWN.
+Otherwise returns TRUE.
 
-If _select_query_ returns no record, return TRUE.
+If _select_query_ returns no record, returns TRUE.
 
 ## Exists
 {: #exists}
@@ -242,4 +244,4 @@ EXISTS (select_query)
 _select_query_
 : [Select Query]({{ '/reference/select-query.html' | relative_url }})
 
-Return TRUE if a _select_query_ returns at least one record, otherwise return FALSE.
+Returns TRUE if a _select_query_ returns at least one record, otherwise returns FALSE.

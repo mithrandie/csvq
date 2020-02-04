@@ -218,12 +218,15 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 					warn, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx)
 
 					if e != nil {
-						if _, ok := e.(*EmptyResultSetError); !ok {
-							err = e
-						} else if 0 < len(warn) {
+						if e == EmptyResultSetError {
 							warnmsg = warn
+						} else if e == DataEmpty {
+							// Do Nothing
+						} else {
+							err = e
 						}
-					} else if !(proc.Tx.Session.OutFile() != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
+					} else if !proc.Tx.Flags.StripEndingLineBreak &&
+						!(proc.Tx.Session.OutFile() != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
 						_, err = writer.Write([]byte(proc.Tx.Flags.LineBreak.Value()))
 					}
 				}

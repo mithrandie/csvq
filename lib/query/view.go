@@ -1759,7 +1759,7 @@ func (view *View) Limit(ctx context.Context, scope *ReferenceScope, clause parse
 	}
 
 	var limit int
-	if clause.IsPercentage() {
+	if clause.Percentage() {
 		number := value.ToFloat(val)
 		if value.IsNull(number) {
 			return NewInvalidLimitPercentageError(clause)
@@ -1791,7 +1791,7 @@ func (view *View) Limit(ctx context.Context, scope *ReferenceScope, clause parse
 		return nil
 	}
 
-	if clause.IsWithTies() && view.sortValuesInEachRecord != nil {
+	if clause.WithTies() && view.sortValuesInEachRecord != nil {
 		bottomSortValues := view.sortValuesInEachRecord[limit-1]
 		for limit < view.RecordLen() {
 			if !bottomSortValues.EquivalentTo(view.sortValuesInEachRecord[limit]) {

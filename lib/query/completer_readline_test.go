@@ -50,6 +50,14 @@ var readlineListenerOnChangeTests = []struct {
 		OK:      false,
 	},
 	{
+		Line:    "abcd'fg''hi",
+		Pos:     8,
+		Key:     '\'',
+		NewLine: "abcd'fg'hi",
+		NewPos:  8,
+		OK:      true,
+	},
+	{
 		Line:    "abcd(fghi",
 		Pos:     5,
 		Key:     '(',
@@ -58,12 +66,28 @@ var readlineListenerOnChangeTests = []struct {
 		OK:      true,
 	},
 	{
+		Line:    "abcd()fghi",
+		Pos:     5,
+		Key:     '(',
+		NewLine: "abcd()fghi",
+		NewPos:  5,
+		OK:      false,
+	},
+	{
 		Line:    "abcd(fghi)",
 		Pos:     5,
 		Key:     '(',
 		NewLine: "abcd(fghi)",
 		NewPos:  5,
 		OK:      false,
+	},
+	{
+		Line:    "abcd(fghi))",
+		Pos:     10,
+		Key:     ')',
+		NewLine: "abcd(fghi)",
+		NewPos:  10,
+		OK:      true,
 	},
 }
 
@@ -95,7 +119,7 @@ func TestCompleter_Update(t *testing.T) {
 		Header:   NewHeader("view1", []string{"col3", "col4"}),
 	})
 	_ = scope.DeclareCursor(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
-	_ = scope.DeclareFunction(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalafunc"}})
+	_ = scope.DeclareFunction(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalarfunc"}})
 	_ = scope.DeclareAggregateFunction(parser.AggregateDeclaration{Name: parser.Identifier{Literal: "aggfunc"}})
 	_ = scope.DeclareVariable(ctx, parser.VariableDeclaration{Assignments: []parser.VariableAssignment{{Variable: parser.Variable{Name: "var"}}}})
 
@@ -128,7 +152,7 @@ func TestCompleter_Update(t *testing.T) {
 	if !reflect.DeepEqual(c.cursorList, []string{"cur1"}) {
 		t.Error("cursors are not set correctly")
 	}
-	if !reflect.DeepEqual(c.userFuncList, []string{"aggfunc", "scalafunc"}) {
+	if !reflect.DeepEqual(c.userFuncList, []string{"aggfunc", "scalarfunc"}) {
 		t.Error("user defined functions are not set correctly")
 	}
 	if len(c.statementList) != 1 {
@@ -280,6 +304,7 @@ var completerStatementsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -985,6 +1010,31 @@ var completerFunctionArgs = []completerTest{
 			{Name: []rune("PRECEDING")},
 		},
 	},
+	{
+		Name:     "FunctionArgs Substring After Extraction String",
+		Line:     "",
+		OrigLine: "substring('abc' ",
+		Index:    16,
+		Expect: readline.CandidateList{
+			{Name: []rune("FROM"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs Substring After Position",
+		Line:     "",
+		OrigLine: "substring('abc' from 2 ",
+		Index:    23,
+		Expect: readline.CandidateList{
+			{Name: []rune("FOR"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "FunctionArgs Substring After FOR",
+		Line:     "",
+		OrigLine: "substring('abc' from 2 for ",
+		Index:    27,
+		Expect:   readline.CandidateList{},
+	},
 }
 
 func TestCompleter_FunctionArgs(t *testing.T) {
@@ -1074,6 +1124,7 @@ var completerWithArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1147,6 +1198,7 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1175,6 +1227,7 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1205,6 +1258,7 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1236,6 +1290,7 @@ var completerSelectArgsTests = []completerTest{
 		OrigLine: "select 1 into @var1 ",
 		Index:    20,
 		Expect: readline.CandidateList{
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1275,6 +1330,7 @@ var completerSelectArgsTests = []completerTest{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("CROSS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FULL"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1301,6 +1357,7 @@ var completerSelectArgsTests = []completerTest{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("CROSS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FULL"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1347,6 +1404,7 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("CROSS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FULL"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1372,6 +1430,7 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("CROSS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FULL"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1404,6 +1463,7 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("CROSS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FULL"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1460,6 +1520,7 @@ var completerSelectArgsTests = []completerTest{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("CROSS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FULL"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1529,6 +1590,7 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("CROSS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FULL"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -1569,6 +1631,7 @@ var completerSelectArgsTests = []completerTest{
 		Index:    25,
 		Expect: readline.CandidateList{
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
 			{Name: []rune("HAVING"), AppendSpace: true},
@@ -1606,6 +1669,7 @@ var completerSelectArgsTests = []completerTest{
 		Index:    36,
 		Expect: readline.CandidateList{
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("HAVING"), AppendSpace: true},
 			{Name: []rune("INTERSECT"), AppendSpace: true},
@@ -1629,6 +1693,7 @@ var completerSelectArgsTests = []completerTest{
 		Index:    26,
 		Expect: readline.CandidateList{
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("INTERSECT"), AppendSpace: true},
 			{Name: []rune("LIMIT"), AppendSpace: true},
@@ -1664,6 +1729,7 @@ var completerSelectArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("ASC")},
 			{Name: []rune("DESC")},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("LIMIT"), AppendSpace: true},
 			{Name: []rune("NULLS FIRST")},
@@ -1677,6 +1743,7 @@ var completerSelectArgsTests = []completerTest{
 		OrigLine: "select 1 from t1 where 1 order by 1 desc ",
 		Index:    41,
 		Expect: readline.CandidateList{
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("LIMIT"), AppendSpace: true},
 			{Name: []rune("NULLS FIRST")},
@@ -1700,6 +1767,7 @@ var completerSelectArgsTests = []completerTest{
 		OrigLine: "select 1 from t1 where 1 order by 1 desc nulls first ",
 		Index:    53,
 		Expect: readline.CandidateList{
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("LIMIT"), AppendSpace: true},
 			{Name: []rune("OFFSET"), AppendSpace: true},
@@ -1768,10 +1836,100 @@ var completerSelectArgsTests = []completerTest{
 		},
 	},
 	{
-		Name:     "SelectArgs After OFFSET Clause",
+		Name:     "SelectArgs After Value in OFFSET Clause",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 offset 2 ",
+		Index:    34,
+		Expect: readline.CandidateList{
+			{Name: []rune("FETCH"), AppendSpace: true},
+			{Name: []rune("FOR UPDATE")},
+			{Name: []rune("ROWS")},
+		},
+	},
+	{
+		Name:     "SelectArgs After Value in OFFSET Clause with LIMIT Clause",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 limit 1 offset 2 ",
+		Index:    42,
+		Expect: readline.CandidateList{
+			{Name: []rune("FOR UPDATE")},
+			{Name: []rune("ROWS")},
+		},
+	},
+	{
+		Name:     "SelectArgs After 1 in OFFSET Clause",
 		Line:     "",
 		OrigLine: "select 1 from t1 where 1 offset 1 ",
 		Index:    34,
+		Expect: readline.CandidateList{
+			{Name: []rune("FETCH"), AppendSpace: true},
+			{Name: []rune("FOR UPDATE")},
+			{Name: []rune("ROW")},
+		},
+	},
+	{
+		Name:     "SelectArgs After FETCH without OFFSET Clause",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 fetch ",
+		Index:    31,
+		Expect: readline.CandidateList{
+			{Name: []rune("FIRST"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "SelectArgs After FETCH",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 offset 10 rows fetch ",
+		Index:    46,
+		Expect: readline.CandidateList{
+			{Name: []rune("NEXT"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "SelectArgs After Value in FETCH Clause",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 offset 10 rows fetch next 2 ",
+		Index:    53,
+		Expect: readline.CandidateList{
+			{Name: []rune("PERCENT"), AppendSpace: true},
+			{Name: []rune("ROWS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "SelectArgs After 1 in FETCH Clause",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 offset 10 rows fetch next 1 ",
+		Index:    53,
+		Expect: readline.CandidateList{
+			{Name: []rune("PERCENT"), AppendSpace: true},
+			{Name: []rune("ROW"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "SelectArgs After ROW in FETCH Clause",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 offset 10 rows fetch next 1 row ",
+		Index:    57,
+		Expect: readline.CandidateList{
+			{Name: []rune("FOR UPDATE")},
+			{Name: []rune("ONLY")},
+			{Name: []rune("WITH TIES")},
+		},
+	},
+	{
+		Name:     "SelectArgs After WITH in FETCH Clause",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 offset 10 rows fetch next 1 row with ",
+		Index:    62,
+		Expect: readline.CandidateList{
+			{Name: []rune("TIES")},
+		},
+	},
+	{
+		Name:     "SelectArgs After ONLY in FETCH Clause",
+		Line:     "",
+		OrigLine: "select 1 from t1 where 1 offset 10 rows fetch next 1 row only ",
+		Index:    62,
 		Expect: readline.CandidateList{
 			{Name: []rune("FOR UPDATE")},
 		},
@@ -1885,6 +2043,7 @@ var completerInsertArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -2068,6 +2227,7 @@ var completerReplaceArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -2226,6 +2386,7 @@ var completerCreateArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -2246,6 +2407,7 @@ var completerCreateArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -2638,6 +2800,7 @@ var completerDeclareArgsTests = []completerTest{
 		Expect: readline.CandidateList{
 			{Name: []rune("AS"), AppendSpace: true},
 			{Name: []rune("EXCEPT"), AppendSpace: true},
+			{Name: []rune("FETCH"), AppendSpace: true},
 			{Name: []rune("FOR UPDATE")},
 			{Name: []rune("FROM"), AppendSpace: true},
 			{Name: []rune("GROUP BY"), AppendSpace: true},
@@ -3978,10 +4141,28 @@ var completerUpdateTokensTests = []struct {
 	},
 	{
 		SearchWord: "",
-		Statements: "select trim(",
+		Statements: "select trim('a')",
 		Expect: []parser.Token{
-			{Token: parser.IDENTIFIER, Literal: "trim", Line: 1, Char: 8},
-			{Token: '(', Literal: "(", Line: 1, Char: 12},
+			{Token: parser.SELECT, Literal: "select", Line: 1, Char: 1},
+			{Token: parser.FUNCTION, Literal: "trim"},
+		},
+		LastIdx: 1,
+	},
+	{
+		SearchWord: "",
+		Statements: "select substring(",
+		Expect: []parser.Token{
+			{Token: parser.SUBSTRING, Literal: "substring", Line: 1, Char: 8},
+			{Token: '(', Literal: "(", Line: 1, Char: 17},
+		},
+		LastIdx: 1,
+	},
+	{
+		SearchWord: "",
+		Statements: "select substring('abc' from 2 for 1)",
+		Expect: []parser.Token{
+			{Token: parser.SELECT, Literal: "select", Line: 1, Char: 1},
+			{Token: parser.FUNCTION, Literal: "substring"},
 		},
 		LastIdx: 1,
 	},

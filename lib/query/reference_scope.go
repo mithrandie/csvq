@@ -206,12 +206,15 @@ func (rs *ReferenceScope) CreateScopeForAnalytics() *ReferenceScope {
 
 func (rs *ReferenceScope) createScope(referenceRecords []ReferenceRecord) *ReferenceScope {
 	return &ReferenceScope{
-		Tx:             rs.Tx,
-		blocks:         rs.blocks,
-		nodes:          rs.nodes,
-		cachedFilePath: rs.cachedFilePath,
-		now:            rs.now,
-		Records:        referenceRecords,
+		Tx:               rs.Tx,
+		blocks:           rs.blocks,
+		nodes:            rs.nodes,
+		cachedFilePath:   rs.cachedFilePath,
+		now:              rs.now,
+		Records:          referenceRecords,
+		RecursiveTable:   rs.RecursiveTable,
+		RecursiveTmpView: rs.RecursiveTmpView,
+		RecursiveCount:   rs.RecursiveCount,
 	}
 }
 
@@ -223,11 +226,14 @@ func (rs *ReferenceScope) CreateChild() *ReferenceScope {
 	}
 
 	return &ReferenceScope{
-		Tx:             rs.Tx,
-		blocks:         blocks,
-		nodes:          nil,
-		cachedFilePath: rs.cachedFilePath,
-		now:            rs.now,
+		Tx:               rs.Tx,
+		blocks:           blocks,
+		nodes:            nil,
+		cachedFilePath:   rs.cachedFilePath,
+		now:              rs.now,
+		RecursiveTable:   rs.RecursiveTable,
+		RecursiveTmpView: rs.RecursiveTmpView,
+		RecursiveCount:   rs.RecursiveCount,
 	}
 }
 
@@ -630,7 +636,7 @@ func (rs *ReferenceScope) DisposeFunction(name parser.Identifier) error {
 }
 
 func (rs *ReferenceScope) AllFunctions() (UserDefinedFunctionMap, UserDefinedFunctionMap) {
-	scalaAll := NewUserDefinedFunctionMap()
+	scalarAll := NewUserDefinedFunctionMap()
 	aggregateAll := NewUserDefinedFunctionMap()
 
 	for i := range rs.blocks {
@@ -641,15 +647,15 @@ func (rs *ReferenceScope) AllFunctions() (UserDefinedFunctionMap, UserDefinedFun
 					aggregateAll.Store(key.(string), fn)
 				}
 			} else {
-				if !scalaAll.Exists(key.(string)) {
-					scalaAll.Store(key.(string), fn)
+				if !scalarAll.Exists(key.(string)) {
+					scalarAll.Store(key.(string), fn)
 				}
 			}
 			return true
 		})
 	}
 
-	return scalaAll, aggregateAll
+	return scalarAll, aggregateAll
 }
 
 func (rs *ReferenceScope) SetInlineTable(ctx context.Context, inlineTable parser.InlineTable) error {

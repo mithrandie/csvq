@@ -16,13 +16,13 @@ var CsvqSyntax = []Expression{
 			{
 				Name: "select_query",
 				Group: []Grammar{
-					{Option{Link("with_clause")}, Link("select_entity"), Option{Link("order_by_clause")}, Option{Link("limit_clause")}, Option{Link("offset_clause")}, Option{Keyword("FOR"), Keyword("UPDATE")}},
+					{Option{Link("with_clause")}, Link("select_entity"), Option{Link("order_by_clause")}, Option{Link("limit_clause")}, Option{Keyword("FOR"), Keyword("UPDATE")}},
 				},
 			},
 			{
 				Name: "select_entity",
 				Group: []Grammar{
-					{Link("select_clause"), Option{Link("from_clause")}, Option{Link("where_clause")}, Option{Link("group_by_clause")}, Option{Link("having_clause")}},
+					{Link("select_clause"), Option{Link("from_clause")}, Option{Link("where_clause")}, Option{Link("group_by_clause")}},
 					{Link("select_set_entity"), Link("Set Operators"), Option{Keyword("ALL")}, Link("select_set_entity")},
 				},
 			},
@@ -228,19 +228,17 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "limit_clause",
 						Group: []Grammar{
-							{Keyword("LIMIT"), Integer("number_of_records"), Option{Keyword("WITH"), Keyword("TIES")}},
-							{Keyword("LIMIT"), Float("percent"), Keyword("PERCENT"), Option{Keyword("WITH"), Keyword("TIES")}},
+							{Keyword("LIMIT"), Integer("number_of_records"), Option{AnyOne{Keyword("ROW"), Keyword("ROWS")}}, Option{AnyOne{Keyword("ONLY"), Keyword("WITH TIES")}}, Option{Link("offset_clause")}},
+							{Keyword("LIMIT"), Float("percentage"), Keyword("PERCENT"), Option{AnyOne{Keyword("ONLY"), Keyword("WITH TIES")}}, Option{Link("offset_clause")}},
+							{Option{Link("offset_clause")}, Keyword("FETCH"), AnyOne{Keyword("FIRST"), Keyword("NEXT")}, Integer("number_of_records"), AnyOne{Keyword("ROW"), Keyword("ROWS")}, Option{AnyOne{Keyword("ONLY"), Keyword("WITH TIES")}}},
+							{Option{Link("offset_clause")}, Keyword("FETCH"), AnyOne{Keyword("FIRST"), Keyword("NEXT")}, Float("percentage"), Keyword("PERCENT"), Option{AnyOne{Keyword("ONLY"), Keyword("WITH TIES")}}},
+							{Link("offset_clause")},
 						},
 					},
-				},
-			},
-			{
-				Label: "OFFSET Clause",
-				Grammar: []Definition{
 					{
 						Name: "offset_clause",
 						Group: []Grammar{
-							{Keyword("OFFSET"), Integer("row_number")},
+							{Keyword("OFFSET"), Integer("number_of_records"), Option{AnyOne{Keyword("ROW"), Keyword("ROWS")}}},
 						},
 					},
 				},
@@ -546,7 +544,7 @@ var CsvqSyntax = []Expression{
 		Label: "User Defined Functions",
 		Grammar: []Definition{
 			{
-				Name: "declare_scala_function_statement",
+				Name: "declare_scalar_function_statement",
 				Group: []Grammar{
 					{Keyword("DECLARE"), Identifier("function_name"), Keyword("FUNCTION"), Parentheses{Link("function_parameters")}, Keyword("AS"), Keyword("BEGIN"), Token("statements"), Keyword("END")},
 				},
@@ -589,7 +587,7 @@ var CsvqSyntax = []Expression{
 				},
 			},
 			{
-				Name: "scala_function_call",
+				Name: "scalar_function_call",
 				Group: []Grammar{
 					{Identifier("function_name"), Parentheses{ContinuousOption{Link("argument")}}},
 				},
@@ -1011,6 +1009,8 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Parse empty fields as empty strings.\n" +
 				"%s  <type::%s>\n" +
+				"  > Strip line break from the end of files and query results.\n" +
+				"%s  <type::%s>\n" +
 				"  > %s of query results.\n" +
 				"%s  <type::%s>\n" +
 				"  > Character %s of query results.\n" +
@@ -1056,6 +1056,7 @@ var CsvqSyntax = []Expression{
 				Flag("@@ENCODING"), String("string"), Link("Encoding"),
 				Flag("@@NO_HEADER"), Boolean("boolean"),
 				Flag("@@WITHOUT_NULL"), Boolean("boolean"),
+				Flag("@@STRIP_ENDING_LINE_BREAK"), Boolean("boolean"),
 				Flag("@@FORMAT"), String("string"), Link("Format"),
 				Flag("@@WRITE_ENCODING"), String("string"), Link("Encoding"),
 				Flag("@@WRITE_DELIMITER"), String("string"),
@@ -2110,15 +2111,32 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
+						Name: "substring",
+						Group: []Grammar{
+							{Function{Name: "SUBSTRING", CustomArgs: []Element{String("str"), Keyword("FROM"), Integer("pos")}, Return: Return("string")}},
+							{Function{Name: "SUBSTRING", CustomArgs: []Element{String("str"), Keyword("FROM"), Integer("pos"), Keyword("FOR"), Integer("len")}, Return: Return("string")}},
+							{Function{Name: "SUBSTRING", Args: []Element{String("str"), Integer("pos")}, Return: Return("string")}},
+							{Function{Name: "SUBSTRING", Args: []Element{String("str"), Integer("pos"), Integer("len")}, Return: Return("string")}},
+						},
+						Description: Description{
+							Template: "Returns the %s characters in %s starting from the %s-th character using one-based positional indexing.\n" +
+								"\n" +
+								"If %s is 0, then it is treated as 1.\n" +
+								"If %s is not specified or %s is longer than the length from %s to the end, then returns the substring from %s to the end.\n" +
+								"If %s is negative, then starting position is %s from the end of the %s.",
+							Values: []Element{Integer("len"), String("str"), Integer("pos"), Integer("pos"), Integer("len"), Integer("len"), Integer("pos"), Integer("pos"), Integer("pos"), Integer("pos"), String("str")},
+						},
+					},
+					{
 						Name: "substr",
 						Group: []Grammar{
 							{Function{Name: "SUBSTR", Args: []Element{String("str"), Integer("pos")}, Return: Return("string")}},
 							{Function{Name: "SUBSTR", Args: []Element{String("str"), Integer("pos"), Integer("len")}, Return: Return("string")}},
 						},
 						Description: Description{
-							Template: "Returns the %s characters in %s from at %s. " +
-								"If %s is not specified or %s is less than the length from %s to the end, then returns the substring from %s to the end.",
-							Values: []Element{Integer("len"), String("str"), Integer("pos"), Integer("len"), Integer("len"), Integer("pos"), Integer("pos")},
+							Template: "Returns the %s characters in %s starting from the %s-th character. \n" +
+								"This function behaves the same as %s function, but uses zero-based positional indexing.",
+							Values: []Element{Integer("len"), String("str"), Integer("pos"), Link("substring")},
 						},
 					},
 					{
@@ -2129,17 +2147,6 @@ var CsvqSyntax = []Expression{
 						Description: Description{
 							Template: "Returns the index of the first occurrence of %s in %s, or null if %s is not present in %s.",
 							Values:   []Element{String("substr"), String("str"), String("substr"), String("str")},
-						},
-					},
-					{
-						Name: "instr",
-						Group: []Grammar{
-							{Function{Name: "INSTR", Args: []Element{String("str"), Integer("substr")}, Return: Return("integer")}},
-						},
-						Description: Description{
-							Template: "Returns the index of the first occurrence of %s in %s. " +
-								"If %s is not present in %s, returns null.",
-							Values: []Element{String("substr"), String("str"), String("substr"), String("str")},
 						},
 					},
 					{
@@ -2372,6 +2379,50 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
+						Name: "stdev",
+						Group: []Grammar{
+							{Function{Name: "STDEV", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the sample standard deviation of float values of %s. " +
+								"If all values are null, then returns %s.",
+							Values: []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "stdevp",
+						Group: []Grammar{
+							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the population standard deviation of float values of %s. " +
+								"If all values are null, then returns %s.",
+							Values: []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "var",
+						Group: []Grammar{
+							{Function{Name: "VAR", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the sample variance of float values of %s. " +
+								"If all values are null, then returns %s.",
+							Values: []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "varp",
+						Group: []Grammar{
+							{Function{Name: "VARP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the population variance of float values of %s. " +
+								"If all values are null, then returns %s.",
+							Values: []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
 						Name: "median",
 						Group: []Grammar{
 							{Function{Name: "MEDIAN", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
@@ -2577,6 +2628,46 @@ var CsvqSyntax = []Expression{
 						},
 						Description: Description{
 							Template: "Returns the average of float values of %s. If all values are null, then returns %s.",
+							Values:   []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "stdev",
+						Group: []Grammar{
+							{Function{Name: "STDEV", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the sample standard deviation of float values of %s. If all values are null, then returns %s.",
+							Values:   []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "stdevp",
+						Group: []Grammar{
+							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the population standard deviation of float values of %s. If all values are null, then returns %s.",
+							Values:   []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "var",
+						Group: []Grammar{
+							{Function{Name: "VAR", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the sample variance of float values of %s. If all values are null, then returns %s.",
+							Values:   []Element{Link("value"), Null("NULL")},
+						},
+					},
+					{
+						Name: "varp",
+						Group: []Grammar{
+							{Function{Name: "VARP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+						},
+						Description: Description{
+							Template: "Returns the population variance of float values of %s. If all values are null, then returns %s.",
 							Values:   []Element{Link("value"), Null("NULL")},
 						},
 					},
@@ -2800,11 +2891,12 @@ var CsvqSyntax = []Expression{
 						"GROUP HAVING IF IGNORE IN INNER INSERT INTERSECT INTO IS JOIN " +
 						"JSON_AGG JSON_OBJECT JSON_ROW JSON_TABLE LAG LAST LAST_VALUE LEAD " +
 						"LEFT LIKE LIMIT LISTAGG MAX MEDIAN MIN NATURAL NEXT NOT NTH_VALUE " +
-						"NTILE NULL OFFSET ON OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
+						"NTILE NULL OFFSET ON ONLY OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
 						"PERCENT_RANK PRECEDING PREPARE PRINT PRINTF PRIOR PWD RANGE RANK RECURSIVE " +
 						"RELATIVE RELOAD REMOVE RENAME REPLACE RETURN RIGHT ROLLBACK ROW ROW_NUMBER " +
-						"SELECT SEPARATOR SET SHOW SOURCE STDIN SUM SYNTAX TABLE THEN TO TRIGGER TRUE " +
-						"UNBOUNDED UNION UNKNOWN UNSET UPDATE USING VALUES VAR VIEW WHEN WHERE " +
+						"SELECT SEPARATOR SET SHOW SOURCE STDEV STDEVP STDIN SUBSTRING SUM SYNTAX TABLE " +
+						"THEN TO TRIGGER TRUE " +
+						"UNBOUNDED UNION UNKNOWN UNSET UPDATE USING VALUES VAR VARP VIEW WHEN WHERE " +
 						"WHILE WITH WITHIN",
 				},
 			},

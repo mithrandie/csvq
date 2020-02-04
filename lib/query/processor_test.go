@@ -377,6 +377,84 @@ var processorExecuteStatementTests = []struct {
 		Logs: "column1,column2\n1,2\n",
 	},
 	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "format"},
+			Value: parser.NewStringValue("text"),
+		},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "tbl"}},
+					},
+				},
+				WhereClause: parser.WhereClause{
+					BaseExpr: nil,
+					Where:    "where",
+					Filter:   parser.NewTernaryValueFromString("false"),
+				},
+			},
+		},
+		Logs: "Empty RecordSet\n",
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "without_header"},
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "format"},
+			Value: parser.NewStringValue("csv"),
+		},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+						},
+						parser.Field{
+							Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+				FromClause: parser.FromClause{
+					Tables: []parser.QueryExpression{
+						parser.Table{Object: parser.Identifier{Literal: "tbl"}},
+					},
+				},
+				WhereClause: parser.WhereClause{
+					BaseExpr: nil,
+					Where:    "where",
+					Filter:   parser.NewTernaryValueFromString("false"),
+				},
+			},
+		},
+		Logs: "",
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "without_header"},
+			Value: parser.NewTernaryValueFromString("false"),
+		},
+	},
+	{
 		Input: parser.SelectQuery{
 			SelectEntity: parser.SelectEntity{
 				SelectClause: parser.SelectClause{
@@ -503,6 +581,33 @@ var processorExecuteStatementTests = []struct {
 			},
 		},
 		Logs: "var1\n1\n",
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "strip_ending_line_break"},
+			Value: parser.NewTernaryValue(ternary.TRUE),
+		},
+	},
+	{
+		Input: parser.SelectQuery{
+			SelectEntity: parser.SelectEntity{
+				SelectClause: parser.SelectClause{
+					Fields: []parser.QueryExpression{
+						parser.Field{
+							Object: parser.Variable{Name: "var1"},
+							Alias:  parser.Identifier{Literal: "var1"},
+						},
+					},
+				},
+			},
+		},
+		Logs: "var1\n1",
+	},
+	{
+		Input: parser.SetFlag{
+			Flag:  parser.Flag{Name: "strip_ending_line_break"},
+			Value: parser.NewTernaryValue(ternary.FALSE),
+		},
 	},
 	{
 		Input: parser.VariableDeclaration{
@@ -1006,12 +1111,12 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 			}
 		}
 		if 0 < len(v.Logs) {
-			if string(log) != v.Logs {
-				t.Errorf("logs = %s, want %s for %q", string(log), v.Logs, v.Input)
+			if log != v.Logs {
+				t.Errorf("logs = %s, want %s for %q", log, v.Logs, v.Input)
 			}
 		}
 		if v.SelectLogs != nil {
-			selectLog := string(log)
+			selectLog := log
 			if !reflect.DeepEqual(selectLog, v.SelectLogs) {
 				t.Errorf("select logs = %s, want %s for %q", selectLog, v.SelectLogs, v.Input)
 			}
@@ -1169,8 +1274,8 @@ func TestProcessor_IfStmt(t *testing.T) {
 		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
 			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
-		if string(log) != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		if log != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, log, v.Result)
 		}
 	}
 }
@@ -1342,8 +1447,8 @@ func TestProcessor_Case(t *testing.T) {
 		if flow != v.ResultFlow {
 			t.Errorf("%s: result flow = %q, want %q", v.Name, flow, v.ResultFlow)
 		}
-		if string(log) != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		if log != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, log, v.Result)
 		}
 	}
 }
@@ -1624,8 +1729,8 @@ func TestProcessor_While(t *testing.T) {
 		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
 			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
-		if string(log) != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		if log != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, log, v.Result)
 		}
 	}
 }
@@ -1862,8 +1967,8 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 		if !reflect.DeepEqual(proc.returnVal, v.ReturnValue) {
 			t.Errorf("%s: return = %t, want %t", v.Name, proc.returnVal, v.ReturnValue)
 		}
-		if string(log) != v.Result {
-			t.Errorf("%s: result = %q, want %q", v.Name, string(log), v.Result)
+		if log != v.Result {
+			t.Errorf("%s: result = %q, want %q", v.Name, log, v.Result)
 		}
 	}
 }

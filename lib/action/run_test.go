@@ -83,12 +83,12 @@ func TestRun(t *testing.T) {
 		}
 
 		if v.Stats {
-			if !strings.Contains(string(stdout), "Time:") {
-				t.Errorf("%s: output = %q, want statistics", v.Name, string(stdout))
+			if !strings.Contains(stdout, "Time:") {
+				t.Errorf("%s: output = %q, want statistics", v.Name, stdout)
 			}
 		} else {
-			if string(stdout) != v.Output {
-				t.Errorf("%s: output = %q, want %q", v.Name, string(stdout), v.Output)
+			if stdout != v.Output {
+				t.Errorf("%s: output = %q, want %q", v.Name, stdout, v.Output)
 			}
 
 			if 0 < len(v.OutFile) {

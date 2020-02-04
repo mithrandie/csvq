@@ -93,6 +93,10 @@ func main() {
 			Name:  "out, o",
 			Usage: "export result sets of select queries to `FILE`",
 		},
+		cli.BoolFlag{
+			Name:  "strip-ending-line-break, T",
+			Usage: "strip line break from the end of files and query results",
+		},
 		cli.StringFlag{
 			Name:  "format, f",
 			Value: "TEXT",
@@ -380,6 +384,9 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 		_ = tx.SetFlag(cmd.WithoutNullFlag, c.GlobalBool("without-null"))
 	}
 
+	if c.GlobalIsSet("strip-ending-line-break") {
+		_ = tx.SetFlag(cmd.StripEndingLineBreakFlag, c.GlobalBool("strip-ending-line-break"))
+	}
 	if c.GlobalIsSet("format") {
 		if err := tx.SetFormatFlag(c.GlobalString("format"), c.GlobalString("out")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())

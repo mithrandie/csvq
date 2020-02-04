@@ -101,12 +101,38 @@ type ReadlineListener struct {
 	scanner parser.Scanner
 }
 
-func (l ReadlineListener) OnChange(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
-	if (readline.IsQuotationMark(key) && !readline.LiteralIsEnclosed(key, line)) || (readline.IsBracket(key) && !readline.BracketIsEnclosed(key, line)) {
-		tail := append([]rune{readline.EncloseMark[key]}, line[pos:]...)
-		line = append(line[:pos], tail...)
-		return line, pos, true
+func skipInputtingEnclosure(line []rune, pos int) []rune {
+	tail := line[pos:]
+	line = append(line[:pos-1], tail...)
+	return line
+}
+
+func completeEnclosure(line []rune, pos int, rightEnclosure rune) []rune {
+	tail := append([]rune{rightEnclosure}, line[pos:]...)
+	line = append(line[:pos], tail...)
+	return line
+}
+
+func (l ReadlineListener) OnChange(line []rune, pos int, key rune) ([]rune, int, bool) {
+	switch {
+	case readline.IsQuotationMark(key):
+		if !readline.LiteralIsEnclosed(key, line) {
+			if pos < len(line) && key == line[pos] {
+				return skipInputtingEnclosure(line, pos), pos, true
+			} else {
+				return completeEnclosure(line, pos, key), pos, true
+			}
+		}
+	case readline.IsBracket(key):
+		if !readline.BracketIsEnclosed(key, line) {
+			return completeEnclosure(line, pos, readline.RightBracket[key]), pos, true
+		}
+	case readline.IsRightBracket(key):
+		if pos < len(line) && readline.IsRightBracket(line[pos]) && readline.BracketIsEnclosedByRightBracket(key, line) {
+			return skipInputtingEnclosure(line, pos), pos, true
+		}
 	}
+
 	return line, pos, false
 }
 
@@ -492,6 +518,43 @@ func (c *Completer) TableObjectArgs(line string, origLine string, index int) rea
 }
 
 func (c *Completer) FunctionArgs(line string, origLine string, index int) readline.CandidateList {
+	if c.tokens[0].Token == parser.SUBSTRING {
+		return c.substringArgs(line, origLine, index)
+	} else {
+		return c.functionArgs(line, origLine, index)
+	}
+}
+
+func (c *Completer) substringArgs(line string, origLine string, index int) readline.CandidateList {
+	return c.completeArgs(
+		line,
+		origLine,
+		index,
+		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
+			customList = append(customList, c.SearchValues(line, origLine, index)...)
+			customList.Sort()
+
+			switch c.tokens[i].Token {
+			case parser.FOR:
+				//Do nothing
+			case parser.FROM:
+				if i < c.lastIdx {
+					keywords = append(keywords, "FOR")
+				}
+			case parser.SUBSTRING:
+				if i < c.lastIdx-1 {
+					keywords = append(keywords, "FROM")
+				}
+			default:
+				return keywords, customList, false
+			}
+
+			return keywords, customList, true
+		},
+	)
+}
+
+func (c *Completer) functionArgs(line string, origLine string, index int) readline.CandidateList {
 	return c.completeArgs(
 		line,
 		origLine,
@@ -792,13 +855,6 @@ func (c *Completer) allTableCandidatesForUpdate(line string, origLine string, in
 	return list
 }
 
-func (c *Completer) allTableCandidatesWithSpace(line string, origLine string, index int) readline.CandidateList {
-	list := c.candidateList(append(tableObjectCandidates, "JSON_TABLE()"), true)
-	list.Sort()
-	list = append(list, c.SearchAllTablesWithSpace(line, origLine, index)...)
-	return list
-}
-
 func (c *Completer) allTableCandidatesWithSpaceForUpdate(line string, origLine string, index int) readline.CandidateList {
 	list := c.candidateList(tableObjectCandidates, true)
 	list.Sort()
@@ -958,15 +1014,6 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 					customList.Sort()
 				}
 				return nil, customList, true
-			case parser.OFFSET:
-				if i < c.lastIdx {
-					customList = append(customList, c.candidateList([]string{
-						"FOR UPDATE",
-					}, false)...)
-				}
-				customList = append(customList, c.SearchValues(line, origLine, index)...)
-				customList.Sort()
-				return nil, customList, true
 			case parser.LIMIT:
 				if i < c.lastIdx {
 					switch c.tokens[c.lastIdx].Token {
@@ -1001,6 +1048,97 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 				}
 				customList.Sort()
 				return keywords, customList, true
+			case parser.FETCH:
+				if i == c.lastIdx {
+					afterOffset := false
+
+				CompleterSelectArgsSearchOffsetLoop:
+					for j := c.lastIdx - 1; j >= 0; j-- {
+						switch c.tokens[j].Token {
+						case parser.OFFSET:
+							afterOffset = true
+							break CompleterSelectArgsSearchOffsetLoop
+						case parser.ORDER, parser.HAVING, parser.GROUP, parser.FROM, parser.SELECT:
+							break CompleterSelectArgsSearchOffsetLoop
+						}
+					}
+
+					if afterOffset {
+						keywords = append(keywords, "NEXT")
+					} else {
+						keywords = append(keywords, "FIRST")
+					}
+				} else {
+					switch c.tokens[c.lastIdx].Token {
+					case parser.ROW, parser.ROWS, parser.PERCENT:
+						customList = append(customList, c.candidateList([]string{
+							"ONLY",
+							"WITH TIES",
+							"FOR UPDATE",
+						}, false)...)
+					case parser.WITH:
+						customList = append(customList, c.candidateList([]string{
+							"TIES",
+						}, false)...)
+					case parser.ONLY, parser.TIES:
+						customList = append(customList, c.candidateList([]string{
+							"FOR UPDATE",
+						}, false)...)
+					case parser.FIRST, parser.NEXT:
+						//Do nothing
+					default:
+						if c.tokens[c.lastIdx].Literal == "1" {
+							keywords = append(keywords, "ROW")
+						} else {
+							keywords = append(keywords, "ROWS")
+						}
+						keywords = append(keywords, "PERCENT")
+					}
+				}
+
+				if customList != nil {
+					customList.Sort()
+				}
+				return keywords, customList, true
+			case parser.OFFSET:
+				if i < c.lastIdx {
+					afterLimit := false
+
+				CompleterSelectArgsSearchLimitLoop:
+					for j := c.lastIdx - 1; j >= 0; j-- {
+						switch c.tokens[j].Token {
+						case parser.LIMIT:
+							afterLimit = true
+							break CompleterSelectArgsSearchLimitLoop
+						case parser.ORDER, parser.HAVING, parser.GROUP, parser.FROM, parser.SELECT:
+							break CompleterSelectArgsSearchLimitLoop
+						}
+					}
+
+					if !afterLimit {
+						customList = append(customList, c.candidateList([]string{
+							"FETCH",
+						}, true)...)
+					}
+
+					customList = append(customList, c.candidateList([]string{
+						"FOR UPDATE",
+					}, false)...)
+					if c.tokens[c.lastIdx].Token != parser.ROW && c.tokens[c.lastIdx].Token != parser.ROWS {
+						if c.tokens[c.lastIdx].Literal == "1" {
+							customList = append(customList, c.candidateList([]string{
+								"ROW",
+							}, false)...)
+						} else {
+							customList = append(customList, c.candidateList([]string{
+								"ROWS",
+							}, false)...)
+						}
+					}
+				}
+				customList = append(customList, c.SearchValues(line, origLine, index)...)
+				customList.Sort()
+				return nil, customList, true
 			case parser.ORDER:
 				if i == c.lastIdx {
 					keywords = append(keywords, "BY")
@@ -1013,8 +1151,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"FOR UPDATE",
 						}, false)...)
 						customList = append(customList, c.candidateList([]string{
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 					case parser.NULLS:
 						customList = append(customList, c.candidateList([]string{
@@ -1023,8 +1162,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						}, false)...)
 					case parser.FIRST, parser.LAST:
 						customList = append(customList, c.candidateList([]string{
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 						customList = append(customList, c.candidateList([]string{
 							"FOR UPDATE",
@@ -1038,8 +1178,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"FOR UPDATE",
 						}, false)...)
 						customList = append(customList, c.candidateList([]string{
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 						customList = append(customList, c.SearchValues(line, origLine, index)...)
 						customList = append(customList, c.aggregateFunctionCandidateList(line)...)
@@ -1077,8 +1218,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 				if i < c.lastIdx {
 					customList = append(customList, c.candidateList([]string{
 						"ORDER BY",
-						"LIMIT",
 						"OFFSET",
+						"FETCH",
+						"LIMIT",
 					}, true)...)
 					if !isSelectInto {
 						customList = append(customList, c.candidateList([]string{
@@ -1102,8 +1244,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						customList = append(customList, c.candidateList([]string{
 							"HAVING",
 							"ORDER BY",
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 						if !isSelectInto {
 							customList = append(customList, c.candidateList([]string{
@@ -1126,8 +1269,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						"GROUP BY",
 						"HAVING",
 						"ORDER BY",
-						"LIMIT",
 						"OFFSET",
+						"FETCH",
+						"LIMIT",
 					}, true)...)
 					if !isSelectInto {
 						customList = append(customList, c.candidateList([]string{
@@ -1151,8 +1295,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"GROUP BY",
 							"HAVING",
 							"ORDER BY",
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 						}, true)...)
 						if !isSelectInto {
 							clist = append(clist, c.candidateList([]string{
@@ -1179,8 +1324,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 						"GROUP BY",
 						"HAVING",
 						"ORDER BY",
-						"LIMIT",
 						"OFFSET",
+						"FETCH",
+						"LIMIT",
 					}, true)...)
 					customList = append(customList, c.candidateList([]string{
 						"FOR UPDATE",
@@ -1208,8 +1354,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"GROUP BY",
 							"HAVING",
 							"ORDER BY",
-							"LIMIT",
 							"OFFSET",
+							"FETCH",
+							"LIMIT",
 							"UNION",
 							"EXCEPT",
 							"INTERSECT",
@@ -1716,8 +1863,10 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList(c.encodingList(), false), true
 					case cmd.WriteEncodingFlag:
 						return nil, c.candidateList(exportEncodingsCandidates, false), true
-					case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
-						cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
+					case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag,
+						cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
+						cmd.StripEndingLineBreakFlag, cmd.EastAsianEncodingFlag,
+						cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
 						cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 						return nil, c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false), true
 					case cmd.FormatFlag:
@@ -2526,7 +2675,8 @@ func (c *Completer) isFunction(token parser.Token) bool {
 		return InStrSliceWithCaseInsensitive(token.Literal, c.userFuncList)
 	}
 
-	return token.Token == parser.JSON_OBJECT ||
+	return token.Token == parser.SUBSTRING ||
+		token.Token == parser.JSON_OBJECT ||
 		token.Token == parser.IF ||
 		token.Token == parser.AGGREGATE_FUNCTION ||
 		token.Token == parser.COUNT ||

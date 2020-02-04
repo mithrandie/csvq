@@ -3,9 +3,12 @@ package query
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/mithrandie/csvq/lib/cmd"
 
 	"github.com/mithrandie/go-text"
 
@@ -24,7 +27,7 @@ func TestTransaction_Commit(t *testing.T) {
 
 	TestTx.Flags.SetQuiet(false)
 
-	ch, _ := file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("create_file.csv"))
+	ch, _ := file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("created_file.csv"))
 	uh, _ := file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
 
 	TestTx.cachedViews = GenerateViewMap([]*View{
@@ -32,9 +35,12 @@ func TestTransaction_Commit(t *testing.T) {
 			Header:    NewHeader("created_file", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
 			FileInfo: &FileInfo{
-				Path:     GetTestFilePath("created_file.csv"),
-				Handler:  ch,
-				Encoding: text.UTF8,
+				Path:      GetTestFilePath("created_file.csv"),
+				Handler:   ch,
+				Encoding:  text.UTF8,
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				LineBreak: text.LF,
 			},
 		},
 		{
@@ -54,9 +60,12 @@ func TestTransaction_Commit(t *testing.T) {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:     GetTestFilePath("updated_file_1.csv"),
-				Handler:  uh,
-				Encoding: text.UTF8,
+				Path:      GetTestFilePath("updated_file_1.csv"),
+				Handler:   uh,
+				Encoding:  text.UTF8,
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				LineBreak: text.LF,
 			},
 		},
 	})
@@ -65,16 +74,22 @@ func TestTransaction_Commit(t *testing.T) {
 		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
-				Path:     GetTestFilePath("created_file.csv"),
-				Handler:  ch,
-				Encoding: text.UTF8,
+				Path:      GetTestFilePath("created_file.csv"),
+				Handler:   ch,
+				Encoding:  text.UTF8,
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				LineBreak: text.LF,
 			},
 		},
 		Updated: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("updated_file_1.csv")): {
-				Path:     GetTestFilePath("updated_file_1.csv"),
-				Handler:  uh,
-				Encoding: text.UTF8,
+				Path:      GetTestFilePath("updated_file_1.csv"),
+				Handler:   uh,
+				Encoding:  text.UTF8,
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				LineBreak: text.LF,
 			},
 		},
 	}
@@ -93,8 +108,121 @@ func TestTransaction_Commit(t *testing.T) {
 
 	log := out.String()
 
-	if string(log) != expect {
-		t.Errorf("Commit: log = %q, want %q", string(log), expect)
+	if log != expect {
+		t.Errorf("Commit: log = %q, want %q", log, expect)
+	}
+
+	expectedCreatedContents := "column1,column2\n"
+	createdContents, err := ioutil.ReadFile(GetTestFilePath("created_file.csv"))
+	if err != nil {
+		t.Fatalf("unexpected error %q", err.Error())
+	}
+
+	if expectedCreatedContents != string(createdContents) {
+		t.Errorf("created contents = %q, want %q", string(createdContents), expectedCreatedContents)
+	}
+
+	expectedUpdatedContents := "column1,column2\n1,str1\nupdate1,update2\n3,str3\n"
+	updatedContents, err := ioutil.ReadFile(GetTestFilePath("updated_file_1.csv"))
+	if err != nil {
+		t.Fatalf("unexpected error %q", err.Error())
+	}
+
+	if expectedUpdatedContents != string(updatedContents) {
+		t.Errorf("updated contents = %q, want %q", string(updatedContents), expectedUpdatedContents)
+	}
+
+	// Flags.StripEndingLineBreak = true
+	TestTx.Flags.StripEndingLineBreak = true
+	ch, _ = file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("created_file_1.csv"))
+	uh, _ = file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
+	TestTx.cachedViews = GenerateViewMap([]*View{
+		{
+			Header:    NewHeader("created_file_1", []string{"column1", "column2"}),
+			RecordSet: RecordSet{},
+			FileInfo: &FileInfo{
+				Path:      GetTestFilePath("created_file_1.csv"),
+				Handler:   ch,
+				Encoding:  text.UTF8,
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				LineBreak: text.LF,
+			},
+		},
+		{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("update1"),
+					value.NewString("update2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      GetTestFilePath("updated_file_1.csv"),
+				Handler:   uh,
+				Encoding:  text.UTF8,
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				LineBreak: text.LF,
+			},
+		},
+	})
+
+	TestTx.uncommittedViews = UncommittedViews{
+		mtx: &sync.RWMutex{},
+		Created: map[string]*FileInfo{
+			strings.ToUpper(GetTestFilePath("created_file_1.csv")): {
+				Path:      GetTestFilePath("created_file_1.csv"),
+				Handler:   ch,
+				Encoding:  text.UTF8,
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				LineBreak: text.LF,
+			},
+		},
+		Updated: map[string]*FileInfo{
+			strings.ToUpper(GetTestFilePath("updated_file_1.csv")): {
+				Path:      GetTestFilePath("updated_file_1.csv"),
+				Handler:   uh,
+				Encoding:  text.UTF8,
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				LineBreak: text.LF,
+			},
+		},
+	}
+
+	err = TestTx.Commit(context.Background(), NewReferenceScope(tx), parser.TransactionControl{Token: parser.COMMIT})
+	if err != nil {
+		t.Fatalf("unexpected error %q", err.Error())
+	}
+
+	expectedCreatedContents = "column1,column2"
+	createdContents, err = ioutil.ReadFile(GetTestFilePath("created_file_1.csv"))
+	if err != nil {
+		t.Fatalf("unexpected error %q", err.Error())
+	}
+
+	if expectedCreatedContents != string(createdContents) {
+		t.Errorf("created contents = %q, want %q", string(createdContents), expectedCreatedContents)
+	}
+
+	expectedUpdatedContents = "column1,column2\n1,str1\nupdate1,update2\n3,str3"
+	updatedContents, err = ioutil.ReadFile(GetTestFilePath("updated_file_1.csv"))
+	if err != nil {
+		t.Fatalf("unexpected error %q", err.Error())
+	}
+
+	if expectedUpdatedContents != string(updatedContents) {
+		t.Errorf("updated contents = %q, want %q", string(updatedContents), expectedUpdatedContents)
 	}
 }
 
@@ -133,7 +261,7 @@ func TestTransaction_Rollback(t *testing.T) {
 
 	log := out.String()
 
-	if string(log) != expect {
-		t.Errorf("Rollback: log = %q, want %q", string(log), expect)
+	if log != expect {
+		t.Errorf("Rollback: log = %q, want %q", log, expect)
 	}
 }

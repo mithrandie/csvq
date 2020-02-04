@@ -16,6 +16,10 @@ func (it InlineTableMap) Set(ctx context.Context, scope *ReferenceScope, inlineT
 
 	scope = scope.CreateNode()
 	if inlineTable.IsRecursive() {
+		if scope.RecursiveTable != nil {
+			return NewNestedRecursionError(inlineTable.Name)
+		}
+
 		scope.RecursiveTable = &inlineTable
 	}
 

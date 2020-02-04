@@ -263,12 +263,12 @@ func TestSelectQuery_String(t *testing.T) {
 			},
 		},
 		LimitClause: LimitClause{
-			Limit: "limit",
+			Type:  Token{Token: LIMIT, Literal: "limit"},
 			Value: NewIntegerValueFromString("10"),
-		},
-		OffsetClause: OffsetClause{
-			Offset: "offset",
-			Value:  NewIntegerValueFromString("10"),
+			OffsetClause: OffsetClause{
+				Offset: "offset",
+				Value:  NewIntegerValueFromString("10"),
+			},
 		},
 		ForUpdate:        true,
 		ForUpdateLiteral: "for update",
@@ -474,54 +474,73 @@ func TestOrderByClause_String(t *testing.T) {
 }
 
 func TestLimitClause_String(t *testing.T) {
-	e := LimitClause{Limit: "limit", Value: NewIntegerValueFromString("10"), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
-	expect := "limit 10 with ties"
+	e := LimitClause{
+		OffsetClause: OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")},
+	}
+	expect := "offset 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = LimitClause{Limit: "limit", Value: NewIntegerValueFromString("10"), Percent: "percent"}
-	expect = "limit 10 percent"
+	e = LimitClause{
+		Type:         Token{Token: LIMIT, Literal: "limit"},
+		Value:        NewIntegerValueFromString("10"),
+		Unit:         Token{Token: ROWS, Literal: "rows"},
+		Restriction:  Token{Token: TIES, Literal: "with ties"},
+		OffsetClause: OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")},
+	}
+	expect = "limit 10 rows with ties offset 10"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = LimitClause{
+		Type:         Token{Token: FETCH, Literal: "fetch"},
+		Position:     Token{Token: NEXT, Literal: "next"},
+		Value:        NewIntegerValueFromString("10"),
+		Unit:         Token{Token: ROWS, Literal: "rows"},
+		Restriction:  Token{Token: TIES, Literal: "with ties"},
+		OffsetClause: OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")},
+	}
+	expect = "offset 10 fetch next 10 rows with ties"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
 
-func TestLimitClause_IsPercentage(t *testing.T) {
-	e := LimitClause{Limit: "limit", Value: NewIntegerValue(10)}
-	if e.IsPercentage() {
-		t.Errorf("percentage = %t, want %t for %#v", e.IsPercentage(), false, e)
+func TestLimitClause_Percentage(t *testing.T) {
+	e := LimitClause{Type: Token{Token: LIMIT, Literal: "limit"}, Value: NewIntegerValue(10)}
+	if e.Percentage() {
+		t.Errorf("percentage = %t, want %t for %#v", e.Percentage(), false, e)
 	}
 
-	e = LimitClause{Limit: "limit", Value: NewIntegerValue(10), Percent: "percent"}
-	if !e.IsPercentage() {
-		t.Errorf("percentage = %t, want %t for %#v", e.IsPercentage(), true, e)
-	}
-}
-
-func TestLimitClause_IsWithTies(t *testing.T) {
-	e := LimitClause{Limit: "limit", Value: NewIntegerValue(10)}
-	if e.IsWithTies() {
-		t.Errorf("with ties = %t, want %t for %#v", e.IsWithTies(), false, e)
-	}
-
-	e = LimitClause{Limit: "limit", Value: NewIntegerValue(10), With: LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}}
-	if !e.IsWithTies() {
-		t.Errorf("with ties = %t, want %t for %#v", e.IsWithTies(), true, e)
+	e = LimitClause{Type: Token{Token: LIMIT, Literal: "limit"}, Value: NewIntegerValue(10), Unit: Token{Token: PERCENT, Literal: "percent"}}
+	if !e.Percentage() {
+		t.Errorf("percentage = %t, want %t for %#v", e.Percentage(), true, e)
 	}
 }
 
-func TestLimitWith_String(t *testing.T) {
-	e := LimitWith{With: "with", Type: Token{Token: TIES, Literal: "ties"}}
-	expect := "with ties"
-	if e.String() != expect {
-		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+func TestLimitClause_WithTies(t *testing.T) {
+	e := LimitClause{Type: Token{Token: LIMIT, Literal: "limit"}, Value: NewIntegerValue(10)}
+	if e.WithTies() {
+		t.Errorf("with ties = %t, want %t for %#v", e.WithTies(), false, e)
+	}
+
+	e = LimitClause{Type: Token{Token: LIMIT, Literal: "limit"}, Value: NewIntegerValue(10), Restriction: Token{Token: TIES, Literal: "with ties"}}
+	if !e.WithTies() {
+		t.Errorf("with ties = %t, want %t for %#v", e.WithTies(), true, e)
 	}
 }
 
 func TestOffsetClause_String(t *testing.T) {
 	e := OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")}
 	expect := "offset 10"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10"), Unit: Token{Token: ROWS, Literal: "rows"}}
+	expect = "offset 10 rows"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1002,6 +1021,47 @@ func TestFunction_String(t *testing.T) {
 		},
 	}
 	expect := "sum(column)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = Function{
+		Name: "substring",
+		Args: []QueryExpression{
+			Identifier{Literal: "column"},
+			NewIntegerValue(2),
+			NewIntegerValue(5),
+		},
+	}
+	expect = "substring(column, 2, 5)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = Function{
+		Name: "substring",
+		Args: []QueryExpression{
+			Identifier{Literal: "column"},
+			NewIntegerValue(2),
+		},
+		From: "from",
+	}
+	expect = "substring(column from 2)"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = Function{
+		Name: "substring",
+		Args: []QueryExpression{
+			Identifier{Literal: "column"},
+			NewIntegerValue(2),
+			NewIntegerValue(5),
+		},
+		From: "from",
+		For:  "for",
+	}
+	expect = "substring(column from 2 for 5)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
