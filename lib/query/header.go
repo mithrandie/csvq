@@ -179,17 +179,18 @@ func (h Header) FieldIndex(fieldRef parser.FieldReference) (int, error) {
 	if 0 < len(fieldRef.View.Literal) {
 		view = fieldRef.View.Literal
 	}
-	column := fieldRef.Column.Literal
+	column := strings.TrimSpace(fieldRef.Column.Literal)
 
 	idx := -1
 
 	for i := range h {
+		hcol := strings.TrimSpace(h[i].Column)
 		if 0 < len(view) {
-			if !strings.EqualFold(h[i].View, view) || !strings.EqualFold(h[i].Column, column) {
+			if !strings.EqualFold(h[i].View, view) || !strings.EqualFold(hcol, column) {
 				continue
 			}
 		} else {
-			isEqual := strings.EqualFold(h[i].Column, column)
+			isEqual := strings.EqualFold(hcol, column)
 			if isEqual && h[i].IsJoinColumn {
 				idx = i
 				break
