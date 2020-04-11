@@ -287,6 +287,18 @@ var headerFieldIndexTests = []struct {
 	},
 	{
 		Ref: parser.FieldReference{
+			Column: parser.Identifier{Literal: " c4 "},
+		},
+		Result: 5,
+	},
+	{
+		Ref: parser.FieldReference{
+			Column: parser.Identifier{Literal: "c5"},
+		},
+		Result: 6,
+	},
+	{
+		Ref: parser.FieldReference{
 			Column: parser.Identifier{Literal: "c1"},
 		},
 		Error: "field ambiguous",
@@ -332,6 +344,11 @@ func TestHeader_FieldIndex(t *testing.T) {
 			Column:       "c4",
 			IsFromTable:  true,
 			IsJoinColumn: true,
+		},
+		{
+			View:        "t4",
+			Column:      "  c5  ",
+			IsFromTable: true,
 		},
 	}
 
