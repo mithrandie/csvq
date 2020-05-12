@@ -36,7 +36,7 @@ func TestObjectWriter_String(t *testing.T) {
 	w.Write(", ")
 	w.Write("bbbbbbbbbb")
 	w.Write(", ")
-	w.Write("bbbbbbbbbbbbbbbbbbbbbbbbb")
+	w.Write("bbbbbbbbbbbbbbbbbbbbbbbb")
 	w.WriteWithoutLineBreak(", ")
 	w.ClearBlock()
 	w.NewLine()
@@ -45,12 +45,12 @@ func TestObjectWriter_String(t *testing.T) {
 	w.NewLine()
 	w.Write("key: ")
 	w.BeginSubBlock()
-	w.Write("bbbbbbbb")
+	w.Write("bbbbbbb")
 	w.WriteWithoutLineBreak(", ")
-	w.Write("bbbbbbbb")
+	w.Write("bbbbbbb")
 	w.EndSubBlock()
 	w.NewLine()
-	w.Write("bbbbbbbb")
+	w.Write("bbbbbbb")
 
 	expect := "" +
 		" aaa\n" +
@@ -61,15 +61,15 @@ func TestObjectWriter_String(t *testing.T) {
 		" aaa\n" +
 		"     bbbbbbbbbb, \n" +
 		"     bbbbbbbbbb, \n" +
-		"     bbbbbbbbbbbbbbbbbbbbbbbbb, \n" +
+		"     bbbbbbbbbbbbbbbbbbbbbbbb, \n" +
 		" aaa\n" +
-		"     key: bbbbbbbb, \n" +
-		"          bbbbbbbb\n" +
-		"     bbbbbbbb"
+		"     key: bbbbbbb, \n" +
+		"          bbbbbbb\n" +
+		"     bbbbbbb"
 	result := w.String()
 
 	if result != expect {
-		t.Errorf("result = %q, want %q", result, expect)
+		t.Errorf("result = %s, want %s", result, expect)
 	}
 
 	w = NewObjectWriter(TestTx)
@@ -98,12 +98,12 @@ func TestObjectWriter_String(t *testing.T) {
 		"     bbbbbbbbbb, \n" +
 		"     bbbbbbbbbb, \n" +
 		"     bbbbbbbbbbbbbbbbbbbbbbbbb, \n" +
-		"     aaaaa bbbbb \n" +
-		"     ccccc \n" +
-		"         ddddd \n" +
-		"     eeeee \n" +
+		"     aaaaa bbbbb\n" +
+		"     ccccc\n" +
+		"         ddddd\n" +
+		"     eeeee\n" +
 		"     aaaaa     bbbbb\n" +
-		"     ccccc " +
+		"     ccccc" +
 		""
 	result = w.String()
 

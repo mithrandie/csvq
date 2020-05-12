@@ -1850,11 +1850,11 @@ var showObjectsTests = []struct {
 			},
 		}),
 		Expect: "\n" +
-			"                              Loaded Tables\n" +
-			"--------------------------------------------------------------------------\n" +
+			"                        Loaded Tables\n" +
+			"--------------------------------------------------------------\n" +
 			" table1.csv\n" +
-			"     Fields: colabcdef1, colabcdef2, colabcdef3, colabcdef4, colabcdef5, \n" +
-			"             colabcdef6, colabcdef7\n" +
+			"     Fields: colabcdef1, colabcdef2, colabcdef3, colabcdef4, \n" +
+			"             colabcdef5, colabcdef6, colabcdef7\n" +
 			"     Format: CSV     Delimiter: '\\t'  Enclose All: false\n" +
 			"     Encoding: SJIS  LineBreak: CRLF  Header: false\n" +
 			"\n",
@@ -1999,16 +1999,20 @@ var showObjectsTests = []struct {
 			"---------------------------------------------------------------------\n" +
 			" cur\n" +
 			"     Status: Closed\n" +
-			"     Query: SELECT column1, column2 FROM table1 \n" +
+			"     Query:\n" +
+			"       SELECT column1, column2 FROM table1\n" +
 			" cur2\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: UNKNOWN\n" +
-			"     Query: SELECT column1, column2 FROM table1 \n" +
+			"     Query:\n" +
+			"       SELECT column1, column2 FROM table1\n" +
 			" cur3\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: 1\n" +
-			"     Query: SELECT column1, column2 FROM table1 \n" +
+			"     Query:\n" +
+			"       SELECT column1, column2 FROM table1\n" +
 			" cur4\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: Out of Range\n" +
-			"     Query: SELECT column1, column2 FROM table1 \n" +
+			"     Query:\n" +
+			"       SELECT column1, column2 FROM table1\n" +
 			" stmtcur\n" +
 			"     Status: Closed\n" +
 			"     Statement: stmt\n" +
@@ -2078,7 +2082,7 @@ var showObjectsTests = []struct {
 		PreparedStatements: GenerateStatementMap([]*PreparedStatement{
 			{
 				Name:            "stmt1",
-				StatementString: "select 1",
+				StatementString: "select 1;\nselect 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 22;",
 				Statements: []parser.Statement{
 					parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
@@ -2087,6 +2091,18 @@ var showObjectsTests = []struct {
 								Fields: []parser.QueryExpression{
 									parser.Field{
 										Object: parser.NewIntegerValueFromString("1"),
+									},
+								},
+							},
+						},
+					},
+					parser.SelectQuery{
+						SelectEntity: parser.SelectEntity{
+							SelectClause: parser.SelectClause{
+								BaseExpr: parser.NewBaseExpr(parser.Token{Line: 2, Char: 1, SourceFile: "stmt"}),
+								Fields: []parser.QueryExpression{
+									parser.Field{
+										Object: parser.NewIntegerValueFromString("2"),
 									},
 								},
 							},
@@ -2116,14 +2132,18 @@ var showObjectsTests = []struct {
 			},
 		}),
 		Expect: "\n" +
-			"    Prepared Statements\n" +
-			"---------------------------\n" +
+			"                          Prepared Statements\n" +
+			"-----------------------------------------------------------------------\n" +
 			" stmt1\n" +
 			"     Placeholder Number: 0\n" +
-			"     Statement: select 1 \n" +
+			"     Statement:\n" +
+			"       select 1;\n" +
+			"       select 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,\\\n" +
+			"       18, 19, 20, 22, 22;\n" +
 			" stmt2\n" +
 			"     Placeholder Number: 1\n" +
-			"     Statement: select ? \n" +
+			"     Statement:\n" +
+			"       select ?\n" +
 			"\n",
 	},
 	{
@@ -2675,14 +2695,14 @@ var syntaxTests = []struct {
 		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.NewStringValue("select clause")}},
 		Expect: "\n" +
 			"                Search: select clause\n" +
-			"------------------------------------------------------\n" +
+			"-----------------------------------------------------\n" +
 			" SELECT Clause\n" +
 			"     select_clause\n" +
-			"         : SELECT [DISTINCT] <field> [, <field> ...] \n" +
+			"         : SELECT [DISTINCT] <field> [, <field> ...]\n" +
 			"\n" +
 			"     field\n" +
-			"         : <value> \n" +
-			"         | <value> AS alias \n" +
+			"         : <value>\n" +
+			"         | <value> AS alias\n" +
 			"\n" +
 			"\n",
 	},
@@ -2690,14 +2710,14 @@ var syntaxTests = []struct {
 		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.NewStringValue(" select  "), parser.NewStringValue("clause")}},
 		Expect: "\n" +
 			"                Search: select clause\n" +
-			"------------------------------------------------------\n" +
+			"-----------------------------------------------------\n" +
 			" SELECT Clause\n" +
 			"     select_clause\n" +
-			"         : SELECT [DISTINCT] <field> [, <field> ...] \n" +
+			"         : SELECT [DISTINCT] <field> [, <field> ...]\n" +
 			"\n" +
 			"     field\n" +
-			"         : <value> \n" +
-			"         | <value> AS alias \n" +
+			"         : <value>\n" +
+			"         | <value> AS alias\n" +
 			"\n" +
 			"\n",
 	},
@@ -2705,37 +2725,37 @@ var syntaxTests = []struct {
 		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.FieldReference{Column: parser.Identifier{Literal: "select clause"}}}},
 		Expect: "\n" +
 			"                Search: select clause\n" +
-			"------------------------------------------------------\n" +
+			"-----------------------------------------------------\n" +
 			" SELECT Clause\n" +
 			"     select_clause\n" +
-			"         : SELECT [DISTINCT] <field> [, <field> ...] \n" +
+			"         : SELECT [DISTINCT] <field> [, <field> ...]\n" +
 			"\n" +
 			"     field\n" +
-			"         : <value> \n" +
-			"         | <value> AS alias \n" +
+			"         : <value>\n" +
+			"         | <value> AS alias\n" +
 			"\n" +
 			"\n",
 	},
 	{
 		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.NewStringValue("operator prec")}},
 		Expect: "\n" +
-			"         Search: operator prec\n" +
-			"---------------------------------------\n" +
+			"        Search: operator prec\n" +
+			"--------------------------------------\n" +
 			" Operator Precedence\n" +
-			"     Operator Precedence Description. \n" +
+			"     Operator Precedence Description.\n" +
 			"\n" +
 			"\n",
 	},
 	{
 		Expr: parser.Syntax{Keywords: []parser.QueryExpression{parser.NewStringValue("string  op")}},
 		Expect: "\n" +
-			"       Search: string op\n" +
-			"-------------------------------\n" +
+			"      Search: string op\n" +
+			"------------------------------\n" +
 			" String Operators\n" +
 			"     concatenation\n" +
-			"         : <value> || <value> \n" +
+			"         : <value> || <value>\n" +
 			"\n" +
-			"         description \n" +
+			"         description\n" +
 			"\n" +
 			"\n",
 	},
