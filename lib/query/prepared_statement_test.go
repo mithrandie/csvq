@@ -26,7 +26,6 @@ func TestPreparedStatementMap_Prepare(t *testing.T) {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
-							Select:   "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{
 									Object: parser.NewIntegerValueFromString("1"),
@@ -83,7 +82,6 @@ func TestPreparedStatementMap_Get(t *testing.T) {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
-							Select:   "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{
 									Object: parser.NewIntegerValueFromString("1"),
@@ -104,7 +102,6 @@ func TestPreparedStatementMap_Get(t *testing.T) {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
-						Select:   "select",
 						Fields: []parser.QueryExpression{
 							parser.Field{
 								Object: parser.NewIntegerValueFromString("1"),
@@ -145,7 +142,6 @@ func TestPreparedStatementMap_Dispose(t *testing.T) {
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
 							BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
-							Select:   "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{
 									Object: parser.NewIntegerValueFromString("1"),
@@ -195,7 +191,6 @@ func TestNewPreparedStatement(t *testing.T) {
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
 						BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
-						Select:   "select",
 						Fields: []parser.QueryExpression{
 							parser.Field{
 								Object: parser.NewIntegerValueFromString("1"),

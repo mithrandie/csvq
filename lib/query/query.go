@@ -123,7 +123,12 @@ func Select(ctx context.Context, scope *ReferenceScope, query parser.SelectQuery
 		}
 	}
 
-	view, err := selectEntity(ctx, queryScope, query.SelectEntity, query.ForUpdate)
+	view, err := selectEntity(
+		ctx,
+		queryScope,
+		query.SelectEntity,
+		query.IsForUpdate(),
+	)
 	if err != nil {
 		queryScope.CloseCurrentNode()
 		return nil, err

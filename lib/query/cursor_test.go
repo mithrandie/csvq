@@ -17,14 +17,12 @@ import (
 var selectQueryForCursorTest = parser.SelectQuery{
 	SelectEntity: parser.SelectEntity{
 		SelectClause: parser.SelectClause{
-			Select: "select",
 			Fields: []parser.QueryExpression{
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 			},
 		},
 		FromClause: parser.FromClause{
-			From: "from",
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},
@@ -35,14 +33,12 @@ var selectQueryForCursorTest = parser.SelectQuery{
 var selectQueryForCursorQueryErrorTest = parser.SelectQuery{
 	SelectEntity: parser.SelectEntity{
 		SelectClause: parser.SelectClause{
-			Select: "select",
 			Fields: []parser.QueryExpression{
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 			},
 		},
 		FromClause: parser.FromClause{
-			From: "from",
 			Tables: []parser.QueryExpression{
 				parser.Table{Object: parser.Identifier{Literal: "table1"}},
 			},

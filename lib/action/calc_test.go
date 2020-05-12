@@ -35,7 +35,7 @@ var calcTests = []struct {
 	{
 		Stdin: "",
 		Input: "md5(c1)",
-		Error: "stdin is empty",
+		Error: "STDIN is empty",
 	},
 	{
 		Stdin: "foo",

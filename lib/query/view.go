@@ -70,7 +70,7 @@ func LoadView(ctx context.Context, scope *ReferenceScope, tables []parser.QueryE
 	if tables == nil {
 		var obj parser.QueryExpression
 		if scope.Tx.Session.CanReadStdin {
-			obj = parser.Stdin{Stdin: "stdin"}
+			obj = parser.Stdin{}
 		} else {
 			obj = parser.Dual{}
 		}
@@ -149,8 +149,8 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		noHeaderIdx := 1
 		withoutNullIdx := 2
 
-		switch strings.ToUpper(tableObject.Type.Literal) {
-		case cmd.CSV.String():
+		switch tableObject.Type.Token {
+		case parser.CSV:
 			if felem == nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, "delimiter is not specified")
 			}
@@ -171,7 +171,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			} else {
 				importFormat = cmd.CSV
 			}
-		case cmd.FIXED.String():
+		case parser.FIXED:
 			if felem == nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, "delimiter positions are not specified")
 			}
@@ -196,7 +196,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 			delimiterPositions = positions
 			importFormat = cmd.FIXED
-		case cmd.JSON.String():
+		case parser.JSON:
 			if felem == nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, "json query is not specified")
 			}
@@ -209,7 +209,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			jsonQuery = felem.(*value.String).Raw()
 			importFormat = cmd.JSON
 			encoding = text.UTF8
-		case cmd.LTSV.String():
+		case parser.LTSV:
 			if 2 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 3)
 			}
@@ -1496,7 +1496,7 @@ func (view *View) OrderBy(ctx context.Context, scope *ReferenceScope, clause par
 			view.sortDirections[i] = oi.Direction.Token
 		}
 
-		if oi.Position.IsEmpty() {
+		if oi.NullsPosition.IsEmpty() {
 			switch view.sortDirections[i] {
 			case parser.ASC:
 				view.sortNullPositions[i] = parser.FIRST
@@ -1504,7 +1504,7 @@ func (view *View) OrderBy(ctx context.Context, scope *ReferenceScope, clause par
 				view.sortNullPositions[i] = parser.LAST
 			}
 		} else {
-			view.sortNullPositions[i] = oi.Position.Token
+			view.sortNullPositions[i] = oi.NullsPosition.Token
 		}
 	}
 

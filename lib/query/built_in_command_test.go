@@ -242,7 +242,7 @@ var sourceTests = []struct {
 	{
 		Name: "Source File Invalid File Path Error",
 		Expr: parser.Source{
-			FilePath: parser.NewNullValueFromString("NULL"),
+			FilePath: parser.NewNullValue(),
 		},
 		Error: "NULL is a invalid file path",
 	},
@@ -591,7 +591,7 @@ var setFlagTests = []struct {
 			Flag:  parser.Flag{Name: "delimiter"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
-		Error: "true for @@delimiter is not allowed",
+		Error: "TRUE for @@DELIMITER is not allowed",
 	},
 	{
 		Name: "Set WaitTimeout Value Error",
@@ -599,7 +599,7 @@ var setFlagTests = []struct {
 			Flag:  parser.Flag{Name: "wait_timeout"},
 			Value: parser.NewTernaryValueFromString("true"),
 		},
-		Error: "true for @@wait_timeout is not allowed",
+		Error: "TRUE for @@WAIT_TIMEOUT is not allowed",
 	},
 	{
 		Name: "Set WithoutNull Value Error",
@@ -607,7 +607,7 @@ var setFlagTests = []struct {
 			Flag:  parser.Flag{Name: "without_null"},
 			Value: parser.NewStringValue("string"),
 		},
-		Error: "'string' for @@without_null is not allowed",
+		Error: "'string' for @@WITHOUT_NULL is not allowed",
 	},
 	{
 		Name: "Set CPU Value Error",
@@ -615,7 +615,7 @@ var setFlagTests = []struct {
 			Flag:  parser.Flag{Name: "cpu"},
 			Value: parser.NewStringValue("invalid"),
 		},
-		Error: "'invalid' for @@cpu is not allowed",
+		Error: "'invalid' for @@CPU is not allowed",
 	},
 	{
 		Name: "Invalid Flag Name Error",
@@ -623,7 +623,7 @@ var setFlagTests = []struct {
 			Flag:  parser.Flag{Name: "invalid"},
 			Value: parser.NewStringValue("string"),
 		},
-		Error: "@@invalid is an unknown flag",
+		Error: "@@INVALID is an unknown flag",
 	},
 	{
 		Name: "Invalid Flag Value Error",
@@ -691,7 +691,7 @@ var addFlagElementTests = []struct {
 		Init: func(flags *cmd.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
-		Error: "add flag element syntax does not support @@format",
+		Error: "add flag element syntax does not support @@FORMAT",
 	},
 	{
 		Name: "Add Element Invalid Flag Name",
@@ -702,7 +702,7 @@ var addFlagElementTests = []struct {
 		Init: func(flags *cmd.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
-		Error: "@@invalid is an unknown flag",
+		Error: "@@INVALID is an unknown flag",
 	},
 }
 
@@ -780,10 +780,10 @@ var removeFlagElementTests = []struct {
 		Name: "Remove Element Invalid Flag Value",
 		Expr: parser.RemoveFlagElement{
 			Flag:  parser.Flag{Name: "datetime_format"},
-			Value: parser.NewNullValueFromString("null"),
+			Value: parser.NewNullValue(),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "null is an invalid value for @@datetime_format to specify the element",
+		Error: "NULL is an invalid value for @@DATETIME_FORMAT to specify the element",
 	},
 	{
 		Name: "Remove Element Evaluation Error",
@@ -801,7 +801,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.NewIntegerValue(1),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "remove flag element syntax does not support @@format",
+		Error: "remove flag element syntax does not support @@FORMAT",
 	},
 	{
 		Name: "Remove Element Invalid Flag Name",
@@ -810,7 +810,7 @@ var removeFlagElementTests = []struct {
 			Value: parser.NewIntegerValue(1),
 		},
 		Init:  func(flags *cmd.Flags) {},
-		Error: "@@invalid is an unknown flag",
+		Error: "@@INVALID is an unknown flag",
 	},
 }
 
@@ -1562,7 +1562,7 @@ var showFlagTests = []struct {
 		Expr: parser.ShowFlag{
 			Flag: parser.Flag{Name: "invalid"},
 		},
-		Error: "@@invalid is an unknown flag",
+		Error: "@@INVALID is an unknown flag",
 	},
 }
 
@@ -1999,16 +1999,16 @@ var showObjectsTests = []struct {
 			"---------------------------------------------------------------------\n" +
 			" cur\n" +
 			"     Status: Closed\n" +
-			"     Query: select column1, column2 from table1 \n" +
+			"     Query: SELECT column1, column2 FROM table1 \n" +
 			" cur2\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: UNKNOWN\n" +
-			"     Query: select column1, column2 from table1 \n" +
+			"     Query: SELECT column1, column2 FROM table1 \n" +
 			" cur3\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: 1\n" +
-			"     Query: select column1, column2 from table1 \n" +
+			"     Query: SELECT column1, column2 FROM table1 \n" +
 			" cur4\n" +
 			"     Status: Open    Number of Rows: 2         Pointer: Out of Range\n" +
-			"     Query: select column1, column2 from table1 \n" +
+			"     Query: SELECT column1, column2 FROM table1 \n" +
 			" stmtcur\n" +
 			"     Status: Closed\n" +
 			"     Statement: stmt\n" +
@@ -2084,7 +2084,6 @@ var showObjectsTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
-								Select:   "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{
 										Object: parser.NewIntegerValueFromString("1"),
@@ -2104,7 +2103,6 @@ var showObjectsTests = []struct {
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
 								BaseExpr: parser.NewBaseExpr(parser.Token{Line: 1, Char: 1, SourceFile: "stmt"}),
-								Select:   "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{
 										Object: parser.Placeholder{Literal: "?", Ordinal: 1},
@@ -2300,7 +2298,7 @@ var showFieldsTests = []struct {
 		Name: "ShowFields Stdin Table",
 		Expr: parser.ShowFields{
 			Type:  parser.Identifier{Literal: "fields"},
-			Table: parser.Stdin{Stdin: "stdin"},
+			Table: parser.Stdin{},
 		},
 		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
 			{
@@ -2316,7 +2314,7 @@ var showFieldsTests = []struct {
 			},
 		}, nil, time.Time{}, nil),
 		Expect: "\n" +
-			" Fields in stdin\n" +
+			" Fields in STDIN\n" +
 			"-----------------\n" +
 			" Type: View\n" +
 			" Status: Fixed\n" +
@@ -2369,7 +2367,7 @@ var showFieldsTests = []struct {
 		Expr: parser.ShowFields{
 			Type: parser.Identifier{Literal: "fields"},
 			Table: parser.TableObject{
-				Type:          parser.Identifier{Literal: "csv"},
+				Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 				FormatElement: parser.NewStringValue(","),
 				Path:          parser.Identifier{Literal: "show_fields_create.csv"},
 			},

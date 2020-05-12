@@ -850,7 +850,7 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 		if e, ok := expr.(parser.Identifier); ok {
 			s = e.Literal
 		} else if e, ok := expr.(parser.Stdin); ok {
-			s = e.Stdin
+			s = e.String()
 		}
 		return
 	}

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -111,8 +112,7 @@ func NewFloatValue(f float64) PrimitiveType {
 
 func NewTernaryValueFromString(s string) PrimitiveType {
 	return PrimitiveType{
-		Literal: s,
-		Value:   value.NewTernaryFromString(s),
+		Value: value.NewTernaryFromString(s),
 	}
 }
 
@@ -135,13 +135,6 @@ func NewDatetimeValue(t time.Time) PrimitiveType {
 	}
 }
 
-func NewNullValueFromString(s string) PrimitiveType {
-	return PrimitiveType{
-		Literal: s,
-		Value:   value.NewNull(),
-	}
-}
-
 func NewNullValue() PrimitiveType {
 	return PrimitiveType{
 		Value: value.NewNull(),
@@ -151,6 +144,8 @@ func NewNullValue() PrimitiveType {
 func (e PrimitiveType) String() string {
 	if 0 < len(e.Literal) {
 		switch e.Value.(type) {
+		case *value.Ternary, *value.Null:
+			return e.Value.String()
 		case *value.String, *value.Datetime:
 			return cmd.QuoteString(e.Literal)
 		default:
@@ -254,12 +249,15 @@ func (e RowValueList) String() string {
 
 type SelectQuery struct {
 	*BaseExpr
-	WithClause       QueryExpression
-	SelectEntity     QueryExpression
-	OrderByClause    QueryExpression
-	LimitClause      QueryExpression
-	ForUpdate        bool
-	ForUpdateLiteral string
+	WithClause    QueryExpression
+	SelectEntity  QueryExpression
+	OrderByClause QueryExpression
+	LimitClause   QueryExpression
+	Context       Token
+}
+
+func (e SelectQuery) IsForUpdate() bool {
+	return e.Context.Token == UPDATE
 }
 
 func (e SelectQuery) String() string {
@@ -274,8 +272,8 @@ func (e SelectQuery) String() string {
 	if e.LimitClause != nil {
 		s = append(s, e.LimitClause.String())
 	}
-	if e.ForUpdate {
-		s = append(s, e.ForUpdateLiteral)
+	if e.IsForUpdate() {
+		s = append(s, keyword(FOR), e.Context.String())
 	}
 	return joinWithSpace(s)
 }
@@ -289,9 +287,9 @@ type SelectSet struct {
 }
 
 func (e SelectSet) String() string {
-	s := []string{e.LHS.String(), e.Operator.Literal}
+	s := []string{e.LHS.String(), e.Operator.String()}
 	if !e.All.IsEmpty() {
-		s = append(s, e.All.Literal)
+		s = append(s, e.All.String())
 	}
 	s = append(s, e.RHS.String())
 	return joinWithSpace(s)
@@ -329,7 +327,6 @@ func (e SelectEntity) String() string {
 
 type SelectClause struct {
 	*BaseExpr
-	Select   string
 	Distinct Token
 	Fields   []QueryExpression
 }
@@ -339,9 +336,9 @@ func (sc SelectClause) IsDistinct() bool {
 }
 
 func (sc SelectClause) String() string {
-	s := []string{sc.Select}
+	s := []string{keyword(SELECT)}
 	if sc.IsDistinct() {
-		s = append(s, sc.Distinct.Literal)
+		s = append(s, sc.Distinct.String())
 	}
 	s = append(s, listQueryExpressions(sc.Fields))
 	return joinWithSpace(s)
@@ -349,7 +346,6 @@ func (sc SelectClause) String() string {
 
 type IntoClause struct {
 	*BaseExpr
-	Into      string
 	Variables []Variable
 }
 
@@ -358,61 +354,56 @@ func (e IntoClause) String() string {
 	for _, v := range e.Variables {
 		vars = append(vars, v)
 	}
-	return joinWithSpace([]string{e.Into, listQueryExpressions(vars)})
+	return joinWithSpace([]string{keyword(INTO), listQueryExpressions(vars)})
 }
 
 type FromClause struct {
 	*BaseExpr
-	From   string
 	Tables []QueryExpression
 }
 
 func (f FromClause) String() string {
-	s := []string{f.From, listQueryExpressions(f.Tables)}
+	s := []string{keyword(FROM), listQueryExpressions(f.Tables)}
 	return joinWithSpace(s)
 }
 
 type WhereClause struct {
 	*BaseExpr
-	Where  string
 	Filter QueryExpression
 }
 
 func (w WhereClause) String() string {
-	s := []string{w.Where, w.Filter.String()}
+	s := []string{keyword(WHERE), w.Filter.String()}
 	return joinWithSpace(s)
 }
 
 type GroupByClause struct {
 	*BaseExpr
-	GroupBy string
-	Items   []QueryExpression
+	Items []QueryExpression
 }
 
 func (gb GroupByClause) String() string {
-	s := []string{gb.GroupBy, listQueryExpressions(gb.Items)}
+	s := []string{keyword(GROUP), keyword(BY), listQueryExpressions(gb.Items)}
 	return joinWithSpace(s)
 }
 
 type HavingClause struct {
 	*BaseExpr
-	Having string
 	Filter QueryExpression
 }
 
 func (h HavingClause) String() string {
-	s := []string{h.Having, h.Filter.String()}
+	s := []string{keyword(HAVING), h.Filter.String()}
 	return joinWithSpace(s)
 }
 
 type OrderByClause struct {
 	*BaseExpr
-	OrderBy string
-	Items   []QueryExpression
+	Items []QueryExpression
 }
 
 func (ob OrderByClause) String() string {
-	s := []string{ob.OrderBy, listQueryExpressions(ob.Items)}
+	s := []string{keyword(ORDER), keyword(BY), listQueryExpressions(ob.Items)}
 	return joinWithSpace(s)
 }
 
@@ -426,17 +417,25 @@ type LimitClause struct {
 	OffsetClause QueryExpression
 }
 
+func (e LimitClause) restrictionString() []string {
+	s := make([]string, 0, 2)
+	if e.WithTies() {
+		s = append(s, keyword(WITH))
+	}
+	return append(s, e.Restriction.String())
+}
+
 func (e LimitClause) String() string {
 	s := make([]string, 0, 6)
 
 	if e.Type.Token == LIMIT {
-		s = append(s, e.Type.Literal)
+		s = append(s, e.Type.String())
 		s = append(s, e.Value.String())
 		if !e.Unit.IsEmpty() {
-			s = append(s, e.Unit.Literal)
+			s = append(s, e.Unit.String())
 		}
 		if !e.Restriction.IsEmpty() {
-			s = append(s, e.Restriction.Literal)
+			s = append(s, e.restrictionString()...)
 		}
 		if e.OffsetClause != nil {
 			s = append(s, e.OffsetClause.String())
@@ -445,12 +444,12 @@ func (e LimitClause) String() string {
 		if e.OffsetClause != nil {
 			s = append(s, e.OffsetClause.String())
 		}
-		s = append(s, e.Type.Literal)
-		s = append(s, e.Position.Literal)
+		s = append(s, e.Type.String())
+		s = append(s, e.Position.String())
 		s = append(s, e.Value.String())
-		s = append(s, e.Unit.Literal)
+		s = append(s, e.Unit.String())
 		if !e.Restriction.IsEmpty() {
-			s = append(s, e.Restriction.Literal)
+			s = append(s, e.restrictionString()...)
 		}
 	} else {
 		if e.OffsetClause != nil {
@@ -470,29 +469,27 @@ func (e LimitClause) WithTies() bool {
 
 type OffsetClause struct {
 	*BaseExpr
-	Offset string
-	Value  QueryExpression
-	Unit   Token
+	Value QueryExpression
+	Unit  Token
 }
 
 func (e OffsetClause) String() string {
 	s := make([]string, 2, 3)
-	s[0] = e.Offset
+	s[0] = keyword(OFFSET)
 	s[1] = e.Value.String()
 	if !e.Unit.IsEmpty() {
-		s = append(s, e.Unit.Literal)
+		s = append(s, e.Unit.String())
 	}
 	return joinWithSpace(s)
 }
 
 type WithClause struct {
 	*BaseExpr
-	With         string
 	InlineTables []QueryExpression
 }
 
 func (e WithClause) String() string {
-	s := []string{e.With, listQueryExpressions(e.InlineTables)}
+	s := []string{keyword(WITH), listQueryExpressions(e.InlineTables)}
 	return joinWithSpace(s)
 }
 
@@ -501,20 +498,19 @@ type InlineTable struct {
 	Recursive Token
 	Name      Identifier
 	Fields    []QueryExpression
-	As        string
 	Query     SelectQuery
 }
 
 func (e InlineTable) String() string {
 	s := make([]string, 0)
 	if !e.Recursive.IsEmpty() {
-		s = append(s, e.Recursive.Literal)
+		s = append(s, e.Recursive.String())
 	}
 	s = append(s, e.Name.String())
 	if e.Fields != nil {
 		s = append(s, putParentheses(listQueryExpressions(e.Fields)))
 	}
-	s = append(s, e.As, putParentheses(e.Query.String()))
+	s = append(s, keyword(AS), putParentheses(e.Query.String()))
 	return joinWithSpace(s)
 }
 
@@ -533,7 +529,7 @@ func (sq Subquery) String() string {
 
 type TableObject struct {
 	*BaseExpr
-	Type          Identifier
+	Type          Token
 	FormatElement QueryExpression
 	Path          QueryExpression
 	Args          []QueryExpression
@@ -553,30 +549,29 @@ func (e TableObject) String() string {
 
 type JsonQuery struct {
 	*BaseExpr
-	JsonQuery string
+	JsonQuery Token
 	Query     QueryExpression
 	JsonText  QueryExpression
 }
 
 func (e JsonQuery) String() string {
-	return e.JsonQuery + putParentheses(e.Query.String()+", "+e.JsonText.String())
+	return e.JsonQuery.String() + putParentheses(e.Query.String()+", "+e.JsonText.String())
 }
 
 type Comparison struct {
 	*BaseExpr
 	LHS      QueryExpression
-	Operator string
+	Operator Token
 	RHS      QueryExpression
 }
 
 func (c Comparison) String() string {
-	s := []string{c.LHS.String(), c.Operator, c.RHS.String()}
+	s := []string{c.LHS.String(), c.Operator.String(), c.RHS.String()}
 	return joinWithSpace(s)
 }
 
 type Is struct {
 	*BaseExpr
-	Is       string
 	LHS      QueryExpression
 	RHS      QueryExpression
 	Negation Token
@@ -587,9 +582,9 @@ func (i Is) IsNegated() bool {
 }
 
 func (i Is) String() string {
-	s := []string{i.LHS.String(), i.Is}
+	s := []string{i.LHS.String(), keyword(IS)}
 	if i.IsNegated() {
-		s = append(s, i.Negation.Literal)
+		s = append(s, i.Negation.String())
 	}
 	s = append(s, i.RHS.String())
 	return joinWithSpace(s)
@@ -597,8 +592,6 @@ func (i Is) String() string {
 
 type Between struct {
 	*BaseExpr
-	Between  string
-	And      string
 	LHS      QueryExpression
 	Low      QueryExpression
 	High     QueryExpression
@@ -612,15 +605,14 @@ func (b Between) IsNegated() bool {
 func (b Between) String() string {
 	s := []string{b.LHS.String()}
 	if b.IsNegated() {
-		s = append(s, b.Negation.Literal)
+		s = append(s, b.Negation.String())
 	}
-	s = append(s, b.Between, b.Low.String(), b.And, b.High.String())
+	s = append(s, keyword(BETWEEN), b.Low.String(), keyword(AND), b.High.String())
 	return joinWithSpace(s)
 }
 
 type In struct {
 	*BaseExpr
-	In       string
 	LHS      QueryExpression
 	Values   QueryExpression
 	Negation Token
@@ -633,41 +625,38 @@ func (i In) IsNegated() bool {
 func (i In) String() string {
 	s := []string{i.LHS.String()}
 	if i.IsNegated() {
-		s = append(s, i.Negation.Literal)
+		s = append(s, i.Negation.String())
 	}
-	s = append(s, i.In, i.Values.String())
+	s = append(s, keyword(IN), i.Values.String())
 	return joinWithSpace(s)
 }
 
 type All struct {
 	*BaseExpr
-	All      string
 	LHS      QueryExpression
-	Operator string
+	Operator Token
 	Values   QueryExpression
 }
 
 func (a All) String() string {
-	s := []string{a.LHS.String(), a.Operator, a.All, a.Values.String()}
+	s := []string{a.LHS.String(), a.Operator.String(), keyword(ALL), a.Values.String()}
 	return joinWithSpace(s)
 }
 
 type Any struct {
 	*BaseExpr
-	Any      string
 	LHS      QueryExpression
-	Operator string
+	Operator Token
 	Values   QueryExpression
 }
 
 func (a Any) String() string {
-	s := []string{a.LHS.String(), a.Operator, a.Any, a.Values.String()}
+	s := []string{a.LHS.String(), a.Operator.String(), keyword(ANY), a.Values.String()}
 	return joinWithSpace(s)
 }
 
 type Like struct {
 	*BaseExpr
-	Like     string
 	LHS      QueryExpression
 	Pattern  QueryExpression
 	Negation Token
@@ -680,32 +669,31 @@ func (l Like) IsNegated() bool {
 func (l Like) String() string {
 	s := []string{l.LHS.String()}
 	if l.IsNegated() {
-		s = append(s, l.Negation.Literal)
+		s = append(s, l.Negation.String())
 	}
-	s = append(s, l.Like, l.Pattern.String())
+	s = append(s, keyword(LIKE), l.Pattern.String())
 	return joinWithSpace(s)
 }
 
 type Exists struct {
 	*BaseExpr
-	Exists string
-	Query  Subquery
+	Query Subquery
 }
 
 func (e Exists) String() string {
-	s := []string{e.Exists, e.Query.String()}
+	s := []string{keyword(EXISTS), e.Query.String()}
 	return joinWithSpace(s)
 }
 
 type Arithmetic struct {
 	*BaseExpr
 	LHS      QueryExpression
-	Operator int
+	Operator Token
 	RHS      QueryExpression
 }
 
 func (a Arithmetic) String() string {
-	s := []string{a.LHS.String(), string(rune(a.Operator)), a.RHS.String()}
+	s := []string{a.LHS.String(), a.Operator.String(), a.RHS.String()}
 	return joinWithSpace(s)
 }
 
@@ -716,7 +704,7 @@ type UnaryArithmetic struct {
 }
 
 func (e UnaryArithmetic) String() string {
-	return e.Operator.Literal + e.Operand.String()
+	return e.Operator.String() + e.Operand.String()
 }
 
 type Logic struct {
@@ -727,7 +715,7 @@ type Logic struct {
 }
 
 func (l Logic) String() string {
-	s := []string{l.LHS.String(), l.Operator.Literal, l.RHS.String()}
+	s := []string{l.LHS.String(), l.Operator.String(), l.RHS.String()}
 	return joinWithSpace(s)
 }
 
@@ -739,10 +727,10 @@ type UnaryLogic struct {
 
 func (e UnaryLogic) String() string {
 	if e.Operator.Token == NOT {
-		s := []string{e.Operator.Literal, e.Operand.String()}
+		s := []string{e.Operator.String(), e.Operand.String()}
 		return joinWithSpace(s)
 	}
-	return e.Operator.Literal + e.Operand.String()
+	return e.Operator.String() + e.Operand.String()
 }
 
 type Concat struct {
@@ -762,23 +750,23 @@ type Function struct {
 	*BaseExpr
 	Name string
 	Args []QueryExpression
-	From string
-	For  string
+	From Token
+	For  Token
 }
 
 func (e Function) String() string {
 	var args string
-	if strings.EqualFold(e.Name, TokenLiteral(SUBSTRING)) && 0 < len(e.From) {
+	if strings.EqualFold(e.Name, keyword(SUBSTRING)) && !e.From.IsEmpty() {
 		elems := make([]string, 0, 5)
-		elems = append(elems, e.Args[0].String(), e.From, e.Args[1].String())
-		if 0 < len(e.For) {
-			elems = append(elems, e.For, e.Args[2].String())
+		elems = append(elems, e.Args[0].String(), e.From.String(), e.Args[1].String())
+		if !e.For.IsEmpty() {
+			elems = append(elems, e.For.String(), e.Args[2].String())
 		}
 		args = joinWithSpace(elems)
 	} else {
 		args = listQueryExpressions(e.Args)
 	}
-	return e.Name + "(" + args + ")"
+	return strings.ToUpper(e.Name) + "(" + args + ")"
 }
 
 type AggregateFunction struct {
@@ -791,11 +779,11 @@ type AggregateFunction struct {
 func (e AggregateFunction) String() string {
 	s := make([]string, 0)
 	if !e.Distinct.IsEmpty() {
-		s = append(s, e.Distinct.Literal)
+		s = append(s, e.Distinct.String())
 	}
 	s = append(s, listQueryExpressions(e.Args))
 
-	return e.Name + "(" + joinWithSpace(s) + ")"
+	return strings.ToUpper(e.Name) + "(" + joinWithSpace(s) + ")"
 }
 
 func (e AggregateFunction) IsDistinct() bool {
@@ -805,14 +793,14 @@ func (e AggregateFunction) IsDistinct() bool {
 type Table struct {
 	*BaseExpr
 	Object QueryExpression
-	As     string
+	As     Token
 	Alias  QueryExpression
 }
 
 func (t Table) String() string {
 	s := []string{t.Object.String()}
-	if 0 < len(t.As) {
-		s = append(s, t.As)
+	if !t.As.IsEmpty() {
+		s = append(s, t.As.String())
 	}
 	if t.Alias != nil {
 		s = append(s, t.Alias.String())
@@ -841,7 +829,6 @@ func (t Table) Name() Identifier {
 
 type Join struct {
 	*BaseExpr
-	Join      string
 	Table     QueryExpression
 	JoinTable QueryExpression
 	Natural   Token
@@ -853,15 +840,15 @@ type Join struct {
 func (j Join) String() string {
 	s := []string{j.Table.String()}
 	if !j.Natural.IsEmpty() {
-		s = append(s, j.Natural.Literal)
+		s = append(s, j.Natural.String())
 	}
 	if !j.Direction.IsEmpty() {
-		s = append(s, j.Direction.Literal)
+		s = append(s, j.Direction.String())
 	}
 	if !j.JoinType.IsEmpty() {
-		s = append(s, j.JoinType.Literal)
+		s = append(s, j.JoinType.String())
 	}
-	s = append(s, j.Join, j.JoinTable.String())
+	s = append(s, keyword(JOIN), j.JoinTable.String())
 	if j.Condition != nil {
 		s = append(s, j.Condition.String())
 	}
@@ -870,32 +857,32 @@ func (j Join) String() string {
 
 type JoinCondition struct {
 	*BaseExpr
-	Literal string
-	On      QueryExpression
-	Using   []QueryExpression
+	On    QueryExpression
+	Using []QueryExpression
 }
 
 func (jc JoinCondition) String() string {
 	var s []string
 	if jc.On != nil {
-		s = []string{jc.Literal, jc.On.String()}
+		s = []string{keyword(ON), jc.On.String()}
 	} else {
-		s = []string{jc.Literal, putParentheses(listQueryExpressions(jc.Using))}
+		s = []string{keyword(USING), putParentheses(listQueryExpressions(jc.Using))}
 	}
+
 	return joinWithSpace(s)
 }
 
 type Field struct {
 	*BaseExpr
 	Object QueryExpression
-	As     string
+	As     Token
 	Alias  QueryExpression
 }
 
 func (f Field) String() string {
 	s := []string{f.Object.String()}
-	if 0 < len(f.As) {
-		s = append(s, f.As)
+	if !f.As.IsEmpty() {
+		s = append(s, f.As.String())
 	}
 	if f.Alias != nil {
 		s = append(s, f.Alias.String())
@@ -926,52 +913,47 @@ func (ac AllColumns) String() string {
 
 type Dual struct {
 	*BaseExpr
-	Dual string
 }
 
 func (d Dual) String() string {
-	return d.Dual
+	return keyword(DUAL)
 }
 
 type Stdin struct {
 	*BaseExpr
-	Stdin string
 }
 
 func (si Stdin) String() string {
-	return si.Stdin
+	return keyword(STDIN)
 }
 
 type OrderItem struct {
 	*BaseExpr
-	Value     QueryExpression
-	Direction Token
-	Nulls     string
-	Position  Token
+	Value         QueryExpression
+	Direction     Token
+	NullsPosition Token
 }
 
 func (e OrderItem) String() string {
 	s := []string{e.Value.String()}
 	if !e.Direction.IsEmpty() {
-		s = append(s, e.Direction.Literal)
+		s = append(s, e.Direction.String())
 	}
-	if 0 < len(e.Nulls) {
-		s = append(s, e.Nulls, e.Position.Literal)
+	if !e.NullsPosition.IsEmpty() {
+		s = append(s, keyword(NULLS), e.NullsPosition.String())
 	}
 	return joinWithSpace(s)
 }
 
 type CaseExpr struct {
 	*BaseExpr
-	Case  string
-	End   string
 	Value QueryExpression
 	When  []QueryExpression
 	Else  QueryExpression
 }
 
 func (e CaseExpr) String() string {
-	s := []string{e.Case}
+	s := []string{keyword(CASE)}
 	if e.Value != nil {
 		s = append(s, e.Value.String())
 	}
@@ -981,58 +963,49 @@ func (e CaseExpr) String() string {
 	if e.Else != nil {
 		s = append(s, e.Else.String())
 	}
-	s = append(s, e.End)
+	s = append(s, keyword(END))
 	return joinWithSpace(s)
 }
 
 type CaseExprWhen struct {
 	*BaseExpr
-	When      string
-	Then      string
 	Condition QueryExpression
 	Result    QueryExpression
 }
 
 func (e CaseExprWhen) String() string {
-	s := []string{e.When, e.Condition.String(), e.Then, e.Result.String()}
+	s := []string{keyword(WHEN), e.Condition.String(), keyword(THEN), e.Result.String()}
 	return joinWithSpace(s)
 }
 
 type CaseExprElse struct {
 	*BaseExpr
-	Else   string
 	Result QueryExpression
 }
 
 func (e CaseExprElse) String() string {
-	s := []string{e.Else, e.Result.String()}
+	s := []string{keyword(ELSE), e.Result.String()}
 	return joinWithSpace(s)
 }
 
 type ListFunction struct {
 	*BaseExpr
-	Name        string
-	Distinct    Token
-	Args        []QueryExpression
-	WithinGroup string
-	OrderBy     QueryExpression
+	Name     string
+	Distinct Token
+	Args     []QueryExpression
+	OrderBy  QueryExpression
 }
 
 func (e ListFunction) String() string {
 	option := make([]string, 0)
 	if !e.Distinct.IsEmpty() {
-		option = append(option, e.Distinct.Literal)
+		option = append(option, e.Distinct.String())
 	}
 	option = append(option, listQueryExpressions(e.Args))
 
-	s := []string{e.Name + "(" + joinWithSpace(option) + ")"}
-	if 0 < len(e.WithinGroup) {
-		s = append(s, e.WithinGroup)
-		if e.OrderBy != nil {
-			s = append(s, "("+e.OrderBy.String()+")")
-		} else {
-			s = append(s, "()")
-		}
+	s := []string{strings.ToUpper(e.Name) + "(" + joinWithSpace(option) + ")"}
+	if e.OrderBy != nil {
+		s = append(s, keyword(WITHIN), keyword(GROUP), "("+e.OrderBy.String()+")")
 	}
 	return joinWithSpace(s)
 }
@@ -1046,27 +1019,25 @@ type AnalyticFunction struct {
 	Name           string
 	Distinct       Token
 	Args           []QueryExpression
-	IgnoreNulls    bool
-	IgnoreNullsLit string
-	Over           string
+	IgnoreType     Token
 	AnalyticClause AnalyticClause
 }
 
 func (e AnalyticFunction) String() string {
 	option := make([]string, 0)
 	if !e.Distinct.IsEmpty() {
-		option = append(option, e.Distinct.Literal)
+		option = append(option, e.Distinct.String())
 	}
 	if e.Args != nil {
 		option = append(option, listQueryExpressions(e.Args))
 	}
-	if e.IgnoreNulls {
-		option = append(option, e.IgnoreNullsLit)
+	if !e.IgnoreType.IsEmpty() {
+		option = append(option, keyword(IGNORE), e.IgnoreType.String())
 	}
 
 	s := []string{
-		e.Name + "(" + joinWithSpace(option) + ")",
-		e.Over,
+		strings.ToUpper(e.Name) + "(" + joinWithSpace(option) + ")",
+		keyword(OVER),
 		"(" + e.AnalyticClause.String() + ")",
 	}
 	return joinWithSpace(s)
@@ -1074,6 +1045,10 @@ func (e AnalyticFunction) String() string {
 
 func (e AnalyticFunction) IsDistinct() bool {
 	return !e.Distinct.IsEmpty()
+}
+
+func (e AnalyticFunction) IgnoreNulls() bool {
+	return e.IgnoreType.Token == NULLS
 }
 
 type AnalyticClause struct {
@@ -1106,44 +1081,47 @@ func (e AnalyticClause) PartitionValues() []QueryExpression {
 
 type PartitionClause struct {
 	*BaseExpr
-	PartitionBy string
-	Values      []QueryExpression
+	Values []QueryExpression
 }
 
 func (e PartitionClause) String() string {
-	s := []string{e.PartitionBy, listQueryExpressions(e.Values)}
+	s := []string{keyword(PARTITION), keyword(BY), listQueryExpressions(e.Values)}
 	return joinWithSpace(s)
 }
 
 type WindowingClause struct {
 	*BaseExpr
-	Rows      string
 	FrameLow  QueryExpression
 	FrameHigh QueryExpression
-	Between   string
-	And       string
 }
 
 func (e WindowingClause) String() string {
-	s := []string{e.Rows}
+	s := []string{keyword(ROWS)}
 	if e.FrameHigh == nil {
 		s = append(s, e.FrameLow.String())
 	} else {
-		s = append(s, e.Between, e.FrameLow.String(), e.And, e.FrameHigh.String())
+		s = append(s, keyword(BETWEEN), e.FrameLow.String(), keyword(AND), e.FrameHigh.String())
 	}
 	return joinWithSpace(s)
 }
 
 type WindowFramePosition struct {
 	*BaseExpr
-	Direction int
-	Unbounded bool
+	Direction Token
+	Unbounded Token
 	Offset    int
-	Literal   string
 }
 
 func (e WindowFramePosition) String() string {
-	return e.Literal
+	s := make([]string, 0, 2)
+	if e.Direction.Token == CURRENT {
+		s = append(s, keyword(CURRENT), keyword(ROW))
+	} else if !e.Unbounded.IsEmpty() {
+		s = append(s, e.Unbounded.String(), e.Direction.String())
+	} else {
+		s = append(s, strconv.Itoa(e.Offset), e.Direction.String())
+	}
+	return joinWithSpace(s)
 }
 
 type Variable struct {
@@ -1202,7 +1180,7 @@ type RuntimeInformation struct {
 }
 
 func (e RuntimeInformation) String() string {
-	return string(VariableSign) + string(RuntimeInformationSign) + e.Name
+	return string(VariableSign) + string(RuntimeInformationSign) + strings.ToUpper(e.Name)
 }
 
 type Flag struct {
@@ -1211,7 +1189,7 @@ type Flag struct {
 }
 
 func (e Flag) String() string {
-	return string(VariableSign) + string(VariableSign) + e.Name
+	return string(VariableSign) + string(VariableSign) + strings.ToUpper(e.Name)
 }
 
 type SetEnvVar struct {
@@ -1507,32 +1485,31 @@ type FetchPosition struct {
 
 type CursorStatus struct {
 	*BaseExpr
-	CursorLit string
-	Cursor    Identifier
-	Is        string
-	Negation  Token
-	Type      int
-	TypeLit   string
+	Cursor   Identifier
+	Negation Token
+	Type     Token
 }
 
 func (e CursorStatus) String() string {
-	s := []string{e.CursorLit, e.Cursor.String(), e.Is}
+	s := []string{keyword(CURSOR), e.Cursor.String(), keyword(IS)}
 	if !e.Negation.IsEmpty() {
-		s = append(s, e.Negation.Literal)
+		s = append(s, e.Negation.String())
 	}
-	s = append(s, e.TypeLit)
+	if e.Type.Token == RANGE {
+		s = append(s, keyword(IN))
+	}
+	s = append(s, e.Type.String())
 	return joinWithSpace(s)
 }
 
 type CursorAttrebute struct {
 	*BaseExpr
-	CursorLit string
 	Cursor    Identifier
 	Attrebute Token
 }
 
 func (e CursorAttrebute) String() string {
-	s := []string{e.CursorLit, e.Cursor.String(), e.Attrebute.Literal}
+	s := []string{keyword(CURSOR), e.Cursor.String(), e.Attrebute.String()}
 	return joinWithSpace(s)
 }
 
@@ -1612,4 +1589,9 @@ func listQueryExpressions(exprs []QueryExpression) string {
 		s[i] = v.String()
 	}
 	return strings.Join(s, ", ")
+}
+
+func keyword(token int) string {
+	s, _ := KeywordLiteral(token)
+	return s
 }

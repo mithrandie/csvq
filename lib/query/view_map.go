@@ -33,6 +33,10 @@ func (m ViewMap) Store(fpath string, view *View) {
 	m.store(strings.ToUpper(fpath), view)
 }
 
+func (m ViewMap) LoadDirect(name string) (interface{}, bool) {
+	return m.load(strings.ToUpper(name))
+}
+
 func (m ViewMap) Load(fpath string) (*View, bool) {
 	if v, ok := m.load(strings.ToUpper(fpath)); ok {
 		return v.(*View), true
@@ -87,7 +91,7 @@ func (m ViewMap) Set(view *View) {
 func (m ViewMap) DisposeTemporaryTable(table parser.QueryExpression) bool {
 	var tableName string
 	if e, ok := table.(parser.Stdin); ok {
-		tableName = e.Stdin
+		tableName = e.String()
 	} else {
 		tableName = table.(parser.Identifier).Literal
 	}

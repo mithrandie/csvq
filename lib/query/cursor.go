@@ -34,6 +34,10 @@ func (m CursorMap) Store(name string, val *Cursor) {
 	m.store(strings.ToUpper(name), val)
 }
 
+func (m CursorMap) LoadDirect(name string) (interface{}, bool) {
+	return m.load(strings.ToUpper(name))
+}
+
 func (m CursorMap) Load(name string) (*Cursor, bool) {
 	if v, ok := m.load(strings.ToUpper(name)); ok {
 		return v.(*Cursor), true
