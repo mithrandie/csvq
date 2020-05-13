@@ -120,6 +120,16 @@ func (e Option) Format(p *color.Palette) string {
 	return "[" + strings.Join(l, " ") + "]"
 }
 
+type FollowingContinuousOption []Element
+
+func (e FollowingContinuousOption) Format(p *color.Palette) string {
+	l := make([]string, 0, len(e))
+	for _, v := range e {
+		l = append(l, v.Format(p))
+	}
+	return " [, " + strings.Join(l, " ") + " ...]"
+}
+
 type ContinuousOption []Element
 
 func (e ContinuousOption) Format(p *color.Palette) string {

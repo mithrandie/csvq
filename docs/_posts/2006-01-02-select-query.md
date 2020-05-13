@@ -94,7 +94,7 @@ _alias_
 {: #from_clause}
 
 ```sql
-FROM table [, table ...]
+FROM table [, joinable_table ...]
 ```
 
 If multiple tables have been enumerated, tables are joined using cross join.
@@ -108,25 +108,37 @@ table
   | table_entity AS alias
   | join
   | DUAL
+  | laterable_table
   | (table)
+
+joinable_table
+  : table
+  | LATERAL laterable_table
 
 table_entity
   : table_identifier
   | table_object
   | json_inline_table
-  | (select_query)
 
 table_identifier
   : table_name
   | STDIN
 
+laterable_table
+  : subquery
+  | subquery alias
+  | subquery AS alias
+
+subquery
+  : (select_query)
+
 join
-  : table CROSS JOIN table
-  | table [INNER] JOIN table join_condition
-  | table {LEFT|RIGHT} [OUTER] JOIN table join_condition
-  | table FULL [OUTER] JOIN table ON condition
-  | table NATURAL [INNER] JOIN table
-  | table NATURAL {LEFT|RIGHT} [OUTER] JOIN table
+  : table CROSS JOIN joinable_table
+  | table [INNER] JOIN joinable_table join_condition
+  | table {LEFT|RIGHT} [OUTER] JOIN joinable_table join_condition
+  | table FULL [OUTER] JOIN joinable_table ON condition
+  | table NATURAL [INNER] JOIN joinable_table
+  | table NATURAL {LEFT|RIGHT} [OUTER] JOIN joinable_table
 
 join_condition
   : ON condition

@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/ternary"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -53,11 +55,22 @@ func TestBaseExpr_HasParseInfo(t *testing.T) {
 	if !expr.HasParseInfo() {
 		t.Errorf("has parse info = %t, want %t for %#v", expr.HasParseInfo(), true, expr)
 	}
+
+	queryExpr := NewNullValue()
+	if queryExpr.HasParseInfo() {
+		t.Errorf("has parse info = %t, want %t for %#v", expr.HasParseInfo(), false, queryExpr)
+	}
 }
 
 func TestPrimitiveType_String(t *testing.T) {
 	e := NewTernaryValueFromString("true")
 	expect := "TRUE"
+	if e.String() != expect {
+		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
+	}
+
+	e = NewTernaryValue(ternary.FALSE)
+	expect = "FALSE"
 	if e.String() != expect {
 		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
 	}
@@ -269,7 +282,9 @@ func TestSelectQuery_String(t *testing.T) {
 				Fields: []QueryExpression{Field{Object: Identifier{Literal: "column"}}},
 			},
 			FromClause: FromClause{
-				Tables: []QueryExpression{Table{Object: Identifier{Literal: "table"}}},
+				Tables: []QueryExpression{
+					Table{Object: Identifier{Literal: "table"}},
+				},
 			},
 		},
 		OrderByClause: OrderByClause{
@@ -327,7 +342,9 @@ func TestSelectEntity_String(t *testing.T) {
 			},
 		},
 		FromClause: FromClause{
-			Tables: []QueryExpression{Table{Object: Identifier{Literal: "table"}}},
+			Tables: []QueryExpression{
+				Table{Object: Identifier{Literal: "table"}},
+			},
 		},
 		WhereClause: WhereClause{
 			Filter: Comparison{
@@ -650,9 +667,7 @@ func TestSubquery_String(t *testing.T) {
 					},
 				},
 				FromClause: FromClause{
-					Tables: []QueryExpression{
-						Dual{},
-					},
+					Tables: []QueryExpression{Dual{}},
 				},
 			},
 		},
@@ -821,9 +836,7 @@ func TestAll_String(t *testing.T) {
 						},
 					},
 					FromClause: FromClause{
-						Tables: []QueryExpression{
-							Dual{},
-						},
+						Tables: []QueryExpression{Dual{}},
 					},
 				},
 			},
@@ -855,9 +868,7 @@ func TestAny_String(t *testing.T) {
 						},
 					},
 					FromClause: FromClause{
-						Tables: []QueryExpression{
-							Dual{},
-						},
+						Tables: []QueryExpression{Dual{}},
 					},
 				},
 			},
@@ -904,9 +915,7 @@ func TestExists_String(t *testing.T) {
 						},
 					},
 					FromClause: FromClause{
-						Tables: []QueryExpression{
-							Dual{},
-						},
+						Tables: []QueryExpression{Dual{}},
 					},
 				},
 			},
@@ -1084,6 +1093,15 @@ func TestTable_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
+
+	e = Table{
+		Lateral: Token{Token: LATERAL, Literal: "lateral"},
+		Object:  Identifier{Literal: "table"},
+	}
+	expect = "LATERAL table"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
 }
 
 func TestTable_Name(t *testing.T) {
@@ -1123,9 +1141,7 @@ func TestTable_Name(t *testing.T) {
 						},
 					},
 					FromClause: FromClause{
-						Tables: []QueryExpression{
-							Dual{},
-						},
+						Tables: []QueryExpression{Dual{}},
 					},
 				},
 			},

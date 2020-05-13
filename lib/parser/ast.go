@@ -144,8 +144,6 @@ func NewNullValue() PrimitiveType {
 func (e PrimitiveType) String() string {
 	if 0 < len(e.Literal) {
 		switch e.Value.(type) {
-		case *value.Ternary, *value.Null:
-			return e.Value.String()
 		case *value.String, *value.Datetime:
 			return cmd.QuoteString(e.Literal)
 		default:
@@ -523,8 +521,8 @@ type Subquery struct {
 	Query SelectQuery
 }
 
-func (sq Subquery) String() string {
-	return putParentheses(sq.Query.String())
+func (e Subquery) String() string {
+	return putParentheses(e.Query.String())
 }
 
 type TableObject struct {
@@ -792,18 +790,23 @@ func (e AggregateFunction) IsDistinct() bool {
 
 type Table struct {
 	*BaseExpr
-	Object QueryExpression
-	As     Token
-	Alias  QueryExpression
+	Lateral Token
+	Object  QueryExpression
+	As      Token
+	Alias   QueryExpression
 }
 
-func (t Table) String() string {
-	s := []string{t.Object.String()}
-	if !t.As.IsEmpty() {
-		s = append(s, t.As.String())
+func (e Table) String() string {
+	s := make([]string, 0, 4)
+	if !e.Lateral.IsEmpty() {
+		s = append(s, e.Lateral.String())
 	}
-	if t.Alias != nil {
-		s = append(s, t.Alias.String())
+	s = append(s, e.Object.String())
+	if !e.As.IsEmpty() {
+		s = append(s, e.As.String())
+	}
+	if e.Alias != nil {
+		s = append(s, e.Alias.String())
 	}
 	return joinWithSpace(s)
 }
