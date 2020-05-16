@@ -808,23 +808,35 @@ func (t Table) String() string {
 	return joinWithSpace(s)
 }
 
+func tableName(expr QueryExpression) Identifier {
+	switch expr.(type) {
+	case Identifier:
+		file, _ := expr.(Identifier)
+		return Identifier{
+			BaseExpr: file.BaseExpr,
+			Literal:  FormatTableName(file.Literal),
+		}
+	case TableObject:
+		obj, _ := expr.(TableObject)
+		return tableName(obj.Path)
+	case JsonQuery, Subquery:
+		return Identifier{
+			BaseExpr: expr.GetBaseExpr(),
+		}
+	default:
+		return Identifier{
+			BaseExpr: expr.GetBaseExpr(),
+			Literal:  expr.String(),
+		}
+	}
+}
+
 func (t Table) Name() Identifier {
 	if t.Alias != nil {
 		return t.Alias.(Identifier)
 	}
 
-	if file, ok := t.Object.(Identifier); ok {
-		return Identifier{
-			BaseExpr: file.BaseExpr,
-			Literal:  FormatTableName(file.Literal),
-		}
-	}
-
-	return Identifier{
-		BaseExpr: t.Object.GetBaseExpr(),
-		Literal:  t.Object.String(),
-	}
-
+	return tableName(t.Object)
 }
 
 type Join struct {

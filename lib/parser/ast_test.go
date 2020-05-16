@@ -1106,6 +1106,14 @@ func TestTable_Name(t *testing.T) {
 	}
 
 	e = Table{
+		Object: Stdin{},
+	}
+	expect = Identifier{Literal: "STDIN"}
+	if !reflect.DeepEqual(e.Name(), expect) {
+		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
+	}
+
+	e = Table{
 		Object: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
@@ -1123,7 +1131,20 @@ func TestTable_Name(t *testing.T) {
 			},
 		},
 	}
-	expect = Identifier{Literal: "(SELECT 1 FROM DUAL)"}
+	expect = Identifier{}
+	if !reflect.DeepEqual(e.Name(), expect) {
+		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
+	}
+
+	e = Table{
+		Object: TableObject{
+			Type:          Token{Token: FIXED, Literal: "fixed"},
+			FormatElement: NewStringValue("[1, 2, 3]"),
+			Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
+			Args:          nil,
+		},
+	}
+	expect = Identifier{Literal: "fixed_length"}
 	if !reflect.DeepEqual(e.Name(), expect) {
 		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}

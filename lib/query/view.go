@@ -119,6 +119,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 	}
 
 	table := tableExpr.(parser.Table)
+	tableName := table.Name()
 
 	switch table.Object.(type) {
 	case parser.Dual:
@@ -408,11 +409,13 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 	case parser.JsonQuery:
-		jsonQuery := table.Object.(parser.JsonQuery)
-		alias := table.Name().Literal
-		if table.Alias == nil {
-			alias = ""
+		if 0 < len(tableName.Literal) {
+			if err := scope.AddAlias(tableName, ""); err != nil {
+				return nil, err
+			}
 		}
+
+		jsonQuery := table.Object.(parser.JsonQuery)
 
 		queryValue, err := Evaluate(ctx, scope, jsonQuery.Query)
 		if err != nil {
@@ -458,7 +461,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 		fileInfo := &FileInfo{
-			Path:      alias,
+			Path:      tableName.Literal,
 			Format:    cmd.JSON,
 			JsonQuery: jqStr,
 			Encoding:  text.UTF8,
@@ -474,18 +477,19 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			return nil, err
 		}
 	case parser.Subquery:
+		if 0 < len(tableName.Literal) {
+			if err := scope.AddAlias(tableName, ""); err != nil {
+				return nil, err
+			}
+		}
+
 		subquery := table.Object.(parser.Subquery)
 		view, err = Select(ctx, scope, subquery.Query)
 		if err != nil {
 			return nil, err
 		}
 
-		tableName := ""
-		if table.Alias != nil {
-			tableName = table.Alias.(parser.Identifier).Literal
-		}
-
-		if err = view.Header.Update(tableName, nil); err != nil {
+		if err = view.Header.Update(tableName.Literal, nil); err != nil {
 			return nil, err
 		}
 	}

@@ -2032,7 +2032,13 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"JT": "",
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "LoadView Json Table Query Evaluation Error",
@@ -2143,7 +2149,13 @@ var viewLoadTests = []struct {
 				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"JT": "",
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "LoadView Json Table From File Path Error",
@@ -2203,7 +2215,13 @@ var viewLoadTests = []struct {
 				}),
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"ALIAS": "",
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "LoadView Subquery Duplicate Table Name Error",
