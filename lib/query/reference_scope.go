@@ -671,6 +671,10 @@ func (rs *ReferenceScope) GetInlineTable(name parser.Identifier) (*View, error) 
 	return nil, NewUndefinedInLineTableError(name)
 }
 
+func (rs *ReferenceScope) StoreInlineTable(name parser.Identifier, view *View) error {
+	return rs.nodes[0].inlineTables.Store(name, view)
+}
+
 func (rs *ReferenceScope) InlineTableExists(name parser.Identifier) bool {
 	for i := range rs.nodes {
 		if rs.nodes[i].inlineTables.Exists(name) {

@@ -31,6 +31,14 @@ import (
 const fileLoadingPreparedRecordSetCap = 300
 const fileLoadingBuffer = 300
 
+const ApplyViewContextKey = "apply_view"
+const ApplyViewName = "@__apply__view__"
+
+type ApplyView struct {
+	View     *View
+	JoinExpr parser.Join
+}
+
 type RecordReader interface {
 	Read() ([]text.RawText, error)
 }
@@ -59,13 +67,6 @@ func NewView() *View {
 	return &View{}
 }
 
-func getTableName(texpr parser.QueryExpression) parser.Identifier {
-	if p, ok := texpr.(parser.Parentheses); ok {
-		return getTableName(p)
-	}
-	return texpr.(parser.Table).Name()
-}
-
 func LoadView(ctx context.Context, scope *ReferenceScope, tables []parser.QueryExpression, forUpdate bool, useInternalId bool) (*View, error) {
 	if tables == nil {
 		var obj parser.QueryExpression
@@ -77,32 +78,34 @@ func LoadView(ctx context.Context, scope *ReferenceScope, tables []parser.QueryE
 		tables = []parser.QueryExpression{parser.Table{Object: obj}}
 	}
 
-	views := make([]*View, len(tables))
-	tableNames := make(map[string]bool, len(tables))
-	for i, v := range tables {
-		loaded, err := loadView(ctx, scope, v, forUpdate, useInternalId)
-		if err != nil {
-			return nil, err
-		}
-		if 0 < loaded.FieldLen() && 0 < len(loaded.Header[0].View) {
-			ulit := strings.ToUpper(loaded.Header[0].View)
-			if _, ok := tableNames[ulit]; ok {
-				return nil, NewDuplicateTableNameError(getTableName(v))
-			}
-			tableNames[ulit] = true
-		}
-		views[i] = loaded
-	}
+	table := tables[0]
 
-	view := views[0]
+	applyView := ctx.Value(ApplyViewContextKey)
+	if applyView != nil {
+		appview := applyView.(ApplyView)
 
-	for i := 1; i < len(views); i++ {
-		if err := CrossJoin(ctx, scope, view, views[i]); err != nil {
+		join := appview.JoinExpr
+		join.Table = parser.Table{Object: parser.Identifier{Literal: ApplyViewName}}
+		join.JoinTable = table
+		table = parser.Table{Object: join}
+
+		if err := scope.StoreInlineTable(parser.Identifier{Literal: ApplyViewName}, appview.View); err != nil {
 			return nil, err
 		}
 	}
 
-	return view, nil
+	for i := 1; i < len(tables); i++ {
+		table = parser.Table{
+			Object: parser.Join{
+				Table:     table,
+				JoinTable: tables[i],
+				JoinType:  parser.Token{Token: parser.CROSS},
+			},
+		}
+	}
+
+	view, err := loadView(ctx, scope, table, forUpdate, useInternalId)
+	return view, err
 }
 
 func LoadViewFromTableIdentifier(ctx context.Context, scope *ReferenceScope, table parser.QueryExpression, forUpdate bool, useInternalId bool) (*View, error) {
@@ -119,6 +122,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 	}
 
 	table := tableExpr.(parser.Table)
+	tableName := table.Name()
 
 	switch table.Object.(type) {
 	case parser.Dual:
@@ -282,7 +286,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			ctx,
 			scope,
 			table.Object.(parser.TableObject).Path,
-			table.Name(),
+			tableName,
 			forUpdate,
 			useInternalId,
 			importFormat,
@@ -306,7 +310,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			ctx,
 			scope,
 			table.Object,
-			table.Name(),
+			tableName,
 			forUpdate,
 			useInternalId,
 			cmd.AutoSelect,
@@ -330,89 +334,74 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		if err != nil {
 			return nil, err
 		}
-		joinView, err := loadView(ctx, scope, join.JoinTable, forUpdate, useInternalId)
-		if err != nil {
-			return nil, err
-		}
 
-		condition, includeFields, excludeFields, err := ParseJoinCondition(join, view, joinView)
-		if err != nil {
-			return nil, err
-		}
+		if t, ok := join.JoinTable.(parser.Table); ok && !t.Lateral.IsEmpty() {
+			var hfields Header
+			subquery := t.Object.(parser.Subquery)
+			resultSetList := make([]RecordSet, view.RecordLen())
 
-		joinType := join.JoinType.Token
-		if join.JoinType.IsEmpty() {
-			if join.Direction.IsEmpty() {
-				joinType = parser.INNER
-			} else {
-				joinType = parser.OUTER
-			}
-		}
-
-		switch joinType {
-		case parser.CROSS:
-			if err = CrossJoin(ctx, scope, view, joinView); err != nil {
-				return nil, err
-			}
-		case parser.INNER:
-			if err = InnerJoin(ctx, scope, view, joinView, condition); err != nil {
-				return nil, err
-			}
-		case parser.OUTER:
-			if err = OuterJoin(ctx, scope, view, joinView, condition, join.Direction.Token); err != nil {
-				return nil, err
-			}
-		}
-
-		includeIndices := NewUintPool(len(includeFields), LimitToUseUintSlicePool)
-		excludeIndices := NewUintPool(view.FieldLen()-len(includeFields), LimitToUseUintSlicePool)
-		if includeFields != nil {
-			for i := range includeFields {
-				idx, _ := view.Header.SearchIndex(includeFields[i])
-				includeIndices.Add(uint(idx))
-
-				idx, _ = view.Header.SearchIndex(excludeFields[i])
-				excludeIndices.Add(uint(idx))
+			applyViewHeader := view.Header.Copy()
+			for i := range applyViewHeader {
+				applyViewHeader[i].IsFromTable = false
 			}
 
-			fieldIndices := make([]int, 0, view.FieldLen()-excludeIndices.Len())
-			header := make(Header, 0, view.FieldLen()-excludeIndices.Len())
-			_ = includeIndices.Range(func(_ int, fidx uint) error {
-				view.Header[fidx].View = ""
-				view.Header[fidx].Number = 0
-				view.Header[fidx].IsJoinColumn = true
-				header = append(header, view.Header[fidx])
-				fieldIndices = append(fieldIndices, int(fidx))
-				return nil
-			})
-			for i := range view.Header {
-				if excludeIndices.Exists(uint(i)) || includeIndices.Exists(uint(i)) {
-					continue
+			if err := NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
+				tmpView := NewView()
+				tmpView.Header = applyViewHeader.Copy()
+				tmpView.RecordSet = RecordSet{view.RecordSet[index].Copy()}
+
+				applyView := ApplyView{
+					View:     tmpView,
+					JoinExpr: join,
 				}
-				header = append(header, view.Header[i])
-				fieldIndices = append(fieldIndices, i)
-			}
-			view.Header = header
-			fieldLen := len(fieldIndices)
 
-			if err = NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
-				record := make(Record, fieldLen)
-				for i, idx := range fieldIndices {
-					record[i] = view.RecordSet[index][idx]
+				appliedView, err := Select(context.WithValue(ctx, ApplyViewContextKey, applyView), scope, subquery.Query)
+				if err != nil {
+					return err
 				}
-				view.RecordSet[index] = record
+
+				calcView := NewView()
+				calcView.Header = view.Header.Copy()
+				calcView.RecordSet = RecordSet{view.RecordSet[index].Copy()}
+				if err = joinViews(ctx, scope, calcView, appliedView, join); err != nil {
+					return err
+				}
+				if index == 0 {
+					hfields = calcView.Header
+				}
+				resultSetList[index] = calcView.RecordSet
 				return nil
 			}); err != nil {
+				return nil, err
+			}
+
+			resultSet := make(RecordSet, 0, view.RecordLen())
+			for i := range resultSetList {
+				resultSet = append(resultSet, resultSetList[i]...)
+			}
+
+			view.Header = hfields
+			view.RecordSet = resultSet
+
+		} else {
+			joinView, err := loadView(ctx, scope, join.JoinTable, forUpdate, useInternalId)
+			if err != nil {
+				return nil, err
+			}
+
+			if err = joinViews(ctx, scope, view, joinView, join); err != nil {
 				return nil, err
 			}
 		}
 
 	case parser.JsonQuery:
-		jsonQuery := table.Object.(parser.JsonQuery)
-		alias := table.Name().Literal
-		if table.Alias == nil {
-			alias = ""
+		if 0 < len(tableName.Literal) {
+			if err := scope.AddAlias(tableName, ""); err != nil {
+				return nil, err
+			}
 		}
+
+		jsonQuery := table.Object.(parser.JsonQuery)
 
 		queryValue, err := Evaluate(ctx, scope, jsonQuery.Query)
 		if err != nil {
@@ -458,7 +447,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 		fileInfo := &FileInfo{
-			Path:      alias,
+			Path:      tableName.Literal,
 			Format:    cmd.JSON,
 			JsonQuery: jqStr,
 			Encoding:  text.UTF8,
@@ -473,24 +462,102 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 			return nil, err
 		}
+
 	case parser.Subquery:
+		if 0 < len(tableName.Literal) {
+			if err := scope.AddAlias(tableName, ""); err != nil {
+				return nil, err
+			}
+		}
+
 		subquery := table.Object.(parser.Subquery)
 		view, err = Select(ctx, scope, subquery.Query)
 		if err != nil {
 			return nil, err
 		}
 
-		tableName := ""
-		if table.Alias != nil {
-			tableName = table.Alias.(parser.Identifier).Literal
-		}
-
-		if err = view.Header.Update(tableName, nil); err != nil {
+		if err = view.Header.Update(tableName.Literal, nil); err != nil {
 			return nil, err
 		}
 	}
 
 	return view, err
+}
+
+func joinViews(ctx context.Context, scope *ReferenceScope, view *View, joinView *View, join parser.Join) error {
+	condition, includeFields, excludeFields, err := ParseJoinCondition(join, view, joinView)
+	if err != nil {
+		return err
+	}
+
+	joinType := join.JoinType.Token
+	if join.JoinType.IsEmpty() {
+		if join.Direction.IsEmpty() {
+			joinType = parser.INNER
+		} else {
+			joinType = parser.OUTER
+		}
+	}
+
+	switch joinType {
+	case parser.CROSS:
+		if err = CrossJoin(ctx, scope, view, joinView); err != nil {
+			return err
+		}
+	case parser.INNER:
+		if err = InnerJoin(ctx, scope, view, joinView, condition); err != nil {
+			return err
+		}
+	case parser.OUTER:
+		if err = OuterJoin(ctx, scope, view, joinView, condition, join.Direction.Token); err != nil {
+			return err
+		}
+	}
+
+	includeIndices := NewUintPool(len(includeFields), LimitToUseUintSlicePool)
+	excludeIndices := NewUintPool(view.FieldLen()-len(includeFields), LimitToUseUintSlicePool)
+	if includeFields != nil {
+		for i := range includeFields {
+			idx, _ := view.Header.SearchIndex(includeFields[i])
+			includeIndices.Add(uint(idx))
+
+			idx, _ = view.Header.SearchIndex(excludeFields[i])
+			excludeIndices.Add(uint(idx))
+		}
+
+		fieldIndices := make([]int, 0, view.FieldLen()-excludeIndices.Len())
+		header := make(Header, 0, view.FieldLen()-excludeIndices.Len())
+		_ = includeIndices.Range(func(_ int, fidx uint) error {
+			view.Header[fidx].View = ""
+			view.Header[fidx].Number = 0
+			view.Header[fidx].IsJoinColumn = true
+			header = append(header, view.Header[fidx])
+			fieldIndices = append(fieldIndices, int(fidx))
+			return nil
+		})
+		for i := range view.Header {
+			if excludeIndices.Exists(uint(i)) || includeIndices.Exists(uint(i)) {
+				continue
+			}
+			header = append(header, view.Header[i])
+			fieldIndices = append(fieldIndices, i)
+		}
+		view.Header = header
+		fieldLen := len(fieldIndices)
+
+		if err = NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
+			record := make(Record, fieldLen)
+			for i, idx := range fieldIndices {
+				record[i] = view.RecordSet[index][idx]
+			}
+			view.RecordSet[index] = record
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, stdin parser.Stdin, tableName parser.Identifier, forUpdate bool, useInternalId bool) (*View, error) {
@@ -533,17 +600,17 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 			return nil, err
 		}
 	}
+
+	if err = scope.AddAlias(tableName, view.FileInfo.Path); err != nil {
+		return nil, err
+	}
+
 	if !strings.EqualFold(stdin.String(), tableName.Literal) {
 		if err = view.Header.Update(tableName.Literal, nil); err != nil {
 			return nil, err
 		}
 	}
 
-	if forUpdate {
-		if err = scope.AddAlias(tableName, view.FileInfo.Path); err != nil {
-			return nil, err
-		}
-	}
 	return view, nil
 }
 
@@ -599,8 +666,12 @@ func loadObject(
 	}
 
 	if scope.InlineTableExists(tableIdentifier) {
+		if err := scope.AddAlias(tableName, ""); err != nil {
+			return nil, err
+		}
+
 		view, _ := scope.GetInlineTable(tableIdentifier)
-		if tableIdentifier.Literal != tableName.Literal {
+		if !strings.EqualFold(tableIdentifier.Literal, tableName.Literal) {
 			if err := view.Header.Update(tableName.Literal, nil); err != nil {
 				return nil, err
 			}
@@ -610,6 +681,10 @@ func loadObject(
 
 	filePath := tableIdentifier.Literal
 	if scope.TemporaryTableExists(filePath) {
+		if err := scope.AddAlias(tableName, filePath); err != nil {
+			return nil, err
+		}
+
 		var view *View
 		var err error
 		pathIdent := parser.Identifier{Literal: filePath}
@@ -619,12 +694,6 @@ func loadObject(
 			}
 		} else {
 			if view, err = scope.GetTemporaryTable(pathIdent); err != nil {
-				return nil, err
-			}
-		}
-
-		if forUpdate {
-			if err := scope.AddAlias(tableName, filePath); err != nil {
 				return nil, err
 			}
 		}
@@ -674,10 +743,8 @@ func loadObject(
 		}
 	}
 
-	if forUpdate {
-		if err = scope.AddAlias(tableName, filePath); err != nil {
-			return nil, err
-		}
+	if err = scope.AddAlias(tableName, filePath); err != nil {
+		return nil, err
 	}
 
 	if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {

@@ -16,6 +16,7 @@ import (
     expression  Expression
     expressions []Expression
     identifier  Identifier
+    table       Table
     variable    Variable
     variables   []Variable
     varassign   VariableAssignment
@@ -138,6 +139,8 @@ import (
 %type<queryexprs>  identified_tables
 %type<queryexprs>  updatable_tables
 %type<queryexpr>   virtual_table_object
+%type<table>       laterable_query_table
+%type<queryexprs>  joinable_tables
 %type<queryexpr>   table
 %type<queryexpr>   join
 %type<queryexpr>   join_condition
@@ -200,7 +203,7 @@ import (
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET PERCENT
-%token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
+%token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL LATERAL
 %token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
 %token<token> AND OR NOT BETWEEN LIKE IS NULL
@@ -2006,9 +2009,39 @@ virtual_table_object
     {
         $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1, Query: $3, JsonText: $5}
     }
-    | subquery
+
+laterable_query_table
+    : subquery
     {
-        $$ = $1
+        $$ = Table{Object: $1}
+    }
+    | subquery identifier
+    {
+        $$ = Table{Object: $1, Alias: $2}
+    }
+    | subquery AS identifier
+    {
+        $$ = Table{Object: $1, As: $2, Alias: $3}
+    }
+
+joinable_tables
+    : table
+    {
+        $$ = []QueryExpression{$1}
+    }
+    | LATERAL laterable_query_table
+    {
+        $2.Lateral = $1
+        $$ = []QueryExpression{$2}
+    }
+    | laterable_query_table ',' joinable_tables
+    {
+        $$ = append([]QueryExpression{$1}, $3...)
+    }
+    | LATERAL laterable_query_table ',' joinable_tables
+    {
+        $2.Lateral = $1
+        $$ = append([]QueryExpression{$2}, $4...)
     }
 
 table
@@ -2031,6 +2064,10 @@ table
     | DUAL
     {
         $$ = Table{Object: Dual{}}
+    }
+    | laterable_query_table
+    {
+        $$ = $1
     }
     | '(' table ')'
     {
@@ -2061,6 +2098,36 @@ join
     | table NATURAL join_outer_direction join_type_outer JOIN table
     {
         $$ = Join{Table: $1, JoinTable: $6, JoinType: $4, Direction: $3, Natural: $2}
+    }
+    | table CROSS JOIN LATERAL laterable_query_table
+    {
+        $5.Lateral = $4
+        $$ = Join{Table: $1, JoinTable: $5, JoinType: $2, Condition: nil}
+    }
+    | table join_type_inner JOIN LATERAL laterable_query_table join_condition
+    {
+        $5.Lateral = $4
+        $$ = Join{Table: $1, JoinTable: $5, JoinType: $2, Condition: $6}
+    }
+    | table join_outer_direction join_type_outer JOIN LATERAL laterable_query_table join_condition
+    {
+        $6.Lateral = $5
+        $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Direction: $2, Condition: $7}
+    }
+    | table FULL join_type_outer JOIN LATERAL laterable_query_table ON value
+    {
+        $6.Lateral = $5
+        $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Direction: $2, Condition: JoinCondition{On: $8}}
+    }
+    | table NATURAL join_type_inner JOIN LATERAL laterable_query_table
+    {
+        $6.Lateral = $5
+        $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Natural: $2}
+    }
+    | table NATURAL join_outer_direction join_type_outer JOIN LATERAL laterable_query_table
+    {
+        $7.Lateral = $6
+        $$ = Join{Table: $1, JoinTable: $7, JoinType: $4, Direction: $3, Natural: $2}
     }
 
 join_condition
@@ -2168,7 +2235,7 @@ tables
     {
         $$ = []QueryExpression{$1}
     }
-    | table ',' tables
+    | table ',' joinable_tables
     {
         $$ = append([]QueryExpression{$1}, $3...)
     }

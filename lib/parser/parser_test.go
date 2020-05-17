@@ -531,6 +531,35 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select 1 from table1, lateral (select 2 from dual)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						Tables: []QueryExpression{
+							Table{
+								Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"},
+							},
+							Table{
+								Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 23},
+								Object: Subquery{
+									BaseExpr: &BaseExpr{line: 1, char: 31},
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 32}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+											FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select 1 \r\n" +
 			" from dual \n" +
 			" where 1 = 1 \n" +
@@ -3352,6 +3381,40 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select 1 from table1 cross join lateral (select 2 from dual) as t",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						Tables: []QueryExpression{
+							Table{
+								Object: Join{
+									Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+									JoinTable: Table{
+										Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
+										Object: Subquery{
+											BaseExpr: &BaseExpr{line: 1, char: 41},
+											Query: SelectQuery{
+												SelectEntity: SelectEntity{
+													SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 42}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+													FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
+												},
+											},
+										},
+										As:    Token{Token: AS, Literal: "as", Line: 1, Char: 62},
+										Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 65}, Literal: "t"},
+									},
+									JoinType: Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select 1 from table1 cross join table2 cross join table3",
 		Output: []Statement{
 			SelectQuery{
@@ -3370,6 +3433,63 @@ var parseTests = []struct {
 									},
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 51}, Literal: "table3"}},
 									JoinType:  Token{Token: CROSS, Literal: "cross", Line: 1, Char: 40},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 cross join lateral (select 1) cross join lateral (select 1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						Tables: []QueryExpression{
+							Table{
+								Object: Join{
+									Table: Table{
+										Object: Join{
+											Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{
+												Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
+												Object: Subquery{
+													BaseExpr: &BaseExpr{line: 1, char: 41},
+													Query: SelectQuery{
+														SelectEntity: SelectEntity{
+															SelectClause: SelectClause{
+																BaseExpr: &BaseExpr{line: 1, char: 42},
+																Fields: []QueryExpression{
+																	Field{Object: NewIntegerValueFromString("1")},
+																},
+															},
+														},
+													},
+												},
+											},
+											JoinType: Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
+										},
+									},
+									JoinTable: Table{
+										Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 63},
+										Object: Subquery{
+											BaseExpr: &BaseExpr{line: 1, char: 71},
+											Query: SelectQuery{
+												SelectEntity: SelectEntity{
+													SelectClause: SelectClause{
+														BaseExpr: &BaseExpr{line: 1, char: 72},
+														Fields: []QueryExpression{
+															Field{Object: NewIntegerValueFromString("1")},
+														},
+													},
+												},
+											},
+										},
+									},
+									JoinType: Token{Token: CROSS, Literal: "cross", Line: 1, Char: 52},
 								},
 							},
 						},

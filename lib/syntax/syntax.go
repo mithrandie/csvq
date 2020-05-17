@@ -76,7 +76,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "from_clause",
 						Group: []Grammar{
-							{Keyword("FROM"), ContinuousOption{Link("table")}},
+							{Keyword("FROM"), Link("table"), FollowingContinuousOption{Link("joinable_table")}},
 						},
 					},
 					{
@@ -87,7 +87,15 @@ var CsvqSyntax = []Expression{
 							{Link("table_entity"), Keyword("AS"), Identifier("alias")},
 							{Link("join")},
 							{Keyword("DUAL")},
+							{Link("laterable_table")},
 							{Parentheses{Link("table")}},
+						},
+					},
+					{
+						Name: "joinable_table",
+						Group: []Grammar{
+							{Link("table")},
+							{Keyword("LATERAL"), Link("laterable_table")},
 						},
 					},
 					{
@@ -96,7 +104,6 @@ var CsvqSyntax = []Expression{
 							{Link("table_identifier")},
 							{Link("table_object")},
 							{Link("json_inline_table")},
-							{Parentheses{Link("select_query")}},
 						},
 					},
 					{
@@ -107,14 +114,28 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
+						Name: "laterable_table",
+						Group: []Grammar{
+							{Link("subquery")},
+							{Link("subquery"), Identifier("alias")},
+							{Link("subquery"), Keyword("AS"), Identifier("alias")},
+						},
+					},
+					{
+						Name: "subquery",
+						Group: []Grammar{
+							{Parentheses{Link("select_query")}},
+						},
+					},
+					{
 						Name: "join",
 						Group: []Grammar{
-							{Link("table"), Keyword("CROSS"), Keyword("JOIN"), Link("table")},
-							{Link("table"), Option{Keyword("INNER")}, Keyword("JOIN"), Link("table"), Link("join_condition")},
-							{Link("table"), AnyOne{Keyword("LEFT"), Keyword("RIGHT")}, Option{Keyword("OUTER")}, Keyword("JOIN"), Link("table"), Link("join_condition")},
-							{Link("table"), Keyword("FULL"), Option{Keyword("OUTER")}, Keyword("JOIN"), Link("table"), Keyword("ON"), Link("condition")},
-							{Link("table"), Keyword("NATURAL"), Option{Keyword("INNER")}, Keyword("JOIN"), Link("table")},
-							{Link("table"), Keyword("NATURAL"), AnyOne{Keyword("LEFT"), Keyword("RIGHT")}, Option{Keyword("OUTER")}, Keyword("JOIN"), Link("table")},
+							{Link("table"), Keyword("CROSS"), Keyword("JOIN"), Link("joinable_table")},
+							{Link("table"), Option{Keyword("INNER")}, Keyword("JOIN"), Link("joinable_table"), Link("join_condition")},
+							{Link("table"), AnyOne{Keyword("LEFT"), Keyword("RIGHT")}, Option{Keyword("OUTER")}, Keyword("JOIN"), Link("joinable_table"), Link("join_condition")},
+							{Link("table"), Keyword("FULL"), Option{Keyword("OUTER")}, Keyword("JOIN"), Link("joinable_table"), Keyword("ON"), Link("condition")},
+							{Link("table"), Keyword("NATURAL"), Option{Keyword("INNER")}, Keyword("JOIN"), Link("joinable_table")},
+							{Link("table"), Keyword("NATURAL"), AnyOne{Keyword("LEFT"), Keyword("RIGHT")}, Option{Keyword("OUTER")}, Keyword("JOIN"), Link("joinable_table")},
 						},
 					},
 					{
@@ -2889,7 +2910,7 @@ var CsvqSyntax = []Expression{
 						"DISTINCT DO DROP DUAL ECHO ELSE ELSEIF END EXCEPT EXECUTE EXISTS " +
 						"EXIT FALSE FETCH FIRST FIRST_VALUE FOLLOWING FOR FROM FULL FUNCTION " +
 						"GROUP HAVING IF IGNORE IN INNER INSERT INTERSECT INTO IS JOIN " +
-						"JSON_AGG JSON_OBJECT JSON_ROW JSON_TABLE LAG LAST LAST_VALUE LEAD " +
+						"JSON_AGG JSON_OBJECT JSON_ROW JSON_TABLE LAG LAST LAST_VALUE LATERAL LEAD " +
 						"LEFT LIKE LIMIT LISTAGG MAX MEDIAN MIN NATURAL NEXT NOT NTH_VALUE " +
 						"NTILE NULL OFFSET ON ONLY OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
 						"PERCENT_RANK PRECEDING PREPARE PRINT PRINTF PRIOR PWD RANGE RANK RECURSIVE " +

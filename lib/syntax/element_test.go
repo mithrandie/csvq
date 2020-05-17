@@ -55,6 +55,11 @@ var grammarFormatTests = []struct {
 		Expect:     "[" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str2")) + "]",
 	},
 	{
+		Grammar:    []Element{FollowingContinuousOption{String("str1"), String("str2")}},
+		UsePalette: false,
+		Expect:     " [, str1 str2 ...]",
+	},
+	{
 		Grammar:    []Element{ContinuousOption{String("str1"), String("str2")}},
 		UsePalette: false,
 		Expect:     "str1 str2 [, str1 str2 ...]",

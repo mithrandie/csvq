@@ -10,10 +10,6 @@ import (
 type InlineTableMap map[string]*View
 
 func (it InlineTableMap) Set(ctx context.Context, scope *ReferenceScope, inlineTable parser.InlineTable) error {
-	if it.Exists(inlineTable.Name) {
-		return NewInLineTableRedefinedError(inlineTable.Name)
-	}
-
 	scope = scope.CreateNode()
 	if inlineTable.IsRecursive() {
 		if scope.RecursiveTable != nil {
@@ -38,15 +34,22 @@ func (it InlineTableMap) Set(ctx context.Context, scope *ReferenceScope, inlineT
 	}
 
 	view.FileInfo = nil
-	it[strings.ToUpper(inlineTable.Name.Literal)] = view
-
-	return nil
+	return it.Store(inlineTable.Name, view)
 }
 
 func (it InlineTableMap) Exists(name parser.Identifier) bool {
 	uname := strings.ToUpper(name.Literal)
 	_, ok := it[uname]
 	return ok
+}
+
+func (it InlineTableMap) Store(name parser.Identifier, view *View) error {
+	if it.Exists(name) {
+		return NewInLineTableRedefinedError(name)
+	}
+	uname := strings.ToUpper(name.Literal)
+	it[uname] = view
+	return nil
 }
 
 func (it InlineTableMap) Get(name parser.Identifier) (*View, error) {
