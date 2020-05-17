@@ -81,7 +81,7 @@ const (
 	ErrMsgTemporaryTableFieldLength            = "select query should return exactly %s for view %s"
 	ErrMsgDuplicateTableName                   = "table name %s is a duplicate"
 	ErrMsgTableNotLoaded                       = "table %s is not loaded"
-	ErrMsgStdinEmpty                           = "stdin is empty"
+	ErrMsgStdinEmpty                           = "STDIN is empty"
 	ErrMsgRowValueLengthInComparison           = "row value should contain exactly %s"
 	ErrMsgFieldLengthInComparison              = "select query should return exactly %s"
 	ErrMsgInvalidLimitPercentage               = "limit percentage %s is not a float value"

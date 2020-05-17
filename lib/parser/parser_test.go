@@ -23,10 +23,10 @@ var parseTests = []struct {
 		Input: "select foo; select bar;",
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}}}},
+				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}}}},
 			}},
 			SelectQuery{SelectEntity: SelectEntity{
-				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 13}, Select: "select", Fields: []QueryExpression{Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 20}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "bar"}}}}},
+				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 13}, Fields: []QueryExpression{Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 20}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "bar"}}}}},
 			}},
 		},
 	},
@@ -35,10 +35,9 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}}}},
 				},
-				ForUpdate:        true,
-				ForUpdateLiteral: "for update",
+				Context: Token{Token: UPDATE, Literal: "update", Line: 1, Char: 16},
 			},
 		},
 	},
@@ -49,23 +48,23 @@ var parseTests = []struct {
 				SelectEntity: SelectSet{
 					LHS: SelectSet{
 						LHS: SelectEntity{
-							SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+							SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 						},
 						Operator: Token{Token: UNION, Literal: "union", Line: 1, Char: 10},
 						All:      Token{Token: ALL, Literal: "all", Line: 1, Char: 16},
 						RHS: SelectSet{
 							LHS: SelectEntity{
-								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 20}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 20}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
 							},
 							Operator: Token{Token: INTERSECT, Literal: "intersect", Line: 1, Char: 29},
 							RHS: SelectEntity{
-								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 39}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("3")}}},
+								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 39}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("3")}}},
 							},
 						},
 					},
 					Operator: Token{Token: EXCEPT, Literal: "except", Line: 1, Char: 48},
 					RHS: SelectEntity{
-						SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 55}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("4")}}},
+						SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 55}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("4")}}},
 					},
 				},
 			},
@@ -77,14 +76,14 @@ var parseTests = []struct {
 			SelectQuery{
 				SelectEntity: SelectSet{
 					LHS: SelectEntity{
-						SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+						SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					},
 					Operator: Token{Token: UNION, Literal: "union", Line: 1, Char: 10},
 					RHS: Subquery{
 						BaseExpr: &BaseExpr{line: 1, char: 16},
 						Query: SelectQuery{
 							SelectEntity: SelectEntity{
-								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 17}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 17}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
 							},
 						},
 					},
@@ -99,17 +98,16 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: NewIntegerValueFromString("1"),
-								As:     "as",
+								As:     Token{Token: AS, Literal: "as", Line: 1, Char: 10},
 								Alias:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "a"},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
-						Table{Object: Dual{Dual: "dual"}},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{Object: Dual{}},
 					}},
 				},
 			},
@@ -122,15 +120,14 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
-						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 16}, Stdin: "stdin"}},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 16}}},
 					}},
 				},
 			},
@@ -143,7 +140,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
@@ -151,13 +147,12 @@ var parseTests = []struct {
 						},
 					},
 					IntoClause: IntoClause{
-						Into: "into",
 						Variables: []Variable{
 							{BaseExpr: &BaseExpr{line: 1, char: 16}, Name: "var"},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
-						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 26}, Stdin: "stdin"}},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 26}}},
 					}},
 				},
 			},
@@ -170,7 +165,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
@@ -178,25 +172,22 @@ var parseTests = []struct {
 						},
 					},
 					IntoClause: IntoClause{
-						Into: "into",
 						Variables: []Variable{
 							{BaseExpr: &BaseExpr{line: 1, char: 16}, Name: "var"},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
-						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 26}, Stdin: "stdin"}},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 26}}},
 					}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 1, char: 32},
 					OffsetClause: OffsetClause{
 						BaseExpr: &BaseExpr{line: 1, char: 32},
-						Offset:   "offset",
 						Value:    NewIntegerValueFromString("1"),
 					},
 				},
-				ForUpdate:        true,
-				ForUpdateLiteral: "for update",
+				Context: Token{Token: UPDATE, Literal: "update", Line: 1, Char: 45},
 			},
 		},
 	},
@@ -207,18 +198,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: TableObject{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
-								Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "fixed"},
+								Type:          Token{Token: FIXED, Literal: "fixed", Line: 1, Char: 16},
 								FormatElement: NewStringValue("[1, 2, 3]"),
 								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "fixed_length.dat", Quoted: true},
 							},
@@ -236,21 +226,20 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: TableObject{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
-								Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "csv"},
+								Type:          Token{Token: CSV, Literal: "csv", Line: 1, Char: 16},
 								FormatElement: NewStringValue(","),
 								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "table.csv", Quoted: true},
-								Args:          []QueryExpression{NewStringValue("utf8"), NewNullValueFromString("null")},
+								Args:          []QueryExpression{NewStringValue("utf8"), NewNullValue()},
 							},
 						},
 					}},
@@ -265,22 +254,21 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: TableObject{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
-								Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "json"},
+								Type:          Token{Token: JSON, Literal: "json", Line: 1, Char: 16},
 								FormatElement: NewStringValue("{}"),
 								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table.txt", Quoted: true},
 							},
-							As:    "as",
+							As:    Token{Token: AS, Literal: "as", Line: 1, Char: 40},
 							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 43}, Literal: "t"},
 						},
 					}},
@@ -295,18 +283,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: TableObject{
 								BaseExpr: &BaseExpr{line: 1, char: 16},
-								Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "ltsv"},
+								Type:     Token{Token: LTSV, Literal: "ltsv", Line: 1, Char: 16},
 								Path:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "table.ltsv", Quoted: true},
 							},
 						},
@@ -322,18 +309,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: TableObject{
 								BaseExpr: &BaseExpr{line: 1, char: 16},
-								Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "ltsv"},
+								Type:     Token{Token: LTSV, Literal: "ltsv", Line: 1, Char: 16},
 								Path:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "table.ltsv", Quoted: true},
 								Args:     []QueryExpression{NewStringValue("utf8")},
 							},
@@ -350,19 +336,18 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: TableObject{
 								BaseExpr: &BaseExpr{line: 1, char: 16},
-								Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "ltsv"},
-								Path:     Stdin{BaseExpr: &BaseExpr{line: 1, char: 21}, Stdin: "stdin"},
+								Type:     Token{Token: LTSV, Literal: "ltsv", Line: 1, Char: 16},
+								Path:     Stdin{BaseExpr: &BaseExpr{line: 1, char: 21}},
 								Args:     []QueryExpression{NewStringValue("utf8")},
 							},
 						},
@@ -378,18 +363,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: JsonQuery{
 								BaseExpr:  &BaseExpr{line: 1, char: 16},
-								JsonQuery: "json_table",
+								JsonQuery: Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
 								Query:     NewStringValue("key"),
 								JsonText:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "table.json", Quoted: true},
 							},
@@ -406,18 +390,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: JsonQuery{
 								BaseExpr:  &BaseExpr{line: 1, char: 16},
-								JsonQuery: "json_table",
+								JsonQuery: Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
 								Query:     NewStringValue("key"),
 								JsonText:  NewStringValue("{\"key2\":1}"),
 							},
@@ -435,22 +418,21 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{
 								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
 							},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{
+					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
 							Object: JsonQuery{
 								BaseExpr:  &BaseExpr{line: 1, char: 16},
-								JsonQuery: "json_table",
+								JsonQuery: Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
 								Query:     NewStringValue("key"),
 								JsonText:  NewStringValue("{\"key2\":1}"),
 							},
-							As:    "as",
+							As:    Token{Token: AS, Literal: "as", Line: 1, Char: 48},
 							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 51}, Literal: "jt"},
 						},
 					}},
@@ -463,9 +445,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"},
@@ -475,8 +456,8 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 23},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 24}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
-											FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 24}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+											FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 										},
 									},
 								},
@@ -492,9 +473,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"},
@@ -505,8 +485,8 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 29},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 30}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
-											FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 30}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+											FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 										},
 									},
 								},
@@ -523,13 +503,12 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"},
-								As:     "as",
+								As:     Token{Token: AS, Literal: "as", Line: 1, Char: 22},
 								Alias:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "alias"},
 							},
 							Table{
@@ -537,13 +516,42 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 32},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 33}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
-											FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 33}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+											FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 										},
 									},
 								},
-								As:    "as",
+								As:    Token{Token: AS, Literal: "as", Line: 1, Char: 53},
 								Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 56}, Literal: "alias2"},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1, lateral (select 2 from dual)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						Tables: []QueryExpression{
+							Table{
+								Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"},
+							},
+							Table{
+								Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 23},
+								Object: Subquery{
+									BaseExpr: &BaseExpr{line: 1, char: 31},
+									Query: SelectQuery{
+										SelectEntity: SelectEntity{
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 32}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+											FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -568,44 +576,39 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 					WhereClause: WhereClause{
-						Where: "where",
 						Filter: Comparison{
 							LHS:      NewIntegerValueFromString("1"),
-							Operator: "=",
+							Operator: Token{Token: '=', Literal: "=", Line: 3, Char: 10},
 							RHS:      NewIntegerValueFromString("1"),
 						},
 					},
 					GroupByClause: GroupByClause{
-						GroupBy: "group by",
 						Items: []QueryExpression{
 							FieldReference{BaseExpr: &BaseExpr{line: 4, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 4, char: 11}, Literal: "column1"}},
 							FieldReference{BaseExpr: &BaseExpr{line: 4, char: 20}, Column: Identifier{BaseExpr: &BaseExpr{line: 4, char: 20}, Literal: "column2"}},
 						},
 					},
 					HavingClause: HavingClause{
-						Having: "having",
 						Filter: Comparison{
 							LHS:      NewIntegerValueFromString("1"),
-							Operator: ">",
+							Operator: Token{Token: COMPARISON_OP, Literal: ">", Line: 5, Char: 11},
 							RHS:      NewIntegerValueFromString("1"),
 						},
 					},
 				},
 				OrderByClause: OrderByClause{
-					OrderBy: "order by",
 					Items: []QueryExpression{
 						OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 6, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 6, char: 11}, Literal: "column4"}}},
 						OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 7, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 7, char: 11}, Literal: "column5"}}, Direction: Token{Token: DESC, Literal: "desc", Line: 7, Char: 19}},
 						OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 8, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 8, char: 11}, Literal: "column6"}}, Direction: Token{Token: ASC, Literal: "asc", Line: 8, Char: 19}},
-						OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 9, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 9, char: 11}, Literal: "column7"}}, Nulls: "nulls", Position: Token{Token: FIRST, Literal: "first", Line: 9, Char: 25}},
-						OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 10, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 10, char: 11}, Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc", Line: 10, Char: 19}, Nulls: "nulls", Position: Token{Token: LAST, Literal: "last", Line: 10, Char: 30}},
+						OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 9, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 9, char: 11}, Literal: "column7"}}, NullsPosition: Token{Token: FIRST, Literal: "first", Line: 9, Char: 25}},
+						OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 10, char: 11}, Column: Identifier{BaseExpr: &BaseExpr{line: 10, char: 11}, Literal: "column8"}}, Direction: Token{Token: DESC, Literal: "desc", Line: 10, Char: 19}, NullsPosition: Token{Token: LAST, Literal: "last", Line: 10, Char: 30}},
 						OrderItem{Value: AnalyticFunction{
 							BaseExpr: &BaseExpr{line: 11, char: 11},
 							Name:     "rank",
-							Over:     "over",
 							AnalyticClause: AnalyticClause{
 								PartitionClause: nil,
 								OrderByClause:   nil,
@@ -619,7 +622,6 @@ var parseTests = []struct {
 					Value:    NewIntegerValueFromString("10"),
 					OffsetClause: OffsetClause{
 						BaseExpr: &BaseExpr{line: 13, char: 2},
-						Offset:   "offset",
 						Value:    NewIntegerValueFromString("10"),
 					},
 				},
@@ -633,14 +635,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 3, char: 2},
 					OffsetClause: OffsetClause{
 						BaseExpr: &BaseExpr{line: 3, char: 2},
-						Offset:   "offset",
 						Value:    NewIntegerValueFromString("1"),
 						Unit:     Token{Token: ROW, Literal: "row", Line: 3, Char: 11},
 					},
@@ -655,14 +656,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 3, char: 2},
 					OffsetClause: OffsetClause{
 						BaseExpr: &BaseExpr{line: 3, char: 2},
-						Offset:   "offset",
 						Value:    NewIntegerValueFromString("2"),
 						Unit:     Token{Token: ROWS, Literal: "rows", Line: 3, Char: 11},
 					},
@@ -685,8 +685,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 3, char: 2},
@@ -704,8 +704,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 3, char: 2},
@@ -723,8 +723,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr: &BaseExpr{line: 3, char: 2},
@@ -742,14 +742,14 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr:    &BaseExpr{line: 3, char: 2},
 					Type:        Token{Token: LIMIT, Literal: "limit", Line: 3, Char: 2},
 					Value:       NewIntegerValueFromString("10"),
-					Restriction: Token{Token: TIES, Literal: "with ties", Line: 3, Char: 16},
+					Restriction: Token{Token: TIES, Literal: "ties", Line: 3, Char: 16},
 				},
 			},
 		},
@@ -761,15 +761,15 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr:    &BaseExpr{line: 3, char: 2},
 					Type:        Token{Token: LIMIT, Literal: "limit", Line: 3, Char: 2},
 					Value:       NewIntegerValueFromString("10"),
 					Unit:        Token{Token: ROWS, Literal: "rows", Line: 3, Char: 11},
-					Restriction: Token{Token: TIES, Literal: "with ties", Line: 3, Char: 21},
+					Restriction: Token{Token: TIES, Literal: "ties", Line: 3, Char: 21},
 				},
 			},
 		},
@@ -782,8 +782,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr:    &BaseExpr{line: 3, char: 2},
@@ -792,7 +792,6 @@ var parseTests = []struct {
 					Restriction: Token{Token: ONLY, Literal: "only", Line: 3, Char: 11},
 					OffsetClause: OffsetClause{
 						BaseExpr: &BaseExpr{line: 4, char: 2},
-						Offset:   "offset",
 						Value:    NewIntegerValueFromString("1"),
 					},
 				},
@@ -807,8 +806,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr:    &BaseExpr{line: 3, char: 2},
@@ -819,7 +818,6 @@ var parseTests = []struct {
 					Restriction: Token{Token: ONLY, Literal: "only", Line: 4, Char: 20},
 					OffsetClause: OffsetClause{
 						BaseExpr: &BaseExpr{line: 3, char: 2},
-						Offset:   "offset",
 						Value:    NewIntegerValueFromString("10"),
 						Unit:     Token{Token: ROWS, Literal: "rows", Line: 3, Char: 12},
 					},
@@ -835,8 +833,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr:    &BaseExpr{line: 3, char: 2},
@@ -844,10 +842,9 @@ var parseTests = []struct {
 					Position:    Token{Token: NEXT, Literal: "next", Line: 4, Char: 8},
 					Value:       NewIntegerValueFromString("1"),
 					Unit:        Token{Token: PERCENT, Literal: "percent", Line: 4, Char: 15},
-					Restriction: Token{Token: TIES, Literal: "with ties", Line: 4, Char: 28},
+					Restriction: Token{Token: TIES, Literal: "ties", Line: 4, Char: 28},
 					OffsetClause: OffsetClause{
 						BaseExpr: &BaseExpr{line: 3, char: 2},
-						Offset:   "offset",
 						Value:    NewIntegerValueFromString("1"),
 						Unit:     Token{Token: ROW, Literal: "row", Line: 3, Char: 11},
 					},
@@ -862,8 +859,8 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
-					FromClause:   FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 				LimitClause: LimitClause{
 					BaseExpr:    &BaseExpr{line: 3, char: 2},
@@ -871,7 +868,7 @@ var parseTests = []struct {
 					Position:    Token{Token: NEXT, Literal: "next", Line: 3, Char: 8},
 					Value:       NewIntegerValueFromString("1"),
 					Unit:        Token{Token: PERCENT, Literal: "percent", Line: 3, Char: 15},
-					Restriction: Token{Token: TIES, Literal: "with ties", Line: 3, Char: 28},
+					Restriction: Token{Token: TIES, Literal: "ties", Line: 3, Char: 28},
 				},
 			},
 		},
@@ -899,13 +896,12 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Distinct: Token{Token: DISTINCT, Literal: "distinct", Line: 1, Char: 8},
 						Fields: []QueryExpression{
 							Field{Object: AllColumns{BaseExpr: &BaseExpr{line: 1, char: 17}}},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					FromClause: FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 			},
 		},
@@ -915,16 +911,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 13},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -937,11 +930,9 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 23},
-						Select:   "select",
 						Fields:   []QueryExpression{Field{Object: AllColumns{BaseExpr: &BaseExpr{line: 1, char: 30}}}},
 					},
 					FromClause: FromClause{
-						From:   "from",
 						Tables: []QueryExpression{Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 37}, Literal: "ct"}}},
 					},
 				},
@@ -953,19 +944,16 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
 							Fields: []QueryExpression{
 								Identifier{BaseExpr: &BaseExpr{line: 1, char: 10}, Literal: "column1"},
 							},
-							As: "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 23},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -978,11 +966,9 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 33},
-						Select:   "select",
 						Fields:   []QueryExpression{Field{Object: AllColumns{BaseExpr: &BaseExpr{line: 1, char: 40}}}},
 					},
 					FromClause: FromClause{
-						From:   "from",
 						Tables: []QueryExpression{Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 47}, Literal: "ct"}}},
 					},
 				},
@@ -994,17 +980,14 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name:      Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "ct"},
 							Recursive: Token{Token: RECURSIVE, Literal: "recursive", Line: 1, Char: 6},
-							As:        "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 23},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -1014,12 +997,10 @@ var parseTests = []struct {
 						},
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "ct2"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 42},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("2")},
 										},
@@ -1032,11 +1013,9 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 52},
-						Select:   "select",
 						Fields:   []QueryExpression{Field{Object: AllColumns{BaseExpr: &BaseExpr{line: 1, char: 59}}}},
 					},
 					FromClause: FromClause{
-						From:   "from",
 						Tables: []QueryExpression{Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 66}, Literal: "ct"}}},
 					},
 				},
@@ -1050,7 +1029,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ident"}}},
 							Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 15}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "tbl"}, Number: value.NewInteger(3)}},
@@ -1060,11 +1038,11 @@ var parseTests = []struct {
 							Field{Object: NewFloatValueFromString("1.234")},
 							Field{Object: NewTernaryValueFromString("true")},
 							Field{Object: NewDatetimeValueFromString("2010-01-01 12:00:00", nil)},
-							Field{Object: NewNullValueFromString("null")},
+							Field{Object: NewNullValue()},
 							Field{Object: Parentheses{Expr: NewStringValue("bar")}},
 						},
 					},
-					FromClause: FromClause{From: "from", Tables: []QueryExpression{Table{Object: Dual{Dual: "dual"}}}},
+					FromClause: FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
 				},
 			},
 		},
@@ -1078,7 +1056,6 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select: "select",
 					Fields: []QueryExpression{
 						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "foo"}}},
 						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 2, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 2, char: 2}, Literal: "bar"}, Column: Identifier{BaseExpr: &BaseExpr{line: 2, char: 6}, Literal: "foo"}}},
@@ -1097,7 +1074,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Concat{Items: []QueryExpression{
 								FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ident"}},
@@ -1117,11 +1093,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Comparison{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: "=",
+								Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
 							}},
 						},
@@ -1137,7 +1112,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Comparison{
 								LHS: RowValue{
@@ -1149,7 +1123,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: "=",
+								Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 27},
 								RHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 29},
 									Value: ValueList{
@@ -1173,11 +1147,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Comparison{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: "<",
+								Operator: Token{Token: COMPARISON_OP, Literal: "<", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
 							}},
 						},
@@ -1193,7 +1166,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Comparison{
 								LHS: RowValue{
@@ -1205,7 +1177,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: "<",
+								Operator: Token{Token: COMPARISON_OP, Literal: "<", Line: 1, Char: 27},
 								RHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 29},
 									Value: Subquery{
@@ -1214,7 +1186,6 @@ var parseTests = []struct {
 											SelectEntity: SelectEntity{
 												SelectClause: SelectClause{
 													BaseExpr: &BaseExpr{line: 1, char: 30},
-													Select:   "select",
 													Fields: []QueryExpression{
 														Field{Object: NewIntegerValueFromString("1")},
 														Field{Object: NewIntegerValueFromString("2")},
@@ -1238,12 +1209,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Is{
-								Is:       "is",
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								RHS:      NewNullValueFromString("null"),
+								RHS:      NewNullValue(),
 								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 19},
 							}},
 						},
@@ -1259,10 +1228,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Is{
-								Is:  "is",
 								LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								RHS: NewTernaryValueFromString("true"),
 							}},
@@ -1279,13 +1246,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS: Between{
-									Between: "between",
-									And:     "and",
-									LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
+									LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 									Low: UnaryArithmetic{
 										Operand:  NewIntegerValueFromString("10"),
 										Operator: Token{Token: '-', Literal: "-", Line: 1, Char: 28},
@@ -1298,11 +1262,9 @@ var parseTests = []struct {
 								},
 								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 40},
 								RHS: Between{
-									Between: "between",
-									And:     "and",
-									LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 43}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 43}, Literal: "column2"}},
-									Low:     NewIntegerValueFromString("20"),
-									High:    NewIntegerValueFromString("30"),
+									LHS:  FieldReference{BaseExpr: &BaseExpr{line: 1, char: 43}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 43}, Literal: "column2"}},
+									Low:  NewIntegerValueFromString("20"),
+									High: NewIntegerValueFromString("30"),
 								},
 							}},
 						},
@@ -1318,12 +1280,9 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS: Between{
-									Between: "between",
-									And:     "and",
 									LHS: RowValue{
 										BaseExpr: &BaseExpr{line: 1, char: 8},
 										Value: ValueList{
@@ -1354,8 +1313,6 @@ var parseTests = []struct {
 									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 27},
 								},
 								RHS: Between{
-									Between: "between",
-									And:     "and",
 									LHS: RowValue{
 										BaseExpr: &BaseExpr{line: 1, char: 61},
 										Value: ValueList{
@@ -1399,11 +1356,9 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS: In{
-									In:  "in",
 									LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 									Values: RowValue{
 										BaseExpr: &BaseExpr{line: 1, char: 23},
@@ -1418,7 +1373,6 @@ var parseTests = []struct {
 									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
 								},
 								RHS: In{
-									In:  "in",
 									LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 37}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 37}, Literal: "column2"}},
 									Values: RowValue{
 										BaseExpr: &BaseExpr{line: 1, char: 48},
@@ -1446,15 +1400,13 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: In{
-								In:  "in",
 								LHS: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Values: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 19},
 									Value: JsonQuery{
-										JsonQuery: "json_row",
+										JsonQuery: Token{Token: JSON_ROW, Literal: "json_row", Line: 1, Char: 19},
 										Query:     NewStringValue("key"),
 										JsonText:  NewStringValue("{\"key\":1}"),
 									},
@@ -1473,10 +1425,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: In{
-								In: "in",
 								LHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 8},
 									Value: ValueList{
@@ -1523,10 +1473,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: In{
-								In: "in",
 								LHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 8},
 									Value: ValueList{
@@ -1540,7 +1488,7 @@ var parseTests = []struct {
 									BaseExpr: &BaseExpr{line: 1, char: 30},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 31}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 31}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 										},
 									},
 								},
@@ -1558,10 +1506,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: In{
-								In: "in",
 								LHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 8},
 									Value: ValueList{
@@ -1573,7 +1519,7 @@ var parseTests = []struct {
 								},
 								Values: JsonQuery{
 									BaseExpr:  &BaseExpr{line: 1, char: 30},
-									JsonQuery: "json_row",
+									JsonQuery: Token{Token: JSON_ROW, Literal: "json_row", Line: 1, Char: 30},
 									Query:     NewStringValue("key"),
 									JsonText:  NewStringValue("{\"key\":1}"),
 								},
@@ -1591,18 +1537,15 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS: Like{
-									Like:     "like",
 									LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 									Pattern:  NewStringValue("pattern1"),
 									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 16},
 								},
 								Operator: Token{Token: AND, Literal: "and", Line: 1, Char: 36},
 								RHS: Like{
-									Like:    "like",
 									LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column2"}},
 									Pattern: NewStringValue("pattern2"),
 								},
@@ -1620,17 +1563,14 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS: Like{
-									Like:    "like",
 									LHS:     FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 									Pattern: NewStringValue("pattern1"),
 								},
 								Operator: Token{Token: OR, Literal: "or", Line: 1, Char: 32},
 								RHS: Like{
-									Like:     "like",
 									LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 35}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "column2"}},
 									Pattern:  NewStringValue("pattern2"),
 									Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 43},
@@ -1649,19 +1589,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Any{
-								Any:      "any",
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: "=",
+								Operator: Token{Token: COMPARISON_OP, Literal: "=", Line: 1, Char: 16},
 								Values: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 22},
 									Value: Subquery{
 										BaseExpr: &BaseExpr{line: 1, char: 22},
 										Query: SelectQuery{
 											SelectEntity: SelectEntity{
-												SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 23}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+												SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 23}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 											},
 										},
 									},
@@ -1680,10 +1618,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Any{
-								Any: "any",
 								LHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 8},
 									Value: ValueList{
@@ -1693,7 +1629,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: "=",
+								Operator: Token{Token: COMPARISON_OP, Literal: "=", Line: 1, Char: 27},
 								Values: RowValueList{
 									RowValues: []QueryExpression{
 										RowValue{
@@ -1730,10 +1666,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Any{
-								Any: "any",
 								LHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 8},
 									Value: ValueList{
@@ -1743,12 +1677,12 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: "=",
+								Operator: Token{Token: COMPARISON_OP, Literal: "=", Line: 1, Char: 27},
 								Values: Subquery{
 									BaseExpr: &BaseExpr{line: 1, char: 33},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 34}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 34}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 										},
 									},
 								},
@@ -1766,19 +1700,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: All{
-								All:      "all",
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: "=",
+								Operator: Token{Token: COMPARISON_OP, Literal: "=", Line: 1, Char: 16},
 								Values: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 22},
 									Value: Subquery{
 										BaseExpr: &BaseExpr{line: 1, char: 22},
 										Query: SelectQuery{
 											SelectEntity: SelectEntity{
-												SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 23}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+												SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 23}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 											},
 										},
 									},
@@ -1797,10 +1729,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: All{
-								All: "all",
 								LHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 8},
 									Value: ValueList{
@@ -1810,7 +1740,7 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: "=",
+								Operator: Token{Token: COMPARISON_OP, Literal: "=", Line: 1, Char: 27},
 								Values: RowValueList{
 									RowValues: []QueryExpression{
 										RowValue{
@@ -1847,10 +1777,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: All{
-								All: "all",
 								LHS: RowValue{
 									BaseExpr: &BaseExpr{line: 1, char: 8},
 									Value: ValueList{
@@ -1860,12 +1788,12 @@ var parseTests = []struct {
 										},
 									},
 								},
-								Operator: "=",
+								Operator: Token{Token: COMPARISON_OP, Literal: "=", Line: 1, Char: 27},
 								Values: Subquery{
 									BaseExpr: &BaseExpr{line: 1, char: 33},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 34}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 34}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 										},
 									},
 								},
@@ -1883,15 +1811,13 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Exists{
-								Exists: "exists",
 								Query: Subquery{
 									BaseExpr: &BaseExpr{line: 1, char: 15},
 									Query: SelectQuery{
 										SelectEntity: SelectEntity{
-											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 16}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+											SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 16}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 										},
 									},
 								},
@@ -1909,11 +1835,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: int('+'),
+								Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
 							}},
 						},
@@ -1929,11 +1854,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: int('-'),
+								Operator: Token{Token: '-', Literal: "-", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
 							}},
 						},
@@ -1949,11 +1873,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: int('*'),
+								Operator: Token{Token: '*', Literal: "*", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
 							}},
 						},
@@ -1969,11 +1892,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: int('/'),
+								Operator: Token{Token: '/', Literal: "/", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
 							}},
 						},
@@ -1989,11 +1911,10 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
-								Operator: int('%'),
+								Operator: Token{Token: '%', Literal: "%", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
 							}},
 						},
@@ -2009,7 +1930,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS:      NewTernaryValueFromString("true"),
@@ -2029,7 +1949,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS:      NewTernaryValueFromString("true"),
@@ -2049,7 +1968,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: UnaryLogic{
 								Operator: Token{Token: NOT, Literal: "not", Line: 1, Char: 8},
@@ -2068,7 +1986,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS:      NewTernaryValueFromString("true"),
@@ -2094,7 +2011,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Logic{
 								LHS: Logic{
@@ -2128,7 +2044,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"}},
 						},
@@ -2144,7 +2059,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: VariableSubstitution{
 								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
@@ -2163,21 +2077,14 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: CaseExpr{
-								Case: "case",
-								End:  "end",
 								When: []QueryExpression{
 									CaseExprWhen{
-										When:      "when",
-										Then:      "then",
 										Condition: NewTernaryValueFromString("true"),
 										Result:    NewStringValue("A"),
 									},
 									CaseExprWhen{
-										When:      "when",
-										Then:      "then",
 										Condition: NewTernaryValueFromString("false"),
 										Result:    NewStringValue("B"),
 									},
@@ -2196,28 +2103,20 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: CaseExpr{
-								Case:  "case",
-								End:   "end",
 								Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 13}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "column1"}},
 								When: []QueryExpression{
 									CaseExprWhen{
-										When:      "when",
-										Then:      "then",
 										Condition: NewIntegerValueFromString("1"),
 										Result:    NewStringValue("A"),
 									},
 									CaseExprWhen{
-										When:      "when",
-										Then:      "then",
 										Condition: NewIntegerValueFromString("2"),
 										Result:    NewStringValue("B"),
 									},
 								},
 								Else: CaseExprElse{
-									Else:   "else",
 									Result: NewStringValue("C"),
 								},
 							}},
@@ -2234,7 +2133,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2253,7 +2151,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2275,7 +2172,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2298,7 +2194,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2322,7 +2217,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2331,7 +2225,7 @@ var parseTests = []struct {
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 18}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "column1"}},
 									NewIntegerValueFromString("2"),
 								},
-								From: "from",
+								From: Token{Token: FROM, Literal: "from", Line: 1, Char: 26},
 							}},
 						},
 					},
@@ -2346,7 +2240,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2356,8 +2249,8 @@ var parseTests = []struct {
 									NewIntegerValueFromString("2"),
 									NewIntegerValueFromString("5"),
 								},
-								From: "from",
-								For:  "for",
+								From: Token{Token: FROM, Literal: "from", Line: 1, Char: 26},
+								For:  Token{Token: FOR, Literal: "for", Line: 1, Char: 33},
 							}},
 						},
 					},
@@ -2378,7 +2271,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2397,7 +2289,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2420,7 +2311,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2444,7 +2334,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: Function{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2468,7 +2357,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2491,7 +2379,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2513,7 +2400,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2535,7 +2421,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2558,7 +2443,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2580,7 +2464,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AggregateFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2603,7 +2486,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: ListFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2625,7 +2507,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: ListFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2649,7 +2530,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: ListFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2658,9 +2538,7 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 25}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 25}, Literal: "column1"}},
 								},
-								WithinGroup: "within group",
 								OrderBy: OrderByClause{
-									OrderBy: "order by",
 									Items: []QueryExpression{
 										OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column1"}}},
 									},
@@ -2679,7 +2557,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: ListFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -2688,9 +2565,7 @@ var parseTests = []struct {
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
 									NewStringValue(","),
 								},
-								WithinGroup: "within group",
 								OrderBy: OrderByClause{
-									OrderBy: "order by",
 									Items: []QueryExpression{
 										OrderItem{Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column1"}}},
 									},
@@ -2709,15 +2584,11 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: CursorStatus{
-								CursorLit: "cursor",
-								Cursor:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "cur"},
-								Is:        "is",
-								Negation:  Token{Token: NOT, Literal: "not", Line: 1, Char: 22},
-								Type:      OPEN,
-								TypeLit:   "open",
+								Cursor:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "cur"},
+								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 22},
+								Type:     Token{Token: OPEN, Literal: "open", Line: 1, Char: 26},
 							}},
 						},
 					},
@@ -2732,15 +2603,11 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: CursorStatus{
-								CursorLit: "cursor",
-								Cursor:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "cur"},
-								Is:        "is",
-								Negation:  Token{Token: NOT, Literal: "not", Line: 1, Char: 22},
-								Type:      RANGE,
-								TypeLit:   "in range",
+								Cursor:   Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "cur"},
+								Negation: Token{Token: NOT, Literal: "not", Line: 1, Char: 22},
+								Type:     Token{Token: RANGE, Literal: "range", Line: 1, Char: 29},
 							}},
 						},
 					},
@@ -2755,10 +2622,8 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: CursorAttrebute{
-								CursorLit: "cursor",
 								Cursor:    Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "cur"},
 								Attrebute: Token{Token: COUNT, Literal: "count", Line: 1, Char: 19},
 							}},
@@ -2775,21 +2640,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "userfunc",
-								Over:     "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 38}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 55}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "column2"}},
@@ -2811,15 +2672,12 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "userfunc",
-								Over:     "over",
 								AnalyticClause: AnalyticClause{
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
@@ -2827,10 +2685,8 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: CURRENT,
-											Literal:   "current row",
+											Direction: Token{Token: CURRENT, Literal: "current", Line: 1, Char: 47},
 										},
 									},
 								},
@@ -2848,15 +2704,12 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "userfunc",
-								Over:     "over",
 								AnalyticClause: AnalyticClause{
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
@@ -2864,11 +2717,9 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: PRECEDING,
-											Unbounded: true,
-											Literal:   "unbounded preceding",
+											Direction: Token{Token: PRECEDING, Literal: "preceding", Line: 1, Char: 57},
+											Unbounded: Token{Token: UNBOUNDED, Literal: "unbounded", Line: 1, Char: 47},
 										},
 									},
 								},
@@ -2886,15 +2737,12 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "userfunc",
-								Over:     "over",
 								AnalyticClause: AnalyticClause{
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
@@ -2902,11 +2750,9 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: PRECEDING,
+											Direction: Token{Token: PRECEDING, Literal: "preceding", Line: 1, Char: 49},
 											Offset:    1,
-											Literal:   "1 preceding",
 										},
 									},
 								},
@@ -2924,15 +2770,12 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "userfunc",
-								Over:     "over",
 								AnalyticClause: AnalyticClause{
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
@@ -2940,19 +2783,14 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: PRECEDING,
-											Unbounded: true,
-											Literal:   "unbounded preceding",
+											Direction: Token{Token: PRECEDING, Literal: "preceding", Line: 1, Char: 65},
+											Unbounded: Token{Token: UNBOUNDED, Literal: "unbounded", Line: 1, Char: 55},
 										},
 										FrameHigh: WindowFramePosition{
-											Direction: FOLLOWING,
+											Direction: Token{Token: FOLLOWING, Literal: "following", Line: 1, Char: 81},
 											Offset:    1,
-											Literal:   "1 following",
 										},
-										Between: "between",
-										And:     "and",
 									},
 								},
 							}},
@@ -2969,15 +2807,12 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "userfunc",
-								Over:     "over",
 								AnalyticClause: AnalyticClause{
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
@@ -2985,19 +2820,14 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: PRECEDING,
+											Direction: Token{Token: PRECEDING, Literal: "preceding", Line: 1, Char: 57},
 											Offset:    1,
-											Literal:   "1 preceding",
 										},
 										FrameHigh: WindowFramePosition{
-											Direction: FOLLOWING,
-											Unbounded: true,
-											Literal:   "unbounded following",
+											Direction: Token{Token: FOLLOWING, Literal: "following", Line: 1, Char: 81},
+											Unbounded: Token{Token: UNBOUNDED, Literal: "unbounded", Line: 1, Char: 71},
 										},
-										Between: "between",
-										And:     "and",
 									},
 								},
 							}},
@@ -3014,15 +2844,12 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "userfunc",
-								Over:     "over",
 								AnalyticClause: AnalyticClause{
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column2"}},
@@ -3030,18 +2857,13 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: CURRENT,
-											Literal:   "current row",
+											Direction: Token{Token: CURRENT, Literal: "current", Line: 1, Char: 55},
 										},
 										FrameHigh: WindowFramePosition{
-											Direction: FOLLOWING,
-											Unbounded: true,
-											Literal:   "unbounded following",
+											Direction: Token{Token: FOLLOWING, Literal: "following", Line: 1, Char: 81},
+											Unbounded: Token{Token: UNBOUNDED, Literal: "unbounded", Line: 1, Char: 71},
 										},
-										Between: "between",
-										And:     "and",
 									},
 								},
 							}},
@@ -3058,7 +2880,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3066,16 +2887,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 10}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 10}, Literal: "column1"}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 38}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 55}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "column2"}},
@@ -3097,7 +2915,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3106,16 +2923,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 19}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 19}, Literal: "column1"}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 47}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 47}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 64}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 64}, Literal: "column2"}},
@@ -3137,7 +2951,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3145,16 +2958,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column2"}},
@@ -3162,10 +2972,8 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: CURRENT,
-											Literal:   "current row",
+											Direction: Token{Token: CURRENT, Literal: "current", Line: 1, Char: 70},
 										},
 									},
 								},
@@ -3183,7 +2991,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3191,16 +2998,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column2"}},
@@ -3208,10 +3012,8 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: CURRENT,
-											Literal:   "current row",
+											Direction: Token{Token: CURRENT, Literal: "current", Line: 1, Char: 70},
 										},
 									},
 								},
@@ -3229,7 +3031,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3237,16 +3038,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 14}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 14}, Literal: "column1"}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 42}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 42}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 59}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 59}, Literal: "column2"}},
@@ -3254,10 +3052,8 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: CURRENT,
-											Literal:   "current row",
+											Direction: Token{Token: CURRENT, Literal: "current", Line: 1, Char: 72},
 										},
 									},
 								},
@@ -3275,7 +3071,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3283,16 +3078,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									AllColumns{BaseExpr: &BaseExpr{line: 1, char: 14}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 36}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 36}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column2"}},
@@ -3300,10 +3092,8 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: CURRENT,
-											Literal:   "current row",
+											Direction: Token{Token: CURRENT, Literal: "current", Line: 1, Char: 66},
 										},
 									},
 								},
@@ -3321,7 +3111,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3329,16 +3118,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 44}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 61}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 61}, Literal: "column2"}},
@@ -3360,7 +3146,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3369,16 +3154,13 @@ var parseTests = []struct {
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 16}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 16}, Literal: "column1"}},
 									NewStringValue(","),
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 49}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 66}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 66}, Literal: "column2"}},
@@ -3400,21 +3182,17 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
 								Name:     "rank",
-								Over:     "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 34}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 51}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 51}, Literal: "column2"}},
@@ -3436,7 +3214,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3444,16 +3221,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 20}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column1"}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 48}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 48}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 65}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 65}, Literal: "column2"}},
@@ -3461,10 +3235,8 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: CURRENT,
-											Literal:   "current row",
+											Direction: Token{Token: CURRENT, Literal: "current", Line: 1, Char: 78},
 										},
 									},
 								},
@@ -3482,7 +3254,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3490,18 +3261,14 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 20}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "column1"}},
 								},
-								IgnoreNulls:    true,
-								IgnoreNullsLit: "ignore nulls",
-								Over:           "over",
+								IgnoreType: Token{Token: NULLS, Literal: "nulls", Line: 1, Char: 36},
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 61}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 61}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 78}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 78}, Literal: "column2"}},
@@ -3509,10 +3276,8 @@ var parseTests = []struct {
 										},
 									},
 									WindowingClause: WindowingClause{
-										Rows: "rows",
 										FrameLow: WindowFramePosition{
-											Direction: CURRENT,
-											Literal:   "current row",
+											Direction: Token{Token: CURRENT, Literal: "current", Line: 1, Char: 91},
 										},
 									},
 								},
@@ -3530,7 +3295,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3538,16 +3302,13 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
 								},
-								Over: "over",
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 40}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 40}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 57}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 57}, Literal: "column2"}},
@@ -3569,7 +3330,6 @@ var parseTests = []struct {
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
 						BaseExpr: &BaseExpr{line: 1, char: 1},
-						Select:   "select",
 						Fields: []QueryExpression{
 							Field{Object: AnalyticFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 8},
@@ -3577,18 +3337,14 @@ var parseTests = []struct {
 								Args: []QueryExpression{
 									FieldReference{BaseExpr: &BaseExpr{line: 1, char: 12}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 12}, Literal: "column1"}},
 								},
-								IgnoreNulls:    true,
-								IgnoreNullsLit: "ignore nulls",
-								Over:           "over",
+								IgnoreType: Token{Token: NULLS, Literal: "nulls", Line: 1, Char: 28},
 								AnalyticClause: AnalyticClause{
 									PartitionClause: PartitionClause{
-										PartitionBy: "partition by",
 										Values: []QueryExpression{
 											FieldReference{BaseExpr: &BaseExpr{line: 1, char: 53}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 53}, Literal: "column1"}},
 										},
 									},
 									OrderByClause: OrderByClause{
-										OrderBy: "order by",
 										Items: []QueryExpression{
 											OrderItem{
 												Value: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 70}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 70}, Literal: "column2"}},
@@ -3608,16 +3364,48 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join:      "join",
 									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "table2"}},
 									JoinType:  Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 cross join lateral (select 2 from dual) as t",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						Tables: []QueryExpression{
+							Table{
+								Object: Join{
+									Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+									JoinTable: Table{
+										Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
+										Object: Subquery{
+											BaseExpr: &BaseExpr{line: 1, char: 41},
+											Query: SelectQuery{
+												SelectEntity: SelectEntity{
+													SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 42}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+													FromClause:   FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
+												},
+											},
+										},
+										As:    Token{Token: AS, Literal: "as", Line: 1, Char: 62},
+										Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 65}, Literal: "t"},
+									},
+									JoinType: Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
 								},
 							},
 						},
@@ -3631,16 +3419,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join: "join",
 									Table: Table{
 										Object: Join{
-											Join:      "join",
 											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "table2"}},
 											JoinType:  Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
@@ -3657,27 +3442,80 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select 1 from table1 cross join lateral (select 1) cross join lateral (select 1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						Tables: []QueryExpression{
+							Table{
+								Object: Join{
+									Table: Table{
+										Object: Join{
+											Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{
+												Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
+												Object: Subquery{
+													BaseExpr: &BaseExpr{line: 1, char: 41},
+													Query: SelectQuery{
+														SelectEntity: SelectEntity{
+															SelectClause: SelectClause{
+																BaseExpr: &BaseExpr{line: 1, char: 42},
+																Fields: []QueryExpression{
+																	Field{Object: NewIntegerValueFromString("1")},
+																},
+															},
+														},
+													},
+												},
+											},
+											JoinType: Token{Token: CROSS, Literal: "cross", Line: 1, Char: 22},
+										},
+									},
+									JoinTable: Table{
+										Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 63},
+										Object: Subquery{
+											BaseExpr: &BaseExpr{line: 1, char: 71},
+											Query: SelectQuery{
+												SelectEntity: SelectEntity{
+													SelectClause: SelectClause{
+														BaseExpr: &BaseExpr{line: 1, char: 72},
+														Fields: []QueryExpression{
+															Field{Object: NewIntegerValueFromString("1")},
+														},
+													},
+												},
+											},
+										},
+									},
+									JoinType: Token{Token: CROSS, Literal: "cross", Line: 1, Char: 52},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select 1 from table1 join table2 on table1.id = table2.id inner join table3 on table1.id = table3.id",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join: "join",
 									Table: Table{
 										Object: Join{
-											Join:      "join",
 											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table2"}},
 											Condition: JoinCondition{
-												Literal: "on",
 												On: Comparison{
 													LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 37}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 37}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "id"}},
-													Operator: "=",
+													Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 47},
 													RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 49}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "table2"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 56}, Literal: "id"}},
 												},
 											},
@@ -3685,10 +3523,9 @@ var parseTests = []struct {
 									},
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 70}, Literal: "table3"}},
 									Condition: JoinCondition{
-										Literal: "on",
 										On: Comparison{
 											LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 80}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 80}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 87}, Literal: "id"}},
-											Operator: "=",
+											Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 90},
 											RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 92}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 92}, Literal: "table3"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 99}, Literal: "id"}},
 										},
 									},
@@ -3706,20 +3543,17 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join:      "join",
 									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 33}, Literal: "table2"}},
 									Condition: JoinCondition{
-										Literal: "on",
 										On: Comparison{
 											LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 43}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 43}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 50}, Literal: "id"}},
-											Operator: "=",
+											Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 53},
 											RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 55}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "table2"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 62}, Literal: "id"}},
 										},
 									},
@@ -3737,16 +3571,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join: "join",
 									Table: Table{
 										Object: Join{
-											Join:      "join",
 											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "table2"}},
 											Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 22},
@@ -3767,21 +3598,17 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join: "join",
 									Table: Table{
 										Object: Join{
-											Join:      "join",
 											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 32}, Literal: "table2"}},
 											Direction: Token{Token: LEFT, Literal: "left", Line: 1, Char: 22},
 											Condition: JoinCondition{
-												Literal: "using",
 												Using: []QueryExpression{
 													Identifier{BaseExpr: &BaseExpr{line: 1, char: 45}, Literal: "id"},
 												},
@@ -3791,7 +3618,6 @@ var parseTests = []struct {
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 59}, Literal: "table3"}},
 									Direction: Token{Token: LEFT, Literal: "left", Line: 1, Char: 49},
 									Condition: JoinCondition{
-										Literal: "using",
 										Using: []QueryExpression{
 											Identifier{BaseExpr: &BaseExpr{line: 1, char: 72}, Literal: "id"},
 										},
@@ -3809,19 +3635,16 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join:      "join",
 									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 39}, Literal: "table2"}},
 									Direction: Token{Token: RIGHT, Literal: "right", Line: 1, Char: 22},
 									JoinType:  Token{Token: OUTER, Literal: "outer", Line: 1, Char: 28},
 									Condition: JoinCondition{
-										Literal: "using",
 										Using: []QueryExpression{
 											Identifier{BaseExpr: &BaseExpr{line: 1, char: 52}, Literal: "id"},
 										},
@@ -3839,13 +3662,11 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join:      "join",
 									Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 41}, Literal: "table2"}},
 									Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 22},
@@ -3863,24 +3684,20 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join: "join",
 									Table: Table{
 										Object: Join{
-											Join:      "join",
 											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 32}, Literal: "table2"}},
 											Direction: Token{Token: FULL, Literal: "full", Line: 1, Char: 22},
 											Condition: JoinCondition{
-												Literal: "on",
 												On: Comparison{
 													LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 42}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 42}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "id"}},
-													Operator: "=",
+													Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 52},
 													RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 54}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 54}, Literal: "table2"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 61}, Literal: "id"}},
 												},
 											},
@@ -3889,10 +3706,9 @@ var parseTests = []struct {
 									JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 74}, Literal: "table3"}},
 									Direction: Token{Token: FULL, Literal: "full", Line: 1, Char: 64},
 									Condition: JoinCondition{
-										Literal: "on",
 										On: Comparison{
 											LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 84}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 84}, Literal: "table3"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 91}, Literal: "id"}},
-											Operator: "=",
+											Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 94},
 											RHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 96}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 96}, Literal: "table1"}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 103}, Literal: "id"}},
 										},
 									},
@@ -3909,17 +3725,14 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Select: "select", Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
 					FromClause: FromClause{
-						From: "from",
 						Tables: []QueryExpression{
 							Table{
 								Object: Join{
-									Join:  "join",
 									Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 									JoinTable: Parentheses{Expr: Table{
 										Object: Join{
-											Join:      "join",
 											Table:     Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "table2"}},
 											JoinTable: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 52}, Literal: "table3"}},
 											JoinType:  Token{Token: CROSS, Literal: "cross", Line: 1, Char: 41},
@@ -4040,16 +3853,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			InsertQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 13},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -4125,7 +3935,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 20},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{Object: NewIntegerValueFromString("1")},
 								Field{Object: NewIntegerValueFromString("2")},
@@ -4149,7 +3958,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 39},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{Object: NewIntegerValueFromString("1")},
 								Field{Object: NewIntegerValueFromString("2")},
@@ -4165,16 +3973,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			UpdateQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 13},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -4193,13 +3998,11 @@ var parseTests = []struct {
 					{Field: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 67}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 67}, Literal: "table1"}, Number: value.NewInteger(3)}, Value: NewIntegerValueFromString("3")},
 				},
 				FromClause: FromClause{
-					From: "from",
 					Tables: []QueryExpression{
 						Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 85}, Literal: "table1"}},
 					},
 				},
 				WhereClause: WhereClause{
-					Where:  "where",
 					Filter: NewTernaryValueFromString("true"),
 				},
 			},
@@ -4212,7 +4015,7 @@ var parseTests = []struct {
 				Tables: []QueryExpression{
 					Table{Object: TableObject{
 						BaseExpr:      &BaseExpr{line: 1, char: 8},
-						Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "csv"},
+						Type:          Token{Token: CSV, Literal: "csv", Line: 1, Char: 8},
 						FormatElement: NewStringValue(","),
 						Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 17}, Literal: "table1"},
 					}},
@@ -4223,7 +4026,6 @@ var parseTests = []struct {
 					{Field: ColumnNumber{BaseExpr: &BaseExpr{line: 1, char: 55}, View: Identifier{BaseExpr: &BaseExpr{line: 1, char: 55}, Literal: "table1"}, Number: value.NewInteger(3)}, Value: NewIntegerValueFromString("3")},
 				},
 				WhereClause: WhereClause{
-					Where:  "where",
 					Filter: NewTernaryValueFromString("true"),
 				},
 			},
@@ -4234,16 +4036,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			ReplaceQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 13},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -4285,16 +4084,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			ReplaceQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 13},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -4342,16 +4138,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			ReplaceQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 13},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -4369,7 +4162,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 60},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{Object: NewIntegerValueFromString("1")},
 								Field{Object: NewIntegerValueFromString("2")},
@@ -4385,16 +4177,13 @@ var parseTests = []struct {
 		Output: []Statement{
 			ReplaceQuery{
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 13},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -4416,7 +4205,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 78},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{Object: NewIntegerValueFromString("1")},
 								Field{Object: NewIntegerValueFromString("2")},
@@ -4507,7 +4295,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 38},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{Object: NewIntegerValueFromString("1")},
 								Field{Object: NewIntegerValueFromString("2")},
@@ -4534,7 +4321,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 56},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{Object: NewIntegerValueFromString("1")},
 								Field{Object: NewIntegerValueFromString("2")},
@@ -4551,16 +4337,13 @@ var parseTests = []struct {
 			DeleteQuery{
 				BaseExpr: &BaseExpr{line: 1, char: 23},
 				WithClause: WithClause{
-					With: "with",
 					InlineTables: []QueryExpression{
 						InlineTable{
 							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
-							As:   "as",
 							Query: SelectQuery{
 								SelectEntity: SelectEntity{
 									SelectClause: SelectClause{
 										BaseExpr: &BaseExpr{line: 1, char: 13},
-										Select:   "select",
 										Fields: []QueryExpression{
 											Field{Object: NewIntegerValueFromString("1")},
 										},
@@ -4571,7 +4354,6 @@ var parseTests = []struct {
 					},
 				},
 				FromClause: FromClause{
-					From: "from",
 					Tables: []QueryExpression{
 						Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 35}, Literal: "table1"}},
 					},
@@ -4588,13 +4370,11 @@ var parseTests = []struct {
 					Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "table1"}},
 				},
 				FromClause: FromClause{
-					From: "from",
 					Tables: []QueryExpression{
 						Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 20}, Literal: "table1"}},
 					},
 				},
 				WhereClause: WhereClause{
-					Where:  "where",
 					Filter: NewTernaryValueFromString("true"),
 				},
 			},
@@ -4625,7 +4405,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 42},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
 									Object: NewIntegerValueFromString("1"),
@@ -4649,7 +4428,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 23},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
 									Object: NewIntegerValueFromString("1"),
@@ -4677,7 +4455,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 45},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
 									Object: NewIntegerValueFromString("1"),
@@ -4701,7 +4478,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 26},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
 									Object: NewIntegerValueFromString("1"),
@@ -4735,7 +4511,7 @@ var parseTests = []struct {
 			AddColumns{
 				Table: TableObject{
 					BaseExpr:      &BaseExpr{line: 1, char: 13},
-					Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 13}, Literal: "csv"},
+					Type:          Token{Token: CSV, Literal: "csv", Line: 1, Char: 13},
 					FormatElement: NewStringValue(","),
 					Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 22}, Literal: "table1"},
 				},
@@ -5137,7 +4913,7 @@ var parseTests = []struct {
 				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "fields"},
 				Table: TableObject{
 					BaseExpr:      &BaseExpr{line: 1, char: 18},
-					Type:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 18}, Literal: "csv"},
+					Type:          Token{Token: CSV, Literal: "csv", Line: 1, Char: 18},
 					FormatElement: NewStringValue(","),
 					Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 27}, Literal: "table1"},
 				},
@@ -5183,7 +4959,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 24},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{Object: NewIntegerValueFromString("1")},
 							},
@@ -5363,7 +5138,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 40},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
 									Object: NewIntegerValueFromString("1"),
@@ -5387,7 +5161,6 @@ var parseTests = []struct {
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
 							BaseExpr: &BaseExpr{line: 1, char: 21},
-							Select:   "select",
 							Fields: []QueryExpression{
 								Field{
 									Object: NewIntegerValueFromString("1"),
@@ -5456,7 +5229,7 @@ var parseTests = []struct {
 				Condition: Comparison{
 					LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 4}, Name: "var1"},
 					RHS:      NewIntegerValueFromString("1"),
-					Operator: "=",
+					Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 10},
 				},
 				Statements: []Statement{
 					Print{Value: NewIntegerValueFromString("1")},
@@ -5471,7 +5244,7 @@ var parseTests = []struct {
 				Condition: Comparison{
 					LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 4}, Name: "var1"},
 					RHS:      NewIntegerValueFromString("1"),
-					Operator: "=",
+					Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 10},
 				},
 				Statements: []Statement{
 					Print{Value: NewIntegerValueFromString("1")},
@@ -5481,7 +5254,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 35}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("2"),
-							Operator: "=",
+							Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 41},
 						},
 						Statements: []Statement{
 							Print{Value: NewIntegerValueFromString("2")},
@@ -5491,7 +5264,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 66}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("3"),
-							Operator: "=",
+							Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 72},
 						},
 						Statements: []Statement{
 							Print{Value: NewIntegerValueFromString("3")},
@@ -5680,7 +5453,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 18}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("1"),
-							Operator: "=",
+							Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 24},
 						},
 						Statements: []Statement{
 							FlowControl{Token: CONTINUE},
@@ -5700,7 +5473,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 18}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("1"),
-							Operator: "=",
+							Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 24},
 						},
 						Statements: []Statement{
 							FlowControl{Token: CONTINUE},
@@ -5710,7 +5483,7 @@ var parseTests = []struct {
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 50}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("2"),
-									Operator: "=",
+									Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 56},
 								},
 								Statements: []Statement{
 									FlowControl{Token: BREAK},
@@ -5720,7 +5493,7 @@ var parseTests = []struct {
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 79}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("3"),
-									Operator: "=",
+									Operator: Token{Token: '=', Literal: "=", Line: 1, Char: 85},
 								},
 								Statements: []Statement{
 									Exit{},
@@ -5842,7 +5615,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 2, char: 4}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("1"),
-							Operator: "=",
+							Operator: Token{Token: '=', Literal: "=", Line: 2, Char: 10},
 						},
 						Statements: []Statement{
 							Print{Value: NewIntegerValueFromString("1")},
@@ -5852,7 +5625,7 @@ var parseTests = []struct {
 						Condition: Comparison{
 							LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 4}, Name: "var1"},
 							RHS:      NewIntegerValueFromString("1"),
-							Operator: "=",
+							Operator: Token{Token: '=', Literal: "=", Line: 3, Char: 10},
 						},
 						Statements: []Statement{
 							Print{Value: NewIntegerValueFromString("1")},
@@ -5862,7 +5635,7 @@ var parseTests = []struct {
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 35}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("2"),
-									Operator: "=",
+									Operator: Token{Token: '=', Literal: "=", Line: 3, Char: 41},
 								},
 								Statements: []Statement{
 									Print{Value: NewIntegerValueFromString("2")},
@@ -5872,7 +5645,7 @@ var parseTests = []struct {
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 3, char: 66}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("3"),
-									Operator: "=",
+									Operator: Token{Token: '=', Literal: "=", Line: 3, Char: 72},
 								},
 								Statements: []Statement{
 									Print{Value: NewIntegerValueFromString("3")},
@@ -5898,7 +5671,7 @@ var parseTests = []struct {
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 5, char: 18}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("1"),
-									Operator: "=",
+									Operator: Token{Token: '=', Literal: "=", Line: 5, Char: 24},
 								},
 								Statements: []Statement{
 									FlowControl{Token: CONTINUE},
@@ -5913,7 +5686,7 @@ var parseTests = []struct {
 								Condition: Comparison{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 18}, Name: "var1"},
 									RHS:      NewIntegerValueFromString("1"),
-									Operator: "=",
+									Operator: Token{Token: '=', Literal: "=", Line: 6, Char: 24},
 								},
 								Statements: []Statement{
 									FlowControl{Token: CONTINUE},
@@ -5923,7 +5696,7 @@ var parseTests = []struct {
 										Condition: Comparison{
 											LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 50}, Name: "var1"},
 											RHS:      NewIntegerValueFromString("2"),
-											Operator: "=",
+											Operator: Token{Token: '=', Literal: "=", Line: 6, Char: 56},
 										},
 										Statements: []Statement{
 											FlowControl{Token: BREAK},
@@ -5933,7 +5706,7 @@ var parseTests = []struct {
 										Condition: Comparison{
 											LHS:      Variable{BaseExpr: &BaseExpr{line: 6, char: 79}, Name: "var1"},
 											RHS:      NewIntegerValueFromString("3"),
-											Operator: "=",
+											Operator: Token{Token: '=', Literal: "=", Line: 6, Char: 85},
 										},
 										Statements: []Statement{
 											Return{Value: NewNullValue()},
@@ -6147,14 +5920,13 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: VariableSubstitution{
 								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var1"},
 								Value: Arithmetic{
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 17}, Name: "var2"},
-									Operator: int('+'),
+									Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 23},
 									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "var3"},
 								},
 							},
@@ -6170,7 +5942,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
@@ -6186,7 +5957,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: EnvironmentVariable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var", Quoted: true},
@@ -6202,7 +5972,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: RuntimeInformation{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
@@ -6218,7 +5987,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: Flag{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "flag"},
@@ -6234,7 +6002,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ties"}},
@@ -6250,7 +6017,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "nulls"}},
@@ -6266,7 +6032,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "tables"}},
@@ -6282,7 +6047,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "views"}},
@@ -6298,7 +6062,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "cursors"}},
@@ -6314,7 +6077,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "functions"}},
@@ -6330,7 +6092,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "rows"}},
@@ -6346,7 +6107,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "csv"}},
@@ -6362,7 +6122,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json"}},
@@ -6378,7 +6137,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "fixed"}},
@@ -6394,7 +6152,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "ltsv"}},
@@ -6410,7 +6167,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "fields"}},
@@ -6448,7 +6204,6 @@ var parseTests = []struct {
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
 					BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select:   "select",
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
@@ -6477,7 +6232,6 @@ var parseTests = []struct {
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1},
-					Select: "select",
 					Fields: []QueryExpression{
 						Field{Object: Placeholder{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "?", Ordinal: 1}},
 						Field{Object: Placeholder{BaseExpr: &BaseExpr{line: 1, char: 11}, Literal: ":val", Ordinal: 2, Name: "val"}},
@@ -6589,50 +6343,53 @@ func TestParse(t *testing.T) {
 				if entity, ok := parsedStmt.SelectEntity.(SelectEntity); ok {
 					expectEntity, ok := expectStmt.SelectEntity.(SelectEntity)
 					if !ok {
-						t.Errorf("entity = %#v, want %#v for %q", entity, expectEntity, v.Input)
+						t.Errorf("entity for %q\n result: %#v\n expect: %#v", v.Input, entity, expectEntity)
 					}
 
 					if !reflect.DeepEqual(entity.SelectClause, expectEntity.SelectClause) {
-						t.Errorf("select clause = %#v, want %#v for %q", entity.SelectClause, expectEntity.SelectClause, v.Input)
+						t.Errorf("select clause for %q\n result: %#v\n expect: %#v", v.Input, entity.SelectClause, expectEntity.SelectClause)
 					}
 					if !reflect.DeepEqual(entity.IntoClause, expectEntity.IntoClause) {
-						t.Errorf("into clause = %#v, want %#v for %q", entity.IntoClause, expectEntity.IntoClause, v.Input)
+						t.Errorf("into clause for %q\n result: %#v\n expect: %#v", v.Input, entity.IntoClause, expectEntity.IntoClause)
 					}
 					if !reflect.DeepEqual(entity.FromClause, expectEntity.FromClause) {
-						t.Errorf("from clause = %#v, want %#v for %q", entity.FromClause, expectEntity.FromClause, v.Input)
+						t.Errorf("from clause for %q\n result: %#v\n expect: %#v", v.Input, entity.FromClause, expectEntity.FromClause)
 					}
 					if !reflect.DeepEqual(entity.WhereClause, expectEntity.WhereClause) {
-						t.Errorf("where clause = %#v, want %#v for %q", entity.WhereClause, expectEntity.WhereClause, v.Input)
+						t.Errorf("where clause for %q\n result: %#v\n expect: %#v", v.Input, entity.WhereClause, expectEntity.WhereClause)
 					}
 					if !reflect.DeepEqual(entity.GroupByClause, expectEntity.GroupByClause) {
-						t.Errorf("group by clause = %#v, want %#v for %q", entity.GroupByClause, expectEntity.GroupByClause, v.Input)
+						t.Errorf("groupby clause for %q\n result: %#v\n expect: %#v", v.Input, entity.GroupByClause, expectEntity.GroupByClause)
 					}
 					if !reflect.DeepEqual(entity.HavingClause, expectEntity.HavingClause) {
-						t.Errorf("having clause = %#v, want %#v for %q", entity.HavingClause, expectEntity.HavingClause, v.Input)
+						t.Errorf("having clause for %q\n result: %#v\n expect: %#v", v.Input, entity.HavingClause, expectEntity.HavingClause)
 					}
 				} else if set, ok := parsedStmt.SelectEntity.(SelectSet); ok {
 					expectSet, ok := expectStmt.SelectEntity.(SelectSet)
 					if !ok {
-						t.Errorf("set = %#v, want %#v for %q", set, expectSet, v.Input)
+						t.Errorf("select set for %q\n result: %#v\n expect: %#v", v.Input, set, expectSet)
 					}
 
 					if !reflect.DeepEqual(set, expectSet) {
-						t.Errorf("set = %#v, want %#v for %q", set, expectSet, v.Input)
+						t.Errorf("select set for %q\n result: %#v\n expect: %#v", v.Input, set, expectSet)
 					}
 				}
 
 				if !reflect.DeepEqual(parsedStmt.WithClause, expectStmt.WithClause) {
-					t.Errorf("with clause = %#v, want %#v for %q", parsedStmt.WithClause, expectStmt.WithClause, v.Input)
+					t.Errorf("with clause for %q\n result: %#v\n expect: %#v", v.Input, parsedStmt.WithClause, expectStmt.WithClause)
 				}
 				if !reflect.DeepEqual(parsedStmt.OrderByClause, expectStmt.OrderByClause) {
-					t.Errorf("order by clause = %#v, want %#v for %q", parsedStmt.OrderByClause, expectStmt.OrderByClause, v.Input)
+					t.Errorf("orderby clause for %q\n result: %#v\n expect: %#v", v.Input, parsedStmt.OrderByClause, expectStmt.OrderByClause)
 				}
 				if !reflect.DeepEqual(parsedStmt.LimitClause, expectStmt.LimitClause) {
-					t.Errorf("limit clause = %#v, want %#v for %q", parsedStmt.LimitClause, expectStmt.LimitClause, v.Input)
+					t.Errorf("limit clause for %q\n result: %#v\n expect: %#v", v.Input, parsedStmt.LimitClause, expectStmt.LimitClause)
+				}
+				if !reflect.DeepEqual(parsedStmt.Context, expectStmt.Context) {
+					t.Errorf("select query context for %q\n result: %#v\n expect: %#v", v.Input, parsedStmt.Context, expectStmt.Context)
 				}
 			default:
 				if !reflect.DeepEqual(stmt, expect) {
-					t.Errorf("output = %#v, want %#v for %q", stmt, expect, v.Input)
+					t.Errorf("output for %q\n result: %#v\n expect: %#v", v.Input, stmt, expect)
 				}
 			}
 		}

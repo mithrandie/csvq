@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mithrandie/ternary"
+
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/value"
-
-	"github.com/mithrandie/ternary"
 )
 
 func TestBaseExpr_Line(t *testing.T) {
@@ -55,11 +55,22 @@ func TestBaseExpr_HasParseInfo(t *testing.T) {
 	if !expr.HasParseInfo() {
 		t.Errorf("has parse info = %t, want %t for %#v", expr.HasParseInfo(), true, expr)
 	}
+
+	queryExpr := NewNullValue()
+	if queryExpr.HasParseInfo() {
+		t.Errorf("has parse info = %t, want %t for %#v", expr.HasParseInfo(), false, queryExpr)
+	}
 }
 
 func TestPrimitiveType_String(t *testing.T) {
 	e := NewTernaryValueFromString("true")
-	expect := "true"
+	expect := "TRUE"
+	if e.String() != expect {
+		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
+	}
+
+	e = NewTernaryValue(ternary.FALSE)
+	expect = "FALSE"
 	if e.String() != expect {
 		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
 	}
@@ -82,8 +93,8 @@ func TestPrimitiveType_String(t *testing.T) {
 		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
 	}
 
-	e = NewTernaryValue(ternary.TRUE)
-	expect = "TRUE"
+	e = NewNullValue()
+	expect = "NULL"
 	if e.String() != expect {
 		t.Errorf("result = %q, want %q for %q ", e.String(), expect, e)
 	}
@@ -223,18 +234,40 @@ func TestRowValueList_String(t *testing.T) {
 	}
 }
 
+func TestSelectQuery_IsForUpdate(t *testing.T) {
+	e := SelectQuery{
+		SelectEntity: SelectEntity{
+			SelectClause: SelectClause{
+				Fields: []QueryExpression{Field{Object: Identifier{Literal: "column"}}},
+			},
+		},
+		Context: Token{Token: UPDATE, Literal: "update"},
+	}
+	if !e.IsForUpdate() {
+		t.Errorf("IsForUpdate() = %t, want %t for %#v", e.IsForUpdate(), true, e)
+	}
+
+	e = SelectQuery{
+		SelectEntity: SelectEntity{
+			SelectClause: SelectClause{
+				Fields: []QueryExpression{Field{Object: Identifier{Literal: "column"}}},
+			},
+		},
+	}
+	if e.IsForUpdate() {
+		t.Errorf("IsForUpdate() = %t, want %t for %#v", e.IsForUpdate(), false, e)
+	}
+}
+
 func TestSelectQuery_String(t *testing.T) {
 	e := SelectQuery{
 		WithClause: WithClause{
-			With: "with",
 			InlineTables: []QueryExpression{
 				InlineTable{
 					Name: Identifier{Literal: "ct"},
-					As:   "as",
 					Query: SelectQuery{
 						SelectEntity: SelectEntity{
 							SelectClause: SelectClause{
-								Select: "select",
 								Fields: []QueryExpression{
 									Field{Object: NewIntegerValueFromString("1")},
 								},
@@ -246,16 +279,15 @@ func TestSelectQuery_String(t *testing.T) {
 		},
 		SelectEntity: SelectEntity{
 			SelectClause: SelectClause{
-				Select: "select",
 				Fields: []QueryExpression{Field{Object: Identifier{Literal: "column"}}},
 			},
 			FromClause: FromClause{
-				From:   "from",
-				Tables: []QueryExpression{Table{Object: Identifier{Literal: "table"}}},
+				Tables: []QueryExpression{
+					Table{Object: Identifier{Literal: "table"}},
+				},
 			},
 		},
 		OrderByClause: OrderByClause{
-			OrderBy: "order by",
 			Items: []QueryExpression{
 				OrderItem{
 					Value: Identifier{Literal: "column"},
@@ -266,14 +298,12 @@ func TestSelectQuery_String(t *testing.T) {
 			Type:  Token{Token: LIMIT, Literal: "limit"},
 			Value: NewIntegerValueFromString("10"),
 			OffsetClause: OffsetClause{
-				Offset: "offset",
-				Value:  NewIntegerValueFromString("10"),
+				Value: NewIntegerValueFromString("10"),
 			},
 		},
-		ForUpdate:        true,
-		ForUpdateLiteral: "for update",
+		Context: Token{Token: UPDATE, Literal: "update"},
 	}
-	expect := "with ct as (select 1) select column from table order by column limit 10 offset 10 for update"
+	expect := "WITH ct AS (SELECT 1) SELECT column FROM table ORDER BY column LIMIT 10 OFFSET 10 FOR UPDATE"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -283,7 +313,6 @@ func TestSelectSet_String(t *testing.T) {
 	e := SelectSet{
 		LHS: SelectEntity{
 			SelectClause: SelectClause{
-				Select: "select",
 				Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}},
 			},
 		},
@@ -291,12 +320,11 @@ func TestSelectSet_String(t *testing.T) {
 		All:      Token{Token: ALL, Literal: "all"},
 		RHS: SelectEntity{
 			SelectClause: SelectClause{
-				Select: "select",
 				Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}},
 			},
 		},
 	}
-	expect := "select 1 union all select 2"
+	expect := "SELECT 1 UNION ALL SELECT 2"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -305,45 +333,41 @@ func TestSelectSet_String(t *testing.T) {
 func TestSelectEntity_String(t *testing.T) {
 	e := SelectEntity{
 		SelectClause: SelectClause{
-			Select: "select",
 			Fields: []QueryExpression{Field{Object: Identifier{Literal: "column"}}},
 		},
 		IntoClause: IntoClause{
-			Into: "into",
 			Variables: []Variable{
 				{Name: "var1"},
 				{Name: "var2"},
 			},
 		},
 		FromClause: FromClause{
-			From:   "from",
-			Tables: []QueryExpression{Table{Object: Identifier{Literal: "table"}}},
+			Tables: []QueryExpression{
+				Table{Object: Identifier{Literal: "table"}},
+			},
 		},
 		WhereClause: WhereClause{
-			Where: "where",
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
-				Operator: ">",
+				Operator: Token{Token: '>', Literal: ">"},
 				RHS:      NewIntegerValueFromString("1"),
 			},
 		},
 		GroupByClause: GroupByClause{
-			GroupBy: "group by",
 			Items: []QueryExpression{
 				Identifier{Literal: "column1"},
 			},
 		},
 		HavingClause: HavingClause{
-			Having: "having",
 			Filter: Comparison{
 				LHS:      Identifier{Literal: "column"},
-				Operator: ">",
+				Operator: Token{Token: '>', Literal: ">"},
 				RHS:      NewIntegerValueFromString("1"),
 			},
 		},
 	}
 
-	expect := "select column into @var1, @var2 from table where column > 1 group by column1 having column > 1"
+	expect := "SELECT column INTO @var1, @var2 FROM table WHERE column > 1 GROUP BY column1 HAVING column > 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -363,7 +387,6 @@ func TestSelectClause_IsDistinct(t *testing.T) {
 
 func TestSelectClause_String(t *testing.T) {
 	e := SelectClause{
-		Select:   "select",
 		Distinct: Token{Token: DISTINCT, Literal: "distinct"},
 		Fields: []QueryExpression{
 			Field{
@@ -371,12 +394,12 @@ func TestSelectClause_String(t *testing.T) {
 			},
 			Field{
 				Object: Identifier{Literal: "column2"},
-				As:     "as",
+				As:     Token{Token: AS, Literal: "as"},
 				Alias:  Identifier{Literal: "alias"},
 			},
 		},
 	}
-	expect := "select distinct column1, column2 as alias"
+	expect := "SELECT DISTINCT column1, column2 AS alias"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -384,13 +407,12 @@ func TestSelectClause_String(t *testing.T) {
 
 func TestIntoClause_String(t *testing.T) {
 	e := IntoClause{
-		Into: "into",
 		Variables: []Variable{
 			{Name: "var1"},
 			{Name: "var2"},
 		},
 	}
-	expect := "into @var1, @var2"
+	expect := "INTO @var1, @var2"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -398,13 +420,12 @@ func TestIntoClause_String(t *testing.T) {
 
 func TestFromClause_String(t *testing.T) {
 	e := FromClause{
-		From: "from",
 		Tables: []QueryExpression{
 			Table{Object: Identifier{Literal: "table1"}},
 			Table{Object: Identifier{Literal: "table2"}},
 		},
 	}
-	expect := "from table1, table2"
+	expect := "FROM table1, table2"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -412,14 +433,13 @@ func TestFromClause_String(t *testing.T) {
 
 func TestWhereClause_String(t *testing.T) {
 	e := WhereClause{
-		Where: "where",
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
-			Operator: ">",
+			Operator: Token{Token: '>', Literal: ">"},
 			RHS:      NewIntegerValueFromString("1"),
 		},
 	}
-	expect := "where column > 1"
+	expect := "WHERE column > 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -427,13 +447,12 @@ func TestWhereClause_String(t *testing.T) {
 
 func TestGroupByClause_String(t *testing.T) {
 	e := GroupByClause{
-		GroupBy: "group by",
 		Items: []QueryExpression{
 			Identifier{Literal: "column1"},
 			Identifier{Literal: "column2"},
 		},
 	}
-	expect := "group by column1, column2"
+	expect := "GROUP BY column1, column2"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -441,14 +460,13 @@ func TestGroupByClause_String(t *testing.T) {
 
 func TestHavingClause_String(t *testing.T) {
 	e := HavingClause{
-		Having: "having",
 		Filter: Comparison{
 			LHS:      Identifier{Literal: "column"},
-			Operator: ">",
+			Operator: Token{Token: '>', Literal: ">"},
 			RHS:      NewIntegerValueFromString("1"),
 		},
 	}
-	expect := "having column > 1"
+	expect := "HAVING column > 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -456,7 +474,6 @@ func TestHavingClause_String(t *testing.T) {
 
 func TestOrderByClause_String(t *testing.T) {
 	e := OrderByClause{
-		OrderBy: "order by",
 		Items: []QueryExpression{
 			OrderItem{
 				Value: Identifier{Literal: "column1"},
@@ -467,7 +484,7 @@ func TestOrderByClause_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "order by column1, column2 asc"
+	expect := "ORDER BY column1, column2 ASC"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -475,9 +492,9 @@ func TestOrderByClause_String(t *testing.T) {
 
 func TestLimitClause_String(t *testing.T) {
 	e := LimitClause{
-		OffsetClause: OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")},
+		OffsetClause: OffsetClause{Value: NewIntegerValueFromString("10")},
 	}
-	expect := "offset 10"
+	expect := "OFFSET 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -487,9 +504,9 @@ func TestLimitClause_String(t *testing.T) {
 		Value:        NewIntegerValueFromString("10"),
 		Unit:         Token{Token: ROWS, Literal: "rows"},
 		Restriction:  Token{Token: TIES, Literal: "with ties"},
-		OffsetClause: OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")},
+		OffsetClause: OffsetClause{Value: NewIntegerValueFromString("10")},
 	}
-	expect = "limit 10 rows with ties offset 10"
+	expect = "LIMIT 10 ROWS WITH TIES OFFSET 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -500,9 +517,9 @@ func TestLimitClause_String(t *testing.T) {
 		Value:        NewIntegerValueFromString("10"),
 		Unit:         Token{Token: ROWS, Literal: "rows"},
 		Restriction:  Token{Token: TIES, Literal: "with ties"},
-		OffsetClause: OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")},
+		OffsetClause: OffsetClause{Value: NewIntegerValueFromString("10")},
 	}
-	expect = "offset 10 fetch next 10 rows with ties"
+	expect = "OFFSET 10 FETCH NEXT 10 ROWS WITH TIES"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -533,14 +550,14 @@ func TestLimitClause_WithTies(t *testing.T) {
 }
 
 func TestOffsetClause_String(t *testing.T) {
-	e := OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10")}
-	expect := "offset 10"
+	e := OffsetClause{Value: NewIntegerValueFromString("10")}
+	expect := "OFFSET 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = OffsetClause{Offset: "offset", Value: NewIntegerValueFromString("10"), Unit: Token{Token: ROWS, Literal: "rows"}}
-	expect = "offset 10 rows"
+	e = OffsetClause{Value: NewIntegerValueFromString("10"), Unit: Token{Token: ROWS, Literal: "rows"}}
+	expect = "OFFSET 10 ROWS"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -548,15 +565,12 @@ func TestOffsetClause_String(t *testing.T) {
 
 func TestWithClause_String(t *testing.T) {
 	e := WithClause{
-		With: "with",
 		InlineTables: []QueryExpression{
 			InlineTable{
 				Name: Identifier{Literal: "alias1"},
-				As:   "as",
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
-							Select: "select",
 							Fields: []QueryExpression{
 								NewIntegerValueFromString("1"),
 							},
@@ -567,11 +581,9 @@ func TestWithClause_String(t *testing.T) {
 			InlineTable{
 				Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
 				Name:      Identifier{Literal: "alias2"},
-				As:        "as",
 				Query: SelectQuery{
 					SelectEntity: SelectEntity{
 						SelectClause: SelectClause{
-							Select: "select",
 							Fields: []QueryExpression{
 								NewIntegerValueFromString("2"),
 							},
@@ -581,7 +593,7 @@ func TestWithClause_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "with alias1 as (select 1), recursive alias2 as (select 2)"
+	expect := "WITH alias1 AS (SELECT 1), RECURSIVE alias2 AS (SELECT 2)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -590,15 +602,13 @@ func TestWithClause_String(t *testing.T) {
 func TestInlineTable_String(t *testing.T) {
 	e := InlineTable{
 		Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
-		Name:      Identifier{Literal: "alias"},
+		Name:      Identifier{Literal: "it"},
 		Fields: []QueryExpression{
 			Identifier{Literal: "column1"},
 		},
-		As: "as",
 		Query: SelectQuery{
 			SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
-					Select: "select",
 					Fields: []QueryExpression{
 						NewIntegerValueFromString("1"),
 					},
@@ -606,7 +616,7 @@ func TestInlineTable_String(t *testing.T) {
 			},
 		},
 	}
-	expect := "recursive alias (column1) as (select 1)"
+	expect := "RECURSIVE it (column1) AS (SELECT 1)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -616,11 +626,9 @@ func TestInlineTable_IsRecursive(t *testing.T) {
 	e := InlineTable{
 		Recursive: Token{Token: RECURSIVE, Literal: "recursive"},
 		Name:      Identifier{Literal: "alias"},
-		As:        "as",
 		Query: SelectQuery{
 			SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
-					Select: "select",
 					Fields: []QueryExpression{
 						NewIntegerValueFromString("1"),
 					},
@@ -634,11 +642,9 @@ func TestInlineTable_IsRecursive(t *testing.T) {
 
 	e = InlineTable{
 		Name: Identifier{Literal: "alias"},
-		As:   "as",
 		Query: SelectQuery{
 			SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
-					Select: "select",
 					Fields: []QueryExpression{
 						NewIntegerValueFromString("1"),
 					},
@@ -656,21 +662,17 @@ func TestSubquery_String(t *testing.T) {
 		Query: SelectQuery{
 			SelectEntity: SelectEntity{
 				SelectClause: SelectClause{
-					Select: "select",
 					Fields: []QueryExpression{
 						NewIntegerValueFromString("1"),
 					},
 				},
 				FromClause: FromClause{
-					From: "from",
-					Tables: []QueryExpression{
-						Dual{Dual: "dual"},
-					},
+					Tables: []QueryExpression{Dual{}},
 				},
 			},
 		},
 	}
-	expect := "(select 1 from dual)"
+	expect := "(SELECT 1 FROM DUAL)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -678,33 +680,33 @@ func TestSubquery_String(t *testing.T) {
 
 func TestTableObject_String(t *testing.T) {
 	e := TableObject{
-		Type:          Identifier{Literal: "fixed"},
+		Type:          Token{Token: FIXED, Literal: "fixed"},
 		FormatElement: NewStringValue("[1, 2, 3]"),
 		Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
 		Args:          []QueryExpression{NewStringValue("utf8")},
 	}
-	expect := "fixed('[1, 2, 3]', `fixed_length.dat`, 'utf8')"
+	expect := "FIXED('[1, 2, 3]', `fixed_length.dat`, 'utf8')"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
 	e = TableObject{
-		Type:          Identifier{Literal: "fixed"},
+		Type:          Token{Token: FIXED, Literal: "fixed"},
 		FormatElement: NewStringValue("[1, 2, 3]"),
 		Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
 		Args:          nil,
 	}
-	expect = "fixed('[1, 2, 3]', `fixed_length.dat`)"
+	expect = "FIXED('[1, 2, 3]', `fixed_length.dat`)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
 	e = TableObject{
-		Type: Identifier{Literal: "ltsv"},
+		Type: Token{Token: LTSV, Literal: "ltsv"},
 		Path: Identifier{Literal: "table.ltsv", Quoted: true},
 		Args: []QueryExpression{NewStringValue("utf8")},
 	}
-	expect = "ltsv(`table.ltsv`, 'utf8')"
+	expect = "LTSV(`table.ltsv`, 'utf8')"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -712,11 +714,11 @@ func TestTableObject_String(t *testing.T) {
 
 func TestJsonQuery_String(t *testing.T) {
 	e := JsonQuery{
-		JsonQuery: "json_array",
+		JsonQuery: Token{Token: JSON_ROW, Literal: "json_array"},
 		Query:     NewStringValue("key"),
 		JsonText:  NewStringValue("{\"key\":1}"),
 	}
-	expect := "json_array('key', '{\"key\":1}')"
+	expect := "JSON_ROW('key', '{\"key\":1}')"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -725,7 +727,7 @@ func TestJsonQuery_String(t *testing.T) {
 func TestComparison_String(t *testing.T) {
 	e := Comparison{
 		LHS:      Identifier{Literal: "column"},
-		Operator: ">",
+		Operator: Token{Token: '>', Literal: ">"},
 		RHS:      NewIntegerValueFromString("1"),
 	}
 	expect := "column > 1"
@@ -748,12 +750,11 @@ func TestIs_IsNegated(t *testing.T) {
 
 func TestIs_String(t *testing.T) {
 	e := Is{
-		Is:       "is",
 		LHS:      Identifier{Literal: "column"},
-		RHS:      NewNullValueFromString("null"),
+		RHS:      NewNullValue(),
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
-	expect := "column is not null"
+	expect := "column IS NOT NULL"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -773,14 +774,12 @@ func TestBetween_IsNegated(t *testing.T) {
 
 func TestBetween_String(t *testing.T) {
 	e := Between{
-		Between:  "between",
-		And:      "and",
 		LHS:      Identifier{Literal: "column"},
 		Low:      NewIntegerValueFromString("-10"),
 		High:     NewIntegerValueFromString("10"),
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
-	expect := "column not between -10 and 10"
+	expect := "column NOT BETWEEN -10 AND 10"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -800,7 +799,6 @@ func TestIn_IsNegated(t *testing.T) {
 
 func TestIn_String(t *testing.T) {
 	e := In{
-		In:  "in",
 		LHS: Identifier{Literal: "column"},
 		Values: RowValue{
 			Value: ValueList{
@@ -812,7 +810,7 @@ func TestIn_String(t *testing.T) {
 		},
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
-	expect := "column not in (1, 2)"
+	expect := "column NOT IN (1, 2)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -820,7 +818,6 @@ func TestIn_String(t *testing.T) {
 
 func TestAll_String(t *testing.T) {
 	e := All{
-		All: "all",
 		LHS: RowValue{
 			Value: ValueList{
 				Values: []QueryExpression{
@@ -829,27 +826,23 @@ func TestAll_String(t *testing.T) {
 				},
 			},
 		},
-		Operator: ">",
+		Operator: Token{Token: '>', Literal: ">"},
 		Values: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
-						Select: "select",
 						Fields: []QueryExpression{
 							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
-						From: "from",
-						Tables: []QueryExpression{
-							Dual{Dual: "dual"},
-						},
+						Tables: []QueryExpression{Dual{}},
 					},
 				},
 			},
 		},
 	}
-	expect := "(column1, column2) > all (select 1 from dual)"
+	expect := "(column1, column2) > ALL (SELECT 1 FROM DUAL)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -857,7 +850,6 @@ func TestAll_String(t *testing.T) {
 
 func TestAny_String(t *testing.T) {
 	e := Any{
-		Any: "any",
 		LHS: RowValue{
 			Value: ValueList{
 				Values: []QueryExpression{
@@ -866,27 +858,23 @@ func TestAny_String(t *testing.T) {
 				},
 			},
 		},
-		Operator: ">",
+		Operator: Token{Token: '>', Literal: ">"},
 		Values: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
-						Select: "select",
 						Fields: []QueryExpression{
 							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
-						From: "from",
-						Tables: []QueryExpression{
-							Dual{Dual: "dual"},
-						},
+						Tables: []QueryExpression{Dual{}},
 					},
 				},
 			},
 		},
 	}
-	expect := "(column1, column2) > any (select 1 from dual)"
+	expect := "(column1, column2) > ANY (SELECT 1 FROM DUAL)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -906,12 +894,11 @@ func TestLike_IsNegated(t *testing.T) {
 
 func TestLike_String(t *testing.T) {
 	e := Like{
-		Like:     "like",
 		LHS:      Identifier{Literal: "column"},
 		Pattern:  NewStringValue("pattern"),
 		Negation: Token{Token: NOT, Literal: "not"},
 	}
-	expect := "column not like 'pattern'"
+	expect := "column NOT LIKE 'pattern'"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -919,27 +906,22 @@ func TestLike_String(t *testing.T) {
 
 func TestExists_String(t *testing.T) {
 	e := Exists{
-		Exists: "exists",
 		Query: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
-						Select: "select",
 						Fields: []QueryExpression{
 							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
-						From: "from",
-						Tables: []QueryExpression{
-							Dual{Dual: "dual"},
-						},
+						Tables: []QueryExpression{Dual{}},
 					},
 				},
 			},
 		},
 	}
-	expect := "exists (select 1 from dual)"
+	expect := "EXISTS (SELECT 1 FROM DUAL)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -948,7 +930,7 @@ func TestExists_String(t *testing.T) {
 func TestArithmetic_String(t *testing.T) {
 	e := Arithmetic{
 		LHS:      Identifier{Literal: "column"},
-		Operator: int('+'),
+		Operator: Token{Token: '+', Literal: "+"},
 		RHS:      NewIntegerValueFromString("2"),
 	}
 	expect := "column + 2"
@@ -974,7 +956,7 @@ func TestLogic_String(t *testing.T) {
 		Operator: Token{Token: AND, Literal: "and"},
 		RHS:      NewTernaryValueFromString("false"),
 	}
-	expect := "true and false"
+	expect := "TRUE AND FALSE"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -985,7 +967,7 @@ func TestUnaryLogic_String(t *testing.T) {
 		Operator: Token{Token: NOT, Literal: "not"},
 		Operand:  NewTernaryValueFromString("false"),
 	}
-	expect := "not false"
+	expect := "NOT FALSE"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -994,7 +976,7 @@ func TestUnaryLogic_String(t *testing.T) {
 		Operator: Token{Token: '!', Literal: "!"},
 		Operand:  NewTernaryValueFromString("false"),
 	}
-	expect = "!false"
+	expect = "!FALSE"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1020,7 +1002,7 @@ func TestFunction_String(t *testing.T) {
 			Identifier{Literal: "column"},
 		},
 	}
-	expect := "sum(column)"
+	expect := "SUM(column)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1033,7 +1015,7 @@ func TestFunction_String(t *testing.T) {
 			NewIntegerValue(5),
 		},
 	}
-	expect = "substring(column, 2, 5)"
+	expect = "SUBSTRING(column, 2, 5)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1044,9 +1026,9 @@ func TestFunction_String(t *testing.T) {
 			Identifier{Literal: "column"},
 			NewIntegerValue(2),
 		},
-		From: "from",
+		From: Token{Token: FROM, Literal: "from"},
 	}
-	expect = "substring(column from 2)"
+	expect = "SUBSTRING(column FROM 2)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1058,10 +1040,10 @@ func TestFunction_String(t *testing.T) {
 			NewIntegerValue(2),
 			NewIntegerValue(5),
 		},
-		From: "from",
-		For:  "for",
+		From: Token{Token: FROM, Literal: "from"},
+		For:  Token{Token: FOR, Literal: "for"},
 	}
-	expect = "substring(column from 2 for 5)"
+	expect = "SUBSTRING(column FROM 2 FOR 5)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1075,7 +1057,7 @@ func TestAggregateFunction_String(t *testing.T) {
 			FieldReference{Column: Identifier{Literal: "column"}},
 		},
 	}
-	expect := "sum(distinct column)"
+	expect := "SUM(DISTINCT column)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1096,10 +1078,10 @@ func TestAggregateFunction_IsDistinct(t *testing.T) {
 func TestTable_String(t *testing.T) {
 	e := Table{
 		Object: Identifier{Literal: "table"},
-		As:     "as",
+		As:     Token{Token: AS, Literal: "as"},
 		Alias:  Identifier{Literal: "alias"},
 	}
-	expect := "table as alias"
+	expect := "table AS alias"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1111,12 +1093,21 @@ func TestTable_String(t *testing.T) {
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
+
+	e = Table{
+		Lateral: Token{Token: LATERAL, Literal: "lateral"},
+		Object:  Identifier{Literal: "table"},
+	}
+	expect = "LATERAL table"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
 }
 
 func TestTable_Name(t *testing.T) {
 	e := Table{
 		Object: Identifier{Literal: "table.csv"},
-		As:     "as",
+		As:     Token{Token: AS, Literal: "as"},
 		Alias:  Identifier{Literal: "alias"},
 	}
 	expect := Identifier{Literal: "alias"}
@@ -1133,26 +1124,43 @@ func TestTable_Name(t *testing.T) {
 	}
 
 	e = Table{
+		Object: Stdin{},
+	}
+	expect = Identifier{Literal: "STDIN"}
+	if !reflect.DeepEqual(e.Name(), expect) {
+		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
+	}
+
+	e = Table{
 		Object: Subquery{
 			Query: SelectQuery{
 				SelectEntity: SelectEntity{
 					SelectClause: SelectClause{
-						Select: "select",
 						Fields: []QueryExpression{
 							NewIntegerValueFromString("1"),
 						},
 					},
 					FromClause: FromClause{
-						From: "from",
-						Tables: []QueryExpression{
-							Dual{Dual: "dual"},
-						},
+						Tables: []QueryExpression{Dual{}},
 					},
 				},
 			},
 		},
 	}
-	expect = Identifier{Literal: "(select 1 from dual)"}
+	expect = Identifier{}
+	if !reflect.DeepEqual(e.Name(), expect) {
+		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
+	}
+
+	e = Table{
+		Object: TableObject{
+			Type:          Token{Token: FIXED, Literal: "fixed"},
+			FormatElement: NewStringValue("[1, 2, 3]"),
+			Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
+			Args:          nil,
+		},
+	}
+	expect = Identifier{Literal: "fixed_length"}
 	if !reflect.DeepEqual(e.Name(), expect) {
 		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}
@@ -1160,30 +1168,27 @@ func TestTable_Name(t *testing.T) {
 
 func TestJoin_String(t *testing.T) {
 	e := Join{
-		Join:      "join",
 		Table:     Table{Object: Identifier{Literal: "table1"}},
 		JoinTable: Table{Object: Identifier{Literal: "table2"}},
 		Natural:   Token{Token: NATURAL, Literal: "natural"},
 	}
-	expect := "table1 natural join table2"
+	expect := "table1 NATURAL JOIN table2"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
 	e = Join{
-		Join:      "join",
 		Table:     Table{Object: Identifier{Literal: "table1"}},
 		JoinTable: Table{Object: Identifier{Literal: "table2"}},
 		JoinType:  Token{Token: OUTER, Literal: "outer"},
 		Direction: Token{Token: LEFT, Literal: "left"},
 		Condition: JoinCondition{
-			Literal: "using",
 			Using: []QueryExpression{
 				Identifier{Literal: "column"},
 			},
 		},
 	}
-	expect = "table1 left outer join table2 using (column)"
+	expect = "table1 LEFT OUTER JOIN table2 USING (column)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1191,26 +1196,24 @@ func TestJoin_String(t *testing.T) {
 
 func TestJoinCondition_String(t *testing.T) {
 	e := JoinCondition{
-		Literal: "on",
 		On: Comparison{
 			LHS:      Identifier{Literal: "column"},
-			Operator: ">",
+			Operator: Token{Token: '>', Literal: ">"},
 			RHS:      NewIntegerValueFromString("1"),
 		},
 	}
-	expect := "on column > 1"
+	expect := "ON column > 1"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
 	e = JoinCondition{
-		Literal: "using",
 		Using: []QueryExpression{
 			Identifier{Literal: "column1"},
 			Identifier{Literal: "column2"},
 		},
 	}
-	expect = "using (column1, column2)"
+	expect = "USING (column1, column2)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1219,10 +1222,10 @@ func TestJoinCondition_String(t *testing.T) {
 func TestField_String(t *testing.T) {
 	e := Field{
 		Object: Identifier{Literal: "column"},
-		As:     "as",
+		As:     Token{Token: AS, Literal: "as"},
 		Alias:  Identifier{Literal: "alias"},
 	}
-	expect := "column as alias"
+	expect := "column AS alias"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1239,7 +1242,7 @@ func TestField_String(t *testing.T) {
 func TestField_Name(t *testing.T) {
 	e := Field{
 		Object: Identifier{Literal: "column"},
-		As:     "as",
+		As:     Token{Token: AS, Literal: "as"},
 		Alias:  Identifier{Literal: "alias"},
 	}
 	expect := "alias"
@@ -1291,16 +1294,16 @@ func TestAllColumns_String(t *testing.T) {
 }
 
 func TestDual_String(t *testing.T) {
-	s := "dual"
-	e := Dual{Dual: s}
+	s := "DUAL"
+	e := Dual{}
 	if e.String() != s {
 		t.Errorf("string = %q, want %q for %#v", e.String(), s, e)
 	}
 }
 
 func TestStdin_String(t *testing.T) {
-	s := "stdin"
-	e := Stdin{Stdin: s}
+	s := "STDIN"
+	e := Stdin{}
 	if e.String() != s {
 		t.Errorf("string = %q, want %q for %#v", e.String(), s, e)
 	}
@@ -1311,7 +1314,7 @@ func TestOrderItem_String(t *testing.T) {
 		Value:     Identifier{Literal: "column"},
 		Direction: Token{Token: DESC, Literal: "desc"},
 	}
-	expect := "column desc"
+	expect := "column DESC"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1325,11 +1328,10 @@ func TestOrderItem_String(t *testing.T) {
 	}
 
 	e = OrderItem{
-		Value:    Identifier{Literal: "column"},
-		Nulls:    "nulls",
-		Position: Token{Token: FIRST, Literal: "first"},
+		Value:         Identifier{Literal: "column"},
+		NullsPosition: Token{Token: FIRST, Literal: "first"},
 	}
-	expect = "column nulls first"
+	expect = "column NULLS FIRST"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1337,47 +1339,37 @@ func TestOrderItem_String(t *testing.T) {
 
 func TestCase_String(t *testing.T) {
 	e := CaseExpr{
-		Case:  "case",
-		End:   "end",
 		Value: Identifier{Literal: "column"},
 		When: []QueryExpression{
 			CaseExprWhen{
-				When:      "when",
-				Then:      "then",
 				Condition: NewIntegerValueFromString("1"),
 				Result:    NewStringValue("A"),
 			},
 			CaseExprWhen{
-				When:      "when",
-				Then:      "then",
 				Condition: NewIntegerValueFromString("2"),
 				Result:    NewStringValue("B"),
 			},
 		},
-		Else: CaseExprElse{Else: "else", Result: NewStringValue("C")},
+		Else: CaseExprElse{Result: NewStringValue("C")},
 	}
-	expect := "case column when 1 then 'A' when 2 then 'B' else 'C' end"
+	expect := "CASE column WHEN 1 THEN 'A' WHEN 2 THEN 'B' ELSE 'C' END"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
 	e = CaseExpr{
-		Case: "case",
-		End:  "end",
 		When: []QueryExpression{
 			CaseExprWhen{
-				When: "when",
-				Then: "then",
 				Condition: Comparison{
 					LHS:      Identifier{Literal: "column"},
-					Operator: ">",
+					Operator: Token{Token: '>', Literal: ">"},
 					RHS:      NewIntegerValueFromString("1"),
 				},
 				Result: NewStringValue("A"),
 			},
 		},
 	}
-	expect = "case when column > 1 then 'A' end"
+	expect = "CASE WHEN column > 1 THEN 'A' END"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1385,24 +1377,22 @@ func TestCase_String(t *testing.T) {
 
 func TestCaseWhen_String(t *testing.T) {
 	e := CaseExprWhen{
-		When: "when",
-		Then: "then",
 		Condition: Comparison{
 			LHS:      Identifier{Literal: "column"},
-			Operator: ">",
+			Operator: Token{Token: '>', Literal: ">"},
 			RHS:      NewIntegerValueFromString("1"),
 		},
 		Result: NewStringValue("abcde"),
 	}
-	expect := "when column > 1 then 'abcde'"
+	expect := "WHEN column > 1 THEN 'abcde'"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 }
 
 func TestCaseElse_String(t *testing.T) {
-	e := CaseExprElse{Else: "else", Result: NewStringValue("abcde")}
-	expect := "else 'abcde'"
+	e := CaseExprElse{Result: NewStringValue("abcde")}
+	expect := "ELSE 'abcde'"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1416,13 +1406,11 @@ func TestListFunction_String(t *testing.T) {
 			Identifier{Literal: "column1"},
 			NewStringValue(","),
 		},
-		WithinGroup: "within group",
 		OrderBy: OrderByClause{
-			OrderBy: "order by",
-			Items:   []QueryExpression{Identifier{Literal: "column1"}},
+			Items: []QueryExpression{Identifier{Literal: "column1"}},
 		},
 	}
-	expect := "listagg(distinct column1, ',') within group (order by column1)"
+	expect := "LISTAGG(DISTINCT column1, ',') WITHIN GROUP (ORDER BY column1)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1434,9 +1422,8 @@ func TestListFunction_String(t *testing.T) {
 			Identifier{Literal: "column1"},
 			NewStringValue(","),
 		},
-		WithinGroup: "within group",
 	}
-	expect = "listagg(distinct column1, ',') within group ()"
+	expect = "LISTAGG(DISTINCT column1, ',')"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1461,26 +1448,22 @@ func TestAnalyticFunction_String(t *testing.T) {
 		Args: []QueryExpression{
 			Identifier{Literal: "column4"},
 		},
-		IgnoreNulls:    true,
-		IgnoreNullsLit: "ignore nulls",
-		Over:           "over",
+		IgnoreType: Token{Token: NULLS, Literal: "nulls"},
 		AnalyticClause: AnalyticClause{
 			PartitionClause: PartitionClause{
-				PartitionBy: "partition by",
 				Values: []QueryExpression{
 					Identifier{Literal: "column1"},
 					Identifier{Literal: "column2"},
 				},
 			},
 			OrderByClause: OrderByClause{
-				OrderBy: "order by",
 				Items: []QueryExpression{
 					OrderItem{Value: Identifier{Literal: "column3"}},
 				},
 			},
 		},
 	}
-	expect := "avg(distinct column4 ignore nulls) over (partition by column1, column2 order by column3)"
+	expect := "AVG(DISTINCT column4 IGNORE NULLS) OVER (PARTITION BY column1, column2 ORDER BY column3)"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1498,30 +1481,38 @@ func TestAnalyticFunction_IsDistinct(t *testing.T) {
 	}
 }
 
+func TestAnalyticFunction_IgnoreNulls(t *testing.T) {
+	e := AnalyticFunction{}
+	if e.IgnoreNulls() == true {
+		t.Errorf("IgnoreNulls() = %t, want %t for %#v", e.IgnoreNulls(), false, e)
+	}
+
+	e = AnalyticFunction{IgnoreType: Token{Token: NULLS, Literal: "nulls"}}
+	if e.IgnoreNulls() == false {
+		t.Errorf("IgnoreNulls() = %t, want %t for %#v", e.IgnoreNulls(), true, e)
+	}
+}
+
 func TestAnalyticClause_String(t *testing.T) {
 	e := AnalyticClause{
 		PartitionClause: PartitionClause{
-			PartitionBy: "partition by",
 			Values: []QueryExpression{
 				Identifier{Literal: "column1"},
 				Identifier{Literal: "column2"},
 			},
 		},
 		OrderByClause: OrderByClause{
-			OrderBy: "order by",
 			Items: []QueryExpression{
 				OrderItem{Value: Identifier{Literal: "column3"}},
 			},
 		},
 		WindowingClause: WindowingClause{
-			Rows: "rows",
 			FrameLow: WindowFramePosition{
-				Direction: CURRENT,
-				Literal:   "current row",
+				Direction: Token{Token: CURRENT, Literal: "current"},
 			},
 		},
 	}
-	expect := "partition by column1, column2 order by column3 rows current row"
+	expect := "PARTITION BY column1, column2 ORDER BY column3 ROWS CURRENT ROW"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1530,7 +1521,6 @@ func TestAnalyticClause_String(t *testing.T) {
 func TestAnalyticClause_PartitionValues(t *testing.T) {
 	e := AnalyticClause{
 		PartitionClause: PartitionClause{
-			PartitionBy: "partition by",
 			Values: []QueryExpression{
 				Identifier{Literal: "column1"},
 				Identifier{Literal: "column2"},
@@ -1554,13 +1544,12 @@ func TestAnalyticClause_PartitionValues(t *testing.T) {
 
 func TestPartition_String(t *testing.T) {
 	e := PartitionClause{
-		PartitionBy: "partition by",
 		Values: []QueryExpression{
 			Identifier{Literal: "column1"},
 			Identifier{Literal: "column2"},
 		},
 	}
-	expect := "partition by column1, column2"
+	expect := "PARTITION BY column1, column2"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1568,33 +1557,26 @@ func TestPartition_String(t *testing.T) {
 
 func TestWindowingClause_String(t *testing.T) {
 	e := WindowingClause{
-		Rows: "rows",
 		FrameLow: WindowFramePosition{
-			Direction: CURRENT,
-			Literal:   "current row",
+			Direction: Token{Token: CURRENT, Literal: "current"},
 		},
 	}
-	expect := "rows current row"
+	expect := "ROWS CURRENT ROW"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
 	e = WindowingClause{
-		Rows: "rows",
 		FrameLow: WindowFramePosition{
-			Direction: PRECEDING,
+			Direction: Token{Token: PRECEDING, Literal: "preceding"},
 			Offset:    1,
-			Literal:   "1 preceding",
 		},
 		FrameHigh: WindowFramePosition{
-			Direction: FOLLOWING,
-			Unbounded: true,
-			Literal:   "unbounded following",
+			Direction: Token{Token: FOLLOWING, Literal: "following"},
+			Unbounded: Token{Token: UNBOUNDED, Literal: "unbounded"},
 		},
-		Between: "between",
-		And:     "and",
 	}
-	expect = "rows between 1 preceding and unbounded following"
+	expect = "ROWS BETWEEN 1 PRECEDING AND UNBOUNDED FOLLOWING"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1646,7 +1628,7 @@ func TestRuntimeInformation_String(t *testing.T) {
 	e := RuntimeInformation{
 		Name: "ri",
 	}
-	expect := "@#ri"
+	expect := "@#RI"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1656,7 +1638,7 @@ func TestFlag_String(t *testing.T) {
 	e := Flag{
 		Name: "flag",
 	}
-	expect := "@@flag"
+	expect := "@@FLAG"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1664,14 +1646,20 @@ func TestFlag_String(t *testing.T) {
 
 func TestCursorStatus_String(t *testing.T) {
 	e := CursorStatus{
-		CursorLit: "cursor",
-		Cursor:    Identifier{Literal: "cur"},
-		Is:        "is",
-		Negation:  Token{Token: NOT, Literal: "not"},
-		Type:      RANGE,
-		TypeLit:   "in range",
+		Cursor:   Identifier{Literal: "cur"},
+		Negation: Token{Token: NOT, Literal: "not"},
+		Type:     Token{Token: RANGE, Literal: "range"},
 	}
-	expect := "cursor cur is not in range"
+	expect := "CURSOR cur IS NOT IN RANGE"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+
+	e = CursorStatus{
+		Cursor: Identifier{Literal: "cur"},
+		Type:   Token{Token: OPEN, Literal: "open"},
+	}
+	expect = "CURSOR cur IS OPEN"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
@@ -1679,11 +1667,10 @@ func TestCursorStatus_String(t *testing.T) {
 
 func TestCursorAttrebute_String(t *testing.T) {
 	e := CursorAttrebute{
-		CursorLit: "cursor",
 		Cursor:    Identifier{Literal: "cur"},
 		Attrebute: Token{Token: COUNT, Literal: "count"},
 	}
-	expect := "cursor cur count"
+	expect := "CURSOR cur COUNT"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}

@@ -37,6 +37,8 @@ const (
 	EndExpression   = '}'
 )
 
+var errTokenIsNotKeyword = errors.New("token is not keyword")
+
 var comparisonOperators = []string{
 	">",
 	"<",
@@ -92,6 +94,13 @@ func TokenLiteral(token int) string {
 		return yyToknames[token-TokenFrom+3]
 	}
 	return string(token)
+}
+
+func KeywordLiteral(token int) (string, error) {
+	if KeywordFrom <= token && token <= KeywordTo {
+		return yyToknames[token-TokenFrom+3], nil
+	}
+	return string(token), errTokenIsNotKeyword
 }
 
 type Scanner struct {

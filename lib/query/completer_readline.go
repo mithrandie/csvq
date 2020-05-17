@@ -902,13 +902,22 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 	}
 
 	var joinConditionRequired = func() bool {
-		if c.tokens[c.lastIdx-1].Token != parser.JOIN {
+		if c.tokens[c.lastIdx].Token == '(' {
 			return false
 		}
-		if c.tokens[c.lastIdx-2].Token == parser.CROSS ||
-			c.tokens[c.lastIdx-2].Token == parser.NATURAL ||
-			c.tokens[c.lastIdx-3].Token == parser.NATURAL ||
-			c.tokens[c.lastIdx-4].Token == parser.NATURAL {
+
+		baseIdx := c.lastIdx - 1
+		if c.tokens[baseIdx].Token == parser.LATERAL {
+			baseIdx--
+		}
+
+		if c.tokens[baseIdx].Token != parser.JOIN {
+			return false
+		}
+		if c.tokens[baseIdx-1].Token == parser.CROSS ||
+			c.tokens[baseIdx-1].Token == parser.NATURAL ||
+			c.tokens[baseIdx-2].Token == parser.NATURAL ||
+			c.tokens[baseIdx-3].Token == parser.NATURAL {
 			return false
 		}
 		return true
@@ -930,6 +939,8 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 	}
 
 	switch c.tokens[c.lastIdx].Token {
+	case parser.LATERAL:
+		restrict = true
 	case parser.CROSS, parser.INNER, parser.OUTER:
 		customList = append(customList, c.candidate("JOIN", true))
 		restrict = true
@@ -957,6 +968,11 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 		}
 		restrict = true
 	} else {
+		switch c.tokens[c.lastIdx].Token {
+		case parser.JOIN, ',':
+			customList = append(customList, c.candidate("LATERAL", true))
+		}
+
 		switch c.tokens[c.lastIdx].Token {
 		case '(':
 			customList = append(customList, c.candidate("SELECT", true))

@@ -237,17 +237,17 @@ func WindowFrameSet(partition Partition, expr parser.AnalyticClause) []WindowFra
 	var frameIndex = func(current int, length int, framePosition parser.WindowFramePosition) int {
 		var idx int
 
-		switch framePosition.Direction {
+		switch framePosition.Direction.Token {
 		case parser.CURRENT:
 			idx = current
 		case parser.PRECEDING:
-			if framePosition.Unbounded {
+			if !framePosition.Unbounded.IsEmpty() {
 				idx = 0
 			} else {
 				idx = current - framePosition.Offset
 			}
 		case parser.FOLLOWING:
-			if framePosition.Unbounded {
+			if !framePosition.Unbounded.IsEmpty() {
 				idx = length - 1
 			} else {
 				idx = current + framePosition.Offset
@@ -269,8 +269,8 @@ func WindowFrameSet(partition Partition, expr parser.AnalyticClause) []WindowFra
 	if expr.WindowingClause == nil {
 		windowClause = parser.WindowingClause{
 			FrameLow: parser.WindowFramePosition{
-				Direction: parser.PRECEDING,
-				Unbounded: true,
+				Direction: parser.Token{Token: parser.PRECEDING},
+				Unbounded: parser.Token{Token: parser.UNBOUNDED},
 			},
 		}
 	} else {
@@ -288,7 +288,7 @@ func WindowFrameSet(partition Partition, expr parser.AnalyticClause) []WindowFra
 		}
 	} else {
 		frameHigh := windowClause.FrameHigh.(parser.WindowFramePosition)
-		if frameLow.Direction == parser.PRECEDING && frameLow.Unbounded && frameHigh.Direction == parser.FOLLOWING && frameHigh.Unbounded {
+		if frameLow.Direction.Token == parser.PRECEDING && !frameLow.Unbounded.IsEmpty() && frameHigh.Direction.Token == parser.FOLLOWING && !frameHigh.Unbounded.IsEmpty() {
 			return singleFrameSet(partition)
 		}
 
@@ -355,7 +355,7 @@ func (fn RowNumber) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn RowNumber) Execute(ctx context.Context, scope *ReferenceScope, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
+func (fn RowNumber) Execute(_ context.Context, _ *ReferenceScope, partition Partition, _ parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 	var number int64 = 0
 	for _, idx := range partition {
@@ -372,7 +372,7 @@ func (fn Rank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn Rank) Execute(ctx context.Context, scope *ReferenceScope, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
+func (fn Rank) Execute(_ context.Context, scope *ReferenceScope, partition Partition, _ parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 	var number int64 = 0
 	var rank int64 = 0
@@ -397,7 +397,7 @@ func (fn DenseRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn DenseRank) Execute(ctx context.Context, scope *ReferenceScope, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
+func (fn DenseRank) Execute(_ context.Context, scope *ReferenceScope, partition Partition, _ parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 	var rank int64 = 0
 	var currentRank SortValues
@@ -420,7 +420,7 @@ func (fn CumeDist) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn CumeDist) Execute(ctx context.Context, scope *ReferenceScope, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
+func (fn CumeDist) Execute(_ context.Context, scope *ReferenceScope, partition Partition, _ parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 
 	groups := perseCumulativeGroups(partition, scope.Records[0].view)
@@ -444,7 +444,7 @@ func (fn PercentRank) CheckArgsLen(expr parser.AnalyticFunction) error {
 	return CheckArgsLen(expr, []int{0})
 }
 
-func (fn PercentRank) Execute(ctx context.Context, scope *ReferenceScope, partition Partition, expr parser.AnalyticFunction) (map[int]value.Primary, error) {
+func (fn PercentRank) Execute(_ context.Context, scope *ReferenceScope, partition Partition, _ parser.AnalyticFunction) (map[int]value.Primary, error) {
 	list := make(map[int]value.Primary, len(partition))
 
 	groups := perseCumulativeGroups(partition, scope.Records[0].view)
@@ -611,7 +611,7 @@ func setNthValue(ctx context.Context, scope *ReferenceScope, partition Partition
 				valueCache[recordIdx] = p
 				val = p
 			}
-			if expr.IgnoreNulls && value.IsNull(val) {
+			if expr.IgnoreNulls() && value.IsNull(val) {
 				continue
 			}
 
@@ -690,7 +690,7 @@ func setLag(ctx context.Context, scope *ReferenceScope, partition Partition, exp
 		val := defaultValue
 		if 0 <= lagIdx && lagIdx < len(values) {
 			for i := lagIdx; i >= 0; i-- {
-				if expr.IgnoreNulls && value.IsNull(values[i]) {
+				if expr.IgnoreNulls() && value.IsNull(values[i]) {
 					continue
 				}
 				val = values[i]

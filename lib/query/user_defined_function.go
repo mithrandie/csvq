@@ -27,6 +27,10 @@ func (m UserDefinedFunctionMap) Store(name string, val *UserDefinedFunction) {
 	m.store(strings.ToUpper(name), val)
 }
 
+func (m UserDefinedFunctionMap) LoadDirect(name string) (interface{}, bool) {
+	return m.load(strings.ToUpper(name))
+}
+
 func (m UserDefinedFunctionMap) Load(name string) (*UserDefinedFunction, bool) {
 	if v, ok := m.load(strings.ToUpper(name)); ok {
 		return v.(*UserDefinedFunction), true

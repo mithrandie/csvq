@@ -10,9 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/file"
-
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mitchellh/go-homedir"
@@ -20,23 +19,23 @@ import (
 	"github.com/mithrandie/go-text/json"
 )
 
-type SyncMapStruct interface {
+type syncMapStruct interface {
 	SortedKeys() []string
-	load(string) (interface{}, bool)
+	LoadDirect(string) (interface{}, bool)
 }
 
-func SyncMapEqual(m1 SyncMapStruct, m2 SyncMapStruct) bool {
+func SyncMapEqual(m1 syncMapStruct, m2 syncMapStruct) bool {
 	mkeys := m1.SortedKeys()
 	vlist := make([]interface{}, 0, len(mkeys))
 	for _, key := range mkeys {
-		v, _ := m1.load(key)
+		v, _ := m1.LoadDirect(key)
 		vlist = append(vlist, v)
 	}
 
 	m2keys := m2.SortedKeys()
 	vlist2 := make([]interface{}, 0, len(m2keys))
 	for _, key := range m2keys {
-		v, _ := m2.load(key)
+		v, _ := m2.LoadDirect(key)
 		vlist2 = append(vlist2, v)
 	}
 	return reflect.DeepEqual(vlist, vlist2)

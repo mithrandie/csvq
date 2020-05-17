@@ -5,6 +5,18 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.12.5
+
+Released on April 11, 2020
+
+- Ignore all leading and trailing white spaces of the field name when specifying a field name.
+
+## Version 1.12.4
+
+Released on February 4, 2020
+
+- Fix a bug that arrow keys do not work in the interactive shell on Windows. ([Github #26](https://github.com/mithrandie/csvq/issues/26))
+
 ## Version 1.12.3
 
 Released on January 15, 2020

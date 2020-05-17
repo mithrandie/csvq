@@ -58,19 +58,19 @@ var parseJoinConditionTests = []struct {
 				LHS: parser.Comparison{
 					LHS:      naturalJoinTestFieldReference("t1", "key1"),
 					RHS:      naturalJoinTestFieldReference("t2", "key1"),
-					Operator: "=",
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
 				RHS: parser.Comparison{
 					LHS:      naturalJoinTestFieldReference("t1", "key2"),
 					RHS:      naturalJoinTestFieldReference("t2", "key2"),
-					Operator: "=",
+					Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 				},
 				Operator: parser.Token{Token: parser.AND, Literal: "AND"},
 			},
 			RHS: parser.Comparison{
 				LHS:      naturalJoinTestFieldReference("t1", "key3"),
 				RHS:      naturalJoinTestFieldReference("t2", "key3"),
-				Operator: "=",
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 			},
 			Operator: parser.Token{Token: parser.AND, Literal: "AND"},
 		},
@@ -101,7 +101,7 @@ var parseJoinConditionTests = []struct {
 		ResultValue: parser.Comparison{
 			LHS:      joinUsingTestFieldReference("t1", "key1"),
 			RHS:      joinUsingTestFieldReference("t2", "key1"),
-			Operator: "=",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		IncludeFields: []parser.FieldReference{
 			joinUsingTestFieldReference("t1", "key1"),
@@ -128,7 +128,7 @@ var parseJoinConditionTests = []struct {
 		ResultValue: parser.Comparison{
 			LHS:      joinUsingTestFieldReference("t1", "key1"),
 			RHS:      joinUsingTestFieldReference("t2", "key1"),
-			Operator: "=",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		IncludeFields: []parser.FieldReference{
 			joinUsingTestFieldReference("t2", "key1"),
@@ -146,7 +146,7 @@ var parseJoinConditionTests = []struct {
 				On: parser.Comparison{
 					LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key1"}},
 					RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key1"}},
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -155,7 +155,7 @@ var parseJoinConditionTests = []struct {
 		ResultValue: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "key1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "key1"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 	},
 	{
@@ -351,7 +351,7 @@ var innerJoinTests = []struct {
 		Condition: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: &View{
 			Header: []HeaderField{
@@ -418,7 +418,7 @@ var innerJoinTests = []struct {
 		Condition: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: &View{
 			Header: []HeaderField{
@@ -558,7 +558,7 @@ var innerJoinTests = []struct {
 		Condition: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "notexist"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "field table2.notexist does not exist",
 	},
@@ -645,7 +645,7 @@ var outerJoinTests = []struct {
 		Condition: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Direction: parser.LEFT,
 		Result: &View{
@@ -724,7 +724,7 @@ var outerJoinTests = []struct {
 		Condition: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Direction: parser.RIGHT,
 		Result: &View{
@@ -803,7 +803,7 @@ var outerJoinTests = []struct {
 		Condition: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Direction: parser.FULL,
 		Result: &View{
@@ -890,7 +890,7 @@ var outerJoinTests = []struct {
 		Condition: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "notexist"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Direction: parser.LEFT,
 		Error:     "field table1.notexist does not exist",
@@ -934,7 +934,7 @@ var outerJoinTests = []struct {
 		Condition: parser.Comparison{
 			LHS:      parser.FieldReference{View: parser.Identifier{Literal: "table1"}, Column: parser.Identifier{Literal: "column1"}},
 			RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column1"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Direction: parser.TokenUndefined,
 		Result: &View{
@@ -1079,7 +1079,7 @@ func BenchmarkInnerJoin(b *testing.B) {
 	condition := parser.Comparison{
 		LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "c1"}},
 		RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "c1"}},
-		Operator: "=",
+		Operator: parser.Token{Token: '=', Literal: "="},
 	}
 
 	ctx := context.Background()
@@ -1097,7 +1097,7 @@ func BenchmarkOuterJoin(b *testing.B) {
 	condition := parser.Comparison{
 		LHS:      parser.FieldReference{View: parser.Identifier{Literal: "t1"}, Column: parser.Identifier{Literal: "c1"}},
 		RHS:      parser.FieldReference{View: parser.Identifier{Literal: "t2"}, Column: parser.Identifier{Literal: "c1"}},
-		Operator: "=",
+		Operator: parser.Token{Token: '=', Literal: "="},
 	}
 
 	ctx := context.Background()

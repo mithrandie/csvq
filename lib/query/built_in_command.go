@@ -581,7 +581,7 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 
 					w.NewLine()
 					if cur.query.SelectEntity != nil {
-						w.WriteColor("Query: ", cmd.LableEffect)
+						w.WriteColor("Query:", cmd.LableEffect)
 						writeQuery(w, cur.query.String())
 					} else {
 						w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
@@ -630,7 +630,7 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 					w.WriteColorWithoutLineBreak("Placeholder Number: ", cmd.LableEffect)
 					w.WriteColorWithoutLineBreak(strconv.Itoa(stmt.HolderNumber), cmd.NumberEffect)
 					w.NewLine()
-					w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
+					w.WriteColorWithoutLineBreak("Statement:", cmd.LableEffect)
 					writeQuery(w, stmt.StatementString)
 
 					w.ClearBlock()
@@ -850,7 +850,7 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 		if e, ok := expr.(parser.Identifier); ok {
 			s = e.Literal
 		} else if e, ok := expr.(parser.Stdin); ok {
-			s = e.Stdin
+			s = e.String()
 		}
 		return
 	}
@@ -947,15 +947,10 @@ func writeFieldList(w *ObjectWriter, fields []string) {
 }
 
 func writeQuery(w *ObjectWriter, s string) {
-	words := strings.Split(s, " ")
-
+	w.NewLine()
+	w.WriteSpaces(2)
 	w.BeginSubBlock()
-	for _, v := range words {
-		if !w.FitInLine(v + " ") {
-			w.NewLine()
-		}
-		w.Write(v + " ")
-	}
+	w.WriteWithAutoLineBreakWithContinueMark(s)
 	w.EndSubBlock()
 }
 

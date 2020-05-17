@@ -359,8 +359,8 @@ var analyzeTests = []struct {
 				},
 				WindowingClause: parser.WindowingClause{
 					FrameLow: parser.WindowFramePosition{
-						Direction: parser.PRECEDING,
-						Unbounded: true,
+						Direction: parser.Token{Token: parser.PRECEDING},
+						Unbounded: parser.Token{Token: parser.UNBOUNDED},
 					},
 				},
 			},
@@ -629,7 +629,7 @@ var analyzeTests = []struct {
 										Value: parser.Arithmetic{
 											LHS:      parser.Variable{Name: "value"},
 											RHS:      parser.Variable{Name: "fetch"},
-											Operator: '*',
+											Operator: parser.Token{Token: '*'},
 										},
 									},
 								},
@@ -776,7 +776,7 @@ var analyzeTests = []struct {
 										Value: parser.Arithmetic{
 											LHS:      parser.Variable{Name: "value"},
 											RHS:      parser.Variable{Name: "fetch"},
-											Operator: '*',
+											Operator: parser.Token{Token: '*', Literal: "*"},
 										},
 									},
 								},
@@ -808,8 +808,8 @@ var analyzeTests = []struct {
 				},
 				WindowingClause: parser.WindowingClause{
 					FrameLow: parser.WindowFramePosition{
-						Direction: parser.PRECEDING,
-						Unbounded: true,
+						Direction: parser.Token{Token: parser.PRECEDING},
+						Unbounded: parser.Token{Token: parser.UNBOUNDED},
 					},
 				},
 			},
@@ -1578,7 +1578,7 @@ var firstValueExecuteTests = []analyticFunctionExecuteTests{
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
-			IgnoreNulls: true,
+			IgnoreType: parser.Token{Token: parser.NULLS, Literal: "nulls"},
 		},
 		Result: map[int]value.Primary{
 			2: value.NewInteger(200),
@@ -1647,7 +1647,7 @@ var lastValueExecuteTests = []analyticFunctionExecuteTests{
 			Args: []parser.QueryExpression{
 				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 			},
-			IgnoreNulls: true,
+			IgnoreType: parser.Token{Token: parser.NULLS, Literal: "nulls"},
 		},
 		Result: map[int]value.Primary{
 			2: value.NewInteger(800),
@@ -1715,7 +1715,7 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 				},
 				WindowingClause: parser.WindowingClause{
 					FrameLow: parser.WindowFramePosition{
-						Direction: parser.PRECEDING,
+						Direction: parser.Token{Token: parser.PRECEDING},
 						Offset:    2,
 					},
 				},
@@ -1747,11 +1747,11 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 				},
 				WindowingClause: parser.WindowingClause{
 					FrameLow: parser.WindowFramePosition{
-						Direction: parser.CURRENT,
+						Direction: parser.Token{Token: parser.CURRENT},
 					},
 					FrameHigh: parser.WindowFramePosition{
-						Direction: parser.FOLLOWING,
-						Unbounded: true,
+						Direction: parser.Token{Token: parser.FOLLOWING},
+						Unbounded: parser.Token{Token: parser.UNBOUNDED},
 					},
 				},
 			},
@@ -1782,11 +1782,11 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 				},
 				WindowingClause: parser.WindowingClause{
 					FrameLow: parser.WindowFramePosition{
-						Direction: parser.PRECEDING,
-						Unbounded: true,
+						Direction: parser.Token{Token: parser.PRECEDING},
+						Unbounded: parser.Token{Token: parser.UNBOUNDED},
 					},
 					FrameHigh: parser.WindowFramePosition{
-						Direction: parser.FOLLOWING,
+						Direction: parser.Token{Token: parser.FOLLOWING},
 						Offset:    2,
 					},
 				},
@@ -1818,12 +1818,12 @@ var nthValueExecuteTests = []analyticFunctionExecuteTests{
 				},
 				WindowingClause: parser.WindowingClause{
 					FrameLow: parser.WindowFramePosition{
-						Direction: parser.PRECEDING,
-						Unbounded: true,
+						Direction: parser.Token{Token: parser.PRECEDING},
+						Unbounded: parser.Token{Token: parser.UNBOUNDED},
 					},
 					FrameHigh: parser.WindowFramePosition{
-						Direction: parser.FOLLOWING,
-						Unbounded: true,
+						Direction: parser.Token{Token: parser.FOLLOWING},
+						Unbounded: parser.Token{Token: parser.UNBOUNDED},
 					},
 				},
 			},
@@ -1981,7 +1981,7 @@ var lagExecuteTests = []analyticFunctionExecuteTests{
 				parser.NewIntegerValue(2),
 				parser.NewIntegerValue(0),
 			},
-			IgnoreNulls: true,
+			IgnoreType: parser.Token{Token: parser.NULLS, Literal: "nulls"},
 		},
 		Result: map[int]value.Primary{
 			2: value.NewInteger(0),

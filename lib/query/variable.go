@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"strings"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -23,6 +24,10 @@ func (m VariableMap) IsEmpty() bool {
 
 func (m VariableMap) Store(name string, val value.Primary) {
 	m.store(name, val)
+}
+
+func (m VariableMap) LoadDirect(name string) (interface{}, bool) {
+	return m.load(strings.ToUpper(name))
 }
 
 func (m VariableMap) Load(name string) (value.Primary, bool) {

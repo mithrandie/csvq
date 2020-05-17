@@ -6,6 +6,36 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 )
 
+func TestFormatTableName(t *testing.T) {
+	path := "/path/to/file.txt"
+	expect := "file"
+	result := FormatTableName(path)
+	if result != expect {
+		t.Errorf("table name = %q, want %q for %q", result, expect, path)
+	}
+
+	path = "/path/to/file"
+	expect = "file"
+	result = FormatTableName(path)
+	if result != expect {
+		t.Errorf("table name = %q, want %q for %q", result, expect, path)
+	}
+
+	path = "file.txt"
+	expect = "file"
+	result = FormatTableName(path)
+	if result != expect {
+		t.Errorf("table name = %q, want %q for %q", result, expect, path)
+	}
+
+	path = ""
+	expect = ""
+	result = FormatTableName(path)
+	if result != expect {
+		t.Errorf("table name = %q, want %q for %q", result, expect, path)
+	}
+}
+
 func TestFormatFieldIdentifier(t *testing.T) {
 	var e QueryExpression = NewStringValue("str")
 	expect := "str"
