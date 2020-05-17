@@ -1,5 +1,9 @@
 # Change Log
 
+## Version 1.13.0-pr1
+
+- Support LATERAL join. ([Github #24](https://github.com/mithrandie/csvq/issues/25))
+
 ## Version 1.12.5
 
 Released on April 11, 2020
