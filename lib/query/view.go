@@ -446,20 +446,20 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 	case parser.Subquery:
-		if 0 < len(tableName.Literal) {
-			if err := scope.AddAlias(tableName, ""); err != nil {
-				return nil, err
-			}
-		}
-
 		subquery := table.Object.(parser.Subquery)
 		view, err = Select(ctx, scope, subquery.Query)
 		if err != nil {
 			return nil, err
 		}
 
-		if err = view.Header.Update(tableName.Literal, nil); err != nil {
-			return nil, err
+		if 0 < len(tableName.Literal) {
+			if err := scope.AddAlias(tableName, ""); err != nil {
+				return nil, err
+			}
+
+			if err = view.Header.Update(tableName.Literal, nil); err != nil {
+				return nil, err
+			}
 		}
 	}
 

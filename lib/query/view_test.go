@@ -2436,6 +2436,50 @@ var viewLoadTests = []struct {
 							},
 						},
 					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+	},
+	{
+		Name: "LoadView Subquery with Table Name Alias",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Subquery{
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Fields: []parser.QueryExpression{
+										parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+										parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+									},
+								},
+								FromClause: parser.FromClause{
+									Tables: []parser.QueryExpression{
+										parser.Table{Object: parser.Identifier{Literal: "table1"}},
+									},
+								},
+							},
+						},
+					},
 					Alias: parser.Identifier{Literal: "alias"},
 				},
 			},
