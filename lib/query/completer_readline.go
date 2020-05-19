@@ -968,8 +968,25 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 		}
 		restrict = true
 	} else {
+		canUseLateral := false
 		switch c.tokens[c.lastIdx].Token {
-		case parser.JOIN, ',':
+		case ',':
+			canUseLateral = true
+		case parser.JOIN:
+			canUseLateral = true
+			switch c.tokens[c.lastIdx-1].Token {
+			case parser.RIGHT, parser.FULL:
+				canUseLateral = false
+			case parser.OUTER:
+				switch c.tokens[c.lastIdx-2].Token {
+				case parser.RIGHT, parser.FULL:
+					canUseLateral = false
+				}
+			}
+
+		}
+
+		if canUseLateral {
 			customList = append(customList, c.candidate("LATERAL", true))
 		}
 
