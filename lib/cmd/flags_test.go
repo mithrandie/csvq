@@ -10,6 +10,32 @@ import (
 	"github.com/mithrandie/go-text/json"
 )
 
+func TestImportOptions_Copy(t *testing.T) {
+	op := NewImportOptions()
+	op.DelimiterPositions = []int{1, 2, 3}
+
+	expect := NewImportOptions()
+	expect.DelimiterPositions = []int{1, 2, 3}
+
+	copied := op.Copy()
+	if !reflect.DeepEqual(copied, expect) {
+		t.Errorf("import options = %v, want %v", copied, expect)
+	}
+}
+
+func TestExportOptions_Copy(t *testing.T) {
+	op := NewExportOptions()
+	op.DelimiterPositions = []int{1, 2, 3}
+
+	expect := NewExportOptions()
+	expect.DelimiterPositions = []int{1, 2, 3}
+
+	copied := op.Copy()
+	if !reflect.DeepEqual(copied, expect) {
+		t.Errorf("export options = %v, want %v", copied, expect)
+	}
+}
+
 func TestFlags_SetRepository(t *testing.T) {
 	flags := NewFlags(nil)
 
@@ -134,13 +160,13 @@ func TestFlags_SetImportFormat(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetImportFormat("")
-	if flags.ImportFormat != CSV {
-		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportFormat, CSV)
+	if flags.ImportOptions.Format != CSV {
+		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportOptions.Format, CSV)
 	}
 
 	_ = flags.SetImportFormat("json")
-	if flags.ImportFormat != JSON {
-		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportFormat, JSON)
+	if flags.ImportOptions.Format != JSON {
+		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportOptions.Format, JSON)
 	}
 
 	expectErr := "import format must be one of CSV|TSV|FIXED|JSON|LTSV"
@@ -163,13 +189,13 @@ func TestFlags_SetDelimiter(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetDelimiter("")
-	if flags.Delimiter != ',' {
-		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, ',', "")
+	if flags.ImportOptions.Delimiter != ',' {
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.ImportOptions.Delimiter, ',', "")
 	}
 
 	_ = flags.SetDelimiter("\\t")
-	if flags.Delimiter != '\t' {
-		t.Errorf("delimiter = %q, expect to set %q for %q", flags.Delimiter, "\t", "\t")
+	if flags.ImportOptions.Delimiter != '\t' {
+		t.Errorf("delimiter = %q, expect to set %q for %q", flags.ImportOptions.Delimiter, "\t", "\t")
 	}
 
 	expectErr := "delimiter must be one character"
@@ -193,32 +219,32 @@ func TestFlags_SetDelimiterPositions(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetDelimiterPositions("")
-	if flags.DelimiterPositions != nil {
-		t.Errorf("delimiter-positions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "")
+	if flags.ImportOptions.DelimiterPositions != nil {
+		t.Errorf("delimiter-positions = %v, expect to set %v for %q", flags.ImportOptions.DelimiterPositions, nil, "")
 	}
 
 	_ = flags.SetDelimiterPositions("s[1, 2, 3]")
-	if flags.SingleLine != true {
-		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, true, "s[1, 2, 3]")
+	if flags.ImportOptions.SingleLine != true {
+		t.Errorf("singleLine = %t, expect to set %t for %q", flags.ImportOptions.SingleLine, true, "s[1, 2, 3]")
 	}
-	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
-		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	if !reflect.DeepEqual(flags.ImportOptions.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.ImportOptions.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
 	}
 
 	_ = flags.SetDelimiterPositions("[1, 2, 3]")
-	if flags.SingleLine != false {
-		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, false, "[1, 2, 3]")
+	if flags.ImportOptions.SingleLine != false {
+		t.Errorf("singleLine = %t, expect to set %t for %q", flags.ImportOptions.SingleLine, false, "[1, 2, 3]")
 	}
-	if !reflect.DeepEqual(flags.DelimiterPositions, []int{1, 2, 3}) {
-		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	if !reflect.DeepEqual(flags.ImportOptions.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.ImportOptions.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
 	}
 
 	_ = flags.SetDelimiterPositions("spaces")
-	if flags.SingleLine != false {
-		t.Errorf("singleLine = %t, expect to set %t for %q", flags.SingleLine, false, "spaces")
+	if flags.ImportOptions.SingleLine != false {
+		t.Errorf("singleLine = %t, expect to set %t for %q", flags.ImportOptions.SingleLine, false, "spaces")
 	}
-	if flags.DelimiterPositions != nil {
-		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.DelimiterPositions, nil, "spaces")
+	if flags.ImportOptions.DelimiterPositions != nil {
+		t.Errorf("delimitPositions = %v, expect to set %v for %q", flags.ImportOptions.DelimiterPositions, nil, "spaces")
 	}
 
 	expectErr := "delimiter positions must be \"SPACES\" or a JSON array of integers"
@@ -241,8 +267,8 @@ func TestFlags_SetJsonQuery(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetJsonQuery("{}")
-	if flags.JsonQuery != "{}" {
-		t.Errorf("json-query = %q, expect to set %q", flags.JsonQuery, "{}")
+	if flags.ImportOptions.JsonQuery != "{}" {
+		t.Errorf("json-query = %q, expect to set %q", flags.ImportOptions.JsonQuery, "{}")
 	}
 }
 
@@ -250,8 +276,8 @@ func TestFlags_SetEncoding(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetEncoding("sjis")
-	if flags.Encoding != text.SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", flags.Encoding, text.SJIS, "sjis")
+	if flags.ImportOptions.Encoding != text.SJIS {
+		t.Errorf("encoding = %s, expect to set %s for %s", flags.ImportOptions.Encoding, text.SJIS, "sjis")
 	}
 
 	expectErr := "encoding must be one of AUTO|UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS"
@@ -267,8 +293,8 @@ func TestFlags_SetNoHeader(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetNoHeader(true)
-	if !flags.NoHeader {
-		t.Errorf("no-header = %t, expect to set %t", flags.NoHeader, true)
+	if !flags.ImportOptions.NoHeader {
+		t.Errorf("no-header = %t, expect to set %t", flags.ImportOptions.NoHeader, true)
 	}
 }
 
@@ -276,8 +302,8 @@ func TestFlags_SetWithoutNull(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetWithoutNull(true)
-	if !flags.WithoutNull {
-		t.Errorf("without-null = %t, expect to set %t", flags.WithoutNull, true)
+	if !flags.ImportOptions.WithoutNull {
+		t.Errorf("without-null = %t, expect to set %t", flags.ImportOptions.WithoutNull, true)
 	}
 }
 
@@ -285,94 +311,94 @@ func TestFlags_SetFormat(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetFormat("", "")
-	if flags.Format != TEXT {
-		t.Errorf("format = %s, expect to set %s for empty string", flags.Format, TEXT)
+	if flags.ExportOptions.Format != TEXT {
+		t.Errorf("format = %s, expect to set %s for empty string", flags.ExportOptions.Format, TEXT)
 	}
 
 	_ = flags.SetFormat("", "foo.csv")
-	if flags.Format != CSV {
-		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, CSV, "foo.csv")
+	if flags.ExportOptions.Format != CSV {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, CSV, "foo.csv")
 	}
 
 	_ = flags.SetFormat("", "foo.tsv")
-	if flags.Format != TSV {
-		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, TSV, "foo.tsv")
+	if flags.ExportOptions.Format != TSV {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, TSV, "foo.tsv")
 	}
 
 	_ = flags.SetFormat("", "foo.json")
-	if flags.Format != JSON {
-		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, JSON, "foo.json")
+	if flags.ExportOptions.Format != JSON {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, JSON, "foo.json")
 	}
 
 	_ = flags.SetFormat("", "foo.ltsv")
-	if flags.Format != LTSV {
-		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, LTSV, "foo.ltsv")
+	if flags.ExportOptions.Format != LTSV {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, LTSV, "foo.ltsv")
 	}
 
 	_ = flags.SetFormat("", "foo.md")
-	if flags.Format != GFM {
-		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, GFM, "foo.md")
+	if flags.ExportOptions.Format != GFM {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, GFM, "foo.md")
 	}
 
 	_ = flags.SetFormat("", "foo.org")
-	if flags.Format != ORG {
-		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.Format, ORG, "foo.org")
+	if flags.ExportOptions.Format != ORG {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, ORG, "foo.org")
 	}
 
 	_ = flags.SetFormat("csv", "")
-	if flags.Format != CSV {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, CSV, "csv")
+	if flags.ExportOptions.Format != CSV {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, CSV, "csv")
 	}
 
 	_ = flags.SetFormat("tsv", "")
-	if flags.Format != TSV {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TSV, "tsv")
+	if flags.ExportOptions.Format != TSV {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, TSV, "tsv")
 	}
 
 	_ = flags.SetFormat("fixed", "")
-	if flags.Format != FIXED {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, FIXED, "fixed")
+	if flags.ExportOptions.Format != FIXED {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, FIXED, "fixed")
 	}
 
 	_ = flags.SetFormat("json", "")
-	if flags.Format != JSON {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "json")
+	if flags.ExportOptions.Format != JSON {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, JSON, "json")
 	}
 
 	_ = flags.SetFormat("ltsv", "")
-	if flags.Format != LTSV {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, LTSV, "ltsv")
+	if flags.ExportOptions.Format != LTSV {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, LTSV, "ltsv")
 	}
 
 	_ = flags.SetFormat("jsonh", "")
-	if flags.Format != JSON {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "jsonh")
+	if flags.ExportOptions.Format != JSON {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, JSON, "jsonh")
 	}
-	if flags.JsonEscape != json.HexDigits {
-		t.Errorf("json escape type = %v, expect to set %v for %s", flags.JsonEscape, json.HexDigits, "jsonh")
+	if flags.ExportOptions.JsonEscape != json.HexDigits {
+		t.Errorf("json escape type = %v, expect to set %v for %s", flags.ExportOptions.JsonEscape, json.HexDigits, "jsonh")
 	}
 
 	_ = flags.SetFormat("jsona", "")
-	if flags.Format != JSON {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, JSON, "jsona")
+	if flags.ExportOptions.Format != JSON {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, JSON, "jsona")
 	}
-	if flags.JsonEscape != json.AllWithHexDigits {
-		t.Errorf("json escape type = %v, expect to set %v for %s", flags.JsonEscape, json.AllWithHexDigits, "jsonh")
+	if flags.ExportOptions.JsonEscape != json.AllWithHexDigits {
+		t.Errorf("json escape type = %v, expect to set %v for %s", flags.ExportOptions.JsonEscape, json.AllWithHexDigits, "jsonh")
 	}
 
 	_ = flags.SetFormat("gfm", "")
-	if flags.Format != GFM {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, GFM, "gfm")
+	if flags.ExportOptions.Format != GFM {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, GFM, "gfm")
 	}
 
 	_ = flags.SetFormat("org", "")
-	if flags.Format != ORG {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, ORG, "org")
+	if flags.ExportOptions.Format != ORG {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, ORG, "org")
 	}
 
 	_ = flags.SetFormat("text", "")
-	if flags.Format != TEXT {
-		t.Errorf("format = %s, expect to set %s for %s", flags.Format, TEXT, "text")
+	if flags.ExportOptions.Format != TEXT {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, TEXT, "text")
 	}
 
 	expectErr := "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT"
@@ -388,8 +414,8 @@ func TestFlags_SetWriteEncoding(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetWriteEncoding("sjis")
-	if flags.WriteEncoding != text.SJIS {
-		t.Errorf("encoding = %s, expect to set %s for %s", flags.WriteEncoding, text.SJIS, "sjis")
+	if flags.ExportOptions.Encoding != text.SJIS {
+		t.Errorf("encoding = %s, expect to set %s for %s", flags.ExportOptions.Encoding, text.SJIS, "sjis")
 	}
 
 	expectErr := "write-encoding must be one of UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS"
@@ -405,13 +431,13 @@ func TestFlags_SetWriteDelimiter(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetWriteDelimiter("")
-	if flags.WriteDelimiter != ',' {
-		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.WriteDelimiter, ',', "", flags.Format)
+	if flags.ExportOptions.Delimiter != ',' {
+		t.Errorf("write-delimiter = %q, expect to set %q for %q, format = %s", flags.ExportOptions.Delimiter, ',', "", flags.ExportOptions.Format)
 	}
 
 	_ = flags.SetWriteDelimiter("\\t")
-	if flags.WriteDelimiter != '\t' {
-		t.Errorf("write-delimiter = %q, expect to set %q for %q", flags.WriteDelimiter, "\t", "\t")
+	if flags.ExportOptions.Delimiter != '\t' {
+		t.Errorf("write-delimiter = %q, expect to set %q for %q", flags.ExportOptions.Delimiter, "\t", "\t")
 	}
 
 	expectErr := "write-delimiter must be one character"
@@ -427,19 +453,19 @@ func TestFlags_SetWriteDelimiterPositions(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetWriteDelimiterPositions("s[1, 2, 3]")
-	if flags.WriteAsSingleLine != true {
-		t.Errorf("WriteAsSingleLine = %t, expect to set %t for %q", flags.WriteAsSingleLine, true, "s[1, 2, 3]")
+	if flags.ExportOptions.SingleLine != true {
+		t.Errorf("WriteAsSingleLine = %t, expect to set %t for %q", flags.ExportOptions.SingleLine, true, "s[1, 2, 3]")
 	}
-	if !reflect.DeepEqual(flags.WriteDelimiterPositions, []int{1, 2, 3}) {
-		t.Errorf("WriteDelimiterPositions = %v, expect to set %v for %q", flags.WriteDelimiterPositions, []int{1, 2, 3}, "s[1, 2, 3]")
+	if !reflect.DeepEqual(flags.ExportOptions.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("WriteDelimiterPositions = %v, expect to set %v for %q", flags.ExportOptions.DelimiterPositions, []int{1, 2, 3}, "s[1, 2, 3]")
 	}
 
 	_ = flags.SetWriteDelimiterPositions("[1, 2, 3]")
-	if flags.WriteAsSingleLine != false {
-		t.Errorf("WriteAsSingleLine = %t, expect to set %t for %q", flags.WriteAsSingleLine, false, "[1, 2, 3]")
+	if flags.ExportOptions.SingleLine != false {
+		t.Errorf("WriteAsSingleLine = %t, expect to set %t for %q", flags.ExportOptions.SingleLine, false, "[1, 2, 3]")
 	}
-	if !reflect.DeepEqual(flags.WriteDelimiterPositions, []int{1, 2, 3}) {
-		t.Errorf("WriteDelimiterPositions = %v, expect to set %v for %q", flags.WriteDelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
+	if !reflect.DeepEqual(flags.ExportOptions.DelimiterPositions, []int{1, 2, 3}) {
+		t.Errorf("WriteDelimiterPositions = %v, expect to set %v for %q", flags.ExportOptions.DelimiterPositions, []int{1, 2, 3}, "[1, 2, 3]")
 	}
 
 	expectErr := "write-delimiter-positions must be \"SPACES\" or a JSON array of integers"
@@ -455,8 +481,8 @@ func TestFlags_SetWithoutHeader(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetWithoutHeader(true)
-	if !flags.WithoutHeader {
-		t.Errorf("without-header = %t, expect to set %t", flags.WithoutHeader, true)
+	if !flags.ExportOptions.WithoutHeader {
+		t.Errorf("without-header = %t, expect to set %t", flags.ExportOptions.WithoutHeader, true)
 	}
 }
 
@@ -464,23 +490,23 @@ func TestFlags_SetLineBreak(t *testing.T) {
 	flags := NewFlags(nil)
 
 	_ = flags.SetLineBreak("")
-	if flags.LineBreak != text.LF {
-		t.Errorf("line-break = %s, expect to set %s for %q", flags.LineBreak, text.LF, "")
+	if flags.ExportOptions.LineBreak != text.LF {
+		t.Errorf("line-break = %s, expect to set %s for %q", flags.ExportOptions.LineBreak, text.LF, "")
 	}
 
 	_ = flags.SetLineBreak("crlf")
-	if flags.LineBreak != text.CRLF {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.CRLF, "crlf")
+	if flags.ExportOptions.LineBreak != text.CRLF {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.ExportOptions.LineBreak, text.CRLF, "crlf")
 	}
 
 	_ = flags.SetLineBreak("cr")
-	if flags.LineBreak != text.CR {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.CR, "cr")
+	if flags.ExportOptions.LineBreak != text.CR {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.ExportOptions.LineBreak, text.CR, "cr")
 	}
 
 	_ = flags.SetLineBreak("lf")
-	if flags.LineBreak != text.LF {
-		t.Errorf("line-break = %s, expect to set %s for %s", flags.LineBreak, text.LF, "LF")
+	if flags.ExportOptions.LineBreak != text.LF {
+		t.Errorf("line-break = %s, expect to set %s for %s", flags.ExportOptions.LineBreak, text.LF, "LF")
 	}
 
 	expectErr := "line-break must be one of CRLF|CR|LF"
@@ -496,8 +522,8 @@ func TestFlags_SetEncloseAll(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetEncloseAll(true)
-	if !flags.EncloseAll {
-		t.Errorf("enclose-all = %t, expect to set %t", flags.EncloseAll, true)
+	if !flags.ExportOptions.EncloseAll {
+		t.Errorf("enclose-all = %t, expect to set %t", flags.ExportOptions.EncloseAll, true)
 	}
 }
 
@@ -506,20 +532,20 @@ func TestFlags_SetJsonEscape(t *testing.T) {
 
 	s := "backslash"
 	_ = flags.SetJsonEscape(s)
-	if flags.JsonEscape != json.Backslash {
-		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.Backslash)
+	if flags.ExportOptions.JsonEscape != json.Backslash {
+		t.Errorf("json-escape = %v, expect to set %v", flags.ExportOptions.JsonEscape, json.Backslash)
 	}
 
 	s = "hex"
 	_ = flags.SetJsonEscape(s)
-	if flags.JsonEscape != json.HexDigits {
-		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.HexDigits)
+	if flags.ExportOptions.JsonEscape != json.HexDigits {
+		t.Errorf("json-escape = %v, expect to set %v", flags.ExportOptions.JsonEscape, json.HexDigits)
 	}
 
 	s = "hexall"
 	_ = flags.SetJsonEscape(s)
-	if flags.JsonEscape != json.AllWithHexDigits {
-		t.Errorf("json-escape = %v, expect to set %v", flags.JsonEscape, json.AllWithHexDigits)
+	if flags.ExportOptions.JsonEscape != json.AllWithHexDigits {
+		t.Errorf("json-escape = %v, expect to set %v", flags.ExportOptions.JsonEscape, json.AllWithHexDigits)
 	}
 
 	s = "error"
@@ -536,8 +562,8 @@ func TestFlags_SetPrettyPrint(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetPrettyPrint(true)
-	if !flags.PrettyPrint {
-		t.Errorf("pretty-print = %t, expect to set %t", flags.PrettyPrint, true)
+	if !flags.ExportOptions.PrettyPrint {
+		t.Errorf("pretty-print = %t, expect to set %t", flags.ExportOptions.PrettyPrint, true)
 	}
 }
 
@@ -545,8 +571,8 @@ func TestFlags_SetStripEndingLineBreak(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetStripEndingLineBreak(true)
-	if !flags.StripEndingLineBreak {
-		t.Errorf("strip ending line break = %t, expect to set %t", flags.StripEndingLineBreak, true)
+	if !flags.ExportOptions.StripEndingLineBreak {
+		t.Errorf("strip ending line break = %t, expect to set %t", flags.ExportOptions.StripEndingLineBreak, true)
 	}
 	flags.SetStripEndingLineBreak(false)
 }
@@ -555,8 +581,8 @@ func TestFlags_SetEastAsianEncoding(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetEastAsianEncoding(true)
-	if !flags.EastAsianEncoding {
-		t.Errorf("east-asian-encoding = %t, expect to set %t", flags.EastAsianEncoding, true)
+	if !flags.ExportOptions.EastAsianEncoding {
+		t.Errorf("east-asian-encoding = %t, expect to set %t", flags.ExportOptions.EastAsianEncoding, true)
 	}
 }
 
@@ -564,8 +590,8 @@ func TestFlags_SetCountDiacriticalSign(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetCountDiacriticalSign(true)
-	if !flags.CountDiacriticalSign {
-		t.Errorf("count-diacritical-sign = %t, expect to set %t", flags.CountDiacriticalSign, true)
+	if !flags.ExportOptions.CountDiacriticalSign {
+		t.Errorf("count-diacritical-sign = %t, expect to set %t", flags.ExportOptions.CountDiacriticalSign, true)
 	}
 }
 
@@ -573,8 +599,8 @@ func TestFlags_SetCountFormatCode(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetCountFormatCode(true)
-	if !flags.CountFormatCode {
-		t.Errorf("count-format-code = %t, expect to set %t", flags.CountFormatCode, true)
+	if !flags.ExportOptions.CountFormatCode {
+		t.Errorf("count-format-code = %t, expect to set %t", flags.ExportOptions.CountFormatCode, true)
 	}
 }
 
@@ -582,8 +608,8 @@ func TestFlags_SetColor(t *testing.T) {
 	flags := NewFlags(nil)
 
 	flags.SetColor(true)
-	if !flags.Color {
-		t.Errorf("color = %t, expect to set %t", flags.Color, true)
+	if !flags.ExportOptions.Color {
+		t.Errorf("color = %t, expect to set %t", flags.ExportOptions.Color, true)
 	}
 	flags.SetColor(false)
 }

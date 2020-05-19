@@ -1047,7 +1047,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 	}()
 
 	TestTx.Flags.Repository = TestDir
-	TestTx.Flags.Format = cmd.CSV
+	TestTx.Flags.ExportOptions.Format = cmd.CSV
 
 	tx := TestTx
 	proc := NewProcessor(tx)

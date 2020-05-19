@@ -23,7 +23,6 @@ import (
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/csv"
 	"github.com/mithrandie/go-text/fixedlen"
-	txjson "github.com/mithrandie/go-text/json"
 	"github.com/mithrandie/go-text/ltsv"
 	"github.com/mithrandie/ternary"
 )
@@ -129,15 +128,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		view = loadDualView()
 	case parser.TableObject:
 		tableObject := table.Object.(parser.TableObject)
-
-		importFormat := scope.Tx.Flags.ImportFormat
-		delimiter := scope.Tx.Flags.Delimiter
-		delimiterPositions := scope.Tx.Flags.DelimiterPositions
-		singleLine := scope.Tx.Flags.SingleLine
-		jsonQuery := scope.Tx.Flags.JsonQuery
-		encoding := scope.Tx.Flags.Encoding
-		noHeader := scope.Tx.Flags.NoHeader
-		withoutNull := scope.Tx.Flags.WithoutNull
+		options := scope.Tx.Flags.ImportOptions.Copy()
 
 		var felem value.Primary
 		if tableObject.FormatElement != nil {
@@ -169,11 +160,11 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			if 3 < len(tableObject.Args) {
 				return nil, NewTableObjectArgumentsLengthError(tableObject, 5)
 			}
-			delimiter = d[0]
-			if delimiter == '\t' {
-				importFormat = cmd.TSV
+			options.Delimiter = d[0]
+			if options.Delimiter == '\t' {
+				options.Format = cmd.TSV
 			} else {
-				importFormat = cmd.CSV
+				options.Format = cmd.CSV
 			}
 		case parser.FIXED:
 			if felem == nil {
@@ -187,7 +178,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			var positions []int
 			if !strings.EqualFold("SPACES", s) {
 				if strings.HasPrefix(s, "s[") || strings.HasPrefix(s, "S[") {
-					singleLine = true
+					options.SingleLine = true
 					s = s[1:]
 				}
 				err = gojson.Unmarshal([]byte(s), &positions)
@@ -198,8 +189,8 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			if 3 < len(tableObject.Args) {
 				return nil, NewTableObjectArgumentsLengthError(tableObject, 5)
 			}
-			delimiterPositions = positions
-			importFormat = cmd.FIXED
+			options.DelimiterPositions = positions
+			options.Format = cmd.FIXED
 		case parser.JSON:
 			if felem == nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, "json query is not specified")
@@ -210,14 +201,14 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			if 0 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
 			}
-			jsonQuery = felem.(*value.String).Raw()
-			importFormat = cmd.JSON
-			encoding = text.UTF8
+			options.JsonQuery = felem.(*value.String).Raw()
+			options.Format = cmd.JSON
+			options.Encoding = text.UTF8
 		case parser.LTSV:
 			if 2 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 3)
 			}
-			importFormat = cmd.LTSV
+			options.Format = cmd.LTSV
 			withoutNullIdx, noHeaderIdx = noHeaderIdx, withoutNullIdx
 		default:
 			return nil, NewInvalidTableObjectError(tableObject, tableObject.Type.Literal)
@@ -271,15 +262,15 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 		if args[encodingIdx] != nil {
-			if encoding, err = cmd.ParseEncoding(args[0].(*value.String).Raw()); err != nil {
+			if options.Encoding, err = cmd.ParseEncoding(args[0].(*value.String).Raw()); err != nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, err.Error())
 			}
 		}
 		if args[noHeaderIdx] != nil {
-			noHeader = args[noHeaderIdx].(*value.Boolean).Raw()
+			options.NoHeader = args[noHeaderIdx].(*value.Boolean).Raw()
 		}
 		if args[withoutNullIdx] != nil {
-			withoutNull = args[withoutNullIdx].(*value.Boolean).Raw()
+			options.WithoutNull = args[withoutNullIdx].(*value.Boolean).Raw()
 		}
 
 		view, err = loadObject(
@@ -289,23 +280,16 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			tableName,
 			forUpdate,
 			useInternalId,
-			importFormat,
-			delimiter,
-			delimiterPositions,
-			singleLine,
-			jsonQuery,
-			encoding,
-			scope.Tx.Flags.LineBreak,
-			noHeader,
-			scope.Tx.Flags.EncloseAll,
-			scope.Tx.Flags.JsonEscape,
-			withoutNull,
+			options,
 		)
 		if err != nil {
 			return nil, err
 		}
 
 	case parser.Identifier, parser.Stdin:
+		options := scope.Tx.Flags.ImportOptions.Copy()
+		options.Format = cmd.AutoSelect
+
 		view, err = loadObject(
 			ctx,
 			scope,
@@ -313,17 +297,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			tableName,
 			forUpdate,
 			useInternalId,
-			cmd.AutoSelect,
-			scope.Tx.Flags.Delimiter,
-			scope.Tx.Flags.DelimiterPositions,
-			scope.Tx.Flags.SingleLine,
-			scope.Tx.Flags.JsonQuery,
-			scope.Tx.Flags.Encoding,
-			scope.Tx.Flags.LineBreak,
-			scope.Tx.Flags.NoHeader,
-			scope.Tx.Flags.EncloseAll,
-			scope.Tx.Flags.JsonEscape,
-			scope.Tx.Flags.WithoutNull,
+			options,
 		)
 		if err != nil {
 			return nil, err
@@ -451,7 +425,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			Format:    cmd.JSON,
 			JsonQuery: jqStr,
 			Encoding:  text.UTF8,
-			LineBreak: scope.Tx.Flags.LineBreak,
+			LineBreak: scope.Tx.Flags.ExportOptions.LineBreak,
 			ViewType:  ViewTypeTemporaryTable,
 		}
 
@@ -621,33 +595,23 @@ func loadObject(
 	tableName parser.Identifier,
 	forUpdate bool,
 	useInternalId bool,
-	importFormat cmd.Format,
-	delimiter rune,
-	delimiterPositions []int,
-	singleLine bool,
-	jsonQuery string,
-	encoding text.Encoding,
-	lineBreak text.LineBreak,
-	noHeader bool,
-	encloseAll bool,
-	jsonEscape txjson.EscapeType,
-	withoutNull bool,
+	options cmd.ImportOptions,
 ) (*View, error) {
 	if stdin, ok := tableExpr.(parser.Stdin); ok {
-		if importFormat == cmd.AutoSelect {
-			importFormat = scope.Tx.Flags.ImportFormat
+		if options.Format == cmd.AutoSelect {
+			options.Format = scope.Tx.Flags.ImportOptions.Format
 		}
 
 		fileInfo := &FileInfo{
 			Path:               stdin.String(),
-			Format:             importFormat,
-			Delimiter:          delimiter,
-			DelimiterPositions: delimiterPositions,
-			SingleLine:         singleLine,
-			JsonQuery:          jsonQuery,
-			Encoding:           encoding,
-			LineBreak:          lineBreak,
-			NoHeader:           noHeader,
+			Format:             options.Format,
+			Delimiter:          options.Delimiter,
+			DelimiterPositions: options.DelimiterPositions,
+			SingleLine:         options.SingleLine,
+			JsonQuery:          options.JsonQuery,
+			Encoding:           options.Encoding,
+			LineBreak:          scope.Tx.Flags.ExportOptions.LineBreak,
+			NoHeader:           options.NoHeader,
 			ViewType:           ViewTypeStdin,
 		}
 		return loadStdin(ctx, scope, fileInfo, stdin, tableName, forUpdate, useInternalId)
@@ -712,17 +676,7 @@ func loadObject(
 		scope,
 		tableIdentifier,
 		forUpdate,
-		importFormat,
-		delimiter,
-		delimiterPositions,
-		singleLine,
-		jsonQuery,
-		encoding,
-		lineBreak,
-		noHeader,
-		encloseAll,
-		jsonEscape,
-		withoutNull,
+		options,
 	)
 	if err != nil {
 		return nil, err
@@ -760,17 +714,7 @@ func cacheViewFromFile(
 	scope *ReferenceScope,
 	tableIdentifier parser.Identifier,
 	forUpdate bool,
-	importFormat cmd.Format,
-	delimiter rune,
-	delimiterPositions []int,
-	singleLine bool,
-	jsonQuery string,
-	encoding text.Encoding,
-	lineBreak text.LineBreak,
-	noHeader bool,
-	encloseAll bool,
-	jsonEscape txjson.EscapeType,
-	withoutNull bool,
+	options cmd.ImportOptions,
 ) (string, error) {
 	scope.Tx.viewLoadingMutex.Lock()
 	defer scope.Tx.viewLoadingMutex.Unlock()
@@ -786,7 +730,7 @@ func cacheViewFromFile(
 
 	view, ok := scope.Tx.cachedViews.Load(filePath)
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
-		fileInfo, err := NewFileInfo(tableIdentifier, scope.Tx.Flags.Repository, importFormat, delimiter, encoding, scope.Tx.Flags)
+		fileInfo, err := NewFileInfo(tableIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
 		if err != nil {
 			return filePath, err
 		}
@@ -794,13 +738,13 @@ func cacheViewFromFile(
 
 		view, ok = scope.Tx.cachedViews.Load(filePath)
 		if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
-			fileInfo.DelimiterPositions = delimiterPositions
-			fileInfo.SingleLine = singleLine
-			fileInfo.JsonQuery = cmd.TrimSpace(jsonQuery)
-			fileInfo.LineBreak = lineBreak
-			fileInfo.NoHeader = noHeader
-			fileInfo.EncloseAll = encloseAll
-			fileInfo.JsonEscape = jsonEscape
+			fileInfo.DelimiterPositions = options.DelimiterPositions
+			fileInfo.SingleLine = options.SingleLine
+			fileInfo.JsonQuery = cmd.TrimSpace(options.JsonQuery)
+			fileInfo.LineBreak = scope.Tx.Flags.ExportOptions.LineBreak
+			fileInfo.NoHeader = options.NoHeader
+			fileInfo.EncloseAll = scope.Tx.Flags.ExportOptions.EncloseAll
+			fileInfo.JsonEscape = scope.Tx.Flags.ExportOptions.JsonEscape
 
 			if ok {
 				fileInfo = view.FileInfo
@@ -831,7 +775,7 @@ func cacheViewFromFile(
 				fp = h.File()
 			}
 
-			loadView, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, withoutNull, tableIdentifier)
+			loadView, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options.WithoutNull, tableIdentifier)
 			if err != nil {
 				if _, ok := err.(Error); !ok {
 					err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())

@@ -2594,19 +2594,19 @@ func TestView_Load(t *testing.T) {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
 		_ = TestTx.Session.SetStdin(os.Stdin)
-		TestTx.Flags.ImportFormat = v.ImportFormat
-		TestTx.Flags.Delimiter = ','
+		TestTx.Flags.ImportOptions.Format = v.ImportFormat
+		TestTx.Flags.ImportOptions.Delimiter = ','
 		if v.Delimiter != 0 {
-			TestTx.Flags.Delimiter = v.Delimiter
+			TestTx.Flags.ImportOptions.Delimiter = v.Delimiter
 		}
-		TestTx.Flags.DelimiterPositions = v.DelimiterPositions
-		TestTx.Flags.SingleLine = v.SingleLine
-		TestTx.Flags.JsonQuery = v.JsonQuery
-		TestTx.Flags.NoHeader = v.NoHeader
+		TestTx.Flags.ImportOptions.DelimiterPositions = v.DelimiterPositions
+		TestTx.Flags.ImportOptions.SingleLine = v.SingleLine
+		TestTx.Flags.ImportOptions.JsonQuery = v.JsonQuery
+		TestTx.Flags.ImportOptions.NoHeader = v.NoHeader
 		if v.Encoding != text.AUTO {
-			TestTx.Flags.Encoding = v.Encoding
+			TestTx.Flags.ImportOptions.Encoding = v.Encoding
 		} else {
-			TestTx.Flags.Encoding = text.UTF8
+			TestTx.Flags.ImportOptions.Encoding = text.UTF8
 		}
 
 		if 0 < len(v.Stdin) {

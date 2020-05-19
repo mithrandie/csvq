@@ -197,17 +197,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 				}
 
 				if _, ok := proc.Tx.Session.Stdout().(*Discard); !ok || proc.Tx.Session.OutFile() != nil {
-					fileInfo := &FileInfo{
-						Format:             proc.Tx.Flags.Format,
-						Delimiter:          proc.Tx.Flags.WriteDelimiter,
-						DelimiterPositions: proc.Tx.Flags.WriteDelimiterPositions,
-						Encoding:           proc.Tx.Flags.WriteEncoding,
-						LineBreak:          proc.Tx.Flags.LineBreak,
-						NoHeader:           proc.Tx.Flags.WithoutHeader,
-						EncloseAll:         proc.Tx.Flags.EncloseAll,
-						PrettyPrint:        proc.Tx.Flags.PrettyPrint,
-						SingleLine:         proc.Tx.Flags.WriteAsSingleLine,
-					}
+					exportOptions := proc.Tx.Flags.ExportOptions.Copy()
 
 					var writer io.Writer
 					if proc.Tx.Session.OutFile() != nil {
@@ -215,7 +205,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 					} else {
 						writer = proc.Tx.Session.Stdout()
 					}
-					warn, e := EncodeView(ctx, writer, view, fileInfo, proc.Tx)
+					warn, e := EncodeView(ctx, writer, view, exportOptions, proc.Tx.Palette)
 
 					if e != nil {
 						if e == EmptyResultSetError {
@@ -225,9 +215,9 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 						} else {
 							err = e
 						}
-					} else if !proc.Tx.Flags.StripEndingLineBreak &&
-						!(proc.Tx.Session.OutFile() != nil && fileInfo.Format == cmd.FIXED && fileInfo.SingleLine) {
-						_, err = writer.Write([]byte(proc.Tx.Flags.LineBreak.Value()))
+					} else if !proc.Tx.Flags.ExportOptions.StripEndingLineBreak &&
+						!(proc.Tx.Session.OutFile() != nil && exportOptions.Format == cmd.FIXED && exportOptions.SingleLine) {
+						_, err = writer.Write([]byte(proc.Tx.Flags.ExportOptions.LineBreak.Value()))
 					}
 				}
 

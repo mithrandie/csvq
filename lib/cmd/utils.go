@@ -387,11 +387,11 @@ func AppendStrIfNotExist(list []string, elem string) []string {
 }
 
 func TextWidth(s string, flags *Flags) int {
-	return text.Width(s, flags.EastAsianEncoding, flags.CountDiacriticalSign, flags.CountFormatCode)
+	return text.Width(s, flags.ExportOptions.EastAsianEncoding, flags.ExportOptions.CountDiacriticalSign, flags.ExportOptions.CountFormatCode)
 }
 
 func RuneWidth(r rune, flags *Flags) int {
-	return text.RuneWidth(r, flags.EastAsianEncoding, flags.CountDiacriticalSign, flags.CountFormatCode)
+	return text.RuneWidth(r, flags.ExportOptions.EastAsianEncoding, flags.ExportOptions.CountDiacriticalSign, flags.ExportOptions.CountFormatCode)
 }
 
 func TrimSpace(s string) string {

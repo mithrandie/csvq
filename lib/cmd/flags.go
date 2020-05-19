@@ -23,36 +23,36 @@ const (
 const DelimitAutomatically = "SPACES"
 
 const (
-	RepositoryFlag              = "REPOSITORY"
-	TimezoneFlag                = "TIMEZONE"
-	DatetimeFormatFlag          = "DATETIME_FORMAT"
-	AnsiQuotesFlag              = "ANSI_QUOTES"
-	WaitTimeoutFlag             = "WAIT_TIMEOUT"
-	ImportFormatFlag            = "IMPORT_FORMAT"
-	DelimiterFlag               = "DELIMITER"
-	DelimiterPositionsFlag      = "DELIMITER_POSITIONS"
-	JsonQueryFlag               = "JSON_QUERY"
-	EncodingFlag                = "ENCODING"
-	NoHeaderFlag                = "NO_HEADER"
-	WithoutNullFlag             = "WITHOUT_NULL"
-	StripEndingLineBreakFlag    = "STRIP_ENDING_LINE_BREAK"
-	FormatFlag                  = "FORMAT"
-	WriteEncodingFlag           = "WRITE_ENCODING"
-	WriteDelimiterFlag          = "WRITE_DELIMITER"
-	WriteDelimiterPositionsFlag = "WRITE_DELIMITER_POSITIONS"
-	WithoutHeaderFlag           = "WITHOUT_HEADER"
-	LineBreakFlag               = "LINE_BREAK"
-	EncloseAllFlag              = "ENCLOSE_ALL"
-	JsonEscapeFlag              = "JSON_ESCAPE"
-	PrettyPrintFlag             = "PRETTY_PRINT"
-	EastAsianEncodingFlag       = "EAST_ASIAN_ENCODING"
-	CountDiacriticalSignFlag    = "COUNT_DIACRITICAL_SIGN"
-	CountFormatCodeFlag         = "COUNT_FORMAT_CODE"
-	ColorFlag                   = "COLOR"
-	QuietFlag                   = "QUIET"
-	LimitRecursion              = "LIMIT_RECURSION"
-	CPUFlag                     = "CPU"
-	StatsFlag                   = "STATS"
+	RepositoryFlag               = "REPOSITORY"
+	TimezoneFlag                 = "TIMEZONE"
+	DatetimeFormatFlag           = "DATETIME_FORMAT"
+	AnsiQuotesFlag               = "ANSI_QUOTES"
+	WaitTimeoutFlag              = "WAIT_TIMEOUT"
+	ImportFormatFlag             = "IMPORT_FORMAT"
+	DelimiterFlag                = "DELIMITER"
+	DelimiterPositionsFlag       = "DELIMITER_POSITIONS"
+	JsonQueryFlag                = "JSON_QUERY"
+	EncodingFlag                 = "ENCODING"
+	NoHeaderFlag                 = "NO_HEADER"
+	WithoutNullFlag              = "WITHOUT_NULL"
+	StripEndingLineBreakFlag     = "STRIP_ENDING_LINE_BREAK"
+	FormatFlag                   = "FORMAT"
+	ExportEncodingFlag           = "WRITE_ENCODING"
+	ExportDelimiterFlag          = "WRITE_DELIMITER"
+	ExportDelimiterPositionsFlag = "WRITE_DELIMITER_POSITIONS"
+	WithoutHeaderFlag            = "WITHOUT_HEADER"
+	LineBreakFlag                = "LINE_BREAK"
+	EncloseAllFlag               = "ENCLOSE_ALL"
+	JsonEscapeFlag               = "JSON_ESCAPE"
+	PrettyPrintFlag              = "PRETTY_PRINT"
+	EastAsianEncodingFlag        = "EAST_ASIAN_ENCODING"
+	CountDiacriticalSignFlag     = "COUNT_DIACRITICAL_SIGN"
+	CountFormatCodeFlag          = "COUNT_FORMAT_CODE"
+	ColorFlag                    = "COLOR"
+	QuietFlag                    = "QUIET"
+	LimitRecursion               = "LIMIT_RECURSION"
+	CPUFlag                      = "CPU"
+	StatsFlag                    = "STATS"
 )
 
 var FlagList = []string{
@@ -70,9 +70,9 @@ var FlagList = []string{
 	WithoutNullFlag,
 	StripEndingLineBreakFlag,
 	FormatFlag,
-	WriteEncodingFlag,
-	WriteDelimiterFlag,
-	WriteDelimiterPositionsFlag,
+	ExportEncodingFlag,
+	ExportDelimiterFlag,
+	ExportDelimiterPositionsFlag,
 	WithoutHeaderFlag,
 	LineBreakFlag,
 	EncloseAllFlag,
@@ -147,19 +147,8 @@ const (
 	TextExt     = ".txt"
 )
 
-type Flags struct {
-	// Common Settings
-	Repository     string
-	Location       string
-	DatetimeFormat []string
-	AnsiQuotes     bool
-
-	// Must be updated from Transaction
-	WaitTimeout float64
-	Color       bool
-
-	// For Import
-	ImportFormat       Format
+type ImportOptions struct {
+	Format             Format
 	Delimiter          rune
 	DelimiterPositions []int
 	SingleLine         bool
@@ -167,24 +156,100 @@ type Flags struct {
 	Encoding           text.Encoding
 	NoHeader           bool
 	WithoutNull        bool
+}
 
-	// For Export
-	StripEndingLineBreak    bool
-	Format                  Format
-	WriteEncoding           text.Encoding
-	WriteDelimiter          rune
-	WriteDelimiterPositions []int
-	WriteAsSingleLine       bool
-	WithoutHeader           bool
-	LineBreak               text.LineBreak
-	EncloseAll              bool
-	JsonEscape              txjson.EscapeType
-	PrettyPrint             bool
+func (ops ImportOptions) Copy() ImportOptions {
+	var dp []int
+	if ops.DelimiterPositions != nil {
+		dp = make([]int, len(ops.DelimiterPositions))
+		copy(dp, ops.DelimiterPositions)
+	}
+
+	ret := ops
+	ret.DelimiterPositions = dp
+	return ret
+}
+
+func NewImportOptions() ImportOptions {
+	return ImportOptions{
+		Format:             CSV,
+		Delimiter:          ',',
+		DelimiterPositions: nil,
+		SingleLine:         false,
+		JsonQuery:          "",
+		Encoding:           text.AUTO,
+		NoHeader:           false,
+		WithoutNull:        false,
+	}
+}
+
+type ExportOptions struct {
+	StripEndingLineBreak bool
+	Format               Format
+	Encoding             text.Encoding
+	Delimiter            rune
+	DelimiterPositions   []int
+	SingleLine           bool
+	WithoutHeader        bool
+	LineBreak            text.LineBreak
+	EncloseAll           bool
+	JsonEscape           txjson.EscapeType
+	PrettyPrint          bool
 
 	// For Calculation of String Width
 	EastAsianEncoding    bool
 	CountDiacriticalSign bool
 	CountFormatCode      bool
+
+	Color bool
+}
+
+func (ops ExportOptions) Copy() ExportOptions {
+	var dp []int
+	if ops.DelimiterPositions != nil {
+		dp = make([]int, len(ops.DelimiterPositions))
+		copy(dp, ops.DelimiterPositions)
+	}
+
+	ret := ops
+	ret.DelimiterPositions = dp
+	return ret
+}
+
+func NewExportOptions() ExportOptions {
+	return ExportOptions{
+		StripEndingLineBreak: false,
+		Format:               TEXT,
+		Encoding:             text.UTF8,
+		Delimiter:            ',',
+		DelimiterPositions:   nil,
+		SingleLine:           false,
+		WithoutHeader:        false,
+		LineBreak:            text.LF,
+		EncloseAll:           false,
+		JsonEscape:           txjson.Backslash,
+		PrettyPrint:          false,
+		EastAsianEncoding:    false,
+		CountDiacriticalSign: false,
+		CountFormatCode:      false,
+		Color:                false,
+	}
+}
+
+type Flags struct {
+	// Common Settings
+	Repository     string
+	Location       string
+	DatetimeFormat []string
+	AnsiQuotes     bool
+
+	WaitTimeout float64
+
+	// For Import
+	ImportOptions ImportOptions
+
+	// For Export
+	ExportOptions ExportOptions
 
 	// System Use
 	Quiet          bool
@@ -213,38 +278,17 @@ func NewFlags(env *Environment) *Flags {
 	}
 
 	return &Flags{
-		Repository:              "",
-		Location:                "Local",
-		DatetimeFormat:          datetimeFormat,
-		AnsiQuotes:              false,
-		WaitTimeout:             10,
-		Color:                   false,
-		ImportFormat:            CSV,
-		Delimiter:               ',',
-		DelimiterPositions:      nil,
-		SingleLine:              false,
-		JsonQuery:               "",
-		Encoding:                text.AUTO,
-		NoHeader:                false,
-		WithoutNull:             false,
-		StripEndingLineBreak:    false,
-		Format:                  TEXT,
-		WriteEncoding:           text.UTF8,
-		WriteDelimiter:          ',',
-		WriteDelimiterPositions: nil,
-		WriteAsSingleLine:       false,
-		WithoutHeader:           false,
-		LineBreak:               text.LF,
-		EncloseAll:              false,
-		JsonEscape:              txjson.Backslash,
-		PrettyPrint:             false,
-		EastAsianEncoding:       false,
-		CountDiacriticalSign:    false,
-		CountFormatCode:         false,
-		Quiet:                   false,
-		LimitRecursion:          1000,
-		CPU:                     GetDefaultNumberOfCPU(),
-		Stats:                   false,
+		Repository:     "",
+		Location:       "Local",
+		DatetimeFormat: datetimeFormat,
+		AnsiQuotes:     false,
+		WaitTimeout:    10,
+		ImportOptions:  NewImportOptions(),
+		ExportOptions:  NewExportOptions(),
+		Quiet:          false,
+		LimitRecursion: 1000,
+		CPU:            GetDefaultNumberOfCPU(),
+		Stats:          false,
 	}
 }
 
@@ -317,14 +361,14 @@ func (f *Flags) SetWaitTimeout(t float64) {
 }
 
 func (f *Flags) SetImportFormat(s string) error {
-	fm, _, err := ParseFormat(s, f.JsonEscape)
+	fm, _, err := ParseFormat(s, f.ExportOptions.JsonEscape)
 	if err != nil {
 		return errors.New("import format must be one of CSV|TSV|FIXED|JSON|LTSV")
 	}
 
 	switch fm {
 	case CSV, TSV, FIXED, JSON, LTSV:
-		f.ImportFormat = fm
+		f.ImportOptions.Format = fm
 		return nil
 	}
 
@@ -341,7 +385,7 @@ func (f *Flags) SetDelimiter(s string) error {
 		return err
 	}
 
-	f.Delimiter = delimiter
+	f.ImportOptions.Delimiter = delimiter
 	return nil
 }
 
@@ -354,13 +398,13 @@ func (f *Flags) SetDelimiterPositions(s string) error {
 		return err
 	}
 
-	f.DelimiterPositions = delimiterPositions
-	f.SingleLine = singleLine
+	f.ImportOptions.DelimiterPositions = delimiterPositions
+	f.ImportOptions.SingleLine = singleLine
 	return nil
 }
 
 func (f *Flags) SetJsonQuery(s string) {
-	f.JsonQuery = TrimSpace(s)
+	f.ImportOptions.JsonQuery = TrimSpace(s)
 }
 
 func (f *Flags) SetEncoding(s string) error {
@@ -373,16 +417,16 @@ func (f *Flags) SetEncoding(s string) error {
 		return err
 	}
 
-	f.Encoding = encoding
+	f.ImportOptions.Encoding = encoding
 	return nil
 }
 
 func (f *Flags) SetNoHeader(b bool) {
-	f.NoHeader = b
+	f.ImportOptions.NoHeader = b
 }
 
 func (f *Flags) SetWithoutNull(b bool) {
-	f.WithoutNull = b
+	f.ImportOptions.WithoutNull = b
 }
 
 func (f *Flags) SetFormat(s string, outfile string) error {
@@ -409,13 +453,13 @@ func (f *Flags) SetFormat(s string, outfile string) error {
 			return nil
 		}
 	default:
-		if fm, escape, err = ParseFormat(s, f.JsonEscape); err != nil {
+		if fm, escape, err = ParseFormat(s, f.ExportOptions.JsonEscape); err != nil {
 			return err
 		}
 	}
 
-	f.Format = fm
-	f.JsonEscape = escape
+	f.ExportOptions.Format = fm
+	f.ExportOptions.JsonEscape = escape
 	return nil
 }
 
@@ -429,7 +473,7 @@ func (f *Flags) SetWriteEncoding(s string) error {
 		return errors.New("write-encoding must be one of UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS")
 	}
 
-	f.WriteEncoding = encoding
+	f.ExportOptions.Encoding = encoding
 	return nil
 }
 
@@ -443,7 +487,7 @@ func (f *Flags) SetWriteDelimiter(s string) error {
 		return errors.New("write-delimiter must be one character")
 	}
 
-	f.WriteDelimiter = delimiter
+	f.ExportOptions.Delimiter = delimiter
 	return nil
 }
 
@@ -456,13 +500,13 @@ func (f *Flags) SetWriteDelimiterPositions(s string) error {
 		return errors.New(fmt.Sprintf("write-delimiter-positions must be %q or a JSON array of integers", DelimitAutomatically))
 	}
 
-	f.WriteDelimiterPositions = delimiterPositions
-	f.WriteAsSingleLine = singleLine
+	f.ExportOptions.DelimiterPositions = delimiterPositions
+	f.ExportOptions.SingleLine = singleLine
 	return nil
 }
 
 func (f *Flags) SetWithoutHeader(b bool) {
-	f.WithoutHeader = b
+	f.ExportOptions.WithoutHeader = b
 }
 
 func (f *Flags) SetLineBreak(s string) error {
@@ -475,7 +519,7 @@ func (f *Flags) SetLineBreak(s string) error {
 		return err
 	}
 
-	f.LineBreak = lb
+	f.ExportOptions.LineBreak = lb
 	return nil
 }
 
@@ -487,36 +531,36 @@ func (f *Flags) SetJsonEscape(s string) error {
 		return err
 	}
 
-	f.JsonEscape = escape
+	f.ExportOptions.JsonEscape = escape
 	return nil
 }
 
 func (f *Flags) SetPrettyPrint(b bool) {
-	f.PrettyPrint = b
+	f.ExportOptions.PrettyPrint = b
 }
 
 func (f *Flags) SetStripEndingLineBreak(b bool) {
-	f.StripEndingLineBreak = b
+	f.ExportOptions.StripEndingLineBreak = b
 }
 
 func (f *Flags) SetEncloseAll(b bool) {
-	f.EncloseAll = b
+	f.ExportOptions.EncloseAll = b
 }
 
 func (f *Flags) SetColor(b bool) {
-	f.Color = b
+	f.ExportOptions.Color = b
 }
 
 func (f *Flags) SetEastAsianEncoding(b bool) {
-	f.EastAsianEncoding = b
+	f.ExportOptions.EastAsianEncoding = b
 }
 
 func (f *Flags) SetCountDiacriticalSign(b bool) {
-	f.CountDiacriticalSign = b
+	f.ExportOptions.CountDiacriticalSign = b
 }
 
 func (f *Flags) SetCountFormatCode(b bool) {
-	f.CountFormatCode = b
+	f.ExportOptions.CountFormatCode = b
 }
 
 func (f *Flags) SetQuiet(b bool) {
