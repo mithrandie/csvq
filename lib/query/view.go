@@ -310,6 +310,11 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 		if t, ok := join.JoinTable.(parser.Table); ok && !t.Lateral.IsEmpty() {
+			switch join.Direction.Token {
+			case parser.RIGHT, parser.FULL:
+				return nil, NewIncorrectLateralUsageError(t)
+			}
+
 			joinTableName := t.Name()
 
 			var hfields Header

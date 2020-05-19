@@ -542,7 +542,8 @@ var parseTests = []struct {
 								Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"},
 							},
 							Table{
-								Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 23},
+								BaseExpr: &BaseExpr{line: 1, char: 23},
+								Lateral:  Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 23},
 								Object: Subquery{
 									BaseExpr: &BaseExpr{line: 1, char: 31},
 									Query: SelectQuery{
@@ -3392,7 +3393,8 @@ var parseTests = []struct {
 								Object: Join{
 									Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 									JoinTable: Table{
-										Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
+										BaseExpr: &BaseExpr{line: 1, char: 33},
+										Lateral:  Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
 										Object: Subquery{
 											BaseExpr: &BaseExpr{line: 1, char: 41},
 											Query: SelectQuery{
@@ -3455,7 +3457,8 @@ var parseTests = []struct {
 										Object: Join{
 											Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
 											JoinTable: Table{
-												Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
+												BaseExpr: &BaseExpr{line: 1, char: 33},
+												Lateral:  Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
 												Object: Subquery{
 													BaseExpr: &BaseExpr{line: 1, char: 41},
 													Query: SelectQuery{
@@ -3474,7 +3477,8 @@ var parseTests = []struct {
 										},
 									},
 									JoinTable: Table{
-										Lateral: Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 63},
+										BaseExpr: &BaseExpr{line: 1, char: 63},
+										Lateral:  Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 63},
 										Object: Subquery{
 											BaseExpr: &BaseExpr{line: 1, char: 71},
 											Query: SelectQuery{

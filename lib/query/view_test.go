@@ -2212,6 +2212,50 @@ var viewLoadTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
+		Name: "Incorrect LATERAL Usage Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+						},
+						JoinTable: parser.Table{
+							Lateral: parser.Token{Token: parser.LATERAL},
+							Object: parser.Subquery{
+								Query: parser.SelectQuery{
+									SelectEntity: parser.SelectEntity{
+										SelectClause: parser.SelectClause{
+											Fields: []parser.QueryExpression{
+												parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+												parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
+											},
+										},
+										FromClause: parser.FromClause{
+											Tables: []parser.QueryExpression{
+												parser.Table{Object: parser.Identifier{Literal: "table2"}},
+											},
+										},
+										WhereClause: parser.WhereClause{
+											Filter: parser.Comparison{
+												LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+												RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
+												Operator: parser.Token{Token: '=', Literal: "="},
+											},
+										},
+									},
+								},
+							},
+						},
+						Direction: parser.Token{Token: parser.FULL, Literal: "full"},
+						Natural:   parser.Token{Token: parser.NATURAL, Literal: "natural"},
+					},
+				},
+			},
+		},
+		Error: "LATERAL cannot to be used in a RIGHT or FULL outer join",
+	},
+	{
 		Name: "Join Left Side Table File Not Exist Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{

@@ -2032,6 +2032,7 @@ joinable_tables
     | LATERAL laterable_query_table
     {
         $2.Lateral = $1
+        $2.BaseExpr = NewBaseExpr($1)
         $$ = []QueryExpression{$2}
     }
     | laterable_query_table ',' joinable_tables
@@ -2041,6 +2042,7 @@ joinable_tables
     | LATERAL laterable_query_table ',' joinable_tables
     {
         $2.Lateral = $1
+        $2.BaseExpr = NewBaseExpr($1)
         $$ = append([]QueryExpression{$2}, $4...)
     }
 
@@ -2098,26 +2100,31 @@ join
     | table CROSS JOIN LATERAL laterable_query_table
     {
         $5.Lateral = $4
+        $5.BaseExpr = NewBaseExpr($4)
         $$ = Join{Table: $1, JoinTable: $5, JoinType: $2, Condition: nil}
     }
     | table join_type_inner JOIN LATERAL laterable_query_table join_condition
     {
         $5.Lateral = $4
+        $5.BaseExpr = NewBaseExpr($4)
         $$ = Join{Table: $1, JoinTable: $5, JoinType: $2, Condition: $6}
     }
     | table join_outer_direction join_type_outer JOIN LATERAL laterable_query_table join_condition
     {
         $6.Lateral = $5
+        $6.BaseExpr = NewBaseExpr($5)
         $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Direction: $2, Condition: $7}
     }
     | table NATURAL join_type_inner JOIN LATERAL laterable_query_table
     {
         $6.Lateral = $5
+        $6.BaseExpr = NewBaseExpr($5)
         $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Natural: $2}
     }
     | table NATURAL join_outer_direction join_type_outer JOIN LATERAL laterable_query_table
     {
         $7.Lateral = $6
+        $7.BaseExpr = NewBaseExpr($6)
         $$ = Join{Table: $1, JoinTable: $7, JoinType: $4, Direction: $3, Natural: $2}
     }
 

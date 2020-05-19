@@ -35,6 +35,7 @@ const (
 	ErrorLoadJson                             = 10702
 	ErrorEmptyJsonQuery                       = 10703
 	ErrorEmptyJsonTable                       = 10801
+	ErrorIncorrectLateralUsage                = 10802
 	ErrorInvalidTableObject                   = 10901
 	ErrorTableObjectInvalidDelimiter          = 10902
 	ErrorTableObjectInvalidDelimiterPositions = 10903
