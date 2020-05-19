@@ -310,6 +310,8 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 		if t, ok := join.JoinTable.(parser.Table); ok && !t.Lateral.IsEmpty() {
+			joinTableName := t.Name()
+
 			var hfields Header
 			subquery := t.Object.(parser.Subquery)
 			resultSetList := make([]RecordSet, view.RecordLen())
@@ -332,6 +334,12 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				appliedView, err := Select(context.WithValue(ctx, ApplyViewContextKey, applyView), scope, subquery.Query)
 				if err != nil {
 					return err
+				}
+
+				if 0 < len(joinTableName.Literal) {
+					if err = appliedView.Header.Update(joinTableName.Literal, nil); err != nil {
+						return err
+					}
 				}
 
 				calcView := NewView()

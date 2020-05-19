@@ -1913,6 +1913,9 @@ var viewLoadTests = []struct {
 									},
 								},
 							},
+							Alias: parser.Identifier{
+								Literal: "t2",
+							},
 						},
 						JoinType: parser.Token{Token: parser.CROSS, Literal: "cross"},
 					},
@@ -1923,8 +1926,8 @@ var viewLoadTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
-				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
+				{View: "t2", Column: "column3", Number: 1, IsFromTable: true},
+				{View: "t2", Column: "column4", Number: 2, IsFromTable: true},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
