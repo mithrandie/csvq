@@ -683,7 +683,7 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 	var view *View
 
 	flags := queryScope.Tx.Flags
-	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.WriteDelimiter, flags.WriteEncoding)
+	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.ExportOptions.Delimiter, flags.ExportOptions.Encoding)
 	if err != nil {
 		return nil, err
 	}
@@ -694,10 +694,10 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 	}
 	fileInfo.Handler = h
 
-	fileInfo.LineBreak = flags.LineBreak
-	fileInfo.EncloseAll = flags.EncloseAll
-	fileInfo.NoHeader = flags.WithoutHeader
-	fileInfo.PrettyPrint = flags.PrettyPrint
+	fileInfo.LineBreak = flags.ExportOptions.LineBreak
+	fileInfo.EncloseAll = flags.ExportOptions.EncloseAll
+	fileInfo.NoHeader = flags.ExportOptions.WithoutHeader
+	fileInfo.PrettyPrint = flags.ExportOptions.PrettyPrint
 	fileInfo.ForUpdate = true
 
 	if query.Query != nil {

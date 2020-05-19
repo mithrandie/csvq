@@ -1913,6 +1913,9 @@ var viewLoadTests = []struct {
 									},
 								},
 							},
+							Alias: parser.Identifier{
+								Literal: "t2",
+							},
 						},
 						JoinType: parser.Token{Token: parser.CROSS, Literal: "cross"},
 					},
@@ -1923,8 +1926,8 @@ var viewLoadTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
-				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
+				{View: "t2", Column: "column3", Number: 1, IsFromTable: true},
+				{View: "t2", Column: "column4", Number: 2, IsFromTable: true},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -2027,11 +2030,6 @@ var viewLoadTests = []struct {
 				{View: "table1b", Column: "column2b", Number: 2, IsFromTable: true},
 			},
 			RecordSet: []Record{
-				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-					value.NewString("str1b"),
-				}),
 				NewRecord([]value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
@@ -2136,9 +2134,58 @@ var viewLoadTests = []struct {
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("str2b"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("str3b"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("4"),
+					value.NewNull(),
+					value.NewString("str4b"),
+				}),
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
+				"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
+			}},
+		}, time.Time{}, nil),
+	},
+	{
+		Name: "Full Outer Join Natural",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table1b"},
+						},
+						Direction: parser.Token{Token: parser.FULL, Literal: "full"},
+						Natural:   parser.Token{Token: parser.NATURAL, Literal: "natural"},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{Column: "column1", IsFromTable: true, IsJoinColumn: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
+				{View: "table1b", Column: "column2b", Number: 2, IsFromTable: true},
+			},
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
-					value.NewString("str1b"),
+					value.NewNull(),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("2"),
@@ -2163,6 +2210,50 @@ var viewLoadTests = []struct {
 				"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
 			}},
 		}, time.Time{}, nil),
+	},
+	{
+		Name: "Incorrect LATERAL Usage Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+						},
+						JoinTable: parser.Table{
+							Lateral: parser.Token{Token: parser.LATERAL},
+							Object: parser.Subquery{
+								Query: parser.SelectQuery{
+									SelectEntity: parser.SelectEntity{
+										SelectClause: parser.SelectClause{
+											Fields: []parser.QueryExpression{
+												parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column3"}}},
+												parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column4"}}},
+											},
+										},
+										FromClause: parser.FromClause{
+											Tables: []parser.QueryExpression{
+												parser.Table{Object: parser.Identifier{Literal: "table2"}},
+											},
+										},
+										WhereClause: parser.WhereClause{
+											Filter: parser.Comparison{
+												LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+												RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
+												Operator: parser.Token{Token: '=', Literal: "="},
+											},
+										},
+									},
+								},
+							},
+						},
+						Direction: parser.Token{Token: parser.FULL, Literal: "full"},
+						Natural:   parser.Token{Token: parser.NATURAL, Literal: "natural"},
+					},
+				},
+			},
+		},
+		Error: "LATERAL cannot to be used in a RIGHT or FULL outer join",
 	},
 	{
 		Name: "Join Left Side Table File Not Exist Error",
@@ -2433,6 +2524,50 @@ var viewLoadTests = []struct {
 							},
 						},
 					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+	},
+	{
+		Name: "LoadView Subquery with Table Name Alias",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Subquery{
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Fields: []parser.QueryExpression{
+										parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+										parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+									},
+								},
+								FromClause: parser.FromClause{
+									Tables: []parser.QueryExpression{
+										parser.Table{Object: parser.Identifier{Literal: "table1"}},
+									},
+								},
+							},
+						},
+					},
 					Alias: parser.Identifier{Literal: "alias"},
 				},
 			},
@@ -2594,19 +2729,19 @@ func TestView_Load(t *testing.T) {
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 
 		_ = TestTx.Session.SetStdin(os.Stdin)
-		TestTx.Flags.ImportFormat = v.ImportFormat
-		TestTx.Flags.Delimiter = ','
+		TestTx.Flags.ImportOptions.Format = v.ImportFormat
+		TestTx.Flags.ImportOptions.Delimiter = ','
 		if v.Delimiter != 0 {
-			TestTx.Flags.Delimiter = v.Delimiter
+			TestTx.Flags.ImportOptions.Delimiter = v.Delimiter
 		}
-		TestTx.Flags.DelimiterPositions = v.DelimiterPositions
-		TestTx.Flags.SingleLine = v.SingleLine
-		TestTx.Flags.JsonQuery = v.JsonQuery
-		TestTx.Flags.NoHeader = v.NoHeader
+		TestTx.Flags.ImportOptions.DelimiterPositions = v.DelimiterPositions
+		TestTx.Flags.ImportOptions.SingleLine = v.SingleLine
+		TestTx.Flags.ImportOptions.JsonQuery = v.JsonQuery
+		TestTx.Flags.ImportOptions.NoHeader = v.NoHeader
 		if v.Encoding != text.AUTO {
-			TestTx.Flags.Encoding = v.Encoding
+			TestTx.Flags.ImportOptions.Encoding = v.Encoding
 		} else {
-			TestTx.Flags.Encoding = text.UTF8
+			TestTx.Flags.ImportOptions.Encoding = text.UTF8
 		}
 
 		if 0 < len(v.Stdin) {
@@ -2690,7 +2825,7 @@ func TestView_Load(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
+			t.Errorf("%s: \n result = %v,\n expect = %v", v.Name, view, v.Result)
 		}
 	}
 }

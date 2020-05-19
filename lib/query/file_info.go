@@ -93,16 +93,16 @@ type FileInfo struct {
 func NewFileInfo(
 	filename parser.Identifier,
 	repository string,
-	format cmd.Format,
-	delimiter rune,
-	encoding text.Encoding,
-	flags *cmd.Flags,
+	options cmd.ImportOptions,
+	defaultFormat cmd.Format,
 ) (*FileInfo, error) {
-	fpath, format, err := SearchFilePath(filename, repository, format, flags)
+	fpath, format, err := SearchFilePath(filename, repository, options, defaultFormat)
 	if err != nil {
 		return nil, err
 	}
 
+	delimiter := options.Delimiter
+	encoding := options.Encoding
 	switch format {
 	case cmd.TSV:
 		delimiter = '\t'
@@ -274,9 +274,26 @@ func (f *FileInfo) IsStdin() bool {
 	return f.ViewType == ViewTypeStdin
 }
 
-func SearchFilePath(filename parser.Identifier, repository string, format cmd.Format, flags *cmd.Flags) (string, cmd.Format, error) {
+func (f *FileInfo) ExportOptions(tx *Transaction) cmd.ExportOptions {
+	ops := tx.Flags.ExportOptions.Copy()
+	ops.Format = f.Format
+	ops.Delimiter = f.Delimiter
+	ops.DelimiterPositions = f.DelimiterPositions
+	ops.SingleLine = f.SingleLine
+	ops.Encoding = f.Encoding
+	ops.LineBreak = f.LineBreak
+	ops.WithoutHeader = f.NoHeader
+	ops.EncloseAll = f.EncloseAll
+	ops.JsonEscape = f.JsonEscape
+	ops.PrettyPrint = f.PrettyPrint
+	return ops
+}
+
+func SearchFilePath(filename parser.Identifier, repository string, options cmd.ImportOptions, defaultFormat cmd.Format) (string, cmd.Format, error) {
 	var fpath string
 	var err error
+
+	format := options.Format
 
 	switch format {
 	case cmd.CSV, cmd.TSV:
@@ -299,7 +316,7 @@ func SearchFilePath(filename parser.Identifier, repository string, format cmd.Fo
 			case cmd.LtsvExt:
 				format = cmd.LTSV
 			default:
-				format = flags.ImportFormat
+				format = defaultFormat
 			}
 		}
 	}

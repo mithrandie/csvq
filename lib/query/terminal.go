@@ -103,7 +103,7 @@ func (p *Prompt) RenderPrompt(ctx context.Context) (string, error) {
 	if err != nil || len(s) < 1 {
 		s = TerminalPrompt
 	}
-	if p.scope.Tx.Flags.Color {
+	if p.scope.Tx.Flags.ExportOptions.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
 			s = p.scope.Tx.Palette.Render(cmd.PromptEffect, s)
 		}
@@ -118,7 +118,7 @@ func (p *Prompt) RenderContinuousPrompt(ctx context.Context) (string, error) {
 	if err != nil || len(s) < 1 {
 		s = TerminalContinuousPrompt
 	}
-	if p.scope.Tx.Flags.Color {
+	if p.scope.Tx.Flags.ExportOptions.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
 			s = p.scope.Tx.Palette.Render(cmd.PromptEffect, s)
 		}

@@ -76,7 +76,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "from_clause",
 						Group: []Grammar{
-							{Keyword("FROM"), Link("table"), FollowingContinuousOption{Link("joinable_table")}},
+							{Keyword("FROM"), Link("table"), FollowingContinuousOption{AnyOne{Link("table"), PlainGroup{Keyword("LATERAL"), Link("laterable_table")}}}},
 						},
 					},
 					{
@@ -89,13 +89,6 @@ var CsvqSyntax = []Expression{
 							{Keyword("DUAL")},
 							{Link("laterable_table")},
 							{Parentheses{Link("table")}},
-						},
-					},
-					{
-						Name: "joinable_table",
-						Group: []Grammar{
-							{Link("table")},
-							{Keyword("LATERAL"), Link("laterable_table")},
 						},
 					},
 					{
@@ -130,12 +123,16 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "join",
 						Group: []Grammar{
-							{Link("table"), Keyword("CROSS"), Keyword("JOIN"), Link("joinable_table")},
-							{Link("table"), Option{Keyword("INNER")}, Keyword("JOIN"), Link("joinable_table"), Link("join_condition")},
-							{Link("table"), AnyOne{Keyword("LEFT"), Keyword("RIGHT")}, Option{Keyword("OUTER")}, Keyword("JOIN"), Link("joinable_table"), Link("join_condition")},
-							{Link("table"), Keyword("FULL"), Option{Keyword("OUTER")}, Keyword("JOIN"), Link("joinable_table"), Keyword("ON"), Link("condition")},
-							{Link("table"), Keyword("NATURAL"), Option{Keyword("INNER")}, Keyword("JOIN"), Link("joinable_table")},
-							{Link("table"), Keyword("NATURAL"), AnyOne{Keyword("LEFT"), Keyword("RIGHT")}, Option{Keyword("OUTER")}, Keyword("JOIN"), Link("joinable_table")},
+							{Link("table"), Keyword("CROSS"), Keyword("JOIN"), Link("table")},
+							{Link("table"), Option{Keyword("INNER")}, Keyword("JOIN"), Link("table"), Link("join_condition")},
+							{Link("table"), AnyOne{Keyword("LEFT"), Keyword("RIGHT"), Keyword("FULL")}, Option{Keyword("OUTER")}, Keyword("JOIN"), Link("table"), Link("join_condition")},
+							{Link("table"), Keyword("NATURAL"), Option{Keyword("INNER")}, Keyword("JOIN"), Link("table")},
+							{Link("table"), Keyword("NATURAL"), AnyOne{Keyword("LEFT"), Keyword("RIGHT")}, Option{Keyword("OUTER")}, Keyword("JOIN"), Link("table")},
+							{Link("table"), Keyword("CROSS"), Keyword("JOIN"), Keyword("LATERAL"), Link("laterable_table")},
+							{Link("table"), Option{Keyword("INNER")}, Keyword("JOIN"), Keyword("LATERAL"), Link("laterable_table"), Link("join_condition")},
+							{Link("table"), Keyword("LEFT"), Option{Keyword("OUTER")}, Keyword("JOIN"), Keyword("LATERAL"), Link("laterable_table"), Link("join_condition")},
+							{Link("table"), Keyword("NATURAL"), Option{Keyword("INNER")}, Keyword("JOIN"), Keyword("LATERAL"), Link("laterable_table")},
+							{Link("table"), Keyword("NATURAL"), Keyword("LEFT"), Option{Keyword("OUTER")}, Keyword("JOIN"), Keyword("LATERAL"), Link("laterable_table")},
 						},
 					},
 					{

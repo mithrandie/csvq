@@ -4042,7 +4042,7 @@ func TestCompleter_ColumnList(t *testing.T) {
 		},
 	)
 
-	TestTx.Flags.Format = cmd.CSV
+	TestTx.Flags.ExportOptions.Format = cmd.CSV
 
 	_ = os.Chdir(CompletionTestDir)
 	completer := NewCompleter(scope)

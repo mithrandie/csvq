@@ -2167,7 +2167,7 @@ var showObjectsTests = []struct {
 			"                 @@DELIMITER: ','\n" +
 			"       @@DELIMITER_POSITIONS: SPACES\n" +
 			"                @@JSON_QUERY: (empty)\n" +
-			"                  @@ENCODING: UTF8\n" +
+			"                  @@ENCODING: AUTO\n" +
 			"                 @@NO_HEADER: false\n" +
 			"              @@WITHOUT_NULL: false\n" +
 			"   @@STRIP_ENDING_LINE_BREAK: false\n" +
@@ -2225,21 +2225,21 @@ func TestShowObjects(t *testing.T) {
 		initFlag(TestTx.Flags)
 
 		TestTx.Flags.Repository = v.Repository
-		TestTx.Flags.ImportFormat = v.ImportFormat
-		TestTx.Flags.Delimiter = ','
+		TestTx.Flags.ImportOptions.Format = v.ImportFormat
+		TestTx.Flags.ImportOptions.Delimiter = ','
 		if v.Delimiter != 0 {
-			TestTx.Flags.Delimiter = v.Delimiter
+			TestTx.Flags.ImportOptions.Delimiter = v.Delimiter
 		}
-		TestTx.Flags.DelimiterPositions = v.DelimiterPositions
-		TestTx.Flags.SingleLine = v.SingleLine
-		TestTx.Flags.JsonQuery = v.JsonQuery
-		TestTx.Flags.WriteDelimiter = ','
+		TestTx.Flags.ImportOptions.DelimiterPositions = v.DelimiterPositions
+		TestTx.Flags.ImportOptions.SingleLine = v.SingleLine
+		TestTx.Flags.ImportOptions.JsonQuery = v.JsonQuery
+		TestTx.Flags.ExportOptions.Delimiter = ','
 		if v.WriteDelimiter != 0 {
-			TestTx.Flags.WriteDelimiter = v.WriteDelimiter
+			TestTx.Flags.ExportOptions.Delimiter = v.WriteDelimiter
 		}
-		TestTx.Flags.WriteDelimiterPositions = v.WriteDelimiterPositions
-		TestTx.Flags.WriteAsSingleLine = v.WriteAsSingleLine
-		TestTx.Flags.Format = v.Format
+		TestTx.Flags.ExportOptions.DelimiterPositions = v.WriteDelimiterPositions
+		TestTx.Flags.ExportOptions.SingleLine = v.WriteAsSingleLine
+		TestTx.Flags.ExportOptions.Format = v.Format
 		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
 		if v.ViewCache.SyncMap != nil {
 			TestTx.cachedViews = v.ViewCache

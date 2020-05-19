@@ -133,7 +133,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	// Flags.StripEndingLineBreak = true
-	TestTx.Flags.StripEndingLineBreak = true
+	TestTx.Flags.ExportOptions.StripEndingLineBreak = true
 	ch, _ = file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("created_file_1.csv"))
 	uh, _ = file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
 	TestTx.cachedViews = GenerateViewMap([]*View{

@@ -15,8 +15,6 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/mithrandie/go-text"
-	"github.com/mithrandie/go-text/json"
 )
 
 type syncMapStruct interface {
@@ -203,28 +201,8 @@ func initFlag(flags *cmd.Flags) {
 	flags.DatetimeFormat = []string{}
 	flags.AnsiQuotes = false
 	flags.WaitTimeout = 15
-	flags.ImportFormat = cmd.CSV
-	flags.Delimiter = ','
-	flags.DelimiterPositions = nil
-	flags.SingleLine = false
-	flags.JsonQuery = ""
-	flags.Encoding = text.UTF8
-	flags.NoHeader = false
-	flags.WithoutNull = false
-	flags.Format = cmd.TEXT
-	flags.WriteEncoding = text.UTF8
-	flags.WriteDelimiter = ','
-	flags.WriteDelimiterPositions = nil
-	flags.WriteAsSingleLine = false
-	flags.WithoutHeader = false
-	flags.LineBreak = text.LF
-	flags.EncloseAll = false
-	flags.JsonEscape = json.Backslash
-	flags.PrettyPrint = false
-	flags.StripEndingLineBreak = false
-	flags.EastAsianEncoding = false
-	flags.CountDiacriticalSign = false
-	flags.CountFormatCode = false
+	flags.ImportOptions = cmd.NewImportOptions()
+	flags.ExportOptions = cmd.NewExportOptions()
 	flags.Quiet = false
 	flags.LimitRecursion = 5
 	flags.CPU = cpu

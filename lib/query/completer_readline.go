@@ -1871,13 +1871,13 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList([]string{"Local", "UTC"}, false), true
 					case cmd.ImportFormatFlag:
 						return nil, c.candidateList(c.importFormatList(), false), true
-					case cmd.DelimiterFlag, cmd.WriteDelimiterFlag:
+					case cmd.DelimiterFlag, cmd.ExportDelimiterFlag:
 						return nil, c.candidateList(delimiterCandidates, false), true
-					case cmd.DelimiterPositionsFlag, cmd.WriteDelimiterPositionsFlag:
+					case cmd.DelimiterPositionsFlag, cmd.ExportDelimiterPositionsFlag:
 						return nil, c.candidateList(delimiterPositionsCandidates, false), true
 					case cmd.EncodingFlag:
 						return nil, c.candidateList(c.encodingList(), false), true
-					case cmd.WriteEncodingFlag:
+					case cmd.ExportEncodingFlag:
 						return nil, c.candidateList(exportEncodingsCandidates, false), true
 					case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag,
 						cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,

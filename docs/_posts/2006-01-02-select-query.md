@@ -94,7 +94,7 @@ _alias_
 {: #from_clause}
 
 ```sql
-FROM table [, joinable_table ...]
+FROM table [, {table|LATERAL laterable_table} ...]
 ```
 
 If multiple tables have been enumerated, tables are joined using cross join.
@@ -110,10 +110,6 @@ table
   | DUAL
   | laterable_table
   | (table)
-
-joinable_table
-  : table
-  | LATERAL laterable_table
 
 table_entity
   : table_identifier
@@ -133,12 +129,16 @@ subquery
   : (select_query)
 
 join
-  : table CROSS JOIN joinable_table
-  | table [INNER] JOIN joinable_table join_condition
-  | table {LEFT|RIGHT} [OUTER] JOIN joinable_table join_condition
-  | table FULL [OUTER] JOIN joinable_table ON condition
-  | table NATURAL [INNER] JOIN joinable_table
-  | table NATURAL {LEFT|RIGHT} [OUTER] JOIN joinable_table
+  : table CROSS JOIN table
+  | table [INNER] JOIN table join_condition
+  | table {LEFT|RIGHT|FULL} [OUTER] JOIN table join_condition
+  | table NATURAL [INNER] JOIN table
+  | table NATURAL {LEFT|RIGHT|FULL} [OUTER] JOIN table
+  | table CROSS JOIN LATERAL laterable_table
+  | table [INNER] JOIN LATERAL laterable_table join_condition
+  | table LEFT [OUTER] JOIN LATERAL laterable_table join_condition
+  | table NATURAL [INNER] JOIN LATERAL laterable_table
+  | table NATURAL LEFT [OUTER] JOIN LATERAL laterable_table
 
 join_condition
   : ON condition
