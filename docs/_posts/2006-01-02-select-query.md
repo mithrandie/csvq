@@ -135,10 +135,9 @@ subquery
 join
   : table CROSS JOIN joinable_table
   | table [INNER] JOIN joinable_table join_condition
-  | table {LEFT|RIGHT} [OUTER] JOIN joinable_table join_condition
-  | table FULL [OUTER] JOIN joinable_table ON condition
+  | table {LEFT|RIGHT|FULL} [OUTER] JOIN joinable_table join_condition
   | table NATURAL [INNER] JOIN joinable_table
-  | table NATURAL {LEFT|RIGHT} [OUTER] JOIN joinable_table
+  | table NATURAL {LEFT|RIGHT|FULL} [OUTER] JOIN joinable_table
 
 join_condition
   : ON condition

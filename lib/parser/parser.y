@@ -2087,10 +2087,6 @@ join
     {
         $$ = Join{Table: $1, JoinTable: $5, JoinType: $3, Direction: $2, Condition: $6}
     }
-    | table FULL join_type_outer JOIN table ON value
-    {
-        $$ = Join{Table: $1, JoinTable: $5, JoinType: $3, Direction: $2, Condition: JoinCondition{On: $7}}
-    }
     | table NATURAL join_type_inner JOIN table
     {
         $$ = Join{Table: $1, JoinTable: $5, JoinType: $3, Natural: $2}
@@ -2113,11 +2109,6 @@ join
     {
         $6.Lateral = $5
         $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Direction: $2, Condition: $7}
-    }
-    | table FULL join_type_outer JOIN LATERAL laterable_query_table ON value
-    {
-        $6.Lateral = $5
-        $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Direction: $2, Condition: JoinCondition{On: $8}}
     }
     | table NATURAL join_type_inner JOIN LATERAL laterable_query_table
     {
@@ -2664,6 +2655,10 @@ join_outer_direction
         $$ = $1
     }
     | RIGHT
+    {
+        $$ = $1
+    }
+    | FULL
     {
         $$ = $1
     }

@@ -496,15 +496,19 @@ func joinViews(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 		}
 	}
 
-	includeIndices := NewUintPool(len(includeFields), LimitToUseUintSlicePool)
-	excludeIndices := NewUintPool(view.FieldLen()-len(includeFields), LimitToUseUintSlicePool)
 	if includeFields != nil {
+		includeIndices := NewUintPool(len(includeFields), LimitToUseUintSlicePool)
+		excludeIndices := NewUintPool(view.FieldLen()-len(includeFields), LimitToUseUintSlicePool)
+		alternatives := make(map[int]int)
+
 		for i := range includeFields {
 			idx, _ := view.Header.SearchIndex(includeFields[i])
 			includeIndices.Add(uint(idx))
 
-			idx, _ = view.Header.SearchIndex(excludeFields[i])
-			excludeIndices.Add(uint(idx))
+			eidx, _ := view.Header.SearchIndex(excludeFields[i])
+			excludeIndices.Add(uint(eidx))
+
+			alternatives[idx] = eidx
 		}
 
 		fieldIndices := make([]int, 0, view.FieldLen()-excludeIndices.Len())
@@ -530,7 +534,11 @@ func joinViews(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 		if err = NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
 			record := make(Record, fieldLen)
 			for i, idx := range fieldIndices {
-				record[i] = view.RecordSet[index][idx]
+				if includeIndices.Exists(uint(idx)) && value.IsNull(view.RecordSet[index][idx][0]) {
+					record[i] = view.RecordSet[index][alternatives[idx]]
+				} else {
+					record[i] = view.RecordSet[index][idx]
+				}
 			}
 			view.RecordSet[index] = record
 			return nil

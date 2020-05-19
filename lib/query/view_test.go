@@ -2031,11 +2031,6 @@ var viewLoadTests = []struct {
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewString("1"),
-					value.NewString("str1"),
-					value.NewString("str1b"),
-				}),
-				NewRecord([]value.Primary{
 					value.NewString("2"),
 					value.NewString("str2"),
 					value.NewString("str2b"),
@@ -2139,9 +2134,58 @@ var viewLoadTests = []struct {
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("str2b"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString("str3b"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("4"),
+					value.NewNull(),
+					value.NewString("str4b"),
+				}),
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"TABLE1":  strings.ToUpper(GetTestFilePath("table1.csv")),
+				"TABLE1B": strings.ToUpper(GetTestFilePath("table1b.csv")),
+			}},
+		}, time.Time{}, nil),
+	},
+	{
+		Name: "Full Outer Join Natural",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Join{
+						Table: parser.Table{
+							Object: parser.Identifier{Literal: "table1"},
+						},
+						JoinTable: parser.Table{
+							Object: parser.Identifier{Literal: "table1b"},
+						},
+						Direction: parser.Token{Token: parser.FULL, Literal: "full"},
+						Natural:   parser.Token{Token: parser.NATURAL, Literal: "natural"},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{Column: "column1", IsFromTable: true, IsJoinColumn: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
+				{View: "table1b", Column: "column2b", Number: 2, IsFromTable: true},
+			},
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
 					value.NewString("1"),
 					value.NewString("str1"),
-					value.NewString("str1b"),
+					value.NewNull(),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("2"),
@@ -2737,7 +2781,7 @@ func TestView_Load(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(view, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, view, v.Result)
+			t.Errorf("%s: \n result = %v,\n expect = %v", v.Name, view, v.Result)
 		}
 	}
 }
