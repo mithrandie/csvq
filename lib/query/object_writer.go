@@ -34,7 +34,7 @@ type ObjectWriter struct {
 
 	subBlock  int
 	lineWidth int
-	column    int
+	Column    int
 }
 
 func NewObjectWriter(tx *Transaction) *ObjectWriter {
@@ -57,7 +57,7 @@ func NewObjectWriter(tx *Transaction) *ObjectWriter {
 		IndentWidth: 4,
 		Padding:     DefaultPadding,
 		lineWidth:   0,
-		column:      0,
+		Column:      0,
 		subBlock:    0,
 	}
 }
@@ -68,7 +68,7 @@ func (w *ObjectWriter) Clear() {
 	w.Title2 = ""
 	w.Title2Effect = ""
 	w.lineWidth = 0
-	w.column = 0
+	w.Column = 0
 	w.subBlock = 0
 	w.buf.Reset()
 }
@@ -82,12 +82,12 @@ func (w *ObjectWriter) WriteColor(s string, effect string) {
 }
 
 func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
-	startOfLine := w.column < 1
+	startOfLine := w.Column < 1
 
 	if startOfLine {
-		width := w.leadingSpacesWidth() + w.subBlock
+		width := w.LeadingSpacesWidth() + w.subBlock
 		w.writeToBuf(strings.Repeat(" ", width))
-		w.column = width
+		w.Column = width
 	}
 
 	if !withoutLineBreak && !startOfLine && !w.FitInLine(s) {
@@ -99,7 +99,7 @@ func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
 		} else {
 			w.writeToBuf(w.Palette.Render(effect, s))
 		}
-		w.column = w.column + cmd.TextWidth(s, w.Flags)
+		w.Column = w.Column + cmd.TextWidth(s, w.Flags)
 	}
 }
 
@@ -107,12 +107,12 @@ func (w *ObjectWriter) writeToBuf(s string) {
 	w.buf.WriteString(s)
 }
 
-func (w *ObjectWriter) leadingSpacesWidth() int {
+func (w *ObjectWriter) LeadingSpacesWidth() int {
 	return w.Padding + (w.Indent * w.IndentWidth)
 }
 
 func (w *ObjectWriter) FitInLine(s string) bool {
-	if w.MaxWidth-w.Padding < w.column+cmd.TextWidth(s, w.Flags) {
+	if w.MaxWidth-(w.Padding*2)-1 < w.Column+cmd.TextWidth(s, w.Flags) {
 		return false
 	}
 	return true
@@ -127,6 +127,19 @@ func (w *ObjectWriter) Write(s string) {
 }
 
 func (w *ObjectWriter) WriteWithAutoLineBreak(s string) {
+	w.writeWithAutoLineBreak(s, false, true)
+}
+
+func (w *ObjectWriter) WriteWithAutoLineBreakWithContinueMark(s string) {
+	w.writeWithAutoLineBreak(s, true, false)
+}
+
+func (w *ObjectWriter) writeWithAutoLineBreak(s string, useContinueMark bool, useBlock bool) {
+	continueMark := ""
+	if useContinueMark {
+		continueMark = "\\"
+	}
+
 	scanner := bufio.NewScanner(strings.NewReader(s))
 	firstLine := true
 	blockQuote := false
@@ -138,7 +151,7 @@ func (w *ObjectWriter) WriteWithAutoLineBreak(s string) {
 		}
 
 		line := scanner.Text()
-		if cmd.TrimSpace(line) == "```" {
+		if useBlock && cmd.TrimSpace(line) == "```" {
 			preformatted = !preformatted
 			continue
 		} else {
@@ -156,18 +169,28 @@ func (w *ObjectWriter) WriteWithAutoLineBreak(s string) {
 
 		wscanner := bufio.NewScanner(strings.NewReader(line))
 		wscanner.Split(bufio.ScanWords)
-		firstWord := true
+		lineHead := true
+
 		for wscanner.Scan() {
 			word := wscanner.Text()
-			if firstWord {
-				firstWord = false
-				if blockQuote == false && word == ">" {
+			if lineHead {
+				if useBlock && blockQuote == false && word == ">" {
 					blockQuote = true
 					w.BeginBlock()
 					continue
 				}
+
+				lineHead = false
+			} else {
+				if !w.FitInLine(" " + word + continueMark) {
+					w.Write(continueMark)
+					w.NewLine()
+				} else {
+					word = " " + word
+				}
 			}
-			w.Write(word + " ")
+
+			w.Write(word)
 		}
 	}
 
@@ -182,10 +205,10 @@ func (w *ObjectWriter) WriteSpaces(l int) {
 
 func (w *ObjectWriter) NewLine() {
 	w.buf.WriteRune('\n')
-	if w.lineWidth < w.column {
-		w.lineWidth = w.column
+	if w.lineWidth < w.Column {
+		w.lineWidth = w.Column
 	}
-	w.column = 0
+	w.Column = 0
 }
 
 func (w *ObjectWriter) BeginBlock() {
@@ -197,7 +220,7 @@ func (w *ObjectWriter) EndBlock() {
 }
 
 func (w *ObjectWriter) BeginSubBlock() {
-	w.subBlock = w.column - w.leadingSpacesWidth()
+	w.subBlock = w.Column - w.LeadingSpacesWidth()
 }
 
 func (w *ObjectWriter) EndSubBlock() {
@@ -220,8 +243,8 @@ func (w *ObjectWriter) String() string {
 		if hlLen < w.lineWidth+1 {
 			hlLen = w.lineWidth + 1
 		}
-		if hlLen < w.column+1 {
-			hlLen = w.column + 1
+		if hlLen < w.Column+1 {
+			hlLen = w.Column + 1
 		}
 		if w.MaxWidth < hlLen {
 			hlLen = w.MaxWidth

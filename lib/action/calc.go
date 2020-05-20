@@ -52,5 +52,5 @@ func Calc(ctx context.Context, proc *query.Processor, expr string) error {
 		values[i], _, _ = query.ConvertFieldContents(p, true)
 	}
 
-	return proc.Tx.Session.WriteToStdout(strings.Join(values, string(proc.Tx.Flags.WriteDelimiter)))
+	return proc.Tx.Session.WriteToStdout(strings.Join(values, string(proc.Tx.Flags.ExportOptions.Delimiter)))
 }

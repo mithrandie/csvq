@@ -74,7 +74,7 @@ func ParseJoinCondition(join parser.Join, view *View, joinView *View) (parser.Qu
 		comps[i] = parser.Comparison{
 			LHS:      lhs,
 			RHS:      rhs,
-			Operator: "=",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		}
 
 		if join.Direction.Token == parser.RIGHT {

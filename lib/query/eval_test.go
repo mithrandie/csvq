@@ -250,7 +250,7 @@ var evaluateTests = []struct {
 		Expr: parser.Arithmetic{
 			LHS:      parser.NewIntegerValue(1),
 			RHS:      parser.NewIntegerValue(2),
-			Operator: '+',
+			Operator: parser.Token{Token: '+', Literal: "+"},
 		},
 		Result: value.NewInteger(3),
 	},
@@ -259,7 +259,7 @@ var evaluateTests = []struct {
 		Expr: parser.Arithmetic{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			RHS:      parser.NewIntegerValue(2),
-			Operator: '+',
+			Operator: parser.Token{Token: '+', Literal: "+"},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -268,7 +268,7 @@ var evaluateTests = []struct {
 		Expr: parser.Arithmetic{
 			LHS:      parser.NewNullValue(),
 			RHS:      parser.NewIntegerValue(2),
-			Operator: '+',
+			Operator: parser.Token{Token: '+', Literal: "+"},
 		},
 		Result: value.NewNull(),
 	},
@@ -277,7 +277,7 @@ var evaluateTests = []struct {
 		Expr: parser.Arithmetic{
 			LHS:      parser.NewIntegerValue(1),
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			Operator: '+',
+			Operator: parser.Token{Token: '+', Literal: "+"},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -351,7 +351,7 @@ var evaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS:      parser.NewIntegerValue(1),
 			RHS:      parser.NewIntegerValue(2),
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.FALSE),
 	},
@@ -360,7 +360,7 @@ var evaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS:      parser.RowValue{Value: parser.ValueList{Values: []parser.QueryExpression{parser.NewStringValue("2")}}},
 			RHS:      parser.NewIntegerValue(2),
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.TRUE),
 	},
@@ -369,7 +369,7 @@ var evaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 			RHS:      parser.NewIntegerValue(2),
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -378,7 +378,7 @@ var evaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS:      parser.NewNullValue(),
 			RHS:      parser.NewIntegerValue(2),
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.UNKNOWN),
 	},
@@ -387,7 +387,7 @@ var evaluateTests = []struct {
 		Expr: parser.Comparison{
 			LHS:      parser.NewIntegerValue(1),
 			RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -410,7 +410,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.TRUE),
 	},
@@ -430,7 +430,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -445,14 +444,14 @@ var evaluateTests = []struct {
 								Filter: parser.Comparison{
 									LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 									RHS:      parser.NewIntegerValue(1),
-									Operator: "=",
+									Operator: parser.Token{Token: '=', Literal: "="},
 								},
 							},
 						},
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.TRUE),
 	},
@@ -475,7 +474,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -495,7 +494,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -513,7 +511,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.UNKNOWN),
 	},
@@ -525,7 +523,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -548,7 +545,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -566,7 +562,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.UNKNOWN),
 	},
@@ -586,7 +582,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
@@ -601,7 +596,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -621,7 +616,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -636,7 +630,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "subquery returns too many records, should return only one record",
 	},
@@ -658,7 +652,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "row value should contain exactly 2 values",
 	},
@@ -679,7 +673,7 @@ var evaluateTests = []struct {
 					JsonText: parser.NewStringValue("{\"key\": {\"key2\": 1, \"key3\": \"str1\"}}"),
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.TRUE),
 	},
@@ -700,7 +694,7 @@ var evaluateTests = []struct {
 					JsonText: parser.NewStringValue("{\"key\": {\"key2\": 1, \"key3\": \"str1\"}}"),
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -721,7 +715,7 @@ var evaluateTests = []struct {
 					JsonText: parser.NewStringValue("{\"key\": {\"key2\": 1, \"key3\": \"str1\"}}"),
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.UNKNOWN),
 	},
@@ -742,7 +736,7 @@ var evaluateTests = []struct {
 					JsonText: parser.NewStringValue("{\"key\": {\"key2\": 1, \"key3\": \"str1\"}}"),
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "json loading error: json value must be an array",
 	},
@@ -763,7 +757,7 @@ var evaluateTests = []struct {
 					JsonText: parser.NewStringValue("{\"key\": []}"),
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Result: value.NewTernary(ternary.UNKNOWN),
 	},
@@ -784,7 +778,7 @@ var evaluateTests = []struct {
 					JsonText: parser.NewStringValue("{\"key\": [{\"key2\": 1, \"key3\": \"str1\"}, {\"key2\": 1, \"key3\": \"str1\"}] }"),
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: '=', Literal: "="},
 		},
 		Error: "json query returns too many records, should return only one record",
 	},
@@ -913,7 +907,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -1236,7 +1229,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -1250,7 +1242,7 @@ var evaluateTests = []struct {
 								Filter: parser.Comparison{
 									LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 									RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-									Operator: "=",
+									Operator: parser.Token{Token: '=', Literal: "="},
 								},
 							},
 						},
@@ -1270,7 +1262,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -1284,7 +1275,7 @@ var evaluateTests = []struct {
 								Filter: parser.Comparison{
 									LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 									RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-									Operator: "=",
+									Operator: parser.Token{Token: '=', Literal: "="},
 								},
 							},
 						},
@@ -1304,7 +1295,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -1332,7 +1322,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -1575,7 +1564,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -1659,7 +1647,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
@@ -1691,7 +1678,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -1883,7 +1869,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
@@ -1908,7 +1893,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -1922,7 +1906,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "<>",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
 		},
 		Result: value.NewTernary(ternary.TRUE),
 	},
@@ -1935,7 +1919,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -1949,7 +1932,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "<>",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -1962,7 +1945,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -1976,14 +1958,14 @@ var evaluateTests = []struct {
 								Filter: parser.Comparison{
 									LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 									RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-									Operator: "=",
+									Operator: parser.Token{Token: '=', Literal: "="},
 								},
 							},
 						},
 					},
 				},
 			},
-			Operator: "<>",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -2002,7 +1984,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
@@ -2015,7 +1996,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "<>",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
 		},
 		Error: "select query should return exactly 2 fields",
 	},
@@ -2049,7 +2030,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "<>",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<>"},
 		},
 		Error: "row value should contain exactly 2 values",
 	},
@@ -2080,7 +2061,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -2094,7 +2074,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: ">",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 		},
 		Result: value.NewTernary(ternary.TRUE),
 	},
@@ -2107,7 +2087,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -2121,7 +2100,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: ">",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 		},
 		Result: value.NewTernary(ternary.FALSE),
 	},
@@ -2134,7 +2113,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -2148,7 +2126,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: ">",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -2161,7 +2139,6 @@ var evaluateTests = []struct {
 					Query: parser.SelectQuery{
 						SelectEntity: parser.SelectEntity{
 							SelectClause: parser.SelectClause{
-								Select: "select",
 								Fields: []parser.QueryExpression{
 									parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 								},
@@ -2175,14 +2152,14 @@ var evaluateTests = []struct {
 								Filter: parser.Comparison{
 									LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 									RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-									Operator: "=",
+									Operator: parser.Token{Token: '=', Literal: "="},
 								},
 							},
 						},
 					},
 				},
 			},
-			Operator: ">",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 		},
 		Error: "field notexist does not exist",
 	},
@@ -2201,7 +2178,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
@@ -2214,7 +2190,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: ">",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 		},
 		Error: "select query should return exactly 2 fields",
 	},
@@ -2248,7 +2224,7 @@ var evaluateTests = []struct {
 					},
 				},
 			},
-			Operator: "=",
+			Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "="},
 		},
 		Error: "row value should contain exactly 2 values",
 	},
@@ -2319,7 +2295,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
@@ -2333,7 +2308,7 @@ var evaluateTests = []struct {
 							Filter: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 								RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-								Operator: "=",
+								Operator: parser.Token{Token: '=', Literal: "="},
 							},
 						},
 					},
@@ -2349,7 +2324,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
@@ -2375,7 +2349,6 @@ var evaluateTests = []struct {
 				Query: parser.SelectQuery{
 					SelectEntity: parser.SelectEntity{
 						SelectClause: parser.SelectClause{
-							Select: "select",
 							Fields: []parser.QueryExpression{
 								parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							},
@@ -2389,7 +2362,7 @@ var evaluateTests = []struct {
 							Filter: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 								RHS:      parser.NewStringValue("str2"),
-								Operator: "=",
+								Operator: parser.Token{Token: '=', Literal: "="},
 							},
 						},
 					},
@@ -2419,7 +2392,6 @@ var evaluateTests = []struct {
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Select: "select",
 						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
@@ -2433,7 +2405,7 @@ var evaluateTests = []struct {
 						Filter: parser.Comparison{
 							LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
 							RHS:      parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.Identifier{Literal: "column4"}},
-							Operator: "=",
+							Operator: parser.Token{Token: '=', Literal: "="},
 						},
 					},
 				},
@@ -2450,7 +2422,6 @@ var evaluateTests = []struct {
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Select: "select",
 						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.NewIntegerValue(1)},
 						},
@@ -2477,7 +2448,6 @@ var evaluateTests = []struct {
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Select: "select",
 						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}}},
 						},
@@ -2498,7 +2468,6 @@ var evaluateTests = []struct {
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Select: "select",
 						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 						},
@@ -2519,7 +2488,6 @@ var evaluateTests = []struct {
 			Query: parser.SelectQuery{
 				SelectEntity: parser.SelectEntity{
 					SelectClause: parser.SelectClause{
-						Select: "select",
 						Fields: []parser.QueryExpression{
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
 							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
@@ -2764,7 +2732,7 @@ var evaluateTests = []struct {
 				},
 			},
 		},
-		Error: "aggregate functions are nested at avg(avg(column1))",
+		Error: "aggregate functions are nested at AVG(AVG(column1))",
 	},
 	{
 		Name: "Aggregate Function Count With AllColumns",
@@ -2904,7 +2872,7 @@ var evaluateTests = []struct {
 										Value: parser.Arithmetic{
 											LHS:      parser.Variable{Name: "value"},
 											RHS:      parser.Variable{Name: "fetch"},
-											Operator: '*',
+											Operator: parser.Token{Token: '*', Literal: "*"},
 										},
 									},
 								},
@@ -3130,7 +3098,7 @@ var evaluateTests = []struct {
 										Value: parser.Arithmetic{
 											LHS:      parser.Variable{Name: "value"},
 											RHS:      parser.Variable{Name: "fetch"},
-											Operator: '*',
+											Operator: parser.Token{Token: '*', Literal: "*"},
 										},
 									},
 								},
@@ -3227,7 +3195,7 @@ var evaluateTests = []struct {
 										Value: parser.Arithmetic{
 											LHS:      parser.Variable{Name: "value"},
 											RHS:      parser.Variable{Name: "fetch"},
-											Operator: '*',
+											Operator: parser.Token{Token: '*', Literal: "*"},
 										},
 									},
 								},
@@ -3504,7 +3472,7 @@ var evaluateTests = []struct {
 				},
 			},
 		},
-		Error: "aggregate functions are nested at listagg(avg(column1))",
+		Error: "aggregate functions are nested at LISTAGG(AVG(column1))",
 	},
 	{
 		Name: "ListAgg Function Second Argument Evaluation Error",
@@ -3706,7 +3674,7 @@ var evaluateTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.NewIntegerValue(2),
 						RHS:      parser.NewIntegerValue(1),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Result: parser.NewStringValue("A"),
 				},
@@ -3714,7 +3682,7 @@ var evaluateTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.NewIntegerValue(2),
 						RHS:      parser.NewIntegerValue(2),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Result: parser.NewStringValue("B"),
 				},
@@ -3940,7 +3908,7 @@ var evaluateTests = []struct {
 		Expr: parser.Flag{
 			Name: "invalid",
 		},
-		Error: "@@invalid is an unknown flag",
+		Error: "@@INVALID is an unknown flag",
 	},
 	{
 		Name: "Variable Undeclared Error",
@@ -3975,52 +3943,39 @@ var evaluateTests = []struct {
 	{
 		Name: "Cursor Status Is Not Open",
 		Expr: parser.CursorStatus{
-			CursorLit: "cursor",
-			Cursor:    parser.Identifier{Literal: "cur"},
-			Is:        "is",
-			Negation:  parser.Token{Token: parser.NOT, Literal: "not"},
-			Type:      parser.OPEN,
-			TypeLit:   "open",
+			Cursor:   parser.Identifier{Literal: "cur"},
+			Negation: parser.Token{Token: parser.NOT, Literal: "not"},
+			Type:     parser.Token{Token: parser.OPEN, Literal: "open"},
 		},
 		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "Cursor Status Is In Range",
 		Expr: parser.CursorStatus{
-			CursorLit: "cursor",
-			Cursor:    parser.Identifier{Literal: "cur"},
-			Is:        "is",
-			Type:      parser.RANGE,
-			TypeLit:   "in range",
+			Cursor: parser.Identifier{Literal: "cur"},
+			Type:   parser.Token{Token: parser.RANGE, Literal: "range"},
 		},
 		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "Cursor Status Open Error",
 		Expr: parser.CursorStatus{
-			CursorLit: "cursor",
-			Cursor:    parser.Identifier{Literal: "notexist"},
-			Is:        "is",
-			Type:      parser.OPEN,
-			TypeLit:   "open",
+			Cursor: parser.Identifier{Literal: "notexist"},
+			Type:   parser.Token{Token: parser.OPEN, Literal: "open"},
 		},
 		Error: "cursor notexist is undeclared",
 	},
 	{
 		Name: "Cursor Status In Range Error",
 		Expr: parser.CursorStatus{
-			CursorLit: "cursor",
-			Cursor:    parser.Identifier{Literal: "notexist"},
-			Is:        "is",
-			Type:      parser.RANGE,
-			TypeLit:   "in range",
+			Cursor: parser.Identifier{Literal: "notexist"},
+			Type:   parser.Token{Token: parser.RANGE, Literal: "range"},
 		},
 		Error: "cursor notexist is undeclared",
 	},
 	{
 		Name: "Cursor Attribute Count",
 		Expr: parser.CursorAttrebute{
-			CursorLit: "cursor",
 			Cursor:    parser.Identifier{Literal: "cur"},
 			Attrebute: parser.Token{Token: parser.COUNT, Literal: "count"},
 		},
@@ -4029,7 +3984,6 @@ var evaluateTests = []struct {
 	{
 		Name: "Cursor Attribute Count Error",
 		Expr: parser.CursorAttrebute{
-			CursorLit: "cursor",
 			Cursor:    parser.Identifier{Literal: "notexist"},
 			Attrebute: parser.Token{Token: parser.COUNT, Literal: "count"},
 		},
@@ -4209,7 +4163,7 @@ var evaluateEmbeddedStringTests = []struct {
 	},
 	{
 		Input: "@#notexist",
-		Error: "@#notexist is an unknown runtime information",
+		Error: "@#NOTEXIST is an unknown runtime information",
 	},
 	{
 		Input: "abc${invalid expr}def",
@@ -4326,7 +4280,7 @@ func BenchmarkEvaluateSingleThread(b *testing.B) {
 			_, _ = Evaluate(ctx, scope, parser.Comparison{
 				LHS:      parser.NewIntegerValue(1),
 				RHS:      parser.NewStringValue("1"),
-				Operator: "=",
+				Operator: parser.Token{Token: '=', Literal: "="},
 			})
 		}
 	}
@@ -4346,7 +4300,7 @@ func BenchmarkEvaluateMultiThread(b *testing.B) {
 					_, _ = Evaluate(ctx, scope, parser.Comparison{
 						LHS:      parser.NewIntegerValue(1),
 						RHS:      parser.NewStringValue("1"),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					})
 				}
 				wg.Done()

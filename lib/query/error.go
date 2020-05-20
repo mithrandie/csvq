@@ -50,6 +50,7 @@ const (
 	ErrMsgLoadJson                             = "json loading error: %s"
 	ErrMsgEmptyJsonQuery                       = "json query is empty"
 	ErrMsgEmptyJsonTable                       = "json table is empty"
+	ErrMsgIncorrectLateralUsage                = "LATERAL cannot to be used in a RIGHT or FULL outer join"
 	ErrMsgInvalidTableObject                   = "invalid table object: %s"
 	ErrMsgTableObjectInvalidDelimiter          = "invalid delimiter: %s"
 	ErrMsgTableObjectInvalidDelimiterPositions = "invalid delimiter positions: %s"
@@ -81,7 +82,7 @@ const (
 	ErrMsgTemporaryTableFieldLength            = "select query should return exactly %s for view %s"
 	ErrMsgDuplicateTableName                   = "table name %s is a duplicate"
 	ErrMsgTableNotLoaded                       = "table %s is not loaded"
-	ErrMsgStdinEmpty                           = "stdin is empty"
+	ErrMsgStdinEmpty                           = "STDIN is empty"
 	ErrMsgRowValueLengthInComparison           = "row value should contain exactly %s"
 	ErrMsgFieldLengthInComparison              = "select query should return exactly %s"
 	ErrMsgInvalidLimitPercentage               = "limit percentage %s is not a float value"
@@ -659,6 +660,16 @@ type EmptyJsonTableError struct {
 func NewEmptyJsonTableError(expr parser.JsonQuery) error {
 	return &EmptyJsonTableError{
 		NewBaseError(expr, ErrMsgEmptyJsonTable, ReturnCodeApplicationError, ErrorEmptyJsonTable),
+	}
+}
+
+type IncorrectLateralUsageError struct {
+	*BaseError
+}
+
+func NewIncorrectLateralUsageError(expr parser.Table) error {
+	return &IncorrectLateralUsageError{
+		NewBaseError(expr, ErrMsgIncorrectLateralUsage, ReturnCodeApplicationError, ErrorIncorrectLateralUsage),
 	}
 }
 

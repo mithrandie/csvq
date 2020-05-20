@@ -16,6 +16,7 @@ import (
     expression  Expression
     expressions []Expression
     identifier  Identifier
+    table       Table
     variable    Variable
     variables   []Variable
     varassign   VariableAssignment
@@ -132,12 +133,14 @@ import (
 %type<queryexpr>   window_frame_low
 %type<queryexpr>   window_frame_high
 %type<queryexpr>   table_identifier
-%type<identifier>  table_object_identifier
+%type<token>       table_object_type
 %type<queryexpr>   table_object
 %type<queryexpr>   updatable_table_identifier
 %type<queryexprs>  identified_tables
 %type<queryexprs>  updatable_tables
 %type<queryexpr>   virtual_table_object
+%type<table>       laterable_query_table
+%type<queryexprs>  joinable_tables
 %type<queryexpr>   table
 %type<queryexpr>   join
 %type<queryexpr>   join_condition
@@ -200,7 +203,7 @@ import (
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
 %token<token> ORDER GROUP HAVING BY ASC DESC LIMIT OFFSET PERCENT
-%token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL
+%token<token> JOIN INNER OUTER LEFT RIGHT FULL CROSS ON USING NATURAL LATERAL
 %token<token> UNION INTERSECT EXCEPT
 %token<token> ALL ANY EXISTS IN
 %token<token> AND OR NOT BETWEEN LIKE IS NULL
@@ -223,7 +226,7 @@ import (
 %token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
 %token<token> UMINUS UPLUS
-%token<token> ';' '*' '=' '-' '+' '!' '(' ')'
+%token<token> ';' '=' '-' '+' '*' '/' '%' '!' '(' ')'
 
 %right SUBSTITUTION_OP
 %left UNION EXCEPT
@@ -902,15 +905,15 @@ fetch_position
 cursor_status
     : CURSOR identifier IS negation OPEN
     {
-        $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $5.Token, TypeLit: $5.Literal}
+        $$ = CursorStatus{Cursor: $2, Negation: $4, Type: $5}
     }
     | CURSOR identifier IS negation IN RANGE
     {
-        $$ = CursorStatus{CursorLit: $1.Literal, Cursor: $2, Is: $3.Literal, Negation: $4, Type: $6.Token, TypeLit: $5.Literal + " " + $6.Literal}
+        $$ = CursorStatus{Cursor: $2, Negation: $4, Type: $6}
     }
     | CURSOR identifier COUNT
     {
-        $$ = CursorAttrebute{CursorLit: $1.Literal, Cursor: $2, Attrebute: $3}
+        $$ = CursorAttrebute{Cursor: $2, Attrebute: $3}
     }
 
 command_statement
@@ -1042,8 +1045,7 @@ select_query
             SelectEntity:  $2,
             OrderByClause: $3,
             LimitClause:   $4,
-            ForUpdate:     true,
-            ForUpdateLiteral: $5.Literal + " " + $6.Literal,
+            Context:       $6,
         }
     }
 
@@ -1078,8 +1080,7 @@ select_into_query
             },
             OrderByClause: $8,
             LimitClause:   $9,
-            ForUpdate:     true,
-            ForUpdateLiteral: $10.Literal + " " + $11.Literal,
+            Context:       $11,
         }
     }
 
@@ -1135,13 +1136,13 @@ select_set_entity
 select_clause
     : SELECT distinct fields
     {
-        $$ = SelectClause{BaseExpr: NewBaseExpr($1), Select: $1.Literal, Distinct: $2, Fields: $3}
+        $$ = SelectClause{BaseExpr: NewBaseExpr($1), Distinct: $2, Fields: $3}
     }
 
 into_clause
     : INTO variables
     {
-        $$ = IntoClause{Into: $1.Literal, Variables: $2}
+        $$ = IntoClause{Variables: $2}
     }
 
 from_clause
@@ -1151,7 +1152,7 @@ from_clause
     }
     | FROM tables
     {
-        $$ = FromClause{From: $1.Literal, Tables: $2}
+        $$ = FromClause{Tables: $2}
     }
 
 where_clause
@@ -1161,7 +1162,7 @@ where_clause
     }
     | WHERE value
     {
-        $$ = WhereClause{Where: $1.Literal, Filter: $2}
+        $$ = WhereClause{Filter: $2}
     }
 
 group_by_clause
@@ -1171,7 +1172,7 @@ group_by_clause
     }
     | GROUP BY values
     {
-        $$ = GroupByClause{GroupBy: $1.Literal + " " + $2.Literal, Items: $3}
+        $$ = GroupByClause{Items: $3}
     }
 
 having_clause
@@ -1181,7 +1182,7 @@ having_clause
     }
     | HAVING value
     {
-        $$ = HavingClause{Having: $1.Literal, Filter: $2}
+        $$ = HavingClause{Filter: $2}
     }
 
 order_by_clause
@@ -1191,7 +1192,7 @@ order_by_clause
     }
     | ORDER BY order_items
     {
-        $$ = OrderByClause{OrderBy: $1.Literal + " " + $2.Literal, Items: $3}
+        $$ = OrderByClause{Items: $3}
     }
 
 limit_clause
@@ -1229,9 +1230,7 @@ limit_restriction
     }
     | WITH TIES
     {
-        tok := $2
-        tok.Literal = joinWithSpace([]string{$1.Literal, tok.Literal})
-        $$ = tok
+        $$ = $2
     }
 
 limit_fetch_position
@@ -1289,7 +1288,7 @@ offset_clause
     }
     | OFFSET substantial_value offset_unit
     {
-        $$ = OffsetClause{BaseExpr: NewBaseExpr($1), Offset: $1.Literal, Value: $2, Unit: $3}
+        $$ = OffsetClause{BaseExpr: NewBaseExpr($1), Value: $2, Unit: $3}
     }
 
 with_clause
@@ -1299,17 +1298,17 @@ with_clause
     }
     | WITH inline_tables
     {
-        $$ = WithClause{With: $1.Literal, InlineTables: $2}
+        $$ = WithClause{InlineTables: $2}
     }
 
 inline_table
     : recursive identifier AS '(' select_query ')'
     {
-        $$ = InlineTable{Recursive: $1, Name: $2, As: $3.Literal, Query: $5.(SelectQuery)}
+        $$ = InlineTable{Recursive: $1, Name: $2, Query: $5.(SelectQuery)}
     }
     | recursive identifier '(' identifiers ')' AS '(' select_query ')'
     {
-        $$ = InlineTable{Recursive: $1, Name: $2, Fields: $4, As: $6.Literal, Query: $8.(SelectQuery)}
+        $$ = InlineTable{Recursive: $1, Name: $2, Fields: $4, Query: $8.(SelectQuery)}
     }
 
 inline_tables
@@ -1357,7 +1356,7 @@ ternary
 null
     : NULL
     {
-        $$ = NewNullValueFromString($1.Literal)
+        $$ = NewNullValue()
     }
 
 field_reference
@@ -1487,7 +1486,7 @@ row_value
     }
     | JSON_ROW '(' value ',' value ')'
     {
-        $$ = RowValue{BaseExpr: NewBaseExpr($1), Value: JsonQuery{JsonQuery: $1.Literal, Query: $3, JsonText: $5}}
+        $$ = RowValue{BaseExpr: NewBaseExpr($1), Value: JsonQuery{JsonQuery: $1, Query: $3, JsonText: $5}}
     }
 
 row_values
@@ -1517,7 +1516,7 @@ order_item
     }
     | order_value order_direction NULLS order_null_position
     {
-        $$ = OrderItem{Value: $1, Direction: $2, Nulls: $3.Literal, Position: $4}
+        $$ = OrderItem{Value: $1, Direction: $2, NullsPosition: $4}
     }
 
 order_value
@@ -1594,107 +1593,107 @@ matrix_value
     }
     | JSON_ROW '(' value ',' value ')'
     {
-        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
+        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1, Query: $3, JsonText: $5}
     }
 
 comparison
     : value COMPARISON_OP value
     {
-        $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
+        $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
     }
     | row_value COMPARISON_OP row_value
     {
-        $$ = Comparison{LHS: $1, Operator: $2.Literal, RHS: $3}
+        $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
     }
     | value '=' value
     {
-        $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
+        $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
     }
     | row_value '=' row_value
     {
-        $$ = Comparison{LHS: $1, Operator: "=", RHS: $3}
+        $$ = Comparison{LHS: $1, Operator: $2, RHS: $3}
     }
     | value IS negation ternary
     {
-        $$ = Is{Is: $2.Literal, LHS: $1, RHS: $4, Negation: $3}
+        $$ = Is{LHS: $1, RHS: $4, Negation: $3}
     }
     | value IS negation null
     {
-        $$ = Is{Is: $2.Literal, LHS: $1, RHS: $4, Negation: $3}
+        $$ = Is{LHS: $1, RHS: $4, Negation: $3}
     }
     | value BETWEEN value AND value
     {
-        $$ = Between{Between: $2.Literal, And: $4.Literal, LHS: $1, Low: $3, High: $5}
+        $$ = Between{LHS: $1, Low: $3, High: $5}
     }
     | value NOT BETWEEN value AND value
     {
-        $$ = Between{Between: $3.Literal, And: $5.Literal, LHS: $1, Low: $4, High: $6, Negation: $2}
+        $$ = Between{LHS: $1, Low: $4, High: $6, Negation: $2}
     }
     | row_value negation BETWEEN row_value AND row_value
     {
-        $$ = Between{Between: $3.Literal, And: $5.Literal, LHS: $1, Low: $4, High: $6, Negation: $2}
+        $$ = Between{LHS: $1, Low: $4, High: $6, Negation: $2}
     }
     | value IN row_value
     {
-        $$ = In{In: $2.Literal, LHS: $1, Values: $3}
+        $$ = In{LHS: $1, Values: $3}
     }
     | value NOT IN row_value
     {
-        $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
+        $$ = In{LHS: $1, Values: $4, Negation: $2}
     }
     | row_value negation IN matrix_value
     {
-        $$ = In{In: $3.Literal, LHS: $1, Values: $4, Negation: $2}
+        $$ = In{LHS: $1, Values: $4, Negation: $2}
     }
     | value LIKE value
     {
-        $$ = Like{Like: $2.Literal, LHS: $1, Pattern: $3}
+        $$ = Like{LHS: $1, Pattern: $3}
     }
     | value NOT LIKE value
     {
-        $$ = Like{Like: $3.Literal, LHS: $1, Pattern: $4, Negation: $2}
+        $$ = Like{LHS: $1, Pattern: $4, Negation: $2}
     }
     | value comparison_operator ANY row_value
     {
-        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
+        $$ = Any{LHS: $1, Operator: $2, Values: $4}
     }
     | row_value comparison_operator ANY matrix_value
     {
-        $$ = Any{Any: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
+        $$ = Any{LHS: $1, Operator: $2, Values: $4}
     }
     | value comparison_operator ALL row_value
     {
-        $$ = All{All: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
+        $$ = All{LHS: $1, Operator: $2, Values: $4}
     }
     | row_value comparison_operator ALL matrix_value
     {
-        $$ = All{All: $3.Literal, LHS: $1, Operator: $2.Literal, Values: $4}
+        $$ = All{LHS: $1, Operator: $2, Values: $4}
     }
     | EXISTS subquery
     {
-        $$ = Exists{Exists: $1.Literal, Query: $2.(Subquery)}
+        $$ = Exists{Query: $2.(Subquery)}
     }
 
 arithmetic
     : value '+' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: int('+'), RHS: $3}
+        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
     }
     | value '-' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: int('-'), RHS: $3}
+        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
     }
     | value '*' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: int('*'), RHS: $3}
+        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
     }
     | value '/' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: int('/'), RHS: $3}
+        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
     }
     | value '%' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: int('%'), RHS: $3}
+        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
     }
     | '-' value %prec UMINUS
     {
@@ -1744,11 +1743,11 @@ function
     }
     | SUBSTRING '(' value FROM value ')'
     {
-        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: []QueryExpression{$3, $5}, From: $4.Literal}
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: []QueryExpression{$3, $5}, From: $4}
     }
     | SUBSTRING '(' value FROM value FOR value ')'
     {
-        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: []QueryExpression{$3, $5, $7}, From: $4.Literal, For: $6.Literal}
+        $$ = Function{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: []QueryExpression{$3, $5, $7}, From: $4, For: $6}
     }
     | JSON_OBJECT '(' ')'
     {
@@ -1801,57 +1800,57 @@ list_function
     }
     | LIST_FUNCTION '(' distinct arguments ')' WITHIN GROUP '(' order_by_clause ')'
     {
-        $$ = ListFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, WithinGroup: $6.Literal + " " + $7.Literal, OrderBy: $9}
+        $$ = ListFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, OrderBy: $9}
     }
 
 analytic_function
     : identifier '(' arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
-        $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Args: $3, AnalyticClause: $7.(AnalyticClause)}
     }
     | identifier '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
-        $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: $1.BaseExpr, Name: $1.Literal, Distinct: $3, Args: $4, AnalyticClause: $8.(AnalyticClause)}
     }
     | AGGREGATE_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, AnalyticClause: $8.(AnalyticClause)}
     }
     | VAR '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, AnalyticClause: $8.(AnalyticClause)}
     }
     | COUNT '(' distinct arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, AnalyticClause: $8.(AnalyticClause)}
     }
     | COUNT '(' distinct wildcard ')' OVER '(' analytic_clause_with_windowing ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: []QueryExpression{$4}, AnalyticClause: $8.(AnalyticClause)}
     }
     | LIST_FUNCTION '(' distinct arguments ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, Over: $6.Literal, AnalyticClause: $8.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Distinct: $3, Args: $4, AnalyticClause: $8.(AnalyticClause)}
     }
     | ANALYTIC_FUNCTION '(' arguments ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, AnalyticClause: $7.(AnalyticClause)}
     }
     | FUNCTION_NTH '(' arguments ')' OVER '(' analytic_clause_with_windowing ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, AnalyticClause: $7.(AnalyticClause)}
     }
     | FUNCTION_NTH '(' arguments ')' IGNORE NULLS OVER '(' analytic_clause_with_windowing ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreNulls: true, IgnoreNullsLit: $5.Literal + " " + $6.Literal, Over: $7.Literal, AnalyticClause: $9.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreType: $6, AnalyticClause: $9.(AnalyticClause)}
     }
     | FUNCTION_WITH_INS '(' arguments ')' OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, Over: $5.Literal, AnalyticClause: $7.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, AnalyticClause: $7.(AnalyticClause)}
     }
     | FUNCTION_WITH_INS '(' arguments ')' IGNORE NULLS OVER '(' analytic_clause ')'
     {
-        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreNulls: true, IgnoreNullsLit: $5.Literal + " " + $6.Literal, Over: $7.Literal, AnalyticClause: $9.(AnalyticClause)}
+        $$ = AnalyticFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3, IgnoreType: $6, AnalyticClause: $9.(AnalyticClause)}
     }
 
 analytic_clause
@@ -1867,8 +1866,7 @@ analytic_clause_with_windowing
     }
     | partition_clause ORDER BY order_items windowing_clause
     {
-        orderByClause := OrderByClause{OrderBy: $2.Literal + " " + $3.Literal, Items: $4}
-        $$ = AnalyticClause{PartitionClause: $1, OrderByClause: orderByClause, WindowingClause: $5}
+        $$ = AnalyticClause{PartitionClause: $1, OrderByClause: OrderByClause{Items: $4}, WindowingClause: $5}
     }
 
 partition_clause
@@ -1878,54 +1876,54 @@ partition_clause
     }
     | PARTITION BY values
     {
-        $$ = PartitionClause{PartitionBy: $1.Literal + " " + $2.Literal, Values: $3}
+        $$ = PartitionClause{Values: $3}
     }
 
 windowing_clause
     : ROWS window_position
     {
-        $$ = WindowingClause{Rows: $1.Literal, FrameLow: $2}
+        $$ = WindowingClause{FrameLow: $2}
     }
     | ROWS BETWEEN window_frame_low AND window_frame_high
     {
-        $$ = WindowingClause{Rows: $1.Literal, FrameLow: $3, FrameHigh: $5, Between: $2.Literal, And: $4.Literal}
+        $$ = WindowingClause{FrameLow: $3, FrameHigh: $5}
     }
 
 window_position
     : UNBOUNDED PRECEDING
     {
-        $$ = WindowFramePosition{Direction: $2.Token, Unbounded: true, Literal: $1.Literal + " " + $2.Literal}
+        $$ = WindowFramePosition{Direction: $2, Unbounded: $1}
     }
     | INTEGER PRECEDING
     {
         i, _ := strconv.Atoi($1.Literal)
-        $$ = WindowFramePosition{Direction: $2.Token, Offset: i, Literal: $1.Literal + " " + $2.Literal}
+        $$ = WindowFramePosition{Direction: $2, Offset: i}
     }
     | CURRENT ROW
     {
-        $$ = WindowFramePosition{Direction: $1.Token, Literal: $1.Literal + " " + $2.Literal}
+        $$ = WindowFramePosition{Direction: $1}
     }
 
 window_relative_position
     : INTEGER PRECEDING
     {
         i, _ := strconv.Atoi($1.Literal)
-        $$ = WindowFramePosition{Direction: $2.Token, Offset: i, Literal: $1.Literal + " " + $2.Literal}
+        $$ = WindowFramePosition{Direction: $2, Offset: i}
     }
     | INTEGER FOLLOWING
     {
         i, _ := strconv.Atoi($1.Literal)
-        $$ = WindowFramePosition{Direction: $2.Token, Offset: i, Literal: $1.Literal + " " + $2.Literal}
+        $$ = WindowFramePosition{Direction: $2, Offset: i}
     }
     | CURRENT ROW
     {
-        $$ = WindowFramePosition{Direction: $1.Token, Literal: $1.Literal + " " + $2.Literal}
+        $$ = WindowFramePosition{Direction: $1}
     }
 
 window_frame_low
     : UNBOUNDED PRECEDING
     {
-        $$ = WindowFramePosition{Direction: $2.Token, Unbounded: true, Literal: $1.Literal + " " + $2.Literal}
+        $$ = WindowFramePosition{Direction: $2, Unbounded: $1}
     }
     | window_relative_position
     {
@@ -1935,7 +1933,7 @@ window_frame_low
 window_frame_high
     : UNBOUNDED FOLLOWING
     {
-        $$ = WindowFramePosition{Direction: $2.Token, Unbounded: true, Literal: $1.Literal + " " + $2.Literal}
+        $$ = WindowFramePosition{Direction: $2, Unbounded: $1}
     }
     | window_relative_position
     {
@@ -1949,43 +1947,43 @@ table_identifier
     }
     | STDIN
     {
-        $$ = Stdin{BaseExpr: NewBaseExpr($1), Stdin: $1.Literal}
+        $$ = Stdin{BaseExpr: NewBaseExpr($1)}
     }
 
-table_object_identifier
+table_object_type
     : CSV
     {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+        $$ = $1
     }
     | JSON
     {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+        $$ = $1
     }
     | FIXED
     {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+        $$ = $1
     }
     | LTSV
     {
-        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+        $$ = $1
     }
 
 table_object
-    : table_object_identifier '(' table_identifier ')'
+    : table_object_type '(' table_identifier ')'
     {
-        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: nil}
+        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, Path: $3, Args: nil}
     }
-    | table_object_identifier '(' table_identifier ',' arguments ')'
+    | table_object_type '(' table_identifier ',' arguments ')'
     {
-        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, Path: $3, Args: $5}
+        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, Path: $3, Args: $5}
     }
-    | table_object_identifier '(' substantial_value ',' table_identifier ')'
+    | table_object_type '(' substantial_value ',' table_identifier ')'
     {
-        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: nil}
+        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
     }
-    | table_object_identifier '(' substantial_value ',' table_identifier ',' arguments ')'
+    | table_object_type '(' substantial_value ',' table_identifier ',' arguments ')'
     {
-        $$ = TableObject{BaseExpr: $1.BaseExpr, Type: $1, FormatElement: $3, Path: $5, Args: $7}
+        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
     }
 
 updatable_table_identifier
@@ -2005,15 +2003,47 @@ virtual_table_object
     }
     | JSON_TABLE '(' substantial_value ',' identifier ')'
     {
-        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
+        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1, Query: $3, JsonText: $5}
     }
     | JSON_TABLE '(' substantial_value ',' substantial_value ')'
     {
-        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1.Literal, Query: $3, JsonText: $5}
+        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1, Query: $3, JsonText: $5}
     }
-    | subquery
+
+laterable_query_table
+    : subquery
     {
-        $$ = $1
+        $$ = Table{Object: $1}
+    }
+    | subquery identifier
+    {
+        $$ = Table{Object: $1, Alias: $2}
+    }
+    | subquery AS identifier
+    {
+        $$ = Table{Object: $1, As: $2, Alias: $3}
+    }
+
+joinable_tables
+    : table
+    {
+        $$ = []QueryExpression{$1}
+    }
+    | LATERAL laterable_query_table
+    {
+        $2.Lateral = $1
+        $2.BaseExpr = NewBaseExpr($1)
+        $$ = []QueryExpression{$2}
+    }
+    | laterable_query_table ',' joinable_tables
+    {
+        $$ = append([]QueryExpression{$1}, $3...)
+    }
+    | LATERAL laterable_query_table ',' joinable_tables
+    {
+        $2.Lateral = $1
+        $2.BaseExpr = NewBaseExpr($1)
+        $$ = append([]QueryExpression{$2}, $4...)
     }
 
 table
@@ -2027,7 +2057,7 @@ table
     }
     | virtual_table_object AS identifier
     {
-        $$ = Table{Object: $1, As: $2.Literal, Alias: $3}
+        $$ = Table{Object: $1, As: $2, Alias: $3}
     }
     | join
     {
@@ -2035,7 +2065,11 @@ table
     }
     | DUAL
     {
-        $$ = Table{Object: Dual{Dual: $1.Literal}}
+        $$ = Table{Object: Dual{}}
+    }
+    | laterable_query_table
+    {
+        $$ = $1
     }
     | '(' table ')'
     {
@@ -2045,37 +2079,63 @@ table
 join
     : table CROSS JOIN table
     {
-        $$ = Join{Join: $3.Literal, Table: $1, JoinTable: $4, JoinType: $2, Condition: nil}
+        $$ = Join{Table: $1, JoinTable: $4, JoinType: $2, Condition: nil}
     }
     | table join_type_inner JOIN table join_condition
     {
-        $$ = Join{Join: $3.Literal, Table: $1, JoinTable: $4, JoinType: $2, Condition: $5}
+        $$ = Join{Table: $1, JoinTable: $4, JoinType: $2, Condition: $5}
     }
     | table join_outer_direction join_type_outer JOIN table join_condition
     {
-        $$ = Join{Join: $4.Literal, Table: $1, JoinTable: $5, JoinType: $3, Direction: $2, Condition: $6}
-    }
-    | table FULL join_type_outer JOIN table ON value
-    {
-        $$ = Join{Join: $4.Literal, Table: $1, JoinTable: $5, JoinType: $3, Direction: $2, Condition: JoinCondition{Literal:$6.Literal, On: $7}}
+        $$ = Join{Table: $1, JoinTable: $5, JoinType: $3, Direction: $2, Condition: $6}
     }
     | table NATURAL join_type_inner JOIN table
     {
-        $$ = Join{Join: $4.Literal, Table: $1, JoinTable: $5, JoinType: $3, Natural: $2}
+        $$ = Join{Table: $1, JoinTable: $5, JoinType: $3, Natural: $2}
     }
     | table NATURAL join_outer_direction join_type_outer JOIN table
     {
-        $$ = Join{Join: $5.Literal, Table: $1, JoinTable: $6, JoinType: $4, Direction: $3, Natural: $2}
+        $$ = Join{Table: $1, JoinTable: $6, JoinType: $4, Direction: $3, Natural: $2}
+    }
+    | table CROSS JOIN LATERAL laterable_query_table
+    {
+        $5.Lateral = $4
+        $5.BaseExpr = NewBaseExpr($4)
+        $$ = Join{Table: $1, JoinTable: $5, JoinType: $2, Condition: nil}
+    }
+    | table join_type_inner JOIN LATERAL laterable_query_table join_condition
+    {
+        $5.Lateral = $4
+        $5.BaseExpr = NewBaseExpr($4)
+        $$ = Join{Table: $1, JoinTable: $5, JoinType: $2, Condition: $6}
+    }
+    | table join_outer_direction join_type_outer JOIN LATERAL laterable_query_table join_condition
+    {
+        $6.Lateral = $5
+        $6.BaseExpr = NewBaseExpr($5)
+        $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Direction: $2, Condition: $7}
+    }
+    | table NATURAL join_type_inner JOIN LATERAL laterable_query_table
+    {
+        $6.Lateral = $5
+        $6.BaseExpr = NewBaseExpr($5)
+        $$ = Join{Table: $1, JoinTable: $6, JoinType: $3, Natural: $2}
+    }
+    | table NATURAL join_outer_direction join_type_outer JOIN LATERAL laterable_query_table
+    {
+        $7.Lateral = $6
+        $7.BaseExpr = NewBaseExpr($6)
+        $$ = Join{Table: $1, JoinTable: $7, JoinType: $4, Direction: $3, Natural: $2}
     }
 
 join_condition
     : ON value
     {
-        $$ = JoinCondition{Literal:$1.Literal, On: $2}
+        $$ = JoinCondition{On: $2}
     }
     | USING '(' identifiers ')'
     {
-        $$ = JoinCondition{Literal:$1.Literal, Using: $3}
+        $$ = JoinCondition{Using: $3}
     }
 
 field_object
@@ -2095,7 +2155,7 @@ field
     }
     | field_object AS identifier
     {
-        $$ = Field{Object: $1, As: $2.Literal, Alias: $3}
+        $$ = Field{Object: $1, As: $2, Alias: $3}
     }
     | wildcard
     {
@@ -2105,7 +2165,7 @@ field
 case_expr
     : CASE case_value case_expr_when case_expr_else END
     {
-        $$ = CaseExpr{Case: $1.Literal, End: $5.Literal, Value: $2, When: $3, Else: $4}
+        $$ = CaseExpr{Value: $2, When: $3, Else: $4}
     }
 
 case_value
@@ -2121,11 +2181,11 @@ case_value
 case_expr_when
     : WHEN value THEN value
     {
-        $$ = []QueryExpression{CaseExprWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}
+        $$ = []QueryExpression{CaseExprWhen{Condition: $2, Result: $4}}
     }
     | WHEN value THEN value case_expr_when
     {
-        $$ = append([]QueryExpression{CaseExprWhen{When: $1.Literal, Then: $3.Literal, Condition: $2, Result: $4}}, $5...)
+        $$ = append([]QueryExpression{CaseExprWhen{Condition: $2, Result: $4}}, $5...)
     }
 
 case_expr_else
@@ -2135,7 +2195,7 @@ case_expr_else
     }
     | ELSE value
     {
-        $$ = CaseExprElse{Else: $1.Literal, Result: $2}
+        $$ = CaseExprElse{Result: $2}
     }
 
 field_references
@@ -2173,7 +2233,7 @@ tables
     {
         $$ = []QueryExpression{$1}
     }
-    | table ',' tables
+    | table ',' joinable_tables
     {
         $$ = append([]QueryExpression{$1}, $3...)
     }
@@ -2295,13 +2355,11 @@ replace_query
 delete_query
     : with_clause DELETE FROM tables where_clause
     {
-        from := FromClause{From: $3.Literal, Tables: $4}
-        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, FromClause: from, WhereClause: $5}
+        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, FromClause: FromClause{Tables: $4}, WhereClause: $5}
     }
     | with_clause DELETE identified_tables FROM tables where_clause
     {
-        from := FromClause{From: $4.Literal, Tables: $5}
-        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Tables: $3, FromClause: from, WhereClause: $6}
+        $$ = DeleteQuery{BaseExpr: NewBaseExpr($2), WithClause: $1, Tables: $3, FromClause: FromClause{Tables: $5}, WhereClause: $6}
     }
 
 elseif
@@ -2604,6 +2662,10 @@ join_outer_direction
         $$ = $1
     }
     | RIGHT
+    {
+        $$ = $1
+    }
+    | FULL
     {
         $$ = $1
     }

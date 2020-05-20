@@ -902,13 +902,22 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 	}
 
 	var joinConditionRequired = func() bool {
-		if c.tokens[c.lastIdx-1].Token != parser.JOIN {
+		if c.tokens[c.lastIdx].Token == '(' {
 			return false
 		}
-		if c.tokens[c.lastIdx-2].Token == parser.CROSS ||
-			c.tokens[c.lastIdx-2].Token == parser.NATURAL ||
-			c.tokens[c.lastIdx-3].Token == parser.NATURAL ||
-			c.tokens[c.lastIdx-4].Token == parser.NATURAL {
+
+		baseIdx := c.lastIdx - 1
+		if c.tokens[baseIdx].Token == parser.LATERAL {
+			baseIdx--
+		}
+
+		if c.tokens[baseIdx].Token != parser.JOIN {
+			return false
+		}
+		if c.tokens[baseIdx-1].Token == parser.CROSS ||
+			c.tokens[baseIdx-1].Token == parser.NATURAL ||
+			c.tokens[baseIdx-2].Token == parser.NATURAL ||
+			c.tokens[baseIdx-3].Token == parser.NATURAL {
 			return false
 		}
 		return true
@@ -930,6 +939,8 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 	}
 
 	switch c.tokens[c.lastIdx].Token {
+	case parser.LATERAL:
+		restrict = true
 	case parser.CROSS, parser.INNER, parser.OUTER:
 		customList = append(customList, c.candidate("JOIN", true))
 		restrict = true
@@ -957,6 +968,28 @@ func (c *Completer) fromClause(i int, line string, origLine string, index int) (
 		}
 		restrict = true
 	} else {
+		canUseLateral := false
+		switch c.tokens[c.lastIdx].Token {
+		case ',':
+			canUseLateral = true
+		case parser.JOIN:
+			canUseLateral = true
+			switch c.tokens[c.lastIdx-1].Token {
+			case parser.RIGHT, parser.FULL:
+				canUseLateral = false
+			case parser.OUTER:
+				switch c.tokens[c.lastIdx-2].Token {
+				case parser.RIGHT, parser.FULL:
+					canUseLateral = false
+				}
+			}
+
+		}
+
+		if canUseLateral {
+			customList = append(customList, c.candidate("LATERAL", true))
+		}
+
 		switch c.tokens[c.lastIdx].Token {
 		case '(':
 			customList = append(customList, c.candidate("SELECT", true))
@@ -1855,13 +1888,13 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList([]string{"Local", "UTC"}, false), true
 					case cmd.ImportFormatFlag:
 						return nil, c.candidateList(c.importFormatList(), false), true
-					case cmd.DelimiterFlag, cmd.WriteDelimiterFlag:
+					case cmd.DelimiterFlag, cmd.ExportDelimiterFlag:
 						return nil, c.candidateList(delimiterCandidates, false), true
-					case cmd.DelimiterPositionsFlag, cmd.WriteDelimiterPositionsFlag:
+					case cmd.DelimiterPositionsFlag, cmd.ExportDelimiterPositionsFlag:
 						return nil, c.candidateList(delimiterPositionsCandidates, false), true
 					case cmd.EncodingFlag:
 						return nil, c.candidateList(c.encodingList(), false), true
-					case cmd.WriteEncodingFlag:
+					case cmd.ExportEncodingFlag:
 						return nil, c.candidateList(exportEncodingsCandidates, false), true
 					case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag,
 						cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,

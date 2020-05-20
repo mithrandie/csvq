@@ -60,7 +60,7 @@ var processorExecuteStatementTests = []struct {
 			Flag:  parser.Flag{Name: "invalid"},
 			Value: parser.NewStringValue("\t"),
 		},
-		Error:      "@@invalid is an unknown flag",
+		Error:      "@@INVALID is an unknown flag",
 		ReturnCode: ReturnCodeApplicationError,
 	},
 	{
@@ -402,7 +402,6 @@ var processorExecuteStatementTests = []struct {
 				},
 				WhereClause: parser.WhereClause{
 					BaseExpr: nil,
-					Where:    "where",
 					Filter:   parser.NewTernaryValueFromString("false"),
 				},
 			},
@@ -441,7 +440,6 @@ var processorExecuteStatementTests = []struct {
 				},
 				WhereClause: parser.WhereClause{
 					BaseExpr: nil,
-					Where:    "where",
 					Filter:   parser.NewTernaryValueFromString("false"),
 				},
 			},
@@ -531,7 +529,7 @@ var processorExecuteStatementTests = []struct {
 							Value: parser.Arithmetic{
 								LHS:      parser.Variable{Name: "value"},
 								RHS:      parser.Variable{Name: "fetch"},
-								Operator: '*',
+								Operator: parser.Token{Token: '*', Literal: "*"},
 							},
 						},
 					},
@@ -685,7 +683,7 @@ var processorExecuteStatementTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewIntegerValueFromString("2"),
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -763,7 +761,7 @@ var processorExecuteStatementTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewIntegerValueFromString("2"),
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -938,7 +936,7 @@ var processorExecuteStatementTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.NewIntegerValueFromString("3"),
-				Operator: "<",
+				Operator: parser.Token{Token: '<', Literal: "<"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -946,7 +944,7 @@ var processorExecuteStatementTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.Print{Value: parser.Variable{Name: "while_test"}},
@@ -1049,7 +1047,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 	}()
 
 	TestTx.Flags.Repository = TestDir
-	TestTx.Flags.Format = cmd.CSV
+	TestTx.Flags.ExportOptions.Format = cmd.CSV
 
 	tx := TestTx
 	proc := NewProcessor(tx)
@@ -1467,7 +1465,7 @@ var processorWhileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.NewIntegerValueFromString("3"),
-				Operator: "<",
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -1475,7 +1473,7 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.Print{Value: parser.Variable{Name: "while_test"}},
@@ -1491,7 +1489,7 @@ var processorWhileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "while_test_count"},
 				RHS:      parser.NewIntegerValueFromString("3"),
-				Operator: "<",
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -1499,7 +1497,7 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.VariableSubstitution{
@@ -1507,14 +1505,14 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("2"),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.CONTINUE},
@@ -1533,7 +1531,7 @@ var processorWhileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "while_test_count"},
 				RHS:      parser.NewIntegerValueFromString("3"),
-				Operator: "<",
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -1541,7 +1539,7 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.VariableSubstitution{
@@ -1549,14 +1547,14 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("2"),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.BREAK},
@@ -1575,7 +1573,7 @@ var processorWhileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "while_test_count"},
 				RHS:      parser.NewIntegerValueFromString("3"),
-				Operator: "<",
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -1583,7 +1581,7 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.VariableSubstitution{
@@ -1591,14 +1589,14 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.If{
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "while_test_count"},
 						RHS:      parser.NewIntegerValueFromString("2"),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Statements: []parser.Statement{
 						parser.Exit{},
@@ -1617,7 +1615,7 @@ var processorWhileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-				Operator: "<",
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -1625,7 +1623,7 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.Print{Value: parser.Variable{Name: "while_test"}},
@@ -1640,7 +1638,7 @@ var processorWhileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.NewIntegerValueFromString("3"),
-				Operator: "<",
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 			},
 			Statements: []parser.Statement{
 				parser.VariableSubstitution{
@@ -1648,7 +1646,7 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.Print{Value: parser.Variable{Name: "while_test"}},
@@ -1663,7 +1661,7 @@ var processorWhileTests = []struct {
 			Condition: parser.Comparison{
 				LHS:      parser.Variable{Name: "while_test"},
 				RHS:      parser.NewIntegerValueFromString("3"),
-				Operator: "<",
+				Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 			},
 			Statements: []parser.Statement{
 				parser.Return{Value: parser.NewStringValue("1")},
@@ -1672,7 +1670,7 @@ var processorWhileTests = []struct {
 					Value: parser.Arithmetic{
 						LHS:      parser.Variable{Name: "while_test"},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: '+',
+						Operator: parser.Token{Token: '+', Literal: "+"},
 					},
 				},
 				parser.Print{Value: parser.Variable{Name: "while_test"}},
@@ -1789,7 +1787,7 @@ var processorWhileInCursorTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "var1"},
 						RHS:      parser.NewIntegerValueFromString("2"),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.CONTINUE},
@@ -1815,7 +1813,7 @@ var processorWhileInCursorTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "var1"},
 						RHS:      parser.NewIntegerValueFromString("2"),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.BREAK},
@@ -1841,7 +1839,7 @@ var processorWhileInCursorTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "var1"},
 						RHS:      parser.NewIntegerValueFromString("2"),
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Statements: []parser.Statement{
 						parser.Exit{},
@@ -1882,7 +1880,7 @@ var processorWhileInCursorTests = []struct {
 					Condition: parser.Comparison{
 						LHS:      parser.Variable{Name: "var1"},
 						RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-						Operator: "=",
+						Operator: parser.Token{Token: '=', Literal: "="},
 					},
 					Statements: []parser.Statement{
 						parser.FlowControl{Token: parser.BREAK},

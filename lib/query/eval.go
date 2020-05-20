@@ -194,7 +194,7 @@ func evalArithmetic(ctx context.Context, scope *ReferenceScope, expr parser.Arit
 		return nil, err
 	}
 
-	return Calculate(lhs, rhs, expr.Operator), nil
+	return Calculate(lhs, rhs, expr.Operator.Token), nil
 }
 
 func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser.UnaryArithmetic) (value.Primary, error) {
@@ -294,14 +294,14 @@ func evalComparison(ctx context.Context, scope *ReferenceScope, expr parser.Comp
 			return nil, err
 		}
 
-		t = value.Compare(sv, rhs, expr.Operator, scope.Tx.Flags.DatetimeFormat)
+		t = value.Compare(sv, rhs, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat)
 	} else {
 		rhs, err := EvalRowValue(ctx, scope, expr.RHS.(parser.RowValue))
 		if err != nil {
 			return nil, err
 		}
 
-		t, err = value.CompareRowValues(rv, rhs, expr.Operator, scope.Tx.Flags.DatetimeFormat)
+		t, err = value.CompareRowValues(rv, rhs, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat)
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.RHS.(parser.RowValue), len(rv))
 		}
@@ -441,7 +441,7 @@ func evalAny(ctx context.Context, scope *ReferenceScope, expr parser.Any) (value
 		return nil, err
 	}
 
-	t, err := Any(val, list, expr.Operator, scope.Tx.Flags.DatetimeFormat)
+	t, err := Any(val, list, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat)
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -462,7 +462,7 @@ func evalAll(ctx context.Context, scope *ReferenceScope, expr parser.All) (value
 		return nil, err
 	}
 
-	t, err := All(val, list, expr.Operator, scope.Tx.Flags.DatetimeFormat)
+	t, err := All(val, list, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat)
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -819,7 +819,7 @@ func evalCursorStatus(expr parser.CursorStatus, scope *ReferenceScope) (value.Pr
 	var t ternary.Value
 	var err error
 
-	switch expr.Type {
+	switch expr.Type.Token {
 	case parser.OPEN:
 		t, err = scope.CursorIsOpen(expr.Cursor)
 		if err != nil {

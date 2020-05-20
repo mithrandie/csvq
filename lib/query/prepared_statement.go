@@ -21,6 +21,10 @@ func (m PreparedStatementMap) Store(name string, statement *PreparedStatement) {
 	m.store(strings.ToUpper(name), statement)
 }
 
+func (m PreparedStatementMap) LoadDirect(name string) (interface{}, bool) {
+	return m.load(strings.ToUpper(name))
+}
+
 func (m PreparedStatementMap) Load(name string) (*PreparedStatement, bool) {
 	if v, ok := m.load(strings.ToUpper(name)); ok {
 		return v.(*PreparedStatement), true

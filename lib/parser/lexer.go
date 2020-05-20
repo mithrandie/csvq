@@ -45,8 +45,15 @@ type Token struct {
 	SourceFile    string
 }
 
-func (t *Token) IsEmpty() bool {
+func (t Token) IsEmpty() bool {
 	return t.Token == 0
+}
+
+func (t Token) String() string {
+	if lit, err := KeywordLiteral(t.Token); err == nil {
+		return lit
+	}
+	return t.Literal
 }
 
 type SyntaxError struct {

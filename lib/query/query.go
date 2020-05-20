@@ -123,7 +123,12 @@ func Select(ctx context.Context, scope *ReferenceScope, query parser.SelectQuery
 		}
 	}
 
-	view, err := selectEntity(ctx, queryScope, query.SelectEntity, query.ForUpdate)
+	view, err := selectEntity(
+		ctx,
+		queryScope,
+		query.SelectEntity,
+		query.IsForUpdate(),
+	)
 	if err != nil {
 		queryScope.CloseCurrentNode()
 		return nil, err
@@ -422,18 +427,19 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 	updatedCount := make(map[string]int)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		fpath, err := queryScope.GetAlias(table.Name())
+		tableName := table.Name()
+		fpath, err := queryScope.GetAlias(tableName)
 		if err != nil {
 			return nil, nil, err
 		}
-		viewKey := strings.ToUpper(table.Name().Literal)
+		viewKey := strings.ToUpper(tableName.Literal)
 
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToUpdate[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToUpdate[viewKey], _ = queryScope.Tx.cachedViews.Get(parser.Identifier{Literal: fpath})
 		}
-		if err = viewsToUpdate[viewKey].Header.Update(table.Name().Literal, nil); err != nil {
+		if err = viewsToUpdate[viewKey].Header.Update(tableName.Literal, nil); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -604,18 +610,19 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 	deletedIndices := make(map[string]map[int]bool)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		fpath, err := queryScope.GetAlias(table.Name())
+		tableName := table.Name()
+		fpath, err := queryScope.GetAlias(tableName)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		viewKey := strings.ToUpper(table.Name().Literal)
+		viewKey := strings.ToUpper(tableName.Literal)
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToDelete[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
 			viewsToDelete[viewKey], _ = queryScope.Tx.cachedViews.Get(parser.Identifier{Literal: fpath})
 		}
-		if err = viewsToDelete[viewKey].Header.Update(table.Name().Literal, nil); err != nil {
+		if err = viewsToDelete[viewKey].Header.Update(tableName.Literal, nil); err != nil {
 			return nil, nil, err
 		}
 		deletedIndices[viewKey] = make(map[int]bool)
@@ -676,7 +683,7 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 	var view *View
 
 	flags := queryScope.Tx.Flags
-	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.WriteDelimiter, flags.WriteEncoding)
+	fileInfo, err := NewFileInfoForCreate(query.Table, flags.Repository, flags.ExportOptions.Delimiter, flags.ExportOptions.Encoding)
 	if err != nil {
 		return nil, err
 	}
@@ -687,10 +694,10 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 	}
 	fileInfo.Handler = h
 
-	fileInfo.LineBreak = flags.LineBreak
-	fileInfo.EncloseAll = flags.EncloseAll
-	fileInfo.NoHeader = flags.WithoutHeader
-	fileInfo.PrettyPrint = flags.PrettyPrint
+	fileInfo.LineBreak = flags.ExportOptions.LineBreak
+	fileInfo.EncloseAll = flags.ExportOptions.EncloseAll
+	fileInfo.NoHeader = flags.ExportOptions.WithoutHeader
+	fileInfo.PrettyPrint = flags.ExportOptions.PrettyPrint
 	fileInfo.ForUpdate = true
 
 	if query.Query != nil {

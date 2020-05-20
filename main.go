@@ -393,17 +393,17 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 		}
 	}
 	if c.GlobalIsSet("write-encoding") {
-		if err := tx.SetFlag(cmd.WriteEncodingFlag, c.GlobalString("write-encoding")); err != nil {
+		if err := tx.SetFlag(cmd.ExportEncodingFlag, c.GlobalString("write-encoding")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("write-delimiter") {
-		if err := tx.SetFlag(cmd.WriteDelimiterFlag, c.GlobalString("write-delimiter")); err != nil {
+		if err := tx.SetFlag(cmd.ExportDelimiterFlag, c.GlobalString("write-delimiter")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.GlobalIsSet("write-delimiter-positions") {
-		if err := tx.SetFlag(cmd.WriteDelimiterPositionsFlag, c.GlobalString("write-delimiter-positions")); err != nil {
+		if err := tx.SetFlag(cmd.ExportDelimiterPositionsFlag, c.GlobalString("write-delimiter-positions")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}

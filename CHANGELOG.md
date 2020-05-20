@@ -1,5 +1,13 @@
 # Change Log
 
+## Version 1.13.0
+ 
+Released on May 20, 2020
+
+- Support LATERAL join. ([Github #24](https://github.com/mithrandie/csvq/issues/24))
+- Support USING join condition in FULL OUTER JOIN.
+- Support $XDG_CONFIG_HOME environment variable for configuration files.
+
 ## Version 1.12.5
 
 Released on April 11, 2020

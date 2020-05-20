@@ -502,21 +502,20 @@ func TestEncodeView(t *testing.T) {
 		}
 		TestTx.UseColor(v.UseColor)
 
-		fileInfo := &FileInfo{
-			Format:             v.Format,
-			Delimiter:          v.WriteDelimiter,
-			DelimiterPositions: v.WriteDelimiterPositions,
-			Encoding:           v.WriteEncoding,
-			LineBreak:          v.LineBreak,
-			NoHeader:           v.WithoutHeader,
-			EncloseAll:         v.EncloseAll,
-			JsonEscape:         v.JsonEscape,
-			PrettyPrint:        v.PrettyPrint,
-			SingleLine:         v.WriteAsSingleLine,
-		}
+		options := TestTx.Flags.ExportOptions.Copy()
+		options.Format = v.Format
+		options.Delimiter = v.WriteDelimiter
+		options.DelimiterPositions = v.WriteDelimiterPositions
+		options.Encoding = v.WriteEncoding
+		options.LineBreak = v.LineBreak
+		options.WithoutHeader = v.WithoutHeader
+		options.EncloseAll = v.EncloseAll
+		options.JsonEscape = v.JsonEscape
+		options.PrettyPrint = v.PrettyPrint
+		options.SingleLine = v.WriteAsSingleLine
 
 		buf.Reset()
-		_, err := EncodeView(ctx, buf, v.View, fileInfo, TestTx)
+		_, err := EncodeView(ctx, buf, v.View, options, TestTx.Palette)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

@@ -216,7 +216,7 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 	switch strings.ToUpper(expr.Flag.Name) {
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.DatetimeFormatFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
-		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag,
+		cmd.ExportEncodingFlag, cmd.FormatFlag, cmd.ExportDelimiterFlag, cmd.ExportDelimiterPositionsFlag,
 		cmd.LineBreakFlag, cmd.JsonEscapeFlag:
 		p = value.ToString(v)
 		if value.IsNull(p) {
@@ -267,7 +267,7 @@ func AddFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.AddF
 		return SetFlag(ctx, scope, e)
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
-		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag,
+		cmd.ExportEncodingFlag, cmd.FormatFlag, cmd.ExportDelimiterFlag, cmd.ExportDelimiterPositionsFlag,
 		cmd.LineBreakFlag, cmd.JsonEscapeFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag,
 		cmd.EncloseAllFlag, cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
 		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag,
@@ -315,7 +315,7 @@ func RemoveFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.R
 		}
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
-		cmd.WriteEncodingFlag, cmd.FormatFlag, cmd.WriteDelimiterFlag, cmd.WriteDelimiterPositionsFlag,
+		cmd.ExportEncodingFlag, cmd.FormatFlag, cmd.ExportDelimiterFlag, cmd.ExportDelimiterPositionsFlag,
 		cmd.LineBreakFlag, cmd.JsonEscapeFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag,
 		cmd.EncloseAllFlag, cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
 		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag,
@@ -371,31 +371,31 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 		} else {
 			s = tx.Palette.Render(cmd.StringEffect, p.Raw())
 		}
-	case cmd.WriteEncodingFlag:
-		switch tx.Flags.Format {
+	case cmd.ExportEncodingFlag:
+		switch tx.Flags.ExportOptions.Format {
 		case cmd.JSON:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.String).Raw())
 		default:
 			s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).Raw())
 		}
-	case cmd.WriteDelimiterFlag:
-		switch tx.Flags.Format {
+	case cmd.ExportDelimiterFlag:
+		switch tx.Flags.ExportOptions.Format {
 		case cmd.CSV:
 			s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).String())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.String).String())
 		}
-	case cmd.WriteDelimiterPositionsFlag:
-		switch tx.Flags.Format {
+	case cmd.ExportDelimiterPositionsFlag:
+		switch tx.Flags.ExportOptions.Format {
 		case cmd.FIXED:
 			s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).Raw())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.String).Raw())
 		}
 	case cmd.WithoutHeaderFlag:
-		switch tx.Flags.Format {
+		switch tx.Flags.ExportOptions.Format {
 		case cmd.CSV, cmd.TSV, cmd.FIXED, cmd.GFM, cmd.ORG:
-			if tx.Flags.Format == cmd.FIXED && tx.Flags.WriteAsSingleLine {
+			if tx.Flags.ExportOptions.Format == cmd.FIXED && tx.Flags.ExportOptions.SingleLine {
 				s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.Boolean).String())
 			} else {
 				s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
@@ -404,34 +404,34 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.Boolean).String())
 		}
 	case cmd.LineBreakFlag:
-		if tx.Flags.Format == cmd.FIXED && tx.Flags.WriteAsSingleLine {
+		if tx.Flags.ExportOptions.Format == cmd.FIXED && tx.Flags.ExportOptions.SingleLine {
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.String).Raw())
 		} else {
 			s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).Raw())
 		}
 	case cmd.EncloseAllFlag:
-		switch tx.Flags.Format {
+		switch tx.Flags.ExportOptions.Format {
 		case cmd.CSV, cmd.TSV:
 			s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.Boolean).String())
 		}
 	case cmd.JsonEscapeFlag:
-		switch tx.Flags.Format {
+		switch tx.Flags.ExportOptions.Format {
 		case cmd.JSON:
 			s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).Raw())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.String).Raw())
 		}
 	case cmd.PrettyPrintFlag:
-		switch tx.Flags.Format {
+		switch tx.Flags.ExportOptions.Format {
 		case cmd.JSON:
 			s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.Boolean).String())
 		}
 	case cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag:
-		switch tx.Flags.Format {
+		switch tx.Flags.ExportOptions.Format {
 		case cmd.GFM, cmd.ORG, cmd.TEXT:
 			s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
 		default:
@@ -581,7 +581,7 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 
 					w.NewLine()
 					if cur.query.SelectEntity != nil {
-						w.WriteColor("Query: ", cmd.LableEffect)
+						w.WriteColor("Query:", cmd.LableEffect)
 						writeQuery(w, cur.query.String())
 					} else {
 						w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
@@ -630,7 +630,7 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 					w.WriteColorWithoutLineBreak("Placeholder Number: ", cmd.LableEffect)
 					w.WriteColorWithoutLineBreak(strconv.Itoa(stmt.HolderNumber), cmd.NumberEffect)
 					w.NewLine()
-					w.WriteColorWithoutLineBreak("Statement: ", cmd.LableEffect)
+					w.WriteColorWithoutLineBreak("Statement:", cmd.LableEffect)
 					writeQuery(w, stmt.StatementString)
 
 					w.ClearBlock()
@@ -850,7 +850,7 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 		if e, ok := expr.(parser.Identifier); ok {
 			s = e.Literal
 		} else if e, ok := expr.(parser.Stdin); ok {
-			s = e.Stdin
+			s = e.String()
 		}
 		return
 	}
@@ -947,15 +947,10 @@ func writeFieldList(w *ObjectWriter, fields []string) {
 }
 
 func writeQuery(w *ObjectWriter, s string) {
-	words := strings.Split(s, " ")
-
+	w.NewLine()
+	w.WriteSpaces(2)
 	w.BeginSubBlock()
-	for _, v := range words {
-		if !w.FitInLine(v + " ") {
-			w.NewLine()
-		}
-		w.Write(v + " ")
-	}
+	w.WriteWithAutoLineBreakWithContinueMark(s)
 	w.EndSubBlock()
 }
 

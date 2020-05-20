@@ -158,13 +158,13 @@ var fetchCursorTests = []struct {
 		CurName: parser.Identifier{Literal: "cur"},
 		FetchPosition: parser.FetchPosition{
 			Position: parser.Token{Token: parser.ABSOLUTE, Literal: "absolute"},
-			Number:   parser.NewNullValueFromString("null"),
+			Number:   parser.NewNullValue(),
 		},
 		Variables: []parser.Variable{
 			{Name: "var1"},
 			{Name: "var2"},
 		},
-		Error: "fetching position null is not an integer value",
+		Error: "fetching position NULL is not an integer value",
 	},
 }
 
@@ -446,7 +446,7 @@ var selectTests = []struct {
 					Filter: parser.Comparison{
 						LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 						RHS:      parser.NewIntegerValueFromString("3"),
-						Operator: "<",
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 					},
 				},
 				GroupByClause: parser.GroupByClause{
@@ -458,7 +458,7 @@ var selectTests = []struct {
 					Filter: parser.Comparison{
 						LHS:      parser.AggregateFunction{Name: "count", Args: []parser.QueryExpression{parser.AllColumns{}}},
 						RHS:      parser.NewIntegerValueFromString("1"),
-						Operator: ">",
+						Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: ">"},
 					},
 				},
 			},
@@ -490,7 +490,7 @@ var selectTests = []struct {
 					IsFromTable: true,
 				},
 				{
-					Column:      "count(*)",
+					Column:      "COUNT(*)",
 					Number:      2,
 					IsFromTable: true,
 				},
@@ -857,18 +857,15 @@ var selectTests = []struct {
 		Name: "Inline Tables",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
 						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
-									Select: "select",
 									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 									},
@@ -904,14 +901,12 @@ var selectTests = []struct {
 		Name: "Inline Tables Field Length Error",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
 						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectSet{
 								LHS: parser.SelectEntity{
@@ -965,7 +960,6 @@ var selectTests = []struct {
 		Name: "Inline Tables Recursion",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
@@ -973,12 +967,10 @@ var selectTests = []struct {
 						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "n"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectSet{
 								LHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
-										Select: "select",
 										Fields: []parser.QueryExpression{
 											parser.Field{Object: parser.NewIntegerValueFromString("1")},
 										},
@@ -987,13 +979,12 @@ var selectTests = []struct {
 								Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 								RHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
-										Select: "select",
 										Fields: []parser.QueryExpression{
 											parser.Field{
 												Object: parser.Arithmetic{
 													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
 													RHS:      parser.NewIntegerValueFromString("1"),
-													Operator: '+',
+													Operator: parser.Token{Token: '+', Literal: "+"},
 												},
 											},
 										},
@@ -1007,7 +998,7 @@ var selectTests = []struct {
 										Filter: parser.Comparison{
 											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
 											RHS:      parser.NewIntegerValueFromString("3"),
-											Operator: "<",
+											Operator: parser.Token{Token: parser.COMPARISON_OP, Literal: "<"},
 										},
 									},
 								},
@@ -1055,7 +1046,6 @@ var selectTests = []struct {
 		Name: "Inline Tables Recursion Field Length Error",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
@@ -1063,12 +1053,10 @@ var selectTests = []struct {
 						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "n"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectSet{
 								LHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
-										Select: "select",
 										Fields: []parser.QueryExpression{
 											parser.Field{Object: parser.NewIntegerValueFromString("1")},
 										},
@@ -1077,13 +1065,12 @@ var selectTests = []struct {
 								Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 								RHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
-										Select: "select",
 										Fields: []parser.QueryExpression{
 											parser.Field{
 												Object: parser.Arithmetic{
 													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
 													RHS:      parser.NewIntegerValueFromString("1"),
-													Operator: '+',
+													Operator: parser.Token{Token: '+', Literal: "+"},
 												},
 											},
 											parser.Field{Object: parser.NewIntegerValueFromString("2")},
@@ -1098,7 +1085,7 @@ var selectTests = []struct {
 										Filter: parser.Comparison{
 											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
 											RHS:      parser.NewIntegerValueFromString("3"),
-											Operator: "<",
+											Operator: parser.Token{Token: '<', Literal: "<"},
 										},
 									},
 								},
@@ -1126,7 +1113,6 @@ var selectTests = []struct {
 		Name: "Inline Tables Recursion Recursion Limit Exceeded Error",
 		Query: parser.SelectQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Recursive: parser.Token{Token: parser.RECURSIVE, Literal: "recursive"},
@@ -1134,12 +1120,10 @@ var selectTests = []struct {
 						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "n"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectSet{
 								LHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
-										Select: "select",
 										Fields: []parser.QueryExpression{
 											parser.Field{Object: parser.NewIntegerValueFromString("1")},
 										},
@@ -1148,13 +1132,12 @@ var selectTests = []struct {
 								Operator: parser.Token{Token: parser.UNION, Literal: "union"},
 								RHS: parser.SelectEntity{
 									SelectClause: parser.SelectClause{
-										Select: "select",
 										Fields: []parser.QueryExpression{
 											parser.Field{
 												Object: parser.Arithmetic{
 													LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
 													RHS:      parser.NewIntegerValueFromString("1"),
-													Operator: '+',
+													Operator: parser.Token{Token: '+', Literal: "+"},
 												},
 											},
 										},
@@ -1168,7 +1151,7 @@ var selectTests = []struct {
 										Filter: parser.Comparison{
 											LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "n"}},
 											RHS:      parser.NewIntegerValueFromString("10"),
-											Operator: "<",
+											Operator: parser.Token{Token: '<', Literal: "<"},
 										},
 									},
 								},
@@ -1399,18 +1382,15 @@ var insertTests = []struct {
 		Name: "Insert Query",
 		Query: parser.InsertQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
 						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
-									Select: "select",
 									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 									},
@@ -1439,7 +1419,6 @@ var insertTests = []struct {
 								Query: parser.SelectQuery{
 									SelectEntity: parser.SelectEntity{
 										SelectClause: parser.SelectClause{
-											Select: "select",
 											Fields: []parser.QueryExpression{
 												parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
 											},
@@ -1809,18 +1788,15 @@ var updateTests = []struct {
 		Name: "Update Query",
 		Query: parser.UpdateQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
 						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
-									Select: "select",
 									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 									},
@@ -1850,7 +1826,6 @@ var updateTests = []struct {
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
-									Select: "select",
 									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
 									},
@@ -1863,7 +1838,7 @@ var updateTests = []struct {
 							},
 						},
 					},
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -1979,7 +1954,7 @@ var updateTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: "=",
+								Operator: parser.Token{Token: '=', Literal: "="},
 							},
 						},
 					}},
@@ -2014,7 +1989,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.Identifier{Literal: "column1"},
 					RHS:      parser.NewIntegerValueFromString("2"),
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -2036,7 +2011,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 					RHS:      parser.NewIntegerValueFromString("2"),
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -2069,7 +2044,7 @@ var updateTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: "=",
+								Operator: parser.Token{Token: '=', Literal: "="},
 							},
 						},
 					}},
@@ -2105,7 +2080,7 @@ var updateTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: "=",
+								Operator: parser.Token{Token: '=', Literal: "="},
 							},
 						},
 					}},
@@ -2130,7 +2105,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewIntegerValueFromString("2"),
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -2152,7 +2127,7 @@ var updateTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewIntegerValueFromString("2"),
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -2288,7 +2263,6 @@ var replaceTests = []struct {
 		Name: "Replace Query",
 		Query: parser.ReplaceQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
@@ -2296,11 +2270,9 @@ var replaceTests = []struct {
 							parser.Identifier{Literal: "c1"},
 							parser.Identifier{Literal: "c2"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
-									Select: "select",
 									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 										parser.Field{Object: parser.NewStringValue("str3")},
@@ -2333,7 +2305,6 @@ var replaceTests = []struct {
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
-									Select: "select",
 									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
 										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c2"}}},
@@ -2712,18 +2683,15 @@ var deleteTests = []struct {
 		Name: "Delete Query",
 		Query: parser.DeleteQuery{
 			WithClause: parser.WithClause{
-				With: "with",
 				InlineTables: []parser.QueryExpression{
 					parser.InlineTable{
 						Name: parser.Identifier{Literal: "it"},
 						Fields: []parser.QueryExpression{
 							parser.Identifier{Literal: "c1"},
 						},
-						As: "as",
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
-									Select: "select",
 									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.NewIntegerValueFromString("2")},
 									},
@@ -2747,7 +2715,6 @@ var deleteTests = []struct {
 						Query: parser.SelectQuery{
 							SelectEntity: parser.SelectEntity{
 								SelectClause: parser.SelectClause{
-									Select: "select",
 									Fields: []parser.QueryExpression{
 										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
 									},
@@ -2760,7 +2727,7 @@ var deleteTests = []struct {
 							},
 						},
 					},
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -2814,7 +2781,7 @@ var deleteTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewIntegerValueFromString("2"),
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -2868,7 +2835,7 @@ var deleteTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: "=",
+								Operator: parser.Token{Token: '=', Literal: "="},
 							},
 						},
 					}},
@@ -2905,7 +2872,7 @@ var deleteTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: "=",
+								Operator: parser.Token{Token: '=', Literal: "="},
 							},
 						},
 					}},
@@ -2928,7 +2895,7 @@ var deleteTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.NewIntegerValueFromString("2"),
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -2948,7 +2915,7 @@ var deleteTests = []struct {
 				Filter: parser.Comparison{
 					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 					RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
-					Operator: "=",
+					Operator: parser.Token{Token: '=', Literal: "="},
 				},
 			},
 		},
@@ -2975,7 +2942,7 @@ var deleteTests = []struct {
 							On: parser.Comparison{
 								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: "=",
+								Operator: parser.Token{Token: '=', Literal: "="},
 							},
 						},
 					}},
@@ -4167,7 +4134,7 @@ var setTableAttributeTests = []struct {
 		Name: "Set Delimiter to TSV with TableObject",
 		Query: parser.SetTableAttribute{
 			Table: parser.TableObject{
-				Type:          parser.Identifier{Literal: "csv"},
+				Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 				Path:          parser.Identifier{Literal: "table1.csv"},
 				FormatElement: parser.NewStringValue(","),
 			},
@@ -4213,9 +4180,9 @@ var setTableAttributeTests = []struct {
 		Query: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table1.csv"},
 			Attribute: parser.Identifier{Literal: "delimiter"},
-			Value:     parser.NewNullValueFromString("null"),
+			Value:     parser.NewNullValue(),
 		},
-		Error: "null for delimiter is not allowed",
+		Error: "NULL for delimiter is not allowed",
 	},
 	{
 		Name: "Set DelimiterPositions",
@@ -4398,9 +4365,9 @@ var setTableAttributeTests = []struct {
 		Query: parser.SetTableAttribute{
 			Table:     parser.Identifier{Literal: "table1.csv"},
 			Attribute: parser.Identifier{Literal: "header"},
-			Value:     parser.NewNullValueFromString("null"),
+			Value:     parser.NewNullValue(),
 		},
-		Error: "null for header is not allowed",
+		Error: "NULL for header is not allowed",
 	},
 	{
 		Name: "Set EncloseAll to true",

@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	ConfigDir              = ".config"
+	XDGConfigHomeEnvName   = "XDG_CONFIG_HOME"
+	DefaultXDGConfigDir    = ".config"
 	CSVQConfigDir          = "csvq"
 	EnvFileName            = "csvq_env.json"
 	PreloadCommandFileName = "csvqrc"
@@ -151,9 +152,9 @@ func (e *Environment) Load(ctx context.Context, defaultWaitTimeout time.Duration
 
 func GetSpecialFilePath(filename string) []string {
 	files := make([]string, 0, 4)
+	files = AppendStrIfNotExist(files, GetConfigDirFilePath(filename))
 	files = AppendStrIfNotExist(files, GetHomeDirFilePath(filename))
 	files = AppendStrIfNotExist(files, GetCSVQConfigDirFilePath(filename))
-	files = AppendStrIfNotExist(files, GetConfigDirFilePath(filename))
 	files = AppendStrIfNotExist(files, GetCurrentDirFilePath(filename))
 	return files
 }
@@ -181,12 +182,16 @@ func GetCSVQConfigDirFilePath(filename string) string {
 }
 
 func GetConfigDirFilePath(filename string) string {
-	home, err := homedir.Dir()
-	if err != nil {
-		return filename
+	configHome := os.Getenv(XDGConfigHomeEnvName)
+	if len(configHome) < 1 {
+		home, err := homedir.Dir()
+		if err != nil {
+			return filename
+		}
+		configHome = filepath.Join(home, DefaultXDGConfigDir)
 	}
 
-	return filepath.Join(home, ConfigDir, CSVQConfigDir, filename)
+	return filepath.Join(configHome, CSVQConfigDir, filename)
 }
 
 func GetCurrentDirFilePath(filename string) string {

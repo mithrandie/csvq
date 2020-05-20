@@ -9,6 +9,9 @@ import (
 )
 
 func FormatTableName(s string) string {
+	if len(s) < 1 {
+		return ""
+	}
 	return strings.TrimSuffix(filepath.Base(s), filepath.Ext(s))
 }
 

@@ -6,7 +6,7 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
         <loc>https://mithrandie.github.io/csvq/</loc>
-        <lastmod>2020-04-11T02:22:24+00:00</lastmod>
+        <lastmod>2020-05-20T18:41:54+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference.html</loc>
@@ -18,19 +18,19 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/command.html</loc>
-        <lastmod>2020-01-13T02:07:03+00:00</lastmod>
+        <lastmod>2020-05-19T17:54:01+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/statement.html</loc>
-        <lastmod>2019-07-06T03:11:57+00:00</lastmod>
+        <lastmod>2020-05-18T09:50:29+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/value.html</loc>
-        <lastmod>2019-05-03T00:52:54+00:00</lastmod>
+        <lastmod>2020-05-19T22:40:57+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/select-query.html</loc>
-        <lastmod>2019-05-28T17:48:36+00:00</lastmod>
+        <lastmod>2020-05-19T21:14:15+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/insert-query.html</loc>
@@ -178,7 +178,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/changelog.html</loc>
-        <lastmod>2020-04-11T02:22:24+00:00</lastmod>
+        <lastmod>2020-05-20T18:41:54+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/license.html</loc>

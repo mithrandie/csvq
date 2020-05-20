@@ -122,12 +122,12 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 				return NewSystemError(err.Error())
 			}
 
-			if _, err := EncodeView(ctx, fp, view, fileinfo, tx); err != nil {
+			if _, err := EncodeView(ctx, fp, view, fileinfo.ExportOptions(tx), tx.Palette); err != nil {
 				return NewCommitError(expr, err.Error())
 			}
 
-			if !tx.Flags.StripEndingLineBreak && !(fileinfo.Format == cmd.FIXED && fileinfo.SingleLine) {
-				if _, err := fp.Write([]byte(tx.Flags.LineBreak.Value())); err != nil {
+			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileinfo.Format == cmd.FIXED && fileinfo.SingleLine) {
+				if _, err := fp.Write([]byte(tx.Flags.ExportOptions.LineBreak.Value())); err != nil {
 					return NewCommitError(expr, err.Error())
 				}
 			}
@@ -148,12 +148,12 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 				return NewSystemError(err.Error())
 			}
 
-			if _, err := EncodeView(ctx, fp, view, fileinfo, tx); err != nil {
+			if _, err := EncodeView(ctx, fp, view, fileinfo.ExportOptions(tx), tx.Palette); err != nil {
 				return NewCommitError(expr, err.Error())
 			}
 
-			if !tx.Flags.StripEndingLineBreak && !(fileinfo.Format == cmd.FIXED && fileinfo.SingleLine) {
-				if _, err := fp.Write([]byte(tx.Flags.LineBreak.Value())); err != nil {
+			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileinfo.Format == cmd.FIXED && fileinfo.SingleLine) {
+				if _, err := fp.Write([]byte(tx.Flags.ExportOptions.LineBreak.Value())); err != nil {
 					return NewCommitError(expr, err.Error())
 				}
 			}
@@ -424,19 +424,19 @@ func (tx *Transaction) setFlag(key string, value interface{}, outFile string) er
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.WriteEncodingFlag:
+	case cmd.ExportEncodingFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetWriteEncoding(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.WriteDelimiterFlag:
+	case cmd.ExportDelimiterFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetWriteDelimiter(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.WriteDelimiterPositionsFlag:
+	case cmd.ExportDelimiterPositionsFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetWriteDelimiterPositions(s)
 		} else {
@@ -560,55 +560,55 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 	case cmd.WaitTimeoutFlag:
 		val = value.NewFloat(tx.Flags.WaitTimeout)
 	case cmd.ImportFormatFlag:
-		val = value.NewString(tx.Flags.ImportFormat.String())
+		val = value.NewString(tx.Flags.ImportOptions.Format.String())
 	case cmd.DelimiterFlag:
-		val = value.NewString(string(tx.Flags.Delimiter))
+		val = value.NewString(string(tx.Flags.ImportOptions.Delimiter))
 	case cmd.DelimiterPositionsFlag:
-		s := fixedlen.DelimiterPositions(tx.Flags.DelimiterPositions).String()
-		if tx.Flags.SingleLine {
+		s := fixedlen.DelimiterPositions(tx.Flags.ImportOptions.DelimiterPositions).String()
+		if tx.Flags.ImportOptions.SingleLine {
 			s = "S" + s
 		}
 		val = value.NewString(s)
 	case cmd.JsonQueryFlag:
-		val = value.NewString(tx.Flags.JsonQuery)
+		val = value.NewString(tx.Flags.ImportOptions.JsonQuery)
 	case cmd.EncodingFlag:
-		val = value.NewString(tx.Flags.Encoding.String())
+		val = value.NewString(tx.Flags.ImportOptions.Encoding.String())
 	case cmd.NoHeaderFlag:
-		val = value.NewBoolean(tx.Flags.NoHeader)
+		val = value.NewBoolean(tx.Flags.ImportOptions.NoHeader)
 	case cmd.WithoutNullFlag:
-		val = value.NewBoolean(tx.Flags.WithoutNull)
+		val = value.NewBoolean(tx.Flags.ImportOptions.WithoutNull)
 	case cmd.FormatFlag:
-		val = value.NewString(tx.Flags.Format.String())
-	case cmd.WriteEncodingFlag:
-		val = value.NewString(tx.Flags.WriteEncoding.String())
-	case cmd.WriteDelimiterFlag:
-		val = value.NewString(string(tx.Flags.WriteDelimiter))
-	case cmd.WriteDelimiterPositionsFlag:
-		s := fixedlen.DelimiterPositions(tx.Flags.WriteDelimiterPositions).String()
-		if tx.Flags.WriteAsSingleLine {
+		val = value.NewString(tx.Flags.ExportOptions.Format.String())
+	case cmd.ExportEncodingFlag:
+		val = value.NewString(tx.Flags.ExportOptions.Encoding.String())
+	case cmd.ExportDelimiterFlag:
+		val = value.NewString(string(tx.Flags.ExportOptions.Delimiter))
+	case cmd.ExportDelimiterPositionsFlag:
+		s := fixedlen.DelimiterPositions(tx.Flags.ExportOptions.DelimiterPositions).String()
+		if tx.Flags.ExportOptions.SingleLine {
 			s = "S" + s
 		}
 		val = value.NewString(s)
 	case cmd.WithoutHeaderFlag:
-		val = value.NewBoolean(tx.Flags.WithoutHeader)
+		val = value.NewBoolean(tx.Flags.ExportOptions.WithoutHeader)
 	case cmd.LineBreakFlag:
-		val = value.NewString(tx.Flags.LineBreak.String())
+		val = value.NewString(tx.Flags.ExportOptions.LineBreak.String())
 	case cmd.EncloseAllFlag:
-		val = value.NewBoolean(tx.Flags.EncloseAll)
+		val = value.NewBoolean(tx.Flags.ExportOptions.EncloseAll)
 	case cmd.JsonEscapeFlag:
-		val = value.NewString(cmd.JsonEscapeTypeToString(tx.Flags.JsonEscape))
+		val = value.NewString(cmd.JsonEscapeTypeToString(tx.Flags.ExportOptions.JsonEscape))
 	case cmd.PrettyPrintFlag:
-		val = value.NewBoolean(tx.Flags.PrettyPrint)
+		val = value.NewBoolean(tx.Flags.ExportOptions.PrettyPrint)
 	case cmd.StripEndingLineBreakFlag:
-		val = value.NewBoolean(tx.Flags.StripEndingLineBreak)
+		val = value.NewBoolean(tx.Flags.ExportOptions.StripEndingLineBreak)
 	case cmd.EastAsianEncodingFlag:
-		val = value.NewBoolean(tx.Flags.EastAsianEncoding)
+		val = value.NewBoolean(tx.Flags.ExportOptions.EastAsianEncoding)
 	case cmd.CountDiacriticalSignFlag:
-		val = value.NewBoolean(tx.Flags.CountDiacriticalSign)
+		val = value.NewBoolean(tx.Flags.ExportOptions.CountDiacriticalSign)
 	case cmd.CountFormatCodeFlag:
-		val = value.NewBoolean(tx.Flags.CountFormatCode)
+		val = value.NewBoolean(tx.Flags.ExportOptions.CountFormatCode)
 	case cmd.ColorFlag:
-		val = value.NewBoolean(tx.Flags.Color)
+		val = value.NewBoolean(tx.Flags.ExportOptions.Color)
 	case cmd.QuietFlag:
 		val = value.NewBoolean(tx.Flags.Quiet)
 	case cmd.LimitRecursion:

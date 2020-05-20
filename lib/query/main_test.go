@@ -10,33 +10,30 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/file"
-
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/mithrandie/go-text"
-	"github.com/mithrandie/go-text/json"
 )
 
-type SyncMapStruct interface {
+type syncMapStruct interface {
 	SortedKeys() []string
-	load(string) (interface{}, bool)
+	LoadDirect(string) (interface{}, bool)
 }
 
-func SyncMapEqual(m1 SyncMapStruct, m2 SyncMapStruct) bool {
+func SyncMapEqual(m1 syncMapStruct, m2 syncMapStruct) bool {
 	mkeys := m1.SortedKeys()
 	vlist := make([]interface{}, 0, len(mkeys))
 	for _, key := range mkeys {
-		v, _ := m1.load(key)
+		v, _ := m1.LoadDirect(key)
 		vlist = append(vlist, v)
 	}
 
 	m2keys := m2.SortedKeys()
 	vlist2 := make([]interface{}, 0, len(m2keys))
 	for _, key := range m2keys {
-		v, _ := m2.load(key)
+		v, _ := m2.LoadDirect(key)
 		vlist2 = append(vlist2, v)
 	}
 	return reflect.DeepEqual(vlist, vlist2)
@@ -204,28 +201,8 @@ func initFlag(flags *cmd.Flags) {
 	flags.DatetimeFormat = []string{}
 	flags.AnsiQuotes = false
 	flags.WaitTimeout = 15
-	flags.ImportFormat = cmd.CSV
-	flags.Delimiter = ','
-	flags.DelimiterPositions = nil
-	flags.SingleLine = false
-	flags.JsonQuery = ""
-	flags.Encoding = text.UTF8
-	flags.NoHeader = false
-	flags.WithoutNull = false
-	flags.Format = cmd.TEXT
-	flags.WriteEncoding = text.UTF8
-	flags.WriteDelimiter = ','
-	flags.WriteDelimiterPositions = nil
-	flags.WriteAsSingleLine = false
-	flags.WithoutHeader = false
-	flags.LineBreak = text.LF
-	flags.EncloseAll = false
-	flags.JsonEscape = json.Backslash
-	flags.PrettyPrint = false
-	flags.StripEndingLineBreak = false
-	flags.EastAsianEncoding = false
-	flags.CountDiacriticalSign = false
-	flags.CountFormatCode = false
+	flags.ImportOptions = cmd.NewImportOptions()
+	flags.ExportOptions = cmd.NewExportOptions()
 	flags.Quiet = false
 	flags.LimitRecursion = 5
 	flags.CPU = cpu

@@ -19,10 +19,7 @@ func (m AliasMap) Add(alias parser.Identifier, path string) error {
 
 func (m AliasMap) Get(alias parser.Identifier) (string, error) {
 	uname := strings.ToUpper(alias.Literal)
-	if fpath, ok := m[uname]; ok {
-		if len(fpath) < 1 {
-			return "", NewTableNotLoadedError(alias)
-		}
+	if fpath, ok := m[uname]; ok && 0 < len(fpath) {
 		return fpath, nil
 	}
 	return "", NewTableNotLoadedError(alias)
