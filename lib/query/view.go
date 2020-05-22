@@ -30,9 +30,6 @@ import (
 const fileLoadingPreparedRecordSetCap = 300
 const fileLoadingBuffer = 300
 
-const ApplyViewContextKey = "apply_view"
-const ApplyViewName = "@__apply__view__"
-
 type ApplyView struct {
 	View     *View
 	JoinExpr parser.Join
@@ -78,20 +75,6 @@ func LoadView(ctx context.Context, scope *ReferenceScope, tables []parser.QueryE
 	}
 
 	table := tables[0]
-
-	applyView := ctx.Value(ApplyViewContextKey)
-	if applyView != nil {
-		appview := applyView.(ApplyView)
-
-		join := appview.JoinExpr
-		join.Table = parser.Table{Object: parser.Identifier{Literal: ApplyViewName}}
-		join.JoinTable = table
-		table = parser.Table{Object: join}
-
-		if err := scope.StoreInlineTable(parser.Identifier{Literal: ApplyViewName}, appview.View); err != nil {
-			return nil, err
-		}
-	}
 
 	for i := 1; i < len(tables); i++ {
 		table = parser.Table{
