@@ -317,26 +317,12 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 			joinTableName := t.Name()
 
-			var hfields Header
 			subquery := t.Object.(parser.Subquery)
+			var hfields Header
 			resultSetList := make([]RecordSet, view.RecordLen())
 
-			applyViewHeader := view.Header.Copy()
-			for i := range applyViewHeader {
-				applyViewHeader[i].IsFromTable = false
-			}
-
-			if err := NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
-				tmpView := NewView()
-				tmpView.Header = applyViewHeader.Copy()
-				tmpView.RecordSet = RecordSet{view.RecordSet[index].Copy()}
-
-				applyView := ApplyView{
-					View:     tmpView,
-					JoinExpr: join,
-				}
-
-				appliedView, err := Select(context.WithValue(ctx, ApplyViewContextKey, applyView), scope, subquery.Query)
+			if err := EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
+				appliedView, err := Select(ctx, seqScope, subquery.Query)
 				if err != nil {
 					return err
 				}
@@ -349,14 +335,15 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 				calcView := NewView()
 				calcView.Header = view.Header.Copy()
-				calcView.RecordSet = RecordSet{view.RecordSet[index].Copy()}
+				calcView.RecordSet = RecordSet{view.RecordSet[rIdx].Copy()}
 				if err = joinViews(ctx, scope, calcView, appliedView, join); err != nil {
 					return err
 				}
-				if index == 0 {
+
+				if rIdx == 0 {
 					hfields = calcView.Header
 				}
-				resultSetList[index] = calcView.RecordSet
+				resultSetList[rIdx] = calcView.RecordSet
 				return nil
 			}); err != nil {
 				return nil, err
