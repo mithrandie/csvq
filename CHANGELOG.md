@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.13.1
+ 
+Released on May 22, 2020
+
+Change reference scope in lateral subquery. ([Github #30](https://github.com/mithrandie/csvq/issues/30))
+
 ## Version 1.13.0
  
 Released on May 20, 2020
