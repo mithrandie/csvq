@@ -3,6 +3,8 @@
 ################################
 vendor/
 csvq
+build/
+dist/
 *.output
 
 ################################
@@ -86,7 +88,6 @@ tramp
 
 # cask packages
 .cask/
-dist/
 
 # Flycheck
 flycheck_*.el
