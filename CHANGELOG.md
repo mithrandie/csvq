@@ -1,10 +1,14 @@
 # Change Log
 
+## Version 1.13.2, 1.13.3
+
+Tagged for Ubuntu PPA. No changes to the behavier.
+
 ## Version 1.13.1
  
 Released on May 22, 2020
 
-Change reference scope in lateral subquery. ([Github #30](https://github.com/mithrandie/csvq/issues/30))
+- Change reference scope in lateral subquery. ([Github #30](https://github.com/mithrandie/csvq/issues/30))
 
 ## Version 1.13.0
  
