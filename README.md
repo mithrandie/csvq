@@ -68,11 +68,17 @@ Go 1.11 or later (ref. [Getting Started - The Go Programming Language](https://g
 2. Change directory to `$GOPATH/src/github.com/mithrandie/csvq`
 3. ```$ env GO111MODULE=on go install```
 
-### Install using package manager (Unofficial)
+### Install using package manager
 
 Installing using a package manager does not ensure that you always get the latest version, but it may make installation and updating easier.
 
-#### macOS or Linux
+#### Ubuntu
+
+1. ```$ sudo add-apt-repository ppa:mithrandie/csvq```
+2. ```$ sudo apt update```
+3. ```$ sudo apt install csvq```
+
+#### macOS (unofficial)
 
 1. Install homebrew (ref. [The missing package manager for macOS (or Linux) — Homebrew](https://brew.sh))
 2. ```$ brew install csvq```
