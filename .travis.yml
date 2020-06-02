@@ -33,6 +33,7 @@ deploy:
     file: 'dist/*.tar.gz'
     prerelease: false
     on:
+      branch: master
       tags: true
       condition: $TRAVIS_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$
       go: '1.14.x'
@@ -44,6 +45,7 @@ deploy:
     file: 'dist/*.tar.gz'
     prerelease: true
     on:
+      branch: pre-release
       tags: true
       condition: $TRAVIS_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+\-pr\.[0-9]+$
       go: '1.14.x'
