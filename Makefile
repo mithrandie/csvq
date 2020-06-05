@@ -2,6 +2,9 @@ GOPATH := $(shell pwd)/build
 BINARY := csvq
 PRERELEASE_ARCH := darwin/amd64 linux/amd64 windows/amd64
 
+GOX := $(shell go env GOPATH)/bin/gox
+GOYACC := $(shell go env GOPATH)/bin/goyacc
+
 ifneq ($(shell command -v git && git remote -v 2>/dev/null | grep mithrandie/csvq.git && echo true),true)
 	VERSION := $(shell git describe --tags --always 2>/dev/null)
 endif
@@ -30,17 +33,17 @@ clean:
 
 .PHONY: install-gox
 install-gox:
-ifeq ($(shell command -v gox 2>/dev/null),)
+ifeq ($(shell command -v $(GOX) 2>/dev/null),)
 	go get github.com/mitchellh/gox
 endif
 
 .PHONY: build-all
 build-all: install-gox
-	GOPATH=$(GOPATH) gox $(LDFLAGS) -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+	GOPATH=$(GOPATH) $(GOX) $(LDFLAGS) -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: build-pre-release
 build-pre-release: install-gox
-	GOPATH=$(GOPATH) gox $(LDFLAGS) --osarch="$(PRERELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+	GOPATH=$(GOPATH) $(GOX) $(LDFLAGS) --osarch="$(PRERELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: dist
 dist:
@@ -62,16 +65,16 @@ endif
 
 .PHONY: install-goyacc
 install-goyacc:
-ifeq ($(shell command -v goyacc 2>/dev/null),)
+ifeq ($(shell command -v $(GOYACC) 2>/dev/null),)
 	go get github.com/cznic/goyacc
 endif
 
 .PHONY: yacc
 yacc: install-goyacc
 	cd lib/parser && \
-	goyacc -o parser.go -v parser.output parser.y && \
+	$(GOYACC) -o parser.go -v parser.output parser.y && \
 	cd ../../lib/json && \
-	goyacc -p jq -o query_parser.go -v query_parser.output query_parser.y && \
-	goyacc -p jp -o path_parser.go -v path_parser.output path_parser.y && \
+	$(GOYACC) -p jq -o query_parser.go -v query_parser.output query_parser.y && \
+	$(GOYACC) -p jp -o path_parser.go -v path_parser.output path_parser.y && \
 	cd ../..
 
