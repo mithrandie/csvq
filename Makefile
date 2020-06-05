@@ -34,7 +34,7 @@ clean:
 .PHONY: install-gox
 install-gox:
 ifeq ($(shell command -v $(GOX) 2>/dev/null),)
-	go get github.com/mitchellh/gox
+	GO111MODULE=off go get github.com/mitchellh/gox
 endif
 
 .PHONY: build-all
@@ -66,7 +66,7 @@ endif
 .PHONY: install-goyacc
 install-goyacc:
 ifeq ($(shell command -v $(GOYACC) 2>/dev/null),)
-	go get github.com/cznic/goyacc
+	GO111MODULE=off go get github.com/cznic/goyacc
 endif
 
 .PHONY: yacc
