@@ -85,7 +85,7 @@ func TestCalculate(t *testing.T) {
 	for _, v := range calculateTests {
 		r := Calculate(v.LHS, v.RHS, v.Operator)
 		if !reflect.DeepEqual(r, v.Result) {
-			t.Errorf("result = %s, want %s for (%s %s %s)", r, v.Result, v.LHS, string(v.Operator), v.RHS)
+			t.Errorf("result = %s, want %s for (%s %s %s)", r, v.Result, v.LHS, string(rune(v.Operator)), v.RHS)
 		}
 	}
 }

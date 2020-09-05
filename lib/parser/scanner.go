@@ -93,14 +93,14 @@ func TokenLiteral(token int) string {
 	if TokenFrom <= token && token <= TokenTo {
 		return yyToknames[token-TokenFrom+3]
 	}
-	return string(token)
+	return string(rune(token))
 }
 
 func KeywordLiteral(token int) (string, error) {
 	if KeywordFrom <= token && token <= KeywordTo {
 		return yyToknames[token-TokenFrom+3], nil
 	}
-	return string(token), errTokenIsNotKeyword
+	return string(rune(token)), errTokenIsNotKeyword
 }
 
 type Scanner struct {

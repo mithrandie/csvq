@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/mithrandie/ternary"
+
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -903,6 +905,29 @@ var parseTests = []struct {
 						},
 					},
 					FromClause: FromClause{Tables: []QueryExpression{Table{Object: Dual{}}}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select * from (select 2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Fields:   []QueryExpression{Field{Object: AllColumns{BaseExpr: &BaseExpr{line: 1, char: 8}}}},
+					},
+					FromClause: FromClause{
+						Tables: []QueryExpression{Table{Object: Subquery{
+							BaseExpr: &BaseExpr{line: 1, char: 15},
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 16}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+								},
+							},
+						}}},
+					},
 				},
 			},
 		},
@@ -3494,6 +3519,131 @@ var parseTests = []struct {
 										},
 									},
 									JoinType: Token{Token: CROSS, Literal: "cross", Line: 1, Char: 52},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 inner join lateral (select 1) on true left join lateral (select 1) on true",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						Tables: []QueryExpression{
+							Table{
+								Object: Join{
+									Table: Table{
+										Object: Join{
+											Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{
+												BaseExpr: &BaseExpr{line: 1, char: 33},
+												Lateral:  Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 33},
+												Object: Subquery{
+													BaseExpr: &BaseExpr{line: 1, char: 41},
+													Query: SelectQuery{
+														SelectEntity: SelectEntity{
+															SelectClause: SelectClause{
+																BaseExpr: &BaseExpr{line: 1, char: 42},
+																Fields: []QueryExpression{
+																	Field{Object: NewIntegerValueFromString("1")},
+																},
+															},
+														},
+													},
+												},
+											},
+											JoinType: Token{Token: INNER, Literal: "inner", Line: 1, Char: 22},
+											Condition: JoinCondition{
+												On: NewTernaryValue(ternary.TRUE),
+											},
+										},
+									},
+									JoinTable: Table{
+										BaseExpr: &BaseExpr{line: 1, char: 70},
+										Lateral:  Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 70},
+										Object: Subquery{
+											BaseExpr: &BaseExpr{line: 1, char: 78},
+											Query: SelectQuery{
+												SelectEntity: SelectEntity{
+													SelectClause: SelectClause{
+														BaseExpr: &BaseExpr{line: 1, char: 79},
+														Fields: []QueryExpression{
+															Field{Object: NewIntegerValueFromString("1")},
+														},
+													},
+												},
+											},
+										},
+									},
+									Direction: Token{Token: LEFT, Literal: "left", Line: 1, Char: 60},
+									Condition: JoinCondition{
+										On: NewTernaryValue(ternary.TRUE),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
+		Input: "select 1 from table1 natural join lateral (select 1) natural left join lateral (select 1)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+					FromClause: FromClause{
+						Tables: []QueryExpression{
+							Table{
+								Object: Join{
+									Table: Table{
+										Object: Join{
+											Table: Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 15}, Literal: "table1"}},
+											JoinTable: Table{
+												BaseExpr: &BaseExpr{line: 1, char: 35},
+												Lateral:  Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 35},
+												Object: Subquery{
+													BaseExpr: &BaseExpr{line: 1, char: 43},
+													Query: SelectQuery{
+														SelectEntity: SelectEntity{
+															SelectClause: SelectClause{
+																BaseExpr: &BaseExpr{line: 1, char: 44},
+																Fields: []QueryExpression{
+																	Field{Object: NewIntegerValueFromString("1")},
+																},
+															},
+														},
+													},
+												},
+											},
+											Natural: Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 22},
+										},
+									},
+									JoinTable: Table{
+										BaseExpr: &BaseExpr{line: 1, char: 72},
+										Lateral:  Token{Token: LATERAL, Literal: "lateral", Line: 1, Char: 72},
+										Object: Subquery{
+											BaseExpr: &BaseExpr{line: 1, char: 80},
+											Query: SelectQuery{
+												SelectEntity: SelectEntity{
+													SelectClause: SelectClause{
+														BaseExpr: &BaseExpr{line: 1, char: 81},
+														Fields: []QueryExpression{
+															Field{Object: NewIntegerValueFromString("1")},
+														},
+													},
+												},
+											},
+										},
+									},
+									Direction: Token{Token: LEFT, Literal: "left", Line: 1, Char: 62},
+									Natural:   Token{Token: NATURAL, Literal: "natural", Line: 1, Char: 54},
 								},
 							},
 						},
@@ -6287,6 +6437,12 @@ var parseTests = []struct {
 		ErrorLine:  1,
 		ErrorChar:  7,
 		ErrorFile:  GetTestFilePath("dummy.sql"),
+	},
+	{
+		Input:     "select * from lateral t",
+		Error:     "syntax error: unexpected token \"lateral\"",
+		ErrorLine: 1,
+		ErrorChar: 15,
 	},
 }
 
