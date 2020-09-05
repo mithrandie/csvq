@@ -19,15 +19,15 @@ $(BINARY): build
 
 .PHONY: build
 build:
-	GOPATH=$(GOPATH) go build $(LDFLAGS) -o $(GOPATH)/bin/$(BINARY)
+	go build $(LDFLAGS) -o $(GOPATH)/bin/$(BINARY)
 
 .PHONY: install
 install:
-	GOPATH=$(GOPATH) go install $(LDFLAGS)
+	go install $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	GOPATH=$(GOPATH) go clean -i -cache -modcache
+	go clean -i -cache -modcache
 
 .PHONY: install-gox
 install-gox:
@@ -37,11 +37,11 @@ endif
 
 .PHONY: build-all
 build-all: install-gox
-	GOPATH=$(GOPATH) gox $(LDFLAGS) --osarch="$(RELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+	gox $(LDFLAGS) --osarch="$(RELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: build-pre-release
 build-pre-release: install-gox
-	GOPATH=$(GOPATH) gox $(LDFLAGS) --osarch="$(PRERELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+	gox $(LDFLAGS) --osarch="$(PRERELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: dist
 dist:
