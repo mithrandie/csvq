@@ -5,7 +5,7 @@ title: Change Log - csvq
 
 # Change Log
 
-## Version 1.13.5
+## Version 1.13.6
 
 Released on September 5, 2020
 
