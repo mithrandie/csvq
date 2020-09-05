@@ -5,10 +5,6 @@ title: Change Log - csvq
 
 # Change Log
 
-## Version 1.13.6-pr.1
-
-- Test for build on travis.
-
 ## Version 1.13.2, 1.13.3
 
 Tagged for Ubuntu PPA. No changes to the behavier.
