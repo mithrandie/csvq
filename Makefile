@@ -40,11 +40,11 @@ endif
 
 .PHONY: build-all
 build-all: install-gox
-	GOPATH=$(GOPATH) $(GOX) $(LDFLAGS) --osarch="$(RELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+	$(GOX) $(LDFLAGS) --osarch="$(RELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: build-pre-release
 build-pre-release: install-gox
-	GOPATH=$(GOPATH) $(GOX) $(LDFLAGS) --osarch="$(PRERELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+	$(GOX) $(LDFLAGS) --osarch="$(PRERELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
 
 .PHONY: dist
 dist:
