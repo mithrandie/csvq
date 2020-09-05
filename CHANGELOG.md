@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.13.4
+ 
+Released on September 5, 2020
+
+- Enclose csv values containing double-quotes automatically. ([Github #37](https://github.com/mithrandie/csvq/issues/37))
+
 ## Version 1.13.2, 1.13.3
 
 Tagged for Ubuntu PPA. No changes to the behavier.
