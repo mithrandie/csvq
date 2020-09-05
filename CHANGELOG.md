@@ -1,16 +1,6 @@
 # Change Log
 
-## Version 1.13.0-pr.2
-
-- Support USING join condition in FULL OUTER JOIN.
-- Support $XDG_CONFIG_HOME environment variable for configuration files.
-- Make an error when using a LATERAL Keyword in a RIGHT or FULL OUTER JOIN. 
-
-## Version 1.13.0-pr.1
-
-- Support LATERAL join. ([Github #24](https://github.com/mithrandie/csvq/issues/24))
-
-## Version 1.13.5
+## Version 1.13.6
 
 Released on September 5, 2020
 
