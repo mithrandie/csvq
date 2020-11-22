@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -73,13 +72,18 @@ func (values SortValues) Serialize(buf *bytes.Buffer) {
 			buf.WriteByte(58)
 		}
 
+		if val.SerializedKey != nil {
+			buf.Write(val.SerializedKey.Bytes())
+			continue
+		}
+
 		switch val.Type {
 		case NullType:
 			serializeNull(buf)
 		case IntegerType, BooleanType:
-			serializeInteger(buf, val.Integer)
+			serializeInteger(buf, value.Int64ToStr(val.Integer))
 		case FloatType:
-			serializeFloat(buf, val.Float)
+			serializeFloat(buf, value.Float64ToStr(val.Float))
 		case DatetimeType:
 			serializeDatetimeFromUnixNano(buf, val.Datetime)
 		case StringType:
@@ -90,6 +94,8 @@ func (values SortValues) Serialize(buf *bytes.Buffer) {
 
 type SortValue struct {
 	Type SortValueType
+
+	SerializedKey *bytes.Buffer
 
 	Integer  int64
 	Float    float64
@@ -136,10 +142,25 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		sortValue.Type = NullType
 	}
 
+	if flags.StrictEqual {
+		sortValue.SerializedKey = &bytes.Buffer{}
+		SerializeIdenticalKey(sortValue.SerializedKey, val)
+	}
+
 	return sortValue
 }
 
 func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
+	if v.SerializedKey != nil {
+		if bytes.Equal(v.SerializedKey.Bytes(), compareValue.SerializedKey.Bytes()) {
+			return ternary.UNKNOWN
+		}
+
+		if v.SerializedKey.Bytes()[1] == 83 && compareValue.SerializedKey.Bytes()[1] == 83 {
+			return ternary.ConvertFromBool(v.String < compareValue.String)
+		}
+	}
+
 	switch v.Type {
 	case IntegerType:
 		switch compareValue.Type {
@@ -185,6 +206,10 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 }
 
 func (v *SortValue) EquivalentTo(compareValue *SortValue) bool {
+	if v.SerializedKey != nil {
+		return bytes.Equal(v.SerializedKey.Bytes(), compareValue.SerializedKey.Bytes())
+	}
+
 	switch v.Type {
 	case IntegerType:
 		switch compareValue.Type {

@@ -2,15 +2,15 @@ package query
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 const LimitToUseUintSlicePool = 20
@@ -130,7 +130,12 @@ func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary, flags *c
 		if 0 < i {
 			buf.WriteByte(58)
 		}
-		SerializeKey(buf, val, flags)
+
+		if flags.StrictEqual {
+			SerializeIdenticalKey(buf, val)
+		} else {
+			SerializeKey(buf, val, flags)
+		}
 	}
 }
 
@@ -138,19 +143,19 @@ func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
 	if value.IsNull(val) {
 		serializeNull(buf)
 	} else if in := value.ToInteger(val); !value.IsNull(in) {
-		serializeInteger(buf, in.(*value.Integer).Raw())
+		serializeInteger(buf, in.(*value.Integer).String())
 		value.Discard(in)
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
-		serializeFloat(buf, f.(*value.Float).Raw())
+		serializeFloat(buf, f.(*value.Float).String())
 		value.Discard(f)
 	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
 		serializeDatetime(buf, dt.(*value.Datetime).Raw())
 		value.Discard(dt)
 	} else if b := value.ToBoolean(val); !value.IsNull(b) {
 		if b.(*value.Boolean).Raw() {
-			serializeInteger(buf, 1)
+			serializeInteger(buf, "1")
 		} else {
-			serializeInteger(buf, 0)
+			serializeInteger(buf, "0")
 		}
 	} else if s, ok := val.(*value.String); ok {
 		serializeString(buf, s.Raw())
@@ -159,24 +164,37 @@ func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
 	}
 }
 
+func SerializeIdenticalKey(buf *bytes.Buffer, val value.Primary) {
+	switch val.(type) {
+	case *value.String:
+		serializeCaseSensitiveString(buf, val.(*value.String).Raw())
+	case *value.Integer:
+		serializeInteger(buf, val.(*value.Integer).String())
+	case *value.Float:
+		serializeFloat(buf, val.(*value.Float).String())
+	case *value.Boolean:
+		serializeBoolean(buf, val.(*value.Boolean).Raw())
+	case *value.Ternary:
+		serializeTernary(buf, val.(*value.Ternary).Ternary())
+	case *value.Datetime:
+		serializeDatetime(buf, val.(*value.Datetime).Raw())
+	default:
+		serializeNull(buf)
+	}
+}
+
 func serializeNull(buf *bytes.Buffer) {
 	buf.Write([]byte{91, 78, 93})
 }
 
-func serializeInteger(buf *bytes.Buffer, i int64) {
-	if i == 0 {
-		buf.Write([]byte{91, 73, 93, 48})
-	} else if i == 1 {
-		buf.Write([]byte{91, 73, 93, 49})
-	} else {
-		buf.Write([]byte{91, 73, 93})
-		_ = binary.Write(buf, binary.LittleEndian, i)
-	}
+func serializeInteger(buf *bytes.Buffer, s string) {
+	buf.Write([]byte{91, 73, 93})
+	buf.WriteString(s)
 }
 
-func serializeFloat(buf *bytes.Buffer, f float64) {
+func serializeFloat(buf *bytes.Buffer, s string) {
 	buf.Write([]byte{91, 70, 93})
-	_ = binary.Write(buf, binary.LittleEndian, f)
+	buf.WriteString(s)
 }
 
 func serializeDatetime(buf *bytes.Buffer, t time.Time) {
@@ -185,10 +203,35 @@ func serializeDatetime(buf *bytes.Buffer, t time.Time) {
 
 func serializeDatetimeFromUnixNano(buf *bytes.Buffer, t int64) {
 	buf.Write([]byte{91, 68, 93})
-	_ = binary.Write(buf, binary.LittleEndian, t)
+	buf.WriteString(value.Int64ToStr(t))
 }
 
 func serializeString(buf *bytes.Buffer, s string) {
 	buf.Write([]byte{91, 83, 93})
 	buf.WriteString(strings.ToUpper(cmd.TrimSpace(s)))
+}
+
+func serializeCaseSensitiveString(buf *bytes.Buffer, s string) {
+	buf.Write([]byte{91, 83, 93})
+	buf.WriteString(cmd.TrimSpace(s))
+}
+
+func serializeBoolean(buf *bytes.Buffer, b bool) {
+	buf.Write([]byte{91, 66, 93})
+	if b {
+		buf.WriteString("T")
+	} else {
+		buf.WriteString("F")
+	}
+}
+
+func serializeTernary(buf *bytes.Buffer, t ternary.Value) {
+	buf.Write([]byte{91, 84, 93})
+	if t == ternary.TRUE {
+		buf.WriteString("T")
+	} else if t == ternary.FALSE {
+		buf.WriteString("F")
+	} else {
+		buf.WriteString("U")
+	}
 }

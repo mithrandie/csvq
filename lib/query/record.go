@@ -1,10 +1,7 @@
 package query
 
 import (
-	"bytes"
 	"sync"
-
-	"github.com/mithrandie/csvq/lib/cmd"
 
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -84,15 +81,6 @@ func (r Record) Copy() Record {
 		record[i] = r[i]
 	}
 	return record
-}
-
-func (r Record) SerializeComparisonKeys(buf *bytes.Buffer, flags *cmd.Flags) {
-	for i := range r {
-		if 0 < i {
-			buf.WriteByte(58)
-		}
-		SerializeKey(buf, r[i][0], flags)
-	}
 }
 
 func (r Record) Merge(r2 Record, pool *sync.Pool) Record {

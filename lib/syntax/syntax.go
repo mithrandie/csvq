@@ -1066,6 +1066,7 @@ var CsvqSyntax = []Expression{
 				Flag("@@TIMEZONE"), String("string"), Link("Timezone"),
 				Flag("@@DATETIME_FORMAT"), String("string"),
 				Flag("@@ANSI_QUOTES"), String("boolean"),
+				Flag("@@STRICT_EQUAL"), String("boolean"),
 				Flag("@@WAIT_TIMEOUT"), Float("float"),
 				Flag("@@IMPORT_FORMAT"), String("string"),
 				Flag("@@DELIMITER"), String("string"),
