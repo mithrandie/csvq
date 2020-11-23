@@ -49,6 +49,10 @@ func main() {
 			Name:  "ansi-quotes, k",
 			Usage: "use double quotation mark as identifier enclosure",
 		},
+		cli.BoolFlag{
+			Name:  "strict-equal, g",
+			Usage: "compare strictly that two values are equal for DISTINCT, GROUP BY and ORDER BY",
+		},
 		cli.Float64Flag{
 			Name:  "wait-timeout, w",
 			Value: 10,
@@ -345,6 +349,9 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	}
 	if c.GlobalIsSet("ansi-quotes") {
 		_ = tx.SetFlag(cmd.AnsiQuotesFlag, c.GlobalBool("ansi-quotes"))
+	}
+	if c.GlobalIsSet("strict-equal") {
+		_ = tx.SetFlag(cmd.StrictEqualFlag, c.GlobalBool("strict-equal"))
 	}
 
 	if c.GlobalIsSet("wait-timeout") {

@@ -80,14 +80,29 @@ func TestSerializeComparisonKeys(t *testing.T) {
 		value.NewDatetimeFromString("2012-02-03T09:18:15.123456789-08:00", TestTx.Flags.DatetimeFormat),
 		value.NewBoolean(true),
 		value.NewBoolean(false),
+		value.NewTernary(ternary.TRUE),
+		value.NewTernary(ternary.FALSE),
 		value.NewTernary(ternary.UNKNOWN),
 		value.NewNull(),
 	}
-	expect := "[S]STR:[I]1:[I]0:[I]\x03\x00\x00\x00\x00\x00\x00\x00:[F]\x58\x39\xb4\xc8\x76\xbe\xf3\x3f:[D]\x00\xa6\x5b\x14\x42\x08\x6f\x12:[D]\xc0\x7a\xb0\x1b\x42\x08\x6f\x12:[D]\x15\x73\xb7\x1b\x42\x08\x6f\x12:[I]1:[I]0:[N]:[N]"
+	expect := "[S]STR:[I]1:[I]0:[I]3:[F]1.234:[D]1328289495000000000:[D]1328289495123000000:[D]1328289495123456789:[I]1:[I]0:[I]1:[I]0:[N]:[N]"
 
 	buf := &bytes.Buffer{}
 	SerializeComparisonKeys(buf, values, TestTx.Flags)
 	result := buf.String()
+	if result != expect {
+		t.Errorf("result = %q, want %q", result, expect)
+	}
+
+	TestTx.Flags.StrictEqual = true
+	defer func() {
+		TestTx.Flags.StrictEqual = false
+	}()
+
+	expect = "[S]str:[I]1:[I]0:[I]3:[F]1.234:[D]1328289495000000000:[D]1328289495123000000:[D]1328289495123456789:[B]T:[B]F:[T]T:[T]F:[T]U:[N]"
+	buf.Reset()
+	SerializeComparisonKeys(buf, values, TestTx.Flags)
+	result = buf.String()
 	if result != expect {
 		t.Errorf("result = %q, want %q", result, expect)
 	}

@@ -11,6 +11,10 @@ import (
 )
 
 func TestSortValues_Serialize(t *testing.T) {
+	defer func() {
+		TestTx.Flags.StrictEqual = false
+	}()
+
 	values := SortValues{
 		NewSortValue(value.NewNull(), TestTx.Flags),
 		NewSortValue(value.NewInteger(1), TestTx.Flags),
@@ -21,7 +25,7 @@ func TestSortValues_Serialize(t *testing.T) {
 		NewSortValue(value.NewBoolean(false), TestTx.Flags),
 		NewSortValue(value.NewString("str"), TestTx.Flags),
 	}
-	expect := "[N]:[I]1:[F]\x58\x39\xb4\xc8\x76\xbe\xf3\x3f:[D]\x00\xa6\x5b\x14\x42\x08\x6f\x12:[D]\xc0\x7a\xb0\x1b\x42\x08\x6f\x12:[D]\x15\x73\xb7\x1b\x42\x08\x6f\x12:[I]0:[S]STR"
+	expect := "[N]:[I]1:[F]1.234:[D]1328289495000000000:[D]1328289495123000000:[D]1328289495123456789:[I]0:[S]STR"
 
 	buf := &bytes.Buffer{}
 	values.Serialize(buf)
@@ -29,109 +33,188 @@ func TestSortValues_Serialize(t *testing.T) {
 	if result != expect {
 		t.Errorf("result = %q, want %q", result, expect)
 	}
+
+	TestTx.Flags.StrictEqual = true
+
+	values = SortValues{
+		NewSortValue(value.NewNull(), TestTx.Flags),
+		NewSortValue(value.NewInteger(1), TestTx.Flags),
+		NewSortValue(value.NewFloat(1.234), TestTx.Flags),
+		NewSortValue(value.NewDatetimeFromString("2012-02-03T09:18:15-08:00", TestTx.Flags.DatetimeFormat), TestTx.Flags),
+		NewSortValue(value.NewDatetimeFromString("2012-02-03T09:18:15.123-08:00", TestTx.Flags.DatetimeFormat), TestTx.Flags),
+		NewSortValue(value.NewDatetimeFromString("2012-02-03T09:18:15.123456789-08:00", TestTx.Flags.DatetimeFormat), TestTx.Flags),
+		NewSortValue(value.NewBoolean(false), TestTx.Flags),
+		NewSortValue(value.NewString("str"), TestTx.Flags),
+	}
+	expect = "[N]:[I]1:[F]1.234:[D]1328289495000000000:[D]1328289495123000000:[D]1328289495123456789:[B]F:[S]str"
+
+	buf.Reset()
+	values.Serialize(buf)
+	result = buf.String()
+	if result != expect {
+		t.Errorf("result = %q, want %q", result, expect)
+	}
 }
 
 var sortValueLessTests = []struct {
 	Name         string
-	SortValue    *SortValue
-	CompareValue *SortValue
+	SortValue    value.Primary
+	CompareValue value.Primary
+	StrictEqual  bool
 	Result       ternary.Value
 }{
 	{
-		Name:         "SortValue Less Integer",
-		SortValue:    NewSortValue(value.NewInteger(3), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewInteger(5), TestTx.Flags),
+		Name:         "Integer is less than Integer",
+		SortValue:    value.NewInteger(3),
+		CompareValue: value.NewInteger(5),
+		StrictEqual:  false,
 		Result:       ternary.TRUE,
 	},
 	{
-		Name:         "SortValue Less Integer Equal",
-		SortValue:    NewSortValue(value.NewInteger(3), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewInteger(3), TestTx.Flags),
+		Name:         "Same Integer",
+		SortValue:    value.NewInteger(3),
+		CompareValue: value.NewInteger(3),
+		StrictEqual:  false,
 		Result:       ternary.UNKNOWN,
 	},
 	{
-		Name:         "SortValue Less Integer and Float",
-		SortValue:    NewSortValue(value.NewInteger(3), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewFloat(5.4), TestTx.Flags),
+		Name:         "Integer is less than Float",
+		SortValue:    value.NewInteger(3),
+		CompareValue: value.NewFloat(5.4),
+		StrictEqual:  false,
 		Result:       ternary.TRUE,
 	},
 	{
-		Name:         "SortValue Less Integer and Datetime",
-		SortValue:    NewSortValue(value.NewInteger(3), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
+		Name:         "Integer and Datetime cannot be compared",
+		SortValue:    value.NewInteger(3),
+		CompareValue: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		StrictEqual:  false,
 		Result:       ternary.UNKNOWN,
 	},
 	{
-		Name:         "SortValue Less Integer and String",
-		SortValue:    NewSortValue(value.NewInteger(3), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewString("4a"), TestTx.Flags),
+		Name:         "Integer is less than String",
+		SortValue:    value.NewInteger(3),
+		CompareValue: value.NewString("4a"),
+		StrictEqual:  false,
 		Result:       ternary.TRUE,
 	},
 	{
-		Name:         "SortValue Less Float",
-		SortValue:    NewSortValue(value.NewFloat(3.4), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewFloat(5.1), TestTx.Flags),
+		Name:         "Float is less than Float",
+		SortValue:    value.NewFloat(3.4),
+		CompareValue: value.NewFloat(5.1),
+		StrictEqual:  false,
 		Result:       ternary.TRUE,
 	},
 	{
-		Name:         "SortValue Less Float Equal",
-		SortValue:    NewSortValue(value.NewFloat(3.4), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewFloat(3.4), TestTx.Flags),
+		Name:         "Same Float",
+		SortValue:    value.NewFloat(3.4),
+		CompareValue: value.NewFloat(3.4),
+		StrictEqual:  false,
 		Result:       ternary.UNKNOWN,
 	},
 	{
-		Name:         "SortValue Less Float and Datetime",
-		SortValue:    NewSortValue(value.NewFloat(3.4), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
+		Name:         "Float and Datetime cannot be compared",
+		SortValue:    value.NewFloat(3.4),
+		CompareValue: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		StrictEqual:  false,
 		Result:       ternary.UNKNOWN,
 	},
 	{
-		Name:         "SortValue Less Float and String",
-		SortValue:    NewSortValue(value.NewFloat(3.4), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewString("4a"), TestTx.Flags),
+		Name:         "Float is less than String",
+		SortValue:    value.NewFloat(3.4),
+		CompareValue: value.NewString("4a"),
+		StrictEqual:  false,
 		Result:       ternary.TRUE,
 	},
 	{
-		Name:         "SortValue Less Datetime",
-		SortValue:    NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 4, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
+		Name:         "Datetime is less than Datetime",
+		SortValue:    value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		CompareValue: value.NewDatetime(time.Date(2012, 2, 4, 9, 18, 15, 123456789, GetTestLocation())),
+		StrictEqual:  false,
 		Result:       ternary.TRUE,
 	},
 	{
-		Name:         "SortValue Less Datetime Equal",
-		SortValue:    NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
+		Name:         "Same Datetime",
+		SortValue:    value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		CompareValue: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		StrictEqual:  false,
 		Result:       ternary.UNKNOWN,
 	},
 	{
-		Name:         "SortValue Less String",
-		SortValue:    NewSortValue(value.NewString("aaa"), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewString("abc"), TestTx.Flags),
+		Name:         "String is less than String",
+		SortValue:    value.NewString("aaa"),
+		CompareValue: value.NewString("abc"),
+		StrictEqual:  false,
 		Result:       ternary.TRUE,
 	},
 	{
-		Name:         "SortValue Less String Equal",
-		SortValue:    NewSortValue(value.NewString(" aaa "), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewString("AAA"), TestTx.Flags),
+		Name:         "String representing integer is less than String  representing integer",
+		SortValue:    value.NewString("1"),
+		CompareValue: value.NewString("003"),
+		StrictEqual:  false,
+		Result:       ternary.TRUE,
+	},
+	{
+		Name:         "Character Cases are Ignored",
+		SortValue:    value.NewString("aaa"),
+		CompareValue: value.NewString("AAA"),
+		StrictEqual:  false,
 		Result:       ternary.UNKNOWN,
 	},
 	{
-		Name:         "SortValue Less Boolean",
-		SortValue:    NewSortValue(value.NewBoolean(true), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewTernary(ternary.FALSE), TestTx.Flags),
+		Name:         "Boolean and Ternary cannot be compared",
+		SortValue:    value.NewBoolean(true),
+		CompareValue: value.NewTernary(ternary.FALSE),
+		StrictEqual:  false,
 		Result:       ternary.UNKNOWN,
 	},
 	{
-		Name:         "SortValue Less Incommensurable Types",
-		SortValue:    NewSortValue(value.NewInteger(3), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewTernary(ternary.UNKNOWN), TestTx.Flags),
+		Name:         "Integer and Ternary cannot be compared",
+		SortValue:    value.NewInteger(3),
+		CompareValue: value.NewTernary(ternary.UNKNOWN),
+		StrictEqual:  false,
 		Result:       ternary.UNKNOWN,
+	},
+	{
+		Name:         "Same Strings when StrictEqual is true",
+		SortValue:    value.NewString("abc"),
+		CompareValue: value.NewString("abc"),
+		StrictEqual:  true,
+		Result:       ternary.UNKNOWN,
+	},
+	{
+		Name:         "When StrictEqual is true, Character Cases are not ignored",
+		SortValue:    value.NewString("aaa"),
+		CompareValue: value.NewString("AAA"),
+		StrictEqual:  true,
+		Result:       ternary.FALSE,
+	},
+	{
+		Name:         "When StrictEqual is true, Strings representing integers are compared as Strings",
+		SortValue:    value.NewString("1"),
+		CompareValue: value.NewString("003"),
+		StrictEqual:  true,
+		Result:       ternary.FALSE,
+	},
+	{
+		Name:         "Float and String are compared even when StrictEqual is true",
+		SortValue:    value.NewFloat(3.4),
+		CompareValue: value.NewString("4a"),
+		StrictEqual:  true,
+		Result:       ternary.TRUE,
 	},
 }
 
 func TestSortValue_Less(t *testing.T) {
+	defer func() {
+		TestTx.Flags.StrictEqual = true
+	}()
+
 	for _, v := range sortValueLessTests {
-		result := v.SortValue.Less(v.CompareValue)
+		TestTx.Flags.StrictEqual = v.StrictEqual
+		sv1 := NewSortValue(v.SortValue, TestTx.Flags)
+		sv2 := NewSortValue(v.CompareValue, TestTx.Flags)
+		result := sv1.Less(sv2)
 		if result != v.Result {
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
@@ -140,81 +223,121 @@ func TestSortValue_Less(t *testing.T) {
 
 var sortValueEquivalentToTests = []struct {
 	Name         string
-	SortValue    *SortValue
-	CompareValue *SortValue
+	SortValue    value.Primary
+	CompareValue value.Primary
+	StrictEqual  bool
 	Result       bool
 }{
 	{
-		Name:         "SortValue EquivalentTo Integer",
-		SortValue:    NewSortValue(value.NewInteger(3), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewInteger(3), TestTx.Flags),
+		Name:         "Same Integer",
+		SortValue:    value.NewInteger(3),
+		CompareValue: value.NewInteger(3),
+		StrictEqual:  false,
 		Result:       true,
 	},
 	{
-		Name:         "SortValue EquivalentTo Integer and Boolean",
-		SortValue:    NewSortValue(value.NewInteger(1), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewBoolean(true), TestTx.Flags),
+		Name:         "Integer and Boolean with equivalent values",
+		SortValue:    value.NewInteger(1),
+		CompareValue: value.NewBoolean(true),
+		StrictEqual:  false,
 		Result:       true,
 	},
 	{
-		Name:         "SortValue EquivalentTo Integer and DateTime",
-		SortValue:    NewSortValue(value.NewInteger(1328260695), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())), TestTx.Flags),
+		Name:         "Integer and DateTime with equivalent values",
+		SortValue:    value.NewInteger(1328260695),
+		CompareValue: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
+		StrictEqual:  false,
 		Result:       false,
 	},
 	{
-		Name:         "SortValue EquivalentTo Float",
-		SortValue:    NewSortValue(value.NewFloat(3.21), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewFloat(3.21), TestTx.Flags),
+		Name:         "Same Float",
+		SortValue:    value.NewFloat(3.21),
+		CompareValue: value.NewFloat(3.21),
+		StrictEqual:  false,
 		Result:       true,
 	},
 	{
-		Name:         "SortValue EquivalentTo Float and DateTime",
-		SortValue:    NewSortValue(value.NewFloat(1328260695.0001), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 100000, GetTestLocation())), TestTx.Flags),
+		Name:         "Float and DateTime with equivalent values",
+		SortValue:    value.NewFloat(1328260695.0001),
+		CompareValue: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 100000, GetTestLocation())),
+		StrictEqual:  false,
 		Result:       false,
 	},
 	{
-		Name:         "SortValue EquivalentTo Datetime",
-		SortValue:    NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())), TestTx.Flags),
+		Name:         "Same Datetime",
+		SortValue:    value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		CompareValue: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 123456789, GetTestLocation())),
+		StrictEqual:  false,
 		Result:       true,
 	},
 	{
-		Name:         "SortValue EquivalentTo Boolean",
-		SortValue:    NewSortValue(value.NewBoolean(true), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewBoolean(true), TestTx.Flags),
+		Name:         "Same Boolean",
+		SortValue:    value.NewBoolean(true),
+		CompareValue: value.NewBoolean(true),
+		StrictEqual:  false,
 		Result:       true,
 	},
 	{
-		Name:         "SortValue EquivalentTo Boolean and Integer",
-		SortValue:    NewSortValue(value.NewBoolean(true), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewInteger(1), TestTx.Flags),
+		Name:         "Boolean and Integer with equivalent values",
+		SortValue:    value.NewBoolean(true),
+		CompareValue: value.NewInteger(1),
+		StrictEqual:  false,
 		Result:       true,
 	},
 	{
-		Name:         "SortValue EquivalentTo String",
-		SortValue:    NewSortValue(value.NewString("str"), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewString("str"), TestTx.Flags),
+		Name:         "String and String with equivalent values",
+		SortValue:    value.NewString("Str"),
+		CompareValue: value.NewString("str"),
+		StrictEqual:  false,
 		Result:       true,
 	},
 	{
-		Name:         "SortValue EquivalentTo Null",
-		SortValue:    NewSortValue(value.NewNull(), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewNull(), TestTx.Flags),
+		Name:         "Null and Null",
+		SortValue:    value.NewNull(),
+		CompareValue: value.NewNull(),
+		StrictEqual:  false,
 		Result:       true,
 	},
 	{
-		Name:         "SortValue EquivalentTo String and Null",
-		SortValue:    NewSortValue(value.NewString("str"), TestTx.Flags),
-		CompareValue: NewSortValue(value.NewNull(), TestTx.Flags),
+		Name:         "String and Null",
+		SortValue:    value.NewString("str"),
+		CompareValue: value.NewNull(),
+		StrictEqual:  false,
+		Result:       false,
+	},
+	{
+		Name:         "When StrictEqual is true, Strings with different case",
+		SortValue:    value.NewString("Str"),
+		CompareValue: value.NewString("str"),
+		StrictEqual:  true,
+		Result:       false,
+	},
+	{
+		Name:         "String and Integer with equivalent values",
+		SortValue:    value.NewString("001"),
+		CompareValue: value.NewInteger(1),
+		StrictEqual:  false,
+		Result:       true,
+	},
+	{
+		Name:         "When StrictEqual is true, Strings and Integer with equivalent values",
+		SortValue:    value.NewString("001"),
+		CompareValue: value.NewInteger(1),
+		StrictEqual:  true,
 		Result:       false,
 	},
 }
 
 func TestSortValue_EquivalentTo(t *testing.T) {
+	defer func() {
+		TestTx.Flags.StrictEqual = true
+	}()
+
 	for _, v := range sortValueEquivalentToTests {
-		result := v.SortValue.EquivalentTo(v.CompareValue)
+		TestTx.Flags.StrictEqual = v.StrictEqual
+		sv1 := NewSortValue(v.SortValue, TestTx.Flags)
+		sv2 := NewSortValue(v.CompareValue, TestTx.Flags)
+		result := sv1.EquivalentTo(sv2)
 		if result != v.Result {
 			t.Errorf("%s: result = %t, want %t", v.Name, result, v.Result)
 		}
