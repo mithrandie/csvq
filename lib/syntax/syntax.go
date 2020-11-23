@@ -1011,6 +1011,8 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Use double quotation mark(U+0022 \") as identifier enclosure.\n" +
 				"%s  <type::%s>\n" +
+				"  > Compare strictly that two values are equal for DISTINCT, GROUP BY and ORDER BY.\n" +
+				"%s  <type::%s>\n" +
 				"  > Limit of the waiting time in seconds to wait for locked files to be released.\n" +
 				"%s  <type::%s>\n" +
 				"  > Default format to load files.\n" +
