@@ -410,6 +410,13 @@ var setFlagTests = []struct {
 		},
 	},
 	{
+		Name: "Set StrictEqual",
+		Expr: parser.SetFlag{
+			Flag:  parser.Flag{Name: "strict_equal"},
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
 		Name: "Set WaitTimeout",
 		Expr: parser.SetFlag{
 			Flag:  parser.Flag{Name: "wait_timeout"},
@@ -923,6 +930,19 @@ var showFlagTests = []struct {
 			},
 		},
 		Result: "\033[34;1m@@ANSI_QUOTES:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show StrictEqual",
+		Expr: parser.ShowFlag{
+			Flag: parser.Flag{Name: "strict_equal"},
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Flag:  parser.Flag{Name: "strict_equal"},
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+		},
+		Result: "\033[34;1m@@STRICT_EQUAL:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Show WaitTimeout",
@@ -2162,6 +2182,7 @@ var showObjectsTests = []struct {
 			"                  @@TIMEZONE: UTC\n" +
 			"           @@DATETIME_FORMAT: (not set)\n" +
 			"               @@ANSI_QUOTES: false\n" +
+			"              @@STRICT_EQUAL: false\n" +
 			"              @@WAIT_TIMEOUT: 15\n" +
 			"             @@IMPORT_FORMAT: CSV\n" +
 			"                 @@DELIMITER: ','\n" +

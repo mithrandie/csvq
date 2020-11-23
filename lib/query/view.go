@@ -1443,15 +1443,21 @@ func (view *View) GenerateComparisonKeys(ctx context.Context, flags *cmd.Flags) 
 	return NewGoroutineTaskManager(view.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
 		flags := flags
 		buf := GetComparisonKeysBuf()
+		var primaries []value.Primary = nil
+
 		if view.selectFields != nil {
-			primaries := make([]value.Primary, len(view.selectFields))
+			primaries = make([]value.Primary, len(view.selectFields))
 			for j, idx := range view.selectFields {
 				primaries[j] = view.RecordSet[index][idx][0]
 			}
-			SerializeComparisonKeys(buf, primaries, flags)
 		} else {
-			view.RecordSet[index].SerializeComparisonKeys(buf, flags)
+			primaries = make([]value.Primary, view.FieldLen())
+			for j := range view.RecordSet[index] {
+				primaries[j] = view.RecordSet[index][j][0]
+			}
 		}
+		SerializeComparisonKeys(buf, primaries, flags)
+
 		view.comparisonKeysInEachRecord[index] = buf.String()
 		PutComparisonkeysBuf(buf)
 		return nil

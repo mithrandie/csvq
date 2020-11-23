@@ -1011,6 +1011,8 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Use double quotation mark(U+0022 \") as identifier enclosure.\n" +
 				"%s  <type::%s>\n" +
+				"  > Compare strictly that two values are equal for DISTINCT, GROUP BY and ORDER BY.\n" +
+				"%s  <type::%s>\n" +
 				"  > Limit of the waiting time in seconds to wait for locked files to be released.\n" +
 				"%s  <type::%s>\n" +
 				"  > Default format to load files.\n" +
@@ -1066,6 +1068,7 @@ var CsvqSyntax = []Expression{
 				Flag("@@TIMEZONE"), String("string"), Link("Timezone"),
 				Flag("@@DATETIME_FORMAT"), String("string"),
 				Flag("@@ANSI_QUOTES"), String("boolean"),
+				Flag("@@STRICT_EQUAL"), String("boolean"),
 				Flag("@@WAIT_TIMEOUT"), Float("float"),
 				Flag("@@IMPORT_FORMAT"), String("string"),
 				Flag("@@DELIMITER"), String("string"),

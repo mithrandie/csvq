@@ -140,6 +140,15 @@ func TestFlags_SetAnsiQuotes(t *testing.T) {
 	}
 }
 
+func TestFlags_SetStrictEqual(t *testing.T) {
+	flags := NewFlags(nil)
+
+	flags.SetStrictEqual(true)
+	if !flags.StrictEqual {
+		t.Errorf("strict_equal = %t, expect to set %t", flags.StrictEqual, true)
+	}
+}
+
 func TestFlags_SetWaitTimeout(t *testing.T) {
 	flags := NewFlags(nil)
 

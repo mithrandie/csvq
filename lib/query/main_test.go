@@ -200,6 +200,7 @@ func initFlag(flags *cmd.Flags) {
 	flags.Location = TestLocation
 	flags.DatetimeFormat = []string{}
 	flags.AnsiQuotes = false
+	flags.StrictEqual = false
 	flags.WaitTimeout = 15
 	flags.ImportOptions = cmd.NewImportOptions()
 	flags.ExportOptions = cmd.NewExportOptions()

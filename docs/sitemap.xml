@@ -6,7 +6,7 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
         <loc>https://mithrandie.github.io/csvq/</loc>
-        <lastmod>2020-09-05T02:00:33+00:00</lastmod>
+        <lastmod>2020-11-23T00:23:34+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference.html</loc>
@@ -18,7 +18,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/command.html</loc>
-        <lastmod>2020-05-19T17:54:01+00:00</lastmod>
+        <lastmod>2020-11-23T00:09:19+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/statement.html</loc>
@@ -102,7 +102,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/flag.html</loc>
-        <lastmod>2020-01-13T02:07:03+00:00</lastmod>
+        <lastmod>2020-11-23T00:09:19+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/environment-variable.html</loc>
@@ -178,11 +178,11 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/changelog.html</loc>
-        <lastmod>2020-09-05T02:00:33+00:00</lastmod>
+        <lastmod>2020-11-23T00:23:34+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/license.html</loc>
-        <lastmod>2017-06-29T17:08:49+00:00</lastmod>
+        <lastmod>2020-11-21T05:25:25+00:00</lastmod>
     </url>
 </urlset>
 

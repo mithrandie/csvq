@@ -27,6 +27,7 @@ const (
 	TimezoneFlag                 = "TIMEZONE"
 	DatetimeFormatFlag           = "DATETIME_FORMAT"
 	AnsiQuotesFlag               = "ANSI_QUOTES"
+	StrictEqualFlag              = "STRICT_EQUAL"
 	WaitTimeoutFlag              = "WAIT_TIMEOUT"
 	ImportFormatFlag             = "IMPORT_FORMAT"
 	DelimiterFlag                = "DELIMITER"
@@ -60,6 +61,7 @@ var FlagList = []string{
 	TimezoneFlag,
 	DatetimeFormatFlag,
 	AnsiQuotesFlag,
+	StrictEqualFlag,
 	WaitTimeoutFlag,
 	ImportFormatFlag,
 	DelimiterFlag,
@@ -242,6 +244,7 @@ type Flags struct {
 	Location       string
 	DatetimeFormat []string
 	AnsiQuotes     bool
+	StrictEqual    bool
 
 	WaitTimeout float64
 
@@ -282,6 +285,7 @@ func NewFlags(env *Environment) *Flags {
 		Location:       "Local",
 		DatetimeFormat: datetimeFormat,
 		AnsiQuotes:     false,
+		StrictEqual:    false,
 		WaitTimeout:    10,
 		ImportOptions:  NewImportOptions(),
 		ExportOptions:  NewExportOptions(),
@@ -349,6 +353,10 @@ func (f *Flags) SetDatetimeFormat(s string) {
 
 func (f *Flags) SetAnsiQuotes(b bool) {
 	f.AnsiQuotes = b
+}
+
+func (f *Flags) SetStrictEqual(b bool) {
+	f.StrictEqual = b
 }
 
 func (f *Flags) SetWaitTimeout(t float64) {
