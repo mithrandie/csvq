@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.13.7
+
+Released on November 23, 2020
+
+- Add the command option "--strict-equal".
+
 ## Version 1.13.6
 
 Released on September 5, 2020
