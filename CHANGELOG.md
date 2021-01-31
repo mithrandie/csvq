@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.13.8
+
+Released on January 31, 2021
+
+- Fix a bug in the "--import-format" option. ([Github #41](https://github.com/mithrandie/csvq/issues/41))
+
 ## Version 1.13.7
 
 Released on November 23, 2020

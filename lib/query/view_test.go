@@ -300,6 +300,46 @@ var viewLoadTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
+		Name: "LoadView TSV From Stdin",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:        "column1\tcolumn2\n1\t\"str1\"",
+		ImportFormat: cmd.TSV,
+		Result: &View{
+			Header: NewHeader("t", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "STDIN",
+				Format:    cmd.TSV,
+				Delimiter: '\t',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeStdin,
+			},
+		},
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
+						FileInfo: &FileInfo{Path: "STDIN"},
+					},
+				},
+			},
+		}, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"T": "STDIN",
+			}},
+		}, time.Time{}, nil),
+	},
+	{
 		Name: "LoadView From Stdin With Internal Id",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
