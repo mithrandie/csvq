@@ -593,6 +593,10 @@ func loadObject(
 			options.Format = scope.Tx.Flags.ImportOptions.Format
 		}
 
+		if options.Format == cmd.TSV {
+			options.Delimiter = '\t'
+		}
+
 		fileInfo := &FileInfo{
 			Path:               stdin.String(),
 			Format:             options.Format,
