@@ -39,10 +39,10 @@ If you want to continue to input the statement on the next line, you can use Bac
 
 ```bash
 # Execute a single query
-$ csvq "SELECT id, name FROM user"
+$ csvq 'SELECT id, name FROM user'
 
 # Execute statements
-$ csvq "VAR @id := 0; SELECT @id := @id + 1 AS id, name FROM user;"
+$ csvq 'VAR @id := 0; SELECT @id := @id + 1 AS id, name FROM user;'
 
 # Load statements from file
 $ cat statements.sql
@@ -156,7 +156,7 @@ Environment Variable
 Runtime Information
 : A [runtime information]({{ '/reference/runtime-information.html' | relative_url }}) is a word starting with "@#" and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`). Character case is ignored.
 
-```sql
+```
 abcde                 -- identifier
 識別子                 -- identifier
 `abc\`de`             -- identifier
