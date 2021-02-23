@@ -8,7 +8,7 @@ ifneq ($(shell command -v git && git remote -v 2>/dev/null | grep mithrandie/csv
 endif
 
 ifdef VERSION
-	LDFLAGS := -ldflags="-X github.com/mithrandie/csvq/lib/query.Version=$(VERSION)"
+	LDFLAGS := -ldflags="-X github.com/mithrandie/csvq/lib/query.Version=$(VERSION) -s -w -buildid="
 endif
 
 DIST_DIRS := find * -type d -exec
