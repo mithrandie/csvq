@@ -3425,6 +3425,17 @@ var datetimeTests = []functionTest{
 		Result: value.NewDatetime(time.Date(2006, 1, 2, 6, 4, 5, 123000000, GetTestLocation())),
 	},
 	{
+		Name: "Datetime from String with time zone conversion",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewString("2012-02-03T09:18:15-07:00"),
+			value.NewString(TestLocation),
+		},
+		Result: value.NewDatetime(time.Date(2012, 2, 3, 16, 18, 15, 0, GetTestLocation())),
+	},
+	{
 		Name: "Datetime Invalid String",
 		Function: parser.Function{
 			Name: "datetime",
@@ -3440,7 +3451,29 @@ var datetimeTests = []functionTest{
 			Name: "datetime",
 		},
 		Args:  []value.Primary{},
-		Error: "function datetime takes exactly 1 argument",
+		Error: "function datetime takes 1 or 2 arguments",
+	},
+	{
+		Name: "Datetime Second Argument Not String Error",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewString("2012-02-03T09:18:15-07:00"),
+			value.NewNull(),
+		},
+		Error: "failed to load time zone NULL for function datetime",
+	},
+	{
+		Name: "Datetime Second Argument Invalid Location Error",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewString("2012-02-03T09:18:15-07:00"),
+			value.NewString("Err"),
+		},
+		Error: "failed to load time zone 'Err' for function datetime",
 	},
 }
 

@@ -233,7 +233,7 @@ var inRowValueListTests = []struct {
 
 func TestInRowValueList(t *testing.T) {
 	for _, v := range inRowValueListTests {
-		r, err := InRowValueList(v.LHS, v.List, v.Type, v.Operator, TestTx.Flags.DatetimeFormat)
+		r, err := InRowValueList(v.LHS, v.List, v.Type, v.Operator, TestTx.Flags.DatetimeFormat, TestTx.Flags.GetTimeLocation())
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for (%s %s %s %s)", err, v.LHS, v.Operator, parser.TokenLiteral(v.Type), v.List)

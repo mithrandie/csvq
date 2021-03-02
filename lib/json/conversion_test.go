@@ -4,11 +4,14 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/value"
 	"github.com/mithrandie/go-text/json"
 	"github.com/mithrandie/ternary"
 )
+
+var location, _ = time.LoadLocation("UTC")
 
 var convertToValueTests = []struct {
 	Input  json.Structure
@@ -361,7 +364,7 @@ var convertTableValueToJsonStructureTests = []struct {
 				value.NewBoolean(false),
 				value.NewTernary(ternary.TRUE),
 				value.NewTernary(ternary.UNKNOWN),
-				value.NewDatetimeFromString("2012-02-02 22:22:22 -07:00", nil),
+				value.NewDatetimeFromString("2012-02-02 22:22:22 -07:00", nil, location),
 				value.NewNull(),
 			},
 		},

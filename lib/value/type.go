@@ -190,8 +190,8 @@ type Datetime struct {
 	value time.Time
 }
 
-func NewDatetimeFromString(s string, formats []string) *Datetime {
-	t, _ := StrToTime(s, formats)
+func NewDatetimeFromString(s string, formats []string, location *time.Location) *Datetime {
+	t, _ := StrToTime(s, formats, location)
 	return NewDatetime(t)
 }
 

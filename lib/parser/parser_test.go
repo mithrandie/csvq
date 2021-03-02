@@ -3,11 +3,14 @@ package parser
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/ternary"
 
 	"github.com/mithrandie/csvq/lib/value"
 )
+
+var location, _ = time.LoadLocation("UTC")
 
 var parseTests = []struct {
 	Input       string
@@ -1063,7 +1066,7 @@ var parseTests = []struct {
 							Field{Object: NewIntegerValueFromString("1")},
 							Field{Object: NewFloatValueFromString("1.234")},
 							Field{Object: NewTernaryValueFromString("true")},
-							Field{Object: NewDatetimeValueFromString("2010-01-01 12:00:00", nil)},
+							Field{Object: NewDatetimeValueFromString("2010-01-01 12:00:00", nil, location)},
 							Field{Object: NewNullValue()},
 							Field{Object: Parentheses{Expr: NewStringValue("bar")}},
 						},
@@ -6448,7 +6451,7 @@ var parseTests = []struct {
 
 func TestParse(t *testing.T) {
 	for _, v := range parseTests {
-		prog, holderNum, err := Parse(v.Input, v.SourceFile, nil, v.ForPrepared, v.AnsiQuotes)
+		prog, holderNum, err := Parse(v.Input, v.SourceFile, nil, location, v.ForPrepared, v.AnsiQuotes)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for %q", err, v.Input)

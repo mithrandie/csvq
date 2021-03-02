@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -113,6 +114,7 @@ type Scanner struct {
 	sourceFile string
 
 	datetimeFormats []string
+	location        *time.Location
 	forPrepared     bool
 	ansiQuotes      bool
 
@@ -121,13 +123,14 @@ type Scanner struct {
 	holderNumber  int
 }
 
-func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, forPrepared bool, ansiQuotes bool) *Scanner {
+func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, location *time.Location, forPrepared bool, ansiQuotes bool) *Scanner {
 	s.src = []rune(src)
 	s.srcPos = 0
 	s.line = 1
 	s.char = 0
 	s.sourceFile = sourceFile
 	s.datetimeFormats = datetimeFormats
+	s.location = location
 	s.forPrepared = forPrepared
 	s.ansiQuotes = ansiQuotes
 	s.holderOrdinal = 0
@@ -138,6 +141,10 @@ func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, 
 
 func (s *Scanner) GetDatetimeFormats() []string {
 	return s.datetimeFormats
+}
+
+func (s *Scanner) GetLocation() *time.Location {
+	return s.location
 }
 
 func (s *Scanner) HolderNumber() int {
@@ -305,7 +312,7 @@ func (s *Scanner) Scan() (Token, error) {
 		if ch == '\'' || (!s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
 			literal = cmd.UnescapeString(s.literal.String(), ch)
-			if _, ok := value.StrToTime(literal, s.datetimeFormats); ok {
+			if _, ok := value.StrToTime(literal, s.datetimeFormats, s.location); ok {
 				token = DATETIME
 			} else {
 				token = STRING

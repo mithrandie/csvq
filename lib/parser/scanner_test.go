@@ -2,6 +2,7 @@ package parser
 
 import (
 	"testing"
+	"time"
 )
 
 type scanResult struct {
@@ -579,8 +580,10 @@ var scanTests = []struct {
 }
 
 func TestScanner_Scan(t *testing.T) {
+	location, _ := time.LoadLocation("UTC")
+
 	for _, v := range scanTests {
-		s := new(Scanner).Init(v.Input, "", v.DTFormats, v.ForPrepared, v.AnsiQuotes)
+		s := new(Scanner).Init(v.Input, "", v.DTFormats, location, v.ForPrepared, v.AnsiQuotes)
 
 		tokenCount := 0
 		for {

@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/json"
@@ -33,6 +34,29 @@ func TestExportOptions_Copy(t *testing.T) {
 	copied := op.Copy()
 	if !reflect.DeepEqual(copied, expect) {
 		t.Errorf("export options = %v, want %v", copied, expect)
+	}
+}
+
+func TestFlags_GetTimeLocation(t *testing.T) {
+	flags := NewFlags(nil)
+
+	local, _ := time.LoadLocation("Local")
+	loc := flags.GetTimeLocation()
+	if local != loc {
+		t.Errorf("location = %q, want %q", loc.String(), local.String())
+	}
+
+	flags.Location = "UTC"
+	utc, _ := time.LoadLocation("UTC")
+	loc = flags.GetTimeLocation()
+	if utc != loc {
+		t.Errorf("location = %q, want %q", loc.String(), utc.String())
+	}
+
+	flags.Location = "Err"
+	loc = flags.GetTimeLocation()
+	if local != loc {
+		t.Errorf("location = %q, want %q", loc.String(), local.String())
 	}
 }
 

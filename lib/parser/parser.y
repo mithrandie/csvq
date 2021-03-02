@@ -3,6 +3,7 @@ package parser
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -1340,7 +1341,7 @@ primitive_type
     }
     | DATETIME
     {
-        $$ = NewDatetimeValueFromString($1.Literal, yylex.(*Lexer).GetDatetimeFormats())
+        $$ = NewDatetimeValueFromString($1.Literal, yylex.(*Lexer).GetDatetimeFormats(), yylex.(*Lexer).GetLocation())
     }
     | null
     {
@@ -2718,9 +2719,9 @@ func SetDebugLevel(level int, verbose bool) {
 	yyErrorVerbose = verbose
 }
 
-func Parse(s string, sourceFile string, datetimeFormats []string, forPrepared bool, ansiQuotes bool) ([]Statement, int, error) {
+func Parse(s string, sourceFile string, datetimeFormats []string, location *time.Location, forPrepared bool, ansiQuotes bool) ([]Statement, int, error) {
     l := new(Lexer)
-    l.Init(s, sourceFile, datetimeFormats, forPrepared, ansiQuotes)
+    l.Init(s, sourceFile, datetimeFormats, location, forPrepared, ansiQuotes)
     yyParse(l)
     return l.program, l.HolderNumber(), l.err
 }
