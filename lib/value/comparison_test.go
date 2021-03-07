@@ -2,6 +2,7 @@ package value
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mithrandie/ternary"
 )
@@ -11,6 +12,8 @@ func TestComparisonResult_String(t *testing.T) {
 		t.Errorf("string = %s, want %s for %s.String()", IsEqual.String(), "IsEqual", IsEqual)
 	}
 }
+
+var location, _ = time.LoadLocation("UTC")
 
 var compareCombinedlyTests = []struct {
 	LHS    Primary
@@ -53,22 +56,22 @@ var compareCombinedlyTests = []struct {
 		Result: IsGreater,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil),
-		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil),
+		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil, location),
+		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil, location),
 		Result: IsEqual,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil),
-		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
+		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil, location),
+		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil, location),
 		Result: IsLess,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
-		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil),
+		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil, location),
+		RHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil, location),
 		Result: IsGreater,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
+		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil, location),
 		RHS:    NewString("abc"),
 		Result: IsIncommensurable,
 	},
@@ -111,7 +114,7 @@ var compareCombinedlyTests = []struct {
 
 func TestCompareCombinedly(t *testing.T) {
 	for _, v := range compareCombinedlyTests {
-		r := CompareCombinedly(v.LHS, v.RHS, nil)
+		r := CompareCombinedly(v.LHS, v.RHS, nil, location)
 		if r != v.Result {
 			t.Errorf("result = %s, want %s for comparison with %s and %s", r, v.Result, v.LHS, v.RHS)
 		}
@@ -154,8 +157,8 @@ var identicalTests = []struct {
 		Result: ternary.TRUE,
 	},
 	{
-		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
-		RHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil),
+		LHS:    NewDatetimeFromString("2006-02-02T15:04:05-07:00", nil, location),
+		RHS:    NewDatetimeFromString("2006-02-02T22:04:05", nil, location),
 		Result: ternary.TRUE,
 	},
 	{
@@ -324,7 +327,7 @@ var compareTests = []struct {
 
 func TestCompare(t *testing.T) {
 	for _, v := range compareTests {
-		r := Compare(v.LHS, v.RHS, v.Op, nil)
+		r := Compare(v.LHS, v.RHS, v.Op, nil, location)
 		if r != v.Result {
 			t.Errorf("result = %s, want %s for (%s %s %s)", r, v.Result, v.LHS, v.Op, v.RHS)
 		}
@@ -659,7 +662,7 @@ var compareRowValuesTests = []struct {
 
 func TestCompareRowValues(t *testing.T) {
 	for _, v := range compareRowValuesTests {
-		r, err := CompareRowValues(v.LHS, v.RHS, v.Op, nil)
+		r, err := CompareRowValues(v.LHS, v.RHS, v.Op, nil, location)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("unexpected error %q for (%s %s %s)", err, v.LHS, v.Op, v.RHS)
@@ -697,7 +700,7 @@ var equivalentToTests = []struct {
 
 func TestEquivalentTo(t *testing.T) {
 	for _, v := range equivalentToTests {
-		r := Equivalent(v.LHS, v.RHS, nil)
+		r := Equivalent(v.LHS, v.RHS, nil, location)
 		if r != v.Result {
 			t.Errorf("result = %s, want %s for (%s is equivalent to %s)", r, v.Result, v.LHS, v.RHS)
 		}

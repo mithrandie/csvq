@@ -11,150 +11,167 @@ import (
 
 func TestStrToTime(t *testing.T) {
 	formats := []string{"01/02/2006"}
+	location, _ := time.LoadLocation("UTC")
 
 	s := "01/02/2006"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 -08:00"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 -0800"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02 15:04:05 PST"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -08:00"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -0800"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 -0800"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/11/2 15:04:05 -0800"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/01/02 15:04:05 PST"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 -08:00"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 -0800"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-1-2 15:04:05 PST"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 -08:00"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 -0800"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006/1/2 15:04:05 PST"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "02 Jan 06 15:04 PDT"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "02 Jan 06 15:04 -0700"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05-08:00"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05+08:00"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "2006-01-02T15:04:05"
-	if _, ok := StrToTime(s, formats); !ok {
+	if _, ok := StrToTime(s, formats, location); !ok {
 		t.Errorf("failed, want to success for %q", s)
 	}
 
 	s = "e"
-	if _, ok := StrToTime(s, formats); ok {
+	if _, ok := StrToTime(s, formats, location); ok {
 		t.Errorf("successeded, want to fail for %q", s)
+	}
+
+	s = "2006-01-02"
+	tm, _ := StrToTime(s, formats, location)
+	if tm.Location() != location {
+		t.Errorf("location should be %q", location.String())
+	}
+
+	s = "2006-01-02T15:04:05+08:00"
+	tm, _ = StrToTime(s, formats, location)
+	z, i := tm.Zone()
+	if z != "" {
+		t.Errorf("zone name shoud be empty")
+	}
+	if i != 28800 {
+		t.Errorf("zone offset should be %d", 28800)
 	}
 }
 
@@ -255,23 +272,25 @@ func TestConvertDatetimeFormat(t *testing.T) {
 }
 
 func TestFloat64ToTime(t *testing.T) {
+	location, _ := time.LoadLocation("UTC")
+
 	f := float64(1136181845)
-	expect := time.Date(2006, 1, 2, 6, 4, 5, 0, time.UTC).In(cmd.GetLocation())
-	result := Float64ToTime(f)
+	expect := time.Date(2006, 1, 2, 6, 4, 5, 0, time.UTC).In(location)
+	result := Float64ToTime(f, location)
 	if !result.Equal(expect) {
 		t.Errorf("result = %q, want %q for %f", result, expect, f)
 	}
 
 	f = 1136181845.123
-	expect = time.Date(2006, 1, 2, 6, 4, 5, 123000000, time.UTC).In(cmd.GetLocation())
-	result = Float64ToTime(f)
+	expect = time.Date(2006, 1, 2, 6, 4, 5, 123000000, time.UTC).In(location)
+	result = Float64ToTime(f, location)
 	if !result.Equal(expect) {
 		t.Errorf("result = %q, want %q for %f", result, expect, f)
 	}
 
 	f = 1.123456789012
-	expect = time.Date(1970, 1, 1, 0, 0, 1, 123456789, time.UTC).In(cmd.GetLocation())
-	result = Float64ToTime(f)
+	expect = time.Date(1970, 1, 1, 0, 0, 1, 123456789, time.UTC).In(location)
+	result = Float64ToTime(f, location)
 	if !result.Equal(expect) {
 		t.Errorf("result = %q, want %q for %f", result, expect, f)
 	}
@@ -410,32 +429,34 @@ func TestToDatetime(t *testing.T) {
 	var p Primary
 	var dt Primary
 
+	location, _ := time.LoadLocation("UTC")
+
 	formats := []string{"01022006"}
 	p = NewString("02012012")
-	dt = ToDatetime(p, formats)
+	dt = ToDatetime(p, formats, location)
 	if _, ok := dt.(*Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	} else {
-		expect := time.Date(2012, 2, 1, 0, 0, 0, 0, cmd.GetLocation())
+		expect := time.Date(2012, 2, 1, 0, 0, 0, 0, location)
 		if !dt.(*Datetime).Raw().Equal(expect) {
 			t.Errorf("datetime = %s, want %s for %#v", dt, expect, p)
 		}
 	}
 
-	p = NewDatetimeFromString("2006-01-02 15:04:05", nil)
-	dt = ToDatetime(p, nil)
+	p = NewDatetimeFromString("2006-01-02 15:04:05", nil, location)
+	dt = ToDatetime(p, nil, location)
 	if _, ok := dt.(*Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewString("2006-01-02 15:04:05")
-	dt = ToDatetime(p, nil)
+	dt = ToDatetime(p, nil, location)
 	if _, ok := dt.(*Datetime); !ok {
 		t.Errorf("primary type = %T, want Datetime for %#v", dt, p)
 	}
 
 	p = NewString("error")
-	dt = ToDatetime(p, nil)
+	dt = ToDatetime(p, nil, location)
 	if _, ok := dt.(*Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", dt, p)
 	}
@@ -492,6 +513,8 @@ func TestToString(t *testing.T) {
 	var p Primary
 	var s Primary
 
+	location, _ := cmd.GetLocation("UTC")
+
 	p = NewString("str")
 	s = ToString(p)
 	if _, ok := s.(*String); !ok {
@@ -510,7 +533,7 @@ func TestToString(t *testing.T) {
 		t.Errorf("primary type = %T, want String for %#v", s, p)
 	}
 
-	p = NewDatetimeFromString("2006-01-02 15:04:05", nil)
+	p = NewDatetimeFromString("2006-01-02 15:04:05", nil, location)
 	s = ToString(p)
 	if _, ok := s.(*Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", s, p)
@@ -578,64 +601,71 @@ func TestMaybeNumber(t *testing.T) {
 
 func BenchmarkStrToTime1(b *testing.B) {
 	formats := []string{"01/02/2006"}
+	location, _ := time.LoadLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "01/02/2006"
-		_, _ = StrToTime(s, formats)
+		_, _ = StrToTime(s, formats, location)
 	}
 }
 
 func BenchmarkStrToTime2(b *testing.B) {
 	formats := []string{"01/02/2006"}
+	location, _ := time.LoadLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02T15:04:05-07:00"
-		_, _ = StrToTime(s, formats)
+		_, _ = StrToTime(s, formats, location)
 	}
 }
 
 func BenchmarkStrToTime3(b *testing.B) {
 	formats := []string{"01/02/2006"}
+	location, _ := time.LoadLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02"
-		_, _ = StrToTime(s, formats)
+		_, _ = StrToTime(s, formats, location)
 	}
 }
 
 func BenchmarkStrToTime4(b *testing.B) {
 	formats := []string{"01/02/2006"}
+	location, _ := time.LoadLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02 15:04:05"
-		_, _ = StrToTime(s, formats)
+		_, _ = StrToTime(s, formats, location)
 	}
 }
 
 func BenchmarkStrToTime5(b *testing.B) {
 	formats := []string{"01/02/2006"}
+	location, _ := time.LoadLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "2006-01-02 15:04:05 -0700"
-		_, _ = StrToTime(s, formats)
+		_, _ = StrToTime(s, formats, location)
 	}
 }
 
 func BenchmarkStrToTime6(b *testing.B) {
 	formats := []string{"01/02/2006"}
+	location, _ := cmd.GetLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "02 Jan 06 15:04 PDT"
-		_, _ = StrToTime(s, formats)
+		_, _ = StrToTime(s, formats, location)
 	}
 }
 
 func BenchmarkStrToTime7(b *testing.B) {
 	formats := []string{"01/02/2006"}
+	location, _ := cmd.GetLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "abcdefghijklmnopq"
-		_, _ = StrToTime(s, formats)
+		_, _ = StrToTime(s, formats, location)
 	}
 }
 

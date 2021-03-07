@@ -182,6 +182,7 @@ func setup() {
 	HomeDir, _ = homedir.Dir()
 	TestTx.Session.SetStdout(NewDiscard())
 	TestTx.Session.SetStderr(NewDiscard())
+	initFlag(TestTx.Flags)
 }
 
 func teardown() {

@@ -123,7 +123,7 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.(*value.String).Raw()))
 		value.Discard(f)
 		value.Discard(s)
-	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
+	} else if dt := value.ToDatetime(val, flags.DatetimeFormat, flags.GetTimeLocation()); !value.IsNull(dt) {
 		t := dt.(*value.Datetime).Raw()
 		sortValue.Type = DatetimeType
 		sortValue.Datetime = t.UnixNano()

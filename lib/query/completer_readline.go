@@ -2096,7 +2096,7 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 	return cands
 }
 
-func (c *Completer) SearchAllTables(line string, origLine string, index int) readline.CandidateList {
+func (c *Completer) SearchAllTables(line string, _ string, _ int) readline.CandidateList {
 	tableKeys := c.scope.Tx.cachedViews.SortedKeys()
 	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, c.scope.Tx.Flags.Repository)
 
@@ -2348,7 +2348,7 @@ func (c *Completer) CaseExpression(line string, origLine string, index int) read
 	)
 }
 
-func (c *Completer) EncloseQuotation(line string, origLine string, index int) readline.CandidateList {
+func (c *Completer) EncloseQuotation(line string, origLine string, _ int) readline.CandidateList {
 	runes := []rune(line)
 	if 0 < len(runes) && readline.IsQuotationMark(runes[0]) && !readline.LiteralIsEnclosed(runes[0], []rune(origLine)) {
 		return c.candidateList([]string{string(append([]rune(line), runes[0]))}, false)
@@ -2522,7 +2522,7 @@ func (c *Completer) completeArgs(
 func (c *Completer) UpdateTokens(line string, origLine string) {
 	c.tokens = c.tokens[:0]
 	s := new(parser.Scanner)
-	s.Init(origLine, "", c.scope.Tx.Flags.DatetimeFormat, false, c.scope.Tx.Flags.AnsiQuotes)
+	s.Init(origLine, "", false, c.scope.Tx.Flags.AnsiQuotes)
 	for {
 		t, _ := s.Scan()
 		if t.Token == parser.EOF {

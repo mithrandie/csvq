@@ -159,7 +159,7 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, fpath parser.I
 		return nil, err
 	}
 
-	statements, _, err = parser.Parse(content, fpath.Literal, tx.Flags.DatetimeFormat, false, tx.Flags.AnsiQuotes)
+	statements, _, err = parser.Parse(content, fpath.Literal, false, tx.Flags.AnsiQuotes)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
@@ -191,7 +191,7 @@ func ParseExecuteStatements(ctx context.Context, scope *ReferenceScope, expr par
 	if err != nil {
 		return nil, NewReplaceValueLengthError(expr, err.(Error).Message())
 	}
-	statements, _, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), scope.Tx.Flags.DatetimeFormat, false, scope.Tx.Flags.AnsiQuotes)
+	statements, _, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), false, scope.Tx.Flags.AnsiQuotes)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}

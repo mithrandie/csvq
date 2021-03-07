@@ -46,9 +46,8 @@ func (dfmap DatetimeFormatMap) Get(s string) string {
 	return f
 }
 
-func StrToTime(s string, formats []string) (time.Time, bool) {
+func StrToTime(s string, formats []string, location *time.Location) (time.Time, bool) {
 	s = cmd.TrimSpace(s)
-	location := cmd.GetLocation()
 
 	for _, format := range formats {
 		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, location); e == nil {
@@ -215,7 +214,7 @@ func ConvertDatetimeFormat(format string) string {
 	return buf.String()
 }
 
-func Float64ToTime(f float64) time.Time {
+func Float64ToTime(f float64, location *time.Location) time.Time {
 	s := Float64ToStr(f)
 	pointIdx := strings.Index(s, ".")
 	if -1 < pointIdx {
@@ -229,7 +228,7 @@ func Float64ToTime(f float64) time.Time {
 		s = s + strings.Repeat("0", 9)
 	}
 	nsec, _ := strconv.ParseInt(s, 10, 64)
-	return TimeFromUnixTime(0, nsec)
+	return TimeFromUnixTime(0, nsec, location)
 }
 
 func Int64ToStr(i int64) string {
@@ -361,12 +360,12 @@ func isDecimal(b byte) bool {
 	return '0' <= b && b <= '9'
 }
 
-func ToDatetime(p Primary, formats []string) Primary {
+func ToDatetime(p Primary, formats []string, location *time.Location) Primary {
 	switch p.(type) {
 	case *Datetime:
 		return NewDatetime(p.(*Datetime).Raw())
 	case *String:
-		if dt, ok := StrToTime(p.(*String).Raw(), formats); ok {
+		if dt, ok := StrToTime(p.(*String).Raw(), formats, location); ok {
 			return NewDatetime(dt)
 		}
 	}
@@ -374,8 +373,8 @@ func ToDatetime(p Primary, formats []string) Primary {
 	return NewNull()
 }
 
-func TimeFromUnixTime(sec int64, nano int64) time.Time {
-	return time.Unix(sec, nano).In(cmd.GetLocation())
+func TimeFromUnixTime(sec int64, nano int64, location *time.Location) time.Time {
+	return time.Unix(sec, nano).In(location)
 }
 
 func ToBoolean(p Primary) Primary {

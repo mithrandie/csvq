@@ -2,6 +2,7 @@ package parser
 
 import (
 	"testing"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -37,6 +38,8 @@ func TestFormatTableName(t *testing.T) {
 }
 
 func TestFormatFieldIdentifier(t *testing.T) {
+	location, _ := time.LoadLocation("UTC")
+
 	var e QueryExpression = NewStringValue("str")
 	expect := "str"
 	result := FormatFieldIdentifier(e)
@@ -44,7 +47,7 @@ func TestFormatFieldIdentifier(t *testing.T) {
 		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
 	}
 
-	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00", nil)
+	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00", nil, location)
 	expect = "2006-01-02T15:04:05-08:00"
 	result = FormatFieldIdentifier(e)
 	if result != expect {

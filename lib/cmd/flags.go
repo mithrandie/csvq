@@ -296,6 +296,14 @@ func NewFlags(env *Environment) *Flags {
 	}
 }
 
+func (f *Flags) GetTimeLocation() *time.Location {
+	loc, err := GetLocation(f.Location)
+	if err != nil {
+		loc, _ = time.LoadLocation("Local")
+	}
+	return loc
+}
+
 func (f *Flags) SetRepository(s string) error {
 	if len(s) < 1 {
 		f.Repository = ""
@@ -326,13 +334,12 @@ func (f *Flags) SetLocation(s string) error {
 		s = "UTC"
 	}
 
-	loc, err := time.LoadLocation(s)
+	_, err := GetLocation(s)
 	if err != nil {
-		return errors.New(fmt.Sprintf("timezone %q does not exist", s))
+		return err
 	}
 
 	f.Location = s
-	location = loc
 	return nil
 }
 

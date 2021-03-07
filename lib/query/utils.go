@@ -148,7 +148,7 @@ func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
 		serializeFloat(buf, f.(*value.Float).String())
 		value.Discard(f)
-	} else if dt := value.ToDatetime(val, flags.DatetimeFormat); !value.IsNull(dt) {
+	} else if dt := value.ToDatetime(val, flags.DatetimeFormat, flags.GetTimeLocation()); !value.IsNull(dt) {
 		serializeDatetime(buf, dt.(*value.Datetime).Raw())
 		value.Discard(dt)
 	} else if b := value.ToBoolean(val); !value.IsNull(b) {

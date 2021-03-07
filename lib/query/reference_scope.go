@@ -260,7 +260,7 @@ func (rs *ReferenceScope) CreateNode() *ReferenceScope {
 		node.cachedFilePath = make(map[string]string)
 	}
 	if node.now.IsZero() {
-		node.now = cmd.Now()
+		node.now = cmd.Now(rs.Tx.Flags.GetTimeLocation())
 	}
 
 	return node
@@ -312,7 +312,7 @@ func (rs *ReferenceScope) LoadFilePath(identifier string) (string, bool) {
 
 func (rs *ReferenceScope) Now() time.Time {
 	if rs.now.IsZero() {
-		return cmd.Now()
+		return cmd.Now(rs.Tx.Flags.GetTimeLocation())
 	}
 	return rs.now
 }
