@@ -27,6 +27,7 @@ const (
 	TimezoneFlag                 = "TIMEZONE"
 	DatetimeFormatFlag           = "DATETIME_FORMAT"
 	AnsiQuotesFlag               = "ANSI_QUOTES"
+	StrictEqualFlag              = "STRICT_EQUAL"
 	WaitTimeoutFlag              = "WAIT_TIMEOUT"
 	ImportFormatFlag             = "IMPORT_FORMAT"
 	DelimiterFlag                = "DELIMITER"
@@ -60,6 +61,7 @@ var FlagList = []string{
 	TimezoneFlag,
 	DatetimeFormatFlag,
 	AnsiQuotesFlag,
+	StrictEqualFlag,
 	WaitTimeoutFlag,
 	ImportFormatFlag,
 	DelimiterFlag,
@@ -242,6 +244,7 @@ type Flags struct {
 	Location       string
 	DatetimeFormat []string
 	AnsiQuotes     bool
+	StrictEqual    bool
 
 	WaitTimeout float64
 
@@ -282,6 +285,7 @@ func NewFlags(env *Environment) *Flags {
 		Location:       "Local",
 		DatetimeFormat: datetimeFormat,
 		AnsiQuotes:     false,
+		StrictEqual:    false,
 		WaitTimeout:    10,
 		ImportOptions:  NewImportOptions(),
 		ExportOptions:  NewExportOptions(),
@@ -290,6 +294,14 @@ func NewFlags(env *Environment) *Flags {
 		CPU:            GetDefaultNumberOfCPU(),
 		Stats:          false,
 	}
+}
+
+func (f *Flags) GetTimeLocation() *time.Location {
+	loc, err := GetLocation(f.Location)
+	if err != nil {
+		loc, _ = time.LoadLocation("Local")
+	}
+	return loc
 }
 
 func (f *Flags) SetRepository(s string) error {
@@ -322,13 +334,12 @@ func (f *Flags) SetLocation(s string) error {
 		s = "UTC"
 	}
 
-	loc, err := time.LoadLocation(s)
+	_, err := GetLocation(s)
 	if err != nil {
-		return errors.New(fmt.Sprintf("timezone %q does not exist", s))
+		return err
 	}
 
 	f.Location = s
-	location = loc
 	return nil
 }
 
@@ -349,6 +360,10 @@ func (f *Flags) SetDatetimeFormat(s string) {
 
 func (f *Flags) SetAnsiQuotes(b bool) {
 	f.AnsiQuotes = b
+}
+
+func (f *Flags) SetStrictEqual(b bool) {
+	f.StrictEqual = b
 }
 
 func (f *Flags) SetWaitTimeout(t float64) {

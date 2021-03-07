@@ -5,6 +5,24 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.13.8
+
+Released on January 31, 2021
+
+- Fix a bug in the "--import-format" option. ([Github #41](https://github.com/mithrandie/csvq/issues/41))
+
+## Version 1.13.7
+
+Released on November 23, 2020
+
+- Add the command option "--strict-equal".
+
+## Version 1.13.6
+
+Released on September 5, 2020
+
+- Enclose csv values containing double-quotes automatically. ([Github #37](https://github.com/mithrandie/csvq/issues/37))
+
 ## Version 1.13.2, 1.13.3
 
 Tagged for Ubuntu PPA. No changes to the behavier.

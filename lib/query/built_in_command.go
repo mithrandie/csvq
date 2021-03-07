@@ -159,7 +159,7 @@ func LoadStatementsFromFile(ctx context.Context, tx *Transaction, fpath parser.I
 		return nil, err
 	}
 
-	statements, _, err = parser.Parse(content, fpath.Literal, tx.Flags.DatetimeFormat, false, tx.Flags.AnsiQuotes)
+	statements, _, err = parser.Parse(content, fpath.Literal, false, tx.Flags.AnsiQuotes)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
@@ -191,7 +191,7 @@ func ParseExecuteStatements(ctx context.Context, scope *ReferenceScope, expr par
 	if err != nil {
 		return nil, NewReplaceValueLengthError(expr, err.(Error).Message())
 	}
-	statements, _, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), scope.Tx.Flags.DatetimeFormat, false, scope.Tx.Flags.AnsiQuotes)
+	statements, _, err := parser.Parse(input, fmt.Sprintf("(L:%d C:%d) EXECUTE", expr.Line(), expr.Char()), false, scope.Tx.Flags.AnsiQuotes)
 	if err != nil {
 		err = NewSyntaxError(err.(*parser.SyntaxError))
 	}
@@ -223,7 +223,8 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 			return NewFlagValueNotAllowedFormatError(expr)
 		}
 		val = p.(*value.String).Raw()
-	case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag,
+	case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag,
+		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag,
 		cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
 		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag,
 		cmd.QuietFlag, cmd.StatsFlag:
@@ -265,7 +266,7 @@ func AddFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.AddF
 			Value:    expr.Value,
 		}
 		return SetFlag(ctx, scope, e)
-	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag,
+	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag, cmd.StrictEqualFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.ExportEncodingFlag, cmd.FormatFlag, cmd.ExportDelimiterFlag, cmd.ExportDelimiterPositionsFlag,
 		cmd.LineBreakFlag, cmd.JsonEscapeFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag,
@@ -313,7 +314,7 @@ func RemoveFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.R
 		} else {
 			return NewInvalidFlagValueToBeRemovedError(expr)
 		}
-	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag,
+	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag, cmd.StrictEqualFlag,
 		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.ExportEncodingFlag, cmd.FormatFlag, cmd.ExportDelimiterFlag, cmd.ExportDelimiterPositionsFlag,
 		cmd.LineBreakFlag, cmd.JsonEscapeFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag,
@@ -452,7 +453,8 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 		s = tx.Palette.Render(cmd.NumberEffect, val.(*value.Integer).String())
 	case cmd.WaitTimeoutFlag:
 		s = tx.Palette.Render(cmd.NumberEffect, val.(*value.Float).String())
-	case cmd.AnsiQuotesFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.StripEndingLineBreakFlag,
+	case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag,
+		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.StripEndingLineBreakFlag,
 		cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 		s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
 	}

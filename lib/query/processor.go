@@ -539,7 +539,7 @@ func (proc *Processor) Case(ctx context.Context, stmt parser.Case) (StatementFlo
 		if val == nil {
 			t = cond.Ternary()
 		} else {
-			t = value.Equal(val, cond, proc.Tx.Flags.DatetimeFormat)
+			t = value.Equal(val, cond, proc.Tx.Flags.DatetimeFormat, proc.Tx.Flags.GetTimeLocation())
 		}
 
 		if t == ternary.TRUE {

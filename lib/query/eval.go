@@ -294,14 +294,14 @@ func evalComparison(ctx context.Context, scope *ReferenceScope, expr parser.Comp
 			return nil, err
 		}
 
-		t = value.Compare(sv, rhs, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat)
+		t = value.Compare(sv, rhs, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 	} else {
 		rhs, err := EvalRowValue(ctx, scope, expr.RHS.(parser.RowValue))
 		if err != nil {
 			return nil, err
 		}
 
-		t, err = value.CompareRowValues(rv, rhs, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat)
+		t, err = value.CompareRowValues(rv, rhs, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.RHS.(parser.RowValue), len(rv))
 		}
@@ -345,7 +345,7 @@ func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between
 			return nil, err
 		}
 
-		lowResult := value.GreaterOrEqual(sv, low, scope.Tx.Flags.DatetimeFormat)
+		lowResult := value.GreaterOrEqual(sv, low, scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 		if lowResult == ternary.FALSE {
 			t = ternary.FALSE
 		} else {
@@ -354,7 +354,7 @@ func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between
 				return nil, err
 			}
 
-			highResult := value.LessOrEqual(sv, high, scope.Tx.Flags.DatetimeFormat)
+			highResult := value.LessOrEqual(sv, high, scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 			t = ternary.And(lowResult, highResult)
 		}
 	} else {
@@ -362,7 +362,7 @@ func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between
 		if err != nil {
 			return nil, err
 		}
-		lowResult, err := value.CompareRowValues(rv, low, ">=", scope.Tx.Flags.DatetimeFormat)
+		lowResult, err := value.CompareRowValues(rv, low, ">=", scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 		if err != nil {
 			return nil, NewRowValueLengthInComparisonError(expr.Low.(parser.RowValue), len(rv))
 		}
@@ -375,7 +375,7 @@ func evalBetween(ctx context.Context, scope *ReferenceScope, expr parser.Between
 				return nil, err
 			}
 
-			highResult, err := value.CompareRowValues(rv, high, "<=", scope.Tx.Flags.DatetimeFormat)
+			highResult, err := value.CompareRowValues(rv, high, "<=", scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 			if err != nil {
 				return nil, NewRowValueLengthInComparisonError(expr.High.(parser.RowValue), len(rv))
 			}
@@ -417,9 +417,9 @@ func evalIn(ctx context.Context, scope *ReferenceScope, expr parser.In) (value.P
 
 	var t ternary.Value
 	if expr.IsNegated() {
-		t, err = All(val, list, "<>", scope.Tx.Flags.DatetimeFormat)
+		t, err = All(val, list, "<>", scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 	} else {
-		t, err = Any(val, list, "=", scope.Tx.Flags.DatetimeFormat)
+		t, err = Any(val, list, "=", scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 	}
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
@@ -441,7 +441,7 @@ func evalAny(ctx context.Context, scope *ReferenceScope, expr parser.Any) (value
 		return nil, err
 	}
 
-	t, err := Any(val, list, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat)
+	t, err := Any(val, list, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -462,7 +462,7 @@ func evalAll(ctx context.Context, scope *ReferenceScope, expr parser.All) (value
 		return nil, err
 	}
 
-	t, err := All(val, list, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat)
+	t, err := All(val, list, expr.Operator.Literal, scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 	if err != nil {
 		if subquery, ok := expr.Values.(parser.Subquery); ok {
 			return nil, NewSelectFieldLengthInComparisonError(subquery, len(val))
@@ -748,7 +748,7 @@ func evalCaseExpr(ctx context.Context, scope *ReferenceScope, expr parser.CaseEx
 		if val == nil {
 			t = cond.Ternary()
 		} else {
-			t = value.Equal(val, cond, scope.Tx.Flags.DatetimeFormat)
+			t = value.Equal(val, cond, scope.Tx.Flags.DatetimeFormat, scope.Tx.Flags.GetTimeLocation())
 		}
 
 		if t == ternary.TRUE {
@@ -1169,7 +1169,7 @@ func EvaluateEmbeddedString(ctx context.Context, scope *ReferenceScope, embedded
 		case excmd.CsvqExpression:
 			expr := scanner.Text()
 			if 0 < len(expr) {
-				statements, _, err := parser.Parse(expr, expr, scope.Tx.Flags.DatetimeFormat, false, scope.Tx.Flags.AnsiQuotes)
+				statements, _, err := parser.Parse(expr, expr, false, scope.Tx.Flags.AnsiQuotes)
 				if err != nil {
 					if syntaxErr, ok := err.(*parser.SyntaxError); ok {
 						err = NewSyntaxError(syntaxErr)

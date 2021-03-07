@@ -2,6 +2,7 @@ package query
 
 import (
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -125,11 +126,11 @@ func matchCondition(pattern []rune) (anyRunesMinLen int, anyRunesMaxLen int, sea
 	return anyRunesMinLen, anyRunesMaxLen, searchWord, pattern[patternPos:]
 }
 
-func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType int, operator string, datetimeFormats []string) (ternary.Value, error) {
+func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType int, operator string, datetimeFormats []string, location *time.Location) (ternary.Value, error) {
 	results := make([]ternary.Value, len(list))
 
 	for i, v := range list {
-		t, err := value.CompareRowValues(rowValue, v, operator, datetimeFormats)
+		t, err := value.CompareRowValues(rowValue, v, operator, datetimeFormats, location)
 		if err != nil {
 			return ternary.FALSE, NewRowValueLengthInListError(i)
 		}
@@ -155,10 +156,10 @@ func InRowValueList(rowValue value.RowValue, list []value.RowValue, matchType in
 	}
 }
 
-func Any(rowValue value.RowValue, list []value.RowValue, operator string, datetimeFormats []string) (ternary.Value, error) {
-	return InRowValueList(rowValue, list, parser.ANY, operator, datetimeFormats)
+func Any(rowValue value.RowValue, list []value.RowValue, operator string, datetimeFormats []string, location *time.Location) (ternary.Value, error) {
+	return InRowValueList(rowValue, list, parser.ANY, operator, datetimeFormats, location)
 }
 
-func All(rowValue value.RowValue, list []value.RowValue, operator string, datetimeFormats []string) (ternary.Value, error) {
-	return InRowValueList(rowValue, list, parser.ALL, operator, datetimeFormats)
+func All(rowValue value.RowValue, list []value.RowValue, operator string, datetimeFormats []string, location *time.Location) (ternary.Value, error) {
+	return InRowValueList(rowValue, list, parser.ALL, operator, datetimeFormats, location)
 }

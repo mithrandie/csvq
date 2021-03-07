@@ -182,6 +182,7 @@ func setup() {
 	HomeDir, _ = homedir.Dir()
 	TestTx.Session.SetStdout(NewDiscard())
 	TestTx.Session.SetStderr(NewDiscard())
+	initFlag(TestTx.Flags)
 }
 
 func teardown() {
@@ -200,6 +201,7 @@ func initFlag(flags *cmd.Flags) {
 	flags.Location = TestLocation
 	flags.DatetimeFormat = []string{}
 	flags.AnsiQuotes = false
+	flags.StrictEqual = false
 	flags.WaitTimeout = 15
 	flags.ImportOptions = cmd.NewImportOptions()
 	flags.ExportOptions = cmd.NewExportOptions()

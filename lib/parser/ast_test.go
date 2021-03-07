@@ -1240,6 +1240,8 @@ func TestField_String(t *testing.T) {
 }
 
 func TestField_Name(t *testing.T) {
+	location, _ := time.LoadLocation("UTC")
+
 	e := Field{
 		Object: Identifier{Literal: "column"},
 		As:     Token{Token: AS, Literal: "as"},
@@ -1267,7 +1269,7 @@ func TestField_Name(t *testing.T) {
 	}
 
 	e = Field{
-		Object: NewDatetimeValueFromString("2012-01-01 00:00:00 +00:00", nil),
+		Object: NewDatetimeValueFromString("2012-01-01 00:00:00 +00:00", nil, location),
 	}
 	expect = "2012-01-01 00:00:00 +00:00"
 	if e.Name() != expect {

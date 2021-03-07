@@ -76,7 +76,7 @@ type PreparedStatement struct {
 }
 
 func NewPreparedStatement(flags *cmd.Flags, expr parser.StatementPreparation) (*PreparedStatement, error) {
-	statements, holderNum, err := parser.Parse(expr.Statement.Raw(), expr.Name.Literal, flags.DatetimeFormat, true, flags.AnsiQuotes)
+	statements, holderNum, err := parser.Parse(expr.Statement.Raw(), expr.Name.Literal, true, flags.AnsiQuotes)
 	if err != nil {
 		return nil, NewPreparedStatementSyntaxError(err.(*parser.SyntaxError))
 	}

@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/json"
@@ -33,6 +34,29 @@ func TestExportOptions_Copy(t *testing.T) {
 	copied := op.Copy()
 	if !reflect.DeepEqual(copied, expect) {
 		t.Errorf("export options = %v, want %v", copied, expect)
+	}
+}
+
+func TestFlags_GetTimeLocation(t *testing.T) {
+	flags := NewFlags(nil)
+
+	local, _ := time.LoadLocation("Local")
+	loc := flags.GetTimeLocation()
+	if local != loc {
+		t.Errorf("location = %q, want %q", loc.String(), local.String())
+	}
+
+	flags.Location = "UTC"
+	utc, _ := time.LoadLocation("UTC")
+	loc = flags.GetTimeLocation()
+	if utc != loc {
+		t.Errorf("location = %q, want %q", loc.String(), utc.String())
+	}
+
+	flags.Location = "Err"
+	loc = flags.GetTimeLocation()
+	if local != loc {
+		t.Errorf("location = %q, want %q", loc.String(), local.String())
 	}
 }
 
@@ -137,6 +161,15 @@ func TestFlags_SetAnsiQuotes(t *testing.T) {
 	flags.SetAnsiQuotes(true)
 	if !flags.AnsiQuotes {
 		t.Errorf("ansi_quotes = %t, expect to set %t", flags.AnsiQuotes, true)
+	}
+}
+
+func TestFlags_SetStrictEqual(t *testing.T) {
+	flags := NewFlags(nil)
+
+	flags.SetStrictEqual(true)
+	if !flags.StrictEqual {
+		t.Errorf("strict_equal = %t, expect to set %t", flags.StrictEqual, true)
 	}
 }
 

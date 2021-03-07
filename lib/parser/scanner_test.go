@@ -16,7 +16,6 @@ type scanResult struct {
 var scanTests = []struct {
 	Name        string
 	Input       string
-	DTFormats   []string
 	ForPrepared bool
 	AnsiQuotes  bool
 	Output      []scanResult
@@ -142,37 +141,6 @@ var scanTests = []struct {
 			{
 				Token:   TERNARY,
 				Literal: "true",
-			},
-		},
-	},
-	{
-		Name:  "Datetime",
-		Input: "\"2012-05-21 12:00:00\"",
-		Output: []scanResult{
-			{
-				Token:   DATETIME,
-				Literal: "2012-05-21 12:00:00",
-			},
-		},
-	},
-	{
-		Name:  "Datetime(RFC3339)",
-		Input: "\"2012-05-21T12:00:00-12:00\"",
-		Output: []scanResult{
-			{
-				Token:   DATETIME,
-				Literal: "2012-05-21T12:00:00-12:00",
-			},
-		},
-	},
-	{
-		Name:      "Datetime",
-		Input:     "\"20120521\"",
-		DTFormats: []string{"%Y%m%d"},
-		Output: []scanResult{
-			{
-				Token:   DATETIME,
-				Literal: "20120521",
 			},
 		},
 	},
@@ -580,7 +548,7 @@ var scanTests = []struct {
 
 func TestScanner_Scan(t *testing.T) {
 	for _, v := range scanTests {
-		s := new(Scanner).Init(v.Input, "", v.DTFormats, v.ForPrepared, v.AnsiQuotes)
+		s := new(Scanner).Init(v.Input, "", v.ForPrepared, v.AnsiQuotes)
 
 		tokenCount := 0
 		for {

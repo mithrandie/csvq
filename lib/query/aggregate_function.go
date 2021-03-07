@@ -54,7 +54,7 @@ func Max(list []value.Primary, flags *cmd.Flags) value.Primary {
 			continue
 		}
 
-		if value.Greater(v, result, flags.DatetimeFormat) == ternary.TRUE {
+		if value.Greater(v, result, flags.DatetimeFormat, flags.GetTimeLocation()) == ternary.TRUE {
 			result = v
 		}
 	}
@@ -76,7 +76,7 @@ func Min(list []value.Primary, flags *cmd.Flags) value.Primary {
 			continue
 		}
 
-		if value.Less(v, result, flags.DatetimeFormat) == ternary.TRUE {
+		if value.Less(v, result, flags.DatetimeFormat, flags.GetTimeLocation()) == ternary.TRUE {
 			result = v
 		}
 	}
@@ -192,7 +192,7 @@ func Median(list []value.Primary, flags *cmd.Flags) value.Primary {
 			values = append(values, f.(*value.Float).Raw())
 			continue
 		}
-		if d := value.ToDatetime(v, flags.DatetimeFormat); !value.IsNull(d) {
+		if d := value.ToDatetime(v, flags.DatetimeFormat, flags.GetTimeLocation()); !value.IsNull(d) {
 			values = append(values, float64(d.(*value.Datetime).Raw().UnixNano())/1e9)
 			continue
 		}

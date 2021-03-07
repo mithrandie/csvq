@@ -3,6 +3,7 @@ package value
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/mithrandie/csvq/lib/cmd"
 
@@ -33,7 +34,7 @@ func (cr ComparisonResult) String() string {
 	return comparisonResultLiterals[cr]
 }
 
-func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) ComparisonResult {
+func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ComparisonResult {
 	if IsNull(p1) || IsNull(p2) {
 		return IsIncommensurable
 	}
@@ -72,8 +73,8 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string) Compari
 		Discard(f1)
 	}
 
-	if d1 := ToDatetime(p1, datetimeFormats); !IsNull(d1) {
-		if d2 := ToDatetime(p2, datetimeFormats); !IsNull(d2) {
+	if d1 := ToDatetime(p1, datetimeFormats, location); !IsNull(d1) {
+		if d2 := ToDatetime(p2, datetimeFormats, location); !IsNull(d2) {
 			v1 := d1.(*Datetime).Raw()
 			v2 := d2.(*Datetime).Raw()
 			Discard(d1)
@@ -162,68 +163,68 @@ func Identical(p1 Primary, p2 Primary) ternary.Value {
 	return ternary.FALSE
 }
 
-func Equal(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
-	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable {
+func Equal(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats, location); r != IsIncommensurable {
 		return ternary.ConvertFromBool(r == IsEqual || r == IsBoolEqual)
 	}
 	return ternary.UNKNOWN
 }
 
-func NotEqual(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
-	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable {
+func NotEqual(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats, location); r != IsIncommensurable {
 		return ternary.ConvertFromBool(r != IsEqual && r != IsBoolEqual)
 	}
 	return ternary.UNKNOWN
 }
 
-func Less(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
-	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+func Less(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats, location); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
 		return ternary.ConvertFromBool(r == IsLess)
 	}
 	return ternary.UNKNOWN
 }
 
-func Greater(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
-	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+func Greater(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats, location); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
 		return ternary.ConvertFromBool(r == IsGreater)
 	}
 	return ternary.UNKNOWN
 }
 
-func LessOrEqual(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
-	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+func LessOrEqual(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats, location); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
 		return ternary.ConvertFromBool(r != IsGreater)
 	}
 	return ternary.UNKNOWN
 }
 
-func GreaterOrEqual(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
-	if r := CompareCombinedly(p1, p2, datetimeFormats); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
+func GreaterOrEqual(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ternary.Value {
+	if r := CompareCombinedly(p1, p2, datetimeFormats, location); r != IsIncommensurable && r != IsNotEqual && r != IsBoolEqual {
 		return ternary.ConvertFromBool(r != IsLess)
 	}
 	return ternary.UNKNOWN
 }
 
-func Compare(p1 Primary, p2 Primary, operator string, datetimeFormats []string) ternary.Value {
+func Compare(p1 Primary, p2 Primary, operator string, datetimeFormats []string, location *time.Location) ternary.Value {
 	switch operator {
 	case "=":
-		return Equal(p1, p2, datetimeFormats)
+		return Equal(p1, p2, datetimeFormats, location)
 	case "==":
 		return Identical(p1, p2)
 	case ">":
-		return Greater(p1, p2, datetimeFormats)
+		return Greater(p1, p2, datetimeFormats, location)
 	case "<":
-		return Less(p1, p2, datetimeFormats)
+		return Less(p1, p2, datetimeFormats, location)
 	case ">=":
-		return GreaterOrEqual(p1, p2, datetimeFormats)
+		return GreaterOrEqual(p1, p2, datetimeFormats, location)
 	case "<=":
-		return LessOrEqual(p1, p2, datetimeFormats)
+		return LessOrEqual(p1, p2, datetimeFormats, location)
 	default: //case "<>", "!=":
-		return NotEqual(p1, p2, datetimeFormats)
+		return NotEqual(p1, p2, datetimeFormats, location)
 	}
 }
 
-func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string, datetimeFormats []string) (ternary.Value, error) {
+func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string, datetimeFormats []string, location *time.Location) (ternary.Value, error) {
 	if rowValue1 == nil || rowValue2 == nil {
 		return ternary.UNKNOWN, nil
 	}
@@ -245,7 +246,7 @@ func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string, d
 			continue
 		}
 
-		r := CompareCombinedly(rowValue1[i], rowValue2[i], datetimeFormats)
+		r := CompareCombinedly(rowValue1[i], rowValue2[i], datetimeFormats, location)
 
 		if r == IsIncommensurable {
 			switch operator {
@@ -303,9 +304,9 @@ func CompareRowValues(rowValue1 RowValue, rowValue2 RowValue, operator string, d
 	return ternary.TRUE, nil
 }
 
-func Equivalent(p1 Primary, p2 Primary, datetimeFormats []string) ternary.Value {
+func Equivalent(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ternary.Value {
 	if IsNull(p1) && IsNull(p2) {
 		return ternary.TRUE
 	}
-	return Equal(p1, p2, datetimeFormats)
+	return Equal(p1, p2, datetimeFormats, location)
 }

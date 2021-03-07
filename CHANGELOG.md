@@ -1,16 +1,18 @@
 # Change Log
 
-## Version 1.13.0-pr.2
+## Version 1.13.8
 
-- Support USING join condition in FULL OUTER JOIN.
-- Support $XDG_CONFIG_HOME environment variable for configuration files.
-- Make an error when using a LATERAL Keyword in a RIGHT or FULL OUTER JOIN. 
+Released on January 31, 2021
 
-## Version 1.13.0-pr.1
+- Fix a bug in the "--import-format" option. ([Github #41](https://github.com/mithrandie/csvq/issues/41))
 
-- Support LATERAL join. ([Github #24](https://github.com/mithrandie/csvq/issues/24))
+## Version 1.13.7
 
-## Version 1.13.5
+Released on November 23, 2020
+
+- Add the command option "--strict-equal".
+
+## Version 1.13.6
 
 Released on September 5, 2020
 
