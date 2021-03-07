@@ -2522,7 +2522,7 @@ func (c *Completer) completeArgs(
 func (c *Completer) UpdateTokens(line string, origLine string) {
 	c.tokens = c.tokens[:0]
 	s := new(parser.Scanner)
-	s.Init(origLine, "", c.scope.Tx.Flags.DatetimeFormat, c.scope.Tx.Flags.GetTimeLocation(), false, c.scope.Tx.Flags.AnsiQuotes)
+	s.Init(origLine, "", false, c.scope.Tx.Flags.AnsiQuotes)
 	for {
 		t, _ := s.Scan()
 		if t.Token == parser.EOF {
