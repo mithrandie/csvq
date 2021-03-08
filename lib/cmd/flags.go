@@ -259,6 +259,8 @@ type Flags struct {
 	LimitRecursion int64
 	CPU            int
 	Stats          bool
+
+	defaultTimeLocation *time.Location
 }
 
 func GetDefaultNumberOfCPU() int {
@@ -280,28 +282,27 @@ func NewFlags(env *Environment) *Flags {
 		datetimeFormat = make([]string, 0, 4)
 	}
 
+	defaultTimeLocation, _ := GetLocation("Local")
+
 	return &Flags{
-		Repository:     "",
-		Location:       "Local",
-		DatetimeFormat: datetimeFormat,
-		AnsiQuotes:     false,
-		StrictEqual:    false,
-		WaitTimeout:    10,
-		ImportOptions:  NewImportOptions(),
-		ExportOptions:  NewExportOptions(),
-		Quiet:          false,
-		LimitRecursion: 1000,
-		CPU:            GetDefaultNumberOfCPU(),
-		Stats:          false,
+		Repository:          "",
+		Location:            "Local",
+		DatetimeFormat:      datetimeFormat,
+		AnsiQuotes:          false,
+		StrictEqual:         false,
+		WaitTimeout:         10,
+		ImportOptions:       NewImportOptions(),
+		ExportOptions:       NewExportOptions(),
+		Quiet:               false,
+		LimitRecursion:      1000,
+		CPU:                 GetDefaultNumberOfCPU(),
+		Stats:               false,
+		defaultTimeLocation: defaultTimeLocation,
 	}
 }
 
 func (f *Flags) GetTimeLocation() *time.Location {
-	loc, err := GetLocation(f.Location)
-	if err != nil {
-		loc, _ = time.LoadLocation("Local")
-	}
-	return loc
+	return f.defaultTimeLocation
 }
 
 func (f *Flags) SetRepository(s string) error {
@@ -334,12 +335,13 @@ func (f *Flags) SetLocation(s string) error {
 		s = "UTC"
 	}
 
-	_, err := GetLocation(s)
+	l, err := GetLocation(s)
 	if err != nil {
 		return err
 	}
 
 	f.Location = s
+	f.defaultTimeLocation = l
 	return nil
 }
 

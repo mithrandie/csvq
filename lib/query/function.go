@@ -1668,27 +1668,32 @@ func Datetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
 	}
 
-	location := flags.GetTimeLocation()
+	var location *time.Location
 	if 1 < len(args) {
 		s := value.ToString(args[1])
 		if value.IsNull(s) {
 			return nil, NewFunctionInvalidArgumentError(fn, fn.Name, fmt.Sprintf("failed to load time zone %s", args[1].String()))
 		}
 
-		l, err := time.LoadLocation(s.(*value.String).Raw())
+		l, err := cmd.GetLocation(s.(*value.String).Raw())
 		if err != nil {
 			return nil, NewFunctionInvalidArgumentError(fn, fn.Name, fmt.Sprintf("failed to load time zone %s", args[1].String()))
 		}
 		location = l
+	} else {
+		location = flags.GetTimeLocation()
 	}
 
 	p := conv(args[0], location)
 
-	if 1 < len(args) && !value.IsNull(p) {
-		p = value.NewDatetime(p.(*value.Datetime).Raw().In(location))
+	if len(args) < 2 || value.IsNull(p) {
+		return p, nil
 	}
 
-	return p, nil
+	p2 := value.NewDatetime(p.(*value.Datetime).Raw().In(location))
+	value.Discard(p)
+
+	return p2, nil
 }
 
 func Call(ctx context.Context, fn parser.Function, args []value.Primary) (value.Primary, error) {

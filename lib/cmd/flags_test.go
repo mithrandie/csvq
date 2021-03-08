@@ -46,17 +46,11 @@ func TestFlags_GetTimeLocation(t *testing.T) {
 		t.Errorf("location = %q, want %q", loc.String(), local.String())
 	}
 
-	flags.Location = "UTC"
+	_ = flags.SetLocation("UTC")
 	utc, _ := time.LoadLocation("UTC")
 	loc = flags.GetTimeLocation()
 	if utc != loc {
 		t.Errorf("location = %q, want %q", loc.String(), utc.String())
-	}
-
-	flags.Location = "Err"
-	loc = flags.GetTimeLocation()
-	if local != loc {
-		t.Errorf("location = %q, want %q", loc.String(), local.String())
 	}
 }
 
