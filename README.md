@@ -54,7 +54,7 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 #### Requirements
 
-Go 1.11 or later (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
+Go 1.14 or later (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
 
 #### Build command
 
