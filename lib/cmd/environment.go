@@ -28,6 +28,8 @@ const (
 
 type Environment struct {
 	DatetimeFormat       []string            `json:"datetime_format"`
+	Timezone             *string             `json:"timezone"`
+	AnsiQuotes           *bool               `json:"ansi_quotes"`
 	InteractiveShell     InteractiveShell    `json:"interactive_shell"`
 	EnvironmentVariables map[string]string   `json:"environment_variables"`
 	Palette              color.PaletteConfig `json:"palette"`
@@ -47,6 +49,14 @@ func NewEnvironment(ctx context.Context, defaultWaitTimeout time.Duration, retry
 func (e *Environment) Merge(e2 *Environment) {
 	for _, f := range e2.DatetimeFormat {
 		e.DatetimeFormat = AppendStrIfNotExist(e.DatetimeFormat, f)
+	}
+
+	if e2.Timezone != nil {
+		e.Timezone = e2.Timezone
+	}
+
+	if e2.AnsiQuotes != nil {
+		e.AnsiQuotes = e2.AnsiQuotes
 	}
 
 	if 0 < len(e2.InteractiveShell.HistoryFile) {

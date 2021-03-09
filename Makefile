@@ -1,14 +1,14 @@
 GOPATH := $(shell pwd)/build
 BINARY := csvq
-RELEASE_ARCH := darwin/amd64 linux/amd64 linux/386 linux/arm freebsd/amd64 freebsd/386 freebsd/arm netbsd/amd64 netbsd/386 netbsd/arm openbsd/amd64 openbsd/386 windows/amd64 windows/386
-PRERELEASE_ARCH := darwin/amd64 linux/amd64 windows/amd64
+RELEASE_ARCH := darwin/amd64 darwin/arm64 linux/amd64 linux/386 linux/arm linux/arm64 freebsd/amd64 freebsd/386 freebsd/arm netbsd/amd64 netbsd/386 netbsd/arm openbsd/amd64 openbsd/386 windows/amd64 windows/386
+PRERELEASE_ARCH := darwin/amd64 darwin/arm64 linux/amd64 windows/amd64
 
 ifneq ($(shell command -v git && git remote -v 2>/dev/null | grep mithrandie/csvq.git && echo true),true)
 	VERSION := $(shell git describe --tags --always 2>/dev/null)
 endif
 
 ifdef VERSION
-	LDFLAGS := -ldflags="-X github.com/mithrandie/csvq/lib/query.Version=$(VERSION)"
+	LDFLAGS := -ldflags="-X github.com/mithrandie/csvq/lib/query.Version=$(VERSION) -s -w -buildid="
 endif
 
 DIST_DIRS := find * -type d -exec

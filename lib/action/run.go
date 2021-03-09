@@ -25,7 +25,7 @@ func Run(ctx context.Context, proc *query.Processor, input string, sourceFile st
 		showStats(ctx, proc, start)
 	}()
 
-	statements, _, err := parser.Parse(input, sourceFile, proc.Tx.Flags.DatetimeFormat, false, proc.Tx.Flags.AnsiQuotes)
+	statements, _, err := parser.Parse(input, sourceFile, false, proc.Tx.Flags.AnsiQuotes)
 	if err != nil {
 		return query.NewSyntaxError(err.(*parser.SyntaxError))
 	}
@@ -136,7 +136,7 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 			proc.LogError(e.Error())
 		}
 
-		statements, _, e := parser.Parse(strings.Join(lines, "\n"), "", proc.Tx.Flags.DatetimeFormat, false, proc.Tx.Flags.AnsiQuotes)
+		statements, _, e := parser.Parse(strings.Join(lines, "\n"), "", false, proc.Tx.Flags.AnsiQuotes)
 		if e != nil {
 			if e = query.NewSyntaxError(e.(*parser.SyntaxError)); e != nil {
 				proc.LogError(e.Error())

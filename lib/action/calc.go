@@ -14,7 +14,7 @@ func Calc(ctx context.Context, proc *query.Processor, expr string) error {
 	_ = proc.Tx.SetFlag(cmd.NoHeaderFlag, true)
 	q := "SELECT " + expr + " FROM STDIN"
 
-	program, _, err := parser.Parse(q, "", proc.Tx.Flags.DatetimeFormat, false, proc.Tx.Flags.AnsiQuotes)
+	program, _, err := parser.Parse(q, "", false, proc.Tx.Flags.AnsiQuotes)
 	if err != nil {
 		e := err.(*parser.SyntaxError)
 		e.SourceFile = ""

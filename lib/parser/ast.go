@@ -122,10 +122,10 @@ func NewTernaryValue(t ternary.Value) PrimitiveType {
 	}
 }
 
-func NewDatetimeValueFromString(s string, formats []string) PrimitiveType {
+func NewDatetimeValueFromString(s string, formats []string, location *time.Location) PrimitiveType {
 	return PrimitiveType{
 		Literal: s,
-		Value:   value.NewDatetimeFromString(s, formats),
+		Value:   value.NewDatetimeFromString(s, formats, location),
 	}
 }
 
@@ -834,12 +834,12 @@ func tableName(expr QueryExpression) Identifier {
 	}
 }
 
-func (t Table) Name() Identifier {
-	if t.Alias != nil {
-		return t.Alias.(Identifier)
+func (e Table) Name() Identifier {
+	if e.Alias != nil {
+		return e.Alias.(Identifier)
 	}
 
-	return tableName(t.Object)
+	return tableName(e.Object)
 }
 
 type Join struct {

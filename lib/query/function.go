@@ -9,6 +9,7 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"hash"
 	"math"
 	"os/exec"
@@ -194,7 +195,7 @@ func Nullif(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.P
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	if value.Equal(args[0], args[1], flags.DatetimeFormat) == ternary.TRUE {
+	if value.Equal(args[0], args[1], flags.DatetimeFormat, flags.GetTimeLocation()) == ternary.TRUE {
 		return value.NewNull(), nil
 	}
 	return args[0], nil
@@ -1151,7 +1152,7 @@ func DatetimeFormat(fn parser.Function, args []value.Primary, flags *cmd.Flags) 
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p := value.ToDatetime(args[0], flags.DatetimeFormat)
+	p := value.ToDatetime(args[0], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(p) {
 		return value.NewNull(), nil
 	}
@@ -1174,7 +1175,7 @@ func execDatetimeToInt(fn parser.Function, args []value.Primary, timef func(time
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.ToDatetime(args[0], flags.DatetimeFormat)
+	dt := value.ToDatetime(args[0], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1189,7 +1190,7 @@ func execDatetimeAdd(fn parser.Function, args []value.Primary, timef func(time.T
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.ToDatetime(args[0], flags.DatetimeFormat)
+	p1 := value.ToDatetime(args[0], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
@@ -1403,7 +1404,7 @@ func truncateDate(fn parser.Function, args []value.Primary, place int8, flags *c
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.ToDatetime(args[0], flags.DatetimeFormat)
+	dt := value.ToDatetime(args[0], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1438,7 +1439,7 @@ func truncateDuration(fn parser.Function, args []value.Primary, dur time.Duratio
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.ToDatetime(args[0], flags.DatetimeFormat)
+	dt := value.ToDatetime(args[0], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1473,12 +1474,12 @@ func DateDiff(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.ToDatetime(args[0], flags.DatetimeFormat)
+	p1 := value.ToDatetime(args[0], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
 
-	p2 := value.ToDatetime(args[1], flags.DatetimeFormat)
+	p2 := value.ToDatetime(args[1], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(p2) {
 		value.Discard(p1)
 		return value.NewNull(), nil
@@ -1489,8 +1490,8 @@ func DateDiff(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value
 	value.Discard(p1)
 	value.Discard(p2)
 
-	subdt1 := time.Date(dt1.Year(), dt1.Month(), dt1.Day(), 0, 0, 0, 0, cmd.GetLocation())
-	subdt2 := time.Date(dt2.Year(), dt2.Month(), dt2.Day(), 0, 0, 0, 0, cmd.GetLocation())
+	subdt1 := time.Date(dt1.Year(), dt1.Month(), dt1.Day(), 0, 0, 0, 0, flags.GetTimeLocation())
+	subdt2 := time.Date(dt2.Year(), dt2.Month(), dt2.Day(), 0, 0, 0, 0, flags.GetTimeLocation())
 	dur := subdt1.Sub(subdt2)
 
 	return value.NewInteger(int64(dur.Hours() / 24)), nil
@@ -1501,12 +1502,12 @@ func timeDiff(fn parser.Function, args []value.Primary, durf func(time.Duration)
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2})
 	}
 
-	p1 := value.ToDatetime(args[0], flags.DatetimeFormat)
+	p1 := value.ToDatetime(args[0], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(p1) {
 		return value.NewNull(), nil
 	}
 
-	p2 := value.ToDatetime(args[1], flags.DatetimeFormat)
+	p2 := value.ToDatetime(args[1], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(p2) {
 		value.Discard(p1)
 		return value.NewNull(), nil
@@ -1542,7 +1543,7 @@ func UTC(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Prim
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	dt := value.ToDatetime(args[0], flags.DatetimeFormat)
+	dt := value.ToDatetime(args[0], flags.DatetimeFormat, flags.GetTimeLocation())
 	if value.IsNull(dt) {
 		return value.NewNull(), nil
 	}
@@ -1552,7 +1553,7 @@ func UTC(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Prim
 	return value.NewDatetime(t), nil
 }
 
-func NanoToDatetime(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+func NanoToDatetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
 	if len(args) != 1 {
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
@@ -1564,7 +1565,7 @@ func NanoToDatetime(fn parser.Function, args []value.Primary, _ *cmd.Flags) (val
 	i := p.(*value.Integer).Raw()
 	value.Discard(p)
 
-	return value.NewDatetime(time.Unix(0, i).In(cmd.GetLocation())), nil
+	return value.NewDatetime(time.Unix(0, i).In(flags.GetTimeLocation())), nil
 }
 
 func String(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -1634,36 +1635,65 @@ func Ternary(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prim
 }
 
 func Datetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
-	if len(args) != 1 {
-		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	conv := func(p value.Primary, location *time.Location) value.Primary {
+		switch p.(type) {
+		case *value.Integer:
+			return value.NewDatetime(value.TimeFromUnixTime(p.(*value.Integer).Raw(), 0, location))
+		case *value.Float:
+			return value.NewDatetime(value.Float64ToTime(p.(*value.Float).Raw(), location))
+		case *value.String:
+			s := cmd.TrimSpace(p.(*value.String).Raw())
+			if dt, ok := value.StrToTime(s, flags.DatetimeFormat, location); ok {
+				return value.NewDatetime(dt)
+			}
+			if value.MaybeInteger(s) {
+				if i, e := strconv.ParseInt(s, 10, 64); e == nil {
+					dt := value.TimeFromUnixTime(i, 0, location)
+					return value.NewDatetime(dt)
+				}
+			}
+			if value.MaybeNumber(s) {
+				if f, e := strconv.ParseFloat(s, 64); e == nil {
+					dt := value.Float64ToTime(f, location)
+					return value.NewDatetime(dt)
+				}
+			}
+			return value.NewNull()
+		default:
+			return value.ToDatetime(p, flags.DatetimeFormat, location)
+		}
 	}
 
-	switch args[0].(type) {
-	case *value.Integer:
-		return value.NewDatetime(value.TimeFromUnixTime(args[0].(*value.Integer).Raw(), 0)), nil
-	case *value.Float:
-		return value.NewDatetime(value.Float64ToTime(args[0].(*value.Float).Raw())), nil
-	case *value.String:
-		s := cmd.TrimSpace(args[0].(*value.String).Raw())
-		if dt, ok := value.StrToTime(s, flags.DatetimeFormat); ok {
-			return value.NewDatetime(dt), nil
-		}
-		if value.MaybeInteger(s) {
-			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-				dt := value.TimeFromUnixTime(i, 0)
-				return value.NewDatetime(dt), nil
-			}
-		}
-		if value.MaybeNumber(s) {
-			if f, e := strconv.ParseFloat(s, 64); e == nil {
-				dt := value.Float64ToTime(f)
-				return value.NewDatetime(dt), nil
-			}
-		}
-		return value.NewNull(), nil
-	default:
-		return value.ToDatetime(args[0], flags.DatetimeFormat), nil
+	if len(args) < 1 || 2 < len(args) {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
 	}
+
+	var location *time.Location
+	if 1 < len(args) {
+		s := value.ToString(args[1])
+		if value.IsNull(s) {
+			return nil, NewFunctionInvalidArgumentError(fn, fn.Name, fmt.Sprintf("failed to load time zone %s", args[1].String()))
+		}
+
+		l, err := cmd.GetLocation(s.(*value.String).Raw())
+		if err != nil {
+			return nil, NewFunctionInvalidArgumentError(fn, fn.Name, fmt.Sprintf("failed to load time zone %s", args[1].String()))
+		}
+		location = l
+	} else {
+		location = flags.GetTimeLocation()
+	}
+
+	p := conv(args[0], location)
+
+	if len(args) < 2 || value.IsNull(p) {
+		return p, nil
+	}
+
+	p2 := value.NewDatetime(p.(*value.Datetime).Raw().In(location))
+	value.Discard(p)
+
+	return p2, nil
 }
 
 func Call(ctx context.Context, fn parser.Function, args []value.Primary) (value.Primary, error) {

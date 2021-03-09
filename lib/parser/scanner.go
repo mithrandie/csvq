@@ -8,7 +8,6 @@ import (
 	"unicode"
 
 	"github.com/mithrandie/csvq/lib/cmd"
-	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"
 )
@@ -112,32 +111,26 @@ type Scanner struct {
 	char       int
 	sourceFile string
 
-	datetimeFormats []string
-	forPrepared     bool
-	ansiQuotes      bool
+	forPrepared bool
+	ansiQuotes  bool
 
 	holderOrdinal int
 	holderNames   []string
 	holderNumber  int
 }
 
-func (s *Scanner) Init(src string, sourceFile string, datetimeFormats []string, forPrepared bool, ansiQuotes bool) *Scanner {
+func (s *Scanner) Init(src string, sourceFile string, forPrepared bool, ansiQuotes bool) *Scanner {
 	s.src = []rune(src)
 	s.srcPos = 0
 	s.line = 1
 	s.char = 0
 	s.sourceFile = sourceFile
-	s.datetimeFormats = datetimeFormats
 	s.forPrepared = forPrepared
 	s.ansiQuotes = ansiQuotes
 	s.holderOrdinal = 0
 	s.holderNames = make([]string, 0, 10)
 	s.holderNumber = 0
 	return s
-}
-
-func (s *Scanner) GetDatetimeFormats() []string {
-	return s.datetimeFormats
 }
 
 func (s *Scanner) HolderNumber() int {
@@ -305,11 +298,7 @@ func (s *Scanner) Scan() (Token, error) {
 		if ch == '\'' || (!s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
 			literal = cmd.UnescapeString(s.literal.String(), ch)
-			if _, ok := value.StrToTime(literal, s.datetimeFormats); ok {
-				token = DATETIME
-			} else {
-				token = STRING
-			}
+			token = STRING
 		} else if ch == '`' || (s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
 			literal = cmd.UnescapeIdentifier(s.literal.String(), ch)

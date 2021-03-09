@@ -259,6 +259,8 @@ type Flags struct {
 	LimitRecursion int64
 	CPU            int
 	Stats          bool
+
+	defaultTimeLocation *time.Location
 }
 
 func GetDefaultNumberOfCPU() int {
@@ -269,31 +271,52 @@ func GetDefaultNumberOfCPU() int {
 	return n
 }
 
-func NewFlags(env *Environment) *Flags {
+func NewFlags(env *Environment) (*Flags, error) {
 	var datetimeFormat []string
+	var location = "Local"
+	var AnsiQuotes = false
+
 	if env != nil {
 		datetimeFormat = make([]string, 0, len(env.DatetimeFormat))
 		for _, v := range env.DatetimeFormat {
 			datetimeFormat = AppendStrIfNotExist(datetimeFormat, v)
 		}
+
+		if env.Timezone != nil {
+			location = *env.Timezone
+		}
+
+		if env.AnsiQuotes != nil {
+			AnsiQuotes = *env.AnsiQuotes
+		}
 	} else {
 		datetimeFormat = make([]string, 0, 4)
 	}
 
-	return &Flags{
-		Repository:     "",
-		Location:       "Local",
-		DatetimeFormat: datetimeFormat,
-		AnsiQuotes:     false,
-		StrictEqual:    false,
-		WaitTimeout:    10,
-		ImportOptions:  NewImportOptions(),
-		ExportOptions:  NewExportOptions(),
-		Quiet:          false,
-		LimitRecursion: 1000,
-		CPU:            GetDefaultNumberOfCPU(),
-		Stats:          false,
+	defaultTimeLocation, err := GetLocation(location)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Flags{
+		Repository:          "",
+		Location:            location,
+		DatetimeFormat:      datetimeFormat,
+		AnsiQuotes:          AnsiQuotes,
+		StrictEqual:         false,
+		WaitTimeout:         10,
+		ImportOptions:       NewImportOptions(),
+		ExportOptions:       NewExportOptions(),
+		Quiet:               false,
+		LimitRecursion:      1000,
+		CPU:                 GetDefaultNumberOfCPU(),
+		Stats:               false,
+		defaultTimeLocation: defaultTimeLocation,
+	}, nil
+}
+
+func (f *Flags) GetTimeLocation() *time.Location {
+	return f.defaultTimeLocation
 }
 
 func (f *Flags) SetRepository(s string) error {
@@ -326,13 +349,13 @@ func (f *Flags) SetLocation(s string) error {
 		s = "UTC"
 	}
 
-	loc, err := time.LoadLocation(s)
+	l, err := GetLocation(s)
 	if err != nil {
-		return errors.New(fmt.Sprintf("timezone %q does not exist", s))
+		return err
 	}
 
 	f.Location = s
-	location = loc
+	f.defaultTimeLocation = l
 	return nil
 }
 

@@ -3,6 +3,8 @@ package cmd
 const DefaultEnvJson = `
 {
   "datetime_format": [],
+  "timezone": "Local",
+  "ansi_quotes": false,
   "interactive_shell": {
     "history_file": ".csvq_history",
     "history_limit": 500,

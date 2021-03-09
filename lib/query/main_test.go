@@ -182,6 +182,7 @@ func setup() {
 	HomeDir, _ = homedir.Dir()
 	TestTx.Session.SetStdout(NewDiscard())
 	TestTx.Session.SetStderr(NewDiscard())
+	initFlag(TestTx.Flags)
 }
 
 func teardown() {
@@ -197,7 +198,6 @@ func initFlag(flags *cmd.Flags) {
 	}
 
 	flags.Repository = "."
-	flags.Location = TestLocation
 	flags.DatetimeFormat = []string{}
 	flags.AnsiQuotes = false
 	flags.StrictEqual = false
@@ -209,6 +209,7 @@ func initFlag(flags *cmd.Flags) {
 	flags.CPU = cpu
 	flags.Stats = false
 	flags.SetColor(false)
+	_ = flags.SetLocation(TestLocation)
 }
 
 func copyfile(dstfile string, srcfile string) error {

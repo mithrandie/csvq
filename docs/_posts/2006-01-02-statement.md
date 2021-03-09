@@ -110,36 +110,6 @@ Float
 Ternary
 : A ternary is represented by any one keyword of TRUE, UNKNOWN or FALSE.
 
-Datetime
-: A datetime is a string formatted as datetime.
-
-  Strings of the form passed by the ["datetime-format" option]({{ '/reference/command.html#global_options' | relative_url }}) and defined in the [configuration files]({{ '/reference/command.html#configurations' | relative_url }}),  or the following forms can be converted to datetime values.
-  
-  | DateFormat | Example |
-  | :- | :- |
-  | YYYY-MM-DD | 2012-03-15 |
-  | YYYY/MM/DD | 2012/03/15 |
-  | YYYY-M-D   | 2012-3-15 |
-  | YYYY/M/D   | 2012/3/15 |
-
-  &nbsp;
-
-  | DatetimeFormat | Example |
-  | :- | :- |
-  | DateFormat | 2012-03-15 |
-  | DateFormat hh:mm:ss(.NanoSecods) | 2012-03-15 12:03:01<br />2012-03-15 12:03:01.123456789 |
-  | DateFormat hh:mm:ss(.NanoSecods) ±hh:mm | 2012-03-15 12:03:01 -07:00 |
-  | DateFormat hh:mm:ss(.NanoSecods) ±hhmm | 2012-03-15 12:03:01 -0700 |
-  | DateFormat hh:mm:ss(.NanoSecods) TimeZone | 2012-03-15 12:03:01 PST |
-  | YYYY-MM-DDThh:mm:ss(.NanoSeconds) | 2012-03-15T12:03:01 |
-  | RFC3339 | 2012-03-15T12:03:01-07:00 |
-  | RFC3339 with Nano Seconds | 2012-03-15T12:03:01.123456789-07:00 |
-  | RFC822 | 03 Mar 12 12:03 PST |
-  | RFC822 with Numeric Zone | 03 Mar 12 12:03 -0700 |
-  
-  > Timezone abbreviations such as "PST" may not work properly depending on your environment, 
-  > so you should use timezone offset such as "-07:00" as possible.
-
 Null
 : A null is represented by a keyword NULL.
 
@@ -166,7 +136,6 @@ abcde                 -- identifier
 123                   -- integer
 123.456               -- float
 true                  -- ternary
-'2012-03-15 12:03:01' -- datetime
 null                  -- null
 @var                  -- variable
 @@FLAG                -- flag

@@ -5,6 +5,17 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.14.0
+
+Released on March 9, 2021
+
+- Add the second argument to [the DATETIME function](https://mithrandie.github.io/csvq/reference/cast-functions.html#datetime)
+  to specify the time zone. ([GitHub #43](https://github.com/mithrandie/csvq/issues/43))
+- Interpret date and time strings as strings instead of converting them to DATETIME values when parsing.
+- Add the following items to the configuration file.
+    - timezone
+    - ansi_quotes
+
 ## Version 1.13.8
 
 Released on January 31, 2021

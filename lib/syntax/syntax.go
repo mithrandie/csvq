@@ -2295,7 +2295,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "datetime",
 						Group: []Grammar{
-							{Function{Name: "DATETIME", Args: []Element{Link("value")}, Return: Return("datetime")}},
+							{Function{Name: "DATETIME", Args: []Element{Link("value"), Option{ArgWithDefValue{Arg: String("timezone"), Default: Italic("timezone set to the flag @@TIMEZONE")}}}, Return: Return("datetime")}},
 						},
 						Description: Description{Template: "Converts %s to a datetime.", Values: []Element{Link("value")}},
 					},
