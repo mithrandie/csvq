@@ -271,24 +271,38 @@ func GetDefaultNumberOfCPU() int {
 	return n
 }
 
-func NewFlags(env *Environment) *Flags {
+func NewFlags(env *Environment) (*Flags, error) {
 	var datetimeFormat []string
+	var location = "Local"
+	var AnsiQuotes = false
+
 	if env != nil {
 		datetimeFormat = make([]string, 0, len(env.DatetimeFormat))
 		for _, v := range env.DatetimeFormat {
 			datetimeFormat = AppendStrIfNotExist(datetimeFormat, v)
 		}
+
+		if env.Timezone != nil {
+			location = *env.Timezone
+		}
+
+		if env.AnsiQuotes != nil {
+			AnsiQuotes = *env.AnsiQuotes
+		}
 	} else {
 		datetimeFormat = make([]string, 0, 4)
 	}
 
-	defaultTimeLocation, _ := GetLocation("Local")
+	defaultTimeLocation, err := GetLocation(location)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Flags{
 		Repository:          "",
-		Location:            "Local",
+		Location:            location,
 		DatetimeFormat:      datetimeFormat,
-		AnsiQuotes:          false,
+		AnsiQuotes:          AnsiQuotes,
 		StrictEqual:         false,
 		WaitTimeout:         10,
 		ImportOptions:       NewImportOptions(),
@@ -298,7 +312,7 @@ func NewFlags(env *Environment) *Flags {
 		CPU:                 GetDefaultNumberOfCPU(),
 		Stats:               false,
 		defaultTimeLocation: defaultTimeLocation,
-	}
+	}, nil
 }
 
 func (f *Flags) GetTimeLocation() *time.Location {
