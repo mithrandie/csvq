@@ -2006,7 +2006,7 @@ var regExpMatchTests = []functionTest{
 			value.NewString("cd"),
 			value.NewNull(),
 		},
-		Result: value.NewBoolean(true),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "RegExpMatch Not Match",
@@ -2017,7 +2017,7 @@ var regExpMatchTests = []functionTest{
 			value.NewString("abcdefg abcdefg"),
 			value.NewString("CD"),
 		},
-		Result: value.NewBoolean(false),
+		Result: value.NewTernary(ternary.FALSE),
 	},
 	{
 		Name: "RegExpMatch Ignore Case",
@@ -2029,7 +2029,7 @@ var regExpMatchTests = []functionTest{
 			value.NewString("CD"),
 			value.NewString("i"),
 		},
-		Result: value.NewBoolean(true),
+		Result: value.NewTernary(ternary.TRUE),
 	},
 	{
 		Name: "RegExpMatch First Argument is not a String",
@@ -2040,7 +2040,7 @@ var regExpMatchTests = []functionTest{
 			value.NewNull(),
 			value.NewString("CD"),
 		},
-		Result: value.NewNull(),
+		Result: value.NewTernary(ternary.UNKNOWN),
 	},
 	{
 		Name: "RegExpMatch Arguments Length Error",

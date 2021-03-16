@@ -2187,7 +2187,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "regexp_match",
 						Group: []Grammar{
-							{Function{Name: "REGEXP_MATCH", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("boolean")}},
+							{Function{Name: "REGEXP_MATCH", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("ternary")}},
 						},
 						Description: Description{Template: ""}, //TODO
 					},
