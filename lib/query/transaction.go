@@ -52,12 +52,17 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 	if err != nil {
 		return nil, ConvertLoadConfigurationError(err)
 	}
-	flags := cmd.NewFlags(environment)
+
+	flags, err := cmd.NewFlags(environment)
+	if err != nil {
+		return nil, ConvertLoadConfigurationError(err)
+	}
 
 	palette, err := cmd.NewPalette(environment)
 	if err != nil {
 		return nil, ConvertLoadConfigurationError(err)
 	}
+
 	palette.Disable()
 
 	return &Transaction{

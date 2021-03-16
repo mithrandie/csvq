@@ -2185,6 +2185,41 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the string that is replaced all occurrences of %s with %s in %s.", Values: []Element{String("old"), String("new"), String("str")}},
 					},
 					{
+						Name: "regexp_match",
+						Group: []Grammar{
+							{Function{Name: "REGEXP_MATCH", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("boolean")}},
+						},
+						Description: Description{Template: ""}, //TODO
+					},
+					{
+						Name: "regexp_find",
+						Group: []Grammar{
+							{Function{Name: "REGEXP_FIND", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("string")}},
+						},
+						Description: Description{Template: ""}, //TODO
+					},
+					{
+						Name: "regexp_find_submatches",
+						Group: []Grammar{
+							{Function{Name: "REGEXP_FIND_SUBMATCHES", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("string")}},
+						},
+						Description: Description{Template: ""}, //TODO
+					},
+					{
+						Name: "regexp_find_all",
+						Group: []Grammar{
+							{Function{Name: "REGEXP_FIND_ALL", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("string")}},
+						},
+						Description: Description{Template: ""}, //TODO
+					},
+					{
+						Name: "regexp_replace",
+						Group: []Grammar{
+							{Function{Name: "REGEXP_MATCH", Args: []Element{String("str"), String("regexp"), String("replacement_value"), Option{String("flags")}}, Return: Return("string")}},
+						},
+						Description: Description{Template: ""}, //TODO
+					},
+					{
 						Name: "format",
 						Group: []Grammar{
 							{Function{Name: "FORMAT", Args: []Element{String("format"), Option{ContinuousOption{Link("replace_value")}}}, Return: Return("string")}},
@@ -2295,7 +2330,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "datetime",
 						Group: []Grammar{
-							{Function{Name: "DATETIME", Args: []Element{Link("value"), Option{ArgWithDefValue{Arg: String("timezone"), Default: Italic("timezone set in Flags")}}}, Return: Return("datetime")}},
+							{Function{Name: "DATETIME", Args: []Element{Link("value"), Option{ArgWithDefValue{Arg: String("timezone"), Default: Italic("timezone set to the flag @@TIMEZONE")}}}, Return: Return("datetime")}},
 						},
 						Description: Description{Template: "Converts %s to a datetime.", Values: []Element{Link("value")}},
 					},

@@ -34,20 +34,22 @@ func Now(location *time.Location) time.Time {
 }
 
 type TimezoneMap struct {
-	m *sync.Map
+	m   *sync.Map
+	mtx *sync.Mutex
 }
 
-func NewTimezoneMap() *TimezoneMap {
-	return &TimezoneMap{
-		m: &sync.Map{},
+func NewTimezoneMap() TimezoneMap {
+	return TimezoneMap{
+		m:   &sync.Map{},
+		mtx: &sync.Mutex{},
 	}
 }
 
-func (tzmap *TimezoneMap) store(key string, value *time.Location) {
+func (tzmap TimezoneMap) store(key string, value *time.Location) {
 	tzmap.m.Store(key, value)
 }
 
-func (tzmap *TimezoneMap) load(key string) (*time.Location, bool) {
+func (tzmap TimezoneMap) load(key string) (*time.Location, bool) {
 	v, ok := tzmap.m.Load(key)
 	if ok {
 		return v.(*time.Location), ok
@@ -56,6 +58,13 @@ func (tzmap *TimezoneMap) load(key string) (*time.Location, bool) {
 }
 
 func (tzmap TimezoneMap) Get(timezone string) (*time.Location, error) {
+	if v, ok := tzmap.load(timezone); ok {
+		return v, nil
+	}
+
+	tzmap.mtx.Lock()
+	defer tzmap.mtx.Unlock()
+
 	if v, ok := tzmap.load(timezone); ok {
 		return v, nil
 	}

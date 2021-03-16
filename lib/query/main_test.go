@@ -198,7 +198,6 @@ func initFlag(flags *cmd.Flags) {
 	}
 
 	flags.Repository = "."
-	flags.Location = TestLocation
 	flags.DatetimeFormat = []string{}
 	flags.AnsiQuotes = false
 	flags.StrictEqual = false
@@ -210,6 +209,7 @@ func initFlag(flags *cmd.Flags) {
 	flags.CPU = cpu
 	flags.Stats = false
 	flags.SetColor(false)
+	_ = flags.SetLocation(TestLocation)
 }
 
 func copyfile(dstfile string, srcfile string) error {
