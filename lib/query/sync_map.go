@@ -6,12 +6,14 @@ import (
 )
 
 type SyncMap struct {
-	m *sync.Map
+	m   *sync.Map
+	mtx *sync.Mutex
 }
 
 func NewSyncMap() *SyncMap {
 	return &SyncMap{
-		m: &sync.Map{},
+		m:   &sync.Map{},
+		mtx: &sync.Mutex{},
 	}
 }
 
@@ -32,11 +34,21 @@ func (m SyncMap) exists(name string) bool {
 	return ok
 }
 
+func (m SyncMap) lock() {
+	m.mtx.Lock()
+}
+
+func (m SyncMap) unlock() {
+	m.mtx.Unlock()
+}
+
 func (m SyncMap) Clear() {
-	m.m.Range(func(key, value interface{}) bool {
+	m.lock()
+	m.Range(func(key, value interface{}) bool {
 		m.m.Delete(key)
 		return true
 	})
+	m.unlock()
 }
 
 func (m SyncMap) Range(fn func(key, value interface{}) bool) {
