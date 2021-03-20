@@ -386,7 +386,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select c1 from json_table('key', `table.json`, 'arg')",
+		Input: "select c1 from csv_inline(',', `table.csv`, 'arg')",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -402,9 +402,9 @@ var parseTests = []struct {
 						Table{
 							Object: TableObject{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
-								Type:          Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
-								FormatElement: NewStringValue("key"),
-								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "table.json", Quoted: true},
+								Type:          Token{Token: CSV_INLINE, Literal: "csv_inline", Line: 1, Char: 16},
+								FormatElement: NewStringValue(","),
+								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 32}, Literal: "table.csv", Quoted: true},
 								Args:          []QueryExpression{NewStringValue("arg")},
 							},
 						},
@@ -414,7 +414,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select c1 from json_table('key', '{\"key2\":1}') jt",
+		Input: "select c1 from json_inline('key', '{\"key2\":1}') jt",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -430,11 +430,11 @@ var parseTests = []struct {
 						Table{
 							Object: TableObject{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
-								Type:          Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
+								Type:          Token{Token: JSON_INLINE, Literal: "json_inline", Line: 1, Char: 16},
 								FormatElement: NewStringValue("key"),
 								Path:          NewStringValue("{\"key2\":1}"),
 							},
-							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 48}, Literal: "jt"},
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "jt"},
 						},
 					}},
 				},

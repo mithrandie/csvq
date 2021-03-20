@@ -223,7 +223,7 @@ import (
 %token<token> VAR SHOW
 %token<token> TIES NULLS ROWS ONLY
 %token<token> CSV JSON FIXED LTSV
-%token<token> JSON_TABLE
+%token<token> CSV_INLINE JSON_INLINE JSON_TABLE
 %token<token> JSON_ROW
 %token<token> SUBSTRING COUNT JSON_OBJECT
 %token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
@@ -1968,7 +1968,15 @@ table_object_type
     }
 
 inline_table_object_type
-    : JSON_TABLE
+    : CSV_INLINE
+    {
+        $$ = $1
+    }
+    | JSON_INLINE
+    {
+        $$ = $1
+    }
+    | JSON_TABLE
     {
         $$ = $1
     }

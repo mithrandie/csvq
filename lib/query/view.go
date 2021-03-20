@@ -43,17 +43,17 @@ type RecordReader interface {
 	Read() ([]text.RawText, error)
 }
 
-func inlineObjectCachePath(tablePath parser.QueryExpression) string {
-	b := sha256.Sum256([]byte(getInlineObjectString(tablePath)))
+func inlineObjectCacheKey(tablePath parser.QueryExpression) string {
+	b := sha256.Sum256([]byte(getInlineObjectData(tablePath)))
 	return inlineObjectHashPrefix + hex.EncodeToString(b[:])
 }
 
-func isInlineObjectString(tablePath parser.QueryExpression) bool {
+func isInlineObjectData(tablePath parser.QueryExpression) bool {
 	_, ok := tablePath.(parser.Identifier)
 	return !ok
 }
 
-func getInlineObjectString(tablePath parser.QueryExpression) string {
+func getInlineObjectData(tablePath parser.QueryExpression) string {
 	return tablePath.(parser.PrimitiveType).Value.(*value.String).Raw()
 }
 
@@ -142,10 +142,10 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 		isInlineObject := false
 		switch tableObject.Type.Token {
-		case parser.JSON_TABLE:
+		case parser.CSV_INLINE, parser.JSON_INLINE, parser.JSON_TABLE:
 			isInlineObject = true
 
-			if isInlineObjectString(tableObject.Path) {
+			if isInlineObjectData(tableObject.Path) {
 				p, err := Evaluate(ctx, scope, tableObject.Path)
 				if err != nil {
 					return nil, err
@@ -156,8 +156,15 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				}
 				tableObject.Path = parser.PrimitiveType{BaseExpr: tableObject.GetBaseExpr(), Value: txt}
 			}
-			tableObject.Type.Token = parser.JSON
+
 			forUpdate = false
+
+			switch tableObject.Type.Token {
+			case parser.CSV_INLINE:
+				tableObject.Type.Token = parser.CSV
+			default: // JSON_INLINE, JSON_TABLE
+				tableObject.Type.Token = parser.JSON
+			}
 		}
 
 		encodingIdx := 0
@@ -699,8 +706,8 @@ func cacheViewFromFile(
 	defer scope.Tx.viewLoadingMutex.Unlock()
 
 	filePath, filePathForCacheKey, err := (func() (string, string, error) {
-		if isInlineObjectString(tablePath) {
-			return inlineObjectCachePath(tablePath), "", nil
+		if isInlineObjectData(tablePath) {
+			return inlineObjectCacheKey(tablePath), "", nil
 		}
 
 		ident := tablePath.(parser.Identifier)
@@ -725,7 +732,7 @@ func cacheViewFromFile(
 	view, ok := scope.Tx.cachedViews.Load(filePath)
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 		fileInfo, err := (func() (*FileInfo, error) {
-			if isInlineObjectString(tablePath) {
+			if isInlineObjectData(tablePath) {
 				return &FileInfo{
 					Path:      filePath,
 					Format:    options.Format,
@@ -761,10 +768,10 @@ func cacheViewFromFile(
 			}
 
 			tableIdentifier := (func() parser.Identifier {
-				if isInlineObjectString(tablePath) {
+				if isInlineObjectData(tablePath) {
 					return parser.Identifier{
 						BaseExpr: tablePath.GetBaseExpr(),
-						Literal:  getInlineObjectString(tablePath),
+						Literal:  getInlineObjectData(tablePath),
 					}
 				}
 
@@ -772,8 +779,8 @@ func cacheViewFromFile(
 			})()
 
 			var fp io.ReadSeeker
-			if isInlineObjectString(tablePath) {
-				fp = strings.NewReader(getInlineObjectString(tablePath))
+			if isInlineObjectData(tablePath) {
+				fp = strings.NewReader(getInlineObjectData(tablePath))
 			} else {
 				if forUpdate {
 					h, err := file.NewHandlerForUpdate(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)

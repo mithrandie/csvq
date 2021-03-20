@@ -96,7 +96,7 @@ var CsvqSyntax = []Expression{
 						Group: []Grammar{
 							{Link("table_identifier")},
 							{Link("table_object")},
-							{Link("json_inline_table")},
+							{Link("inline_table_object")},
 						},
 					},
 					{
@@ -152,10 +152,12 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
-						Name: "json_inline_table",
+						Name: "inline_table_object",
 						Group: []Grammar{
-							{Function{Name: "JSON_TABLE", Args: []Element{String("json_query"), Identifier("table_name")}}},
-							{Function{Name: "JSON_TABLE", Args: []Element{String("json_query"), String("json_data")}}},
+							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), Identifier("table_name"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
+							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), String("csv_data"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
+							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), Identifier("table_name")}}},
+							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), String("json_data")}}},
 						},
 					},
 				},
@@ -2941,11 +2943,11 @@ var CsvqSyntax = []Expression{
 					Template: "" +
 						"ABSOLUTE ADD AFTER AGGREGATE ALTER ALL AND ANY AS ASC AVG BEFORE BEGIN " +
 						"BETWEEN BREAK BY CASE CHDIR CLOSE COMMIT CONTINUE COUNT CREATE CROSS " +
-						"CUME_DIST CURRENT CURSOR DECLARE DEFAULT DELETE DENSE_RANK DESC DISPOSE " +
+						"CSV_INLINE CUME_DIST CURRENT CURSOR DECLARE DEFAULT DELETE DENSE_RANK DESC DISPOSE " +
 						"DISTINCT DO DROP DUAL ECHO ELSE ELSEIF END EXCEPT EXECUTE EXISTS " +
 						"EXIT FALSE FETCH FIRST FIRST_VALUE FOLLOWING FOR FROM FULL FUNCTION " +
 						"GROUP HAVING IF IGNORE IN INNER INSERT INTERSECT INTO IS JOIN " +
-						"JSON_AGG JSON_OBJECT JSON_ROW JSON_TABLE LAG LAST LAST_VALUE LATERAL LEAD " +
+						"JSON_AGG JSON_INLINE JSON_OBJECT JSON_ROW JSON_TABLE LAG LAST LAST_VALUE LATERAL LEAD " +
 						"LEFT LIKE LIMIT LISTAGG MAX MEDIAN MIN NATURAL NEXT NOT NTH_VALUE " +
 						"NTILE NULL OFFSET ON ONLY OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
 						"PERCENT_RANK PRECEDING PREPARE PRINT PRINTF PRIOR PWD RANGE RANK RECURSIVE " +
