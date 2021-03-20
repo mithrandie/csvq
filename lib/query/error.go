@@ -48,9 +48,8 @@ const (
 	ErrMsgSubqueryTooManyFields                = "subquery returns too many fields, should return only one field"
 	ErrMsgJsonQueryTooManyRecords              = "json query returns too many records, should return only one record"
 	ErrMsgLoadJson                             = "json loading error: %s"
-	ErrMsgEmptyJsonQuery                       = "json query is empty"
-	ErrMsgEmptyJsonTable                       = "json table is empty"
 	ErrMsgIncorrectLateralUsage                = "LATERAL cannot to be used in a RIGHT or FULL outer join"
+	ErrMsgEmptyInlineTable                     = "inline table is empty"
 	ErrMsgInvalidTableObject                   = "invalid table object: %s"
 	ErrMsgTableObjectInvalidDelimiter          = "invalid delimiter: %s"
 	ErrMsgTableObjectInvalidDelimiterPositions = "invalid delimiter positions: %s"
@@ -643,26 +642,6 @@ func NewLoadJsonError(expr parser.QueryExpression, message string) error {
 	}
 }
 
-type EmptyJsonQueryError struct {
-	*BaseError
-}
-
-func NewEmptyJsonQueryError(expr parser.JsonQuery) error {
-	return &EmptyJsonQueryError{
-		NewBaseError(expr, ErrMsgEmptyJsonQuery, ReturnCodeApplicationError, ErrorEmptyJsonQuery),
-	}
-}
-
-type EmptyJsonTableError struct {
-	*BaseError
-}
-
-func NewEmptyJsonTableError(expr parser.JsonQuery) error {
-	return &EmptyJsonTableError{
-		NewBaseError(expr, ErrMsgEmptyJsonTable, ReturnCodeApplicationError, ErrorEmptyJsonTable),
-	}
-}
-
 type IncorrectLateralUsageError struct {
 	*BaseError
 }
@@ -670,6 +649,16 @@ type IncorrectLateralUsageError struct {
 func NewIncorrectLateralUsageError(expr parser.Table) error {
 	return &IncorrectLateralUsageError{
 		NewBaseError(expr, ErrMsgIncorrectLateralUsage, ReturnCodeApplicationError, ErrorIncorrectLateralUsage),
+	}
+}
+
+type EmptyInlineTableError struct {
+	*BaseError
+}
+
+func NewEmptyInlineTableError(expr parser.TableObject) error {
+	return &EmptyInlineTableError{
+		NewBaseError(expr, ErrMsgEmptyInlineTable, ReturnCodeApplicationError, ErrorEmptyInlineTable),
 	}
 }
 

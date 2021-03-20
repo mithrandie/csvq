@@ -3,6 +3,8 @@ package query
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	gojson "encoding/json"
 	"fmt"
 	"io"
@@ -30,6 +32,8 @@ import (
 const fileLoadingPreparedRecordSetCap = 300
 const fileLoadingBuffer = 300
 
+const inlineObjectHashPrefix = "@__io__?"
+
 type ApplyView struct {
 	View     *View
 	JoinExpr parser.Join
@@ -37,6 +41,20 @@ type ApplyView struct {
 
 type RecordReader interface {
 	Read() ([]text.RawText, error)
+}
+
+func inlineObjectCachePath(tablePath parser.QueryExpression) string {
+	b := sha256.Sum256([]byte(getInlineObjectString(tablePath)))
+	return inlineObjectHashPrefix + hex.EncodeToString(b[:])
+}
+
+func isInlineObjectString(tablePath parser.QueryExpression) bool {
+	_, ok := tablePath.(parser.Identifier)
+	return !ok
+}
+
+func getInlineObjectString(tablePath parser.QueryExpression) string {
+	return tablePath.(parser.PrimitiveType).Value.(*value.String).Raw()
 }
 
 type View struct {
@@ -120,7 +138,26 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				return nil, err
 			}
 			felem = value.ToString(p)
-			defer value.Discard(felem)
+		}
+
+		isInlineObject := false
+		switch tableObject.Type.Token {
+		case parser.JSON_TABLE:
+			isInlineObject = true
+
+			if isInlineObjectString(tableObject.Path) {
+				p, err := Evaluate(ctx, scope, tableObject.Path)
+				if err != nil {
+					return nil, err
+				}
+				txt := value.ToString(p)
+				if value.IsNull(txt) {
+					return nil, NewEmptyInlineTableError(tableObject)
+				}
+				tableObject.Path = parser.PrimitiveType{BaseExpr: tableObject.GetBaseExpr(), Value: txt}
+			}
+			tableObject.Type.Token = parser.JSON
+			forUpdate = false
 		}
 
 		encodingIdx := 0
@@ -263,10 +300,16 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			tableName,
 			forUpdate,
 			useInternalId,
+			isInlineObject,
 			options,
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if isInlineObject {
+			view.FileInfo.Path = ""
+			view.FileInfo.ViewType = ViewTypeTemporaryTable
 		}
 
 	case parser.Identifier, parser.Stdin:
@@ -280,6 +323,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			tableName,
 			forUpdate,
 			useInternalId,
+			false,
 			options,
 		)
 		if err != nil {
@@ -349,75 +393,6 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			if err = joinViews(ctx, scope, view, joinView, join); err != nil {
 				return nil, err
 			}
-		}
-
-	case parser.JsonQuery:
-		if 0 < len(tableName.Literal) {
-			if err := scope.AddAlias(tableName, ""); err != nil {
-				return nil, err
-			}
-		}
-
-		jsonQuery := table.Object.(parser.JsonQuery)
-
-		queryValue, err := Evaluate(ctx, scope, jsonQuery.Query)
-		if err != nil {
-			return nil, err
-		}
-		jq := value.ToString(queryValue)
-		if value.IsNull(jq) {
-			return nil, NewEmptyJsonQueryError(jsonQuery)
-		}
-		jqStr := jq.(*value.String).Raw()
-		value.Discard(jq)
-
-		var reader io.Reader
-
-		if jsonPath, ok := jsonQuery.JsonText.(parser.Identifier); ok {
-			fpath, err := SearchJsonFilePath(jsonPath, scope.Tx.Flags.Repository)
-			if err != nil {
-				return nil, err
-			}
-
-			h, err := file.NewHandlerForRead(ctx, scope.Tx.FileContainer, fpath, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
-			if err != nil {
-				jsonPath.Literal = fpath
-				return nil, ConvertFileHandlerError(err, jsonPath)
-			}
-			defer func() {
-				err = appendCompositeError(err, scope.Tx.FileContainer.Close(h))
-			}()
-			reader = h.File()
-		} else {
-			jsonTextValue, err := Evaluate(ctx, scope, jsonQuery.JsonText)
-			if err != nil {
-				return nil, err
-			}
-			jsonText := value.ToString(jsonTextValue)
-
-			if value.IsNull(jsonText) {
-				return nil, NewEmptyJsonTableError(jsonQuery)
-			}
-
-			reader = strings.NewReader(jsonText.(*value.String).Raw())
-			value.Discard(jsonText)
-		}
-
-		fileInfo := &FileInfo{
-			Path:      tableName.Literal,
-			Format:    cmd.JSON,
-			JsonQuery: jqStr,
-			Encoding:  text.UTF8,
-			LineBreak: scope.Tx.Flags.ExportOptions.LineBreak,
-			ViewType:  ViewTypeTemporaryTable,
-		}
-
-		view, err = loadViewFromJsonFile(reader, fileInfo, jsonQuery)
-		if err != nil {
-			if _, ok := err.(Error); !ok {
-				err = NewLoadJsonError(jsonQuery, err.Error())
-			}
-			return nil, err
 		}
 
 	case parser.Subquery:
@@ -582,13 +557,14 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 func loadObject(
 	ctx context.Context,
 	scope *ReferenceScope,
-	tableExpr parser.QueryExpression,
+	tablePath parser.QueryExpression,
 	tableName parser.Identifier,
 	forUpdate bool,
 	useInternalId bool,
+	isInlineObject bool,
 	options cmd.ImportOptions,
 ) (*View, error) {
-	if stdin, ok := tableExpr.(parser.Stdin); ok {
+	if stdin, ok := tablePath.(parser.Stdin); ok {
 		if options.Format == cmd.AutoSelect {
 			options.Format = scope.Tx.Flags.ImportOptions.Format
 		}
@@ -612,64 +588,66 @@ func loadObject(
 		return loadStdin(ctx, scope, fileInfo, stdin, tableName, forUpdate, useInternalId)
 	}
 
-	tableIdentifier := tableExpr.(parser.Identifier)
+	if !isInlineObject {
+		tableIdentifier := tablePath.(parser.Identifier)
 
-	if scope.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, scope.RecursiveTable.Name.Literal) && scope.RecursiveTmpView != nil {
-		view := scope.RecursiveTmpView.Copy()
-		if !strings.EqualFold(scope.RecursiveTable.Name.Literal, tableName.Literal) {
-			if err := view.Header.Update(tableName.Literal, nil); err != nil {
+		if scope.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, scope.RecursiveTable.Name.Literal) && scope.RecursiveTmpView != nil {
+			view := scope.RecursiveTmpView.Copy()
+			if !strings.EqualFold(scope.RecursiveTable.Name.Literal, tableName.Literal) {
+				if err := view.Header.Update(tableName.Literal, nil); err != nil {
+					return nil, err
+				}
+			}
+			return view, nil
+		}
+
+		if scope.InlineTableExists(tableIdentifier) {
+			if err := scope.AddAlias(tableName, ""); err != nil {
 				return nil, err
 			}
-		}
-		return view, nil
-	}
 
-	if scope.InlineTableExists(tableIdentifier) {
-		if err := scope.AddAlias(tableName, ""); err != nil {
-			return nil, err
+			view, _ := scope.GetInlineTable(tableIdentifier)
+			if !strings.EqualFold(tableIdentifier.Literal, tableName.Literal) {
+				if err := view.Header.Update(tableName.Literal, nil); err != nil {
+					return nil, err
+				}
+			}
+			return view, nil
 		}
 
-		view, _ := scope.GetInlineTable(tableIdentifier)
-		if !strings.EqualFold(tableIdentifier.Literal, tableName.Literal) {
-			if err := view.Header.Update(tableName.Literal, nil); err != nil {
+		filePath := tableIdentifier.Literal
+		if scope.TemporaryTableExists(filePath) {
+			if err := scope.AddAlias(tableName, filePath); err != nil {
 				return nil, err
 			}
-		}
-		return view, nil
-	}
 
-	filePath := tableIdentifier.Literal
-	if scope.TemporaryTableExists(filePath) {
-		if err := scope.AddAlias(tableName, filePath); err != nil {
-			return nil, err
-		}
-
-		var view *View
-		var err error
-		pathIdent := parser.Identifier{Literal: filePath}
-		if useInternalId {
-			if view, err = scope.GetTemporaryTableWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
-				return nil, err
+			var view *View
+			var err error
+			pathIdent := parser.Identifier{Literal: filePath}
+			if useInternalId {
+				if view, err = scope.GetTemporaryTableWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+					return nil, err
+				}
+			} else {
+				if view, err = scope.GetTemporaryTable(pathIdent); err != nil {
+					return nil, err
+				}
 			}
-		} else {
-			if view, err = scope.GetTemporaryTable(pathIdent); err != nil {
-				return nil, err
-			}
-		}
 
-		if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
-			if err := view.Header.Update(tableName.Literal, nil); err != nil {
-				return nil, err
+			if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
+				if err := view.Header.Update(tableName.Literal, nil); err != nil {
+					return nil, err
+				}
 			}
-		}
 
-		return view, nil
+			return view, nil
+		}
 	}
 
 	filePath, err := cacheViewFromFile(
 		ctx,
 		scope,
-		tableIdentifier,
+		tablePath,
 		forUpdate,
 		options,
 	)
@@ -678,7 +656,7 @@ func loadObject(
 	}
 
 	var view *View
-	pathIdent := parser.Identifier{Literal: filePath}
+	pathIdent := parser.Identifier{BaseExpr: tablePath.GetBaseExpr(), Literal: filePath}
 	if useInternalId {
 		if view, err = scope.Tx.cachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
 			if err == errTableNotLoaded {
@@ -692,8 +670,14 @@ func loadObject(
 		}
 	}
 
-	if err = scope.AddAlias(tableName, filePath); err != nil {
-		return nil, err
+	if isInlineObject {
+		filePath = ""
+	}
+
+	if 0 < len(tableName.Literal) {
+		if err = scope.AddAlias(tableName, filePath); err != nil {
+			return nil, err
+		}
 	}
 
 	if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
@@ -707,25 +691,52 @@ func loadObject(
 func cacheViewFromFile(
 	ctx context.Context,
 	scope *ReferenceScope,
-	tableIdentifier parser.Identifier,
+	tablePath parser.QueryExpression,
 	forUpdate bool,
 	options cmd.ImportOptions,
 ) (string, error) {
 	scope.Tx.viewLoadingMutex.Lock()
 	defer scope.Tx.viewLoadingMutex.Unlock()
 
-	filePath, cacheExists := scope.LoadFilePath(tableIdentifier.Literal)
-	if !cacheExists {
-		p, err := CreateFilePath(tableIdentifier, scope.Tx.Flags.Repository)
-		if err != nil {
-			return filePath, NewIOError(tableIdentifier, err.Error())
+	filePath, filePathForCacheKey, err := (func() (string, string, error) {
+		if isInlineObjectString(tablePath) {
+			return inlineObjectCachePath(tablePath), "", nil
 		}
-		filePath = p
+
+		ident := tablePath.(parser.Identifier)
+		fpathForCache := ""
+		fpath, ok := scope.LoadFilePath(ident.Literal)
+		if !ok {
+			p, err := CreateFilePath(ident, scope.Tx.Flags.Repository)
+			if err != nil {
+				return fpath, "", NewIOError(ident, err.Error())
+			}
+			fpath = p
+			fpathForCache = ident.Literal
+		}
+
+		return fpath, fpathForCache, nil
+	})()
+
+	if err != nil {
+		return filePath, err
 	}
 
 	view, ok := scope.Tx.cachedViews.Load(filePath)
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
-		fileInfo, err := NewFileInfo(tableIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
+		fileInfo, err := (func() (*FileInfo, error) {
+			if isInlineObjectString(tablePath) {
+				return &FileInfo{
+					Path:      filePath,
+					Format:    options.Format,
+					Delimiter: options.Delimiter,
+					Encoding:  options.Encoding,
+				}, nil
+			}
+
+			return NewFileInfo(tablePath.(parser.Identifier), scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
+		})()
+
 		if err != nil {
 			return filePath, err
 		}
@@ -749,25 +760,40 @@ func cacheViewFromFile(
 				return filePath, err
 			}
 
-			var fp *os.File
-			if forUpdate {
-				h, err := file.NewHandlerForUpdate(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
-				if err != nil {
-					tableIdentifier.Literal = fileInfo.Path
-					return filePath, ConvertFileHandlerError(err, tableIdentifier)
+			tableIdentifier := (func() parser.Identifier {
+				if isInlineObjectString(tablePath) {
+					return parser.Identifier{
+						BaseExpr: tablePath.GetBaseExpr(),
+						Literal:  getInlineObjectString(tablePath),
+					}
 				}
-				fileInfo.Handler = h
-				fp = h.File()
+
+				return tablePath.(parser.Identifier)
+			})()
+
+			var fp io.ReadSeeker
+			if isInlineObjectString(tablePath) {
+				fp = strings.NewReader(getInlineObjectString(tablePath))
 			} else {
-				h, err := file.NewHandlerForRead(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
-				if err != nil {
-					tableIdentifier.Literal = fileInfo.Path
-					return filePath, ConvertFileHandlerError(err, tableIdentifier)
+				if forUpdate {
+					h, err := file.NewHandlerForUpdate(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
+					if err != nil {
+						tableIdentifier.Literal = fileInfo.Path
+						return filePath, ConvertFileHandlerError(err, tableIdentifier)
+					}
+					fileInfo.Handler = h
+					fp = h.File()
+				} else {
+					h, err := file.NewHandlerForRead(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
+					if err != nil {
+						tableIdentifier.Literal = fileInfo.Path
+						return filePath, ConvertFileHandlerError(err, tableIdentifier)
+					}
+					defer func() {
+						err = appendCompositeError(err, scope.Tx.FileContainer.Close(h))
+					}()
+					fp = h.File()
 				}
-				defer func() {
-					err = appendCompositeError(err, scope.Tx.FileContainer.Close(h))
-				}()
-				fp = h.File()
 			}
 
 			loadView, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options.WithoutNull, tableIdentifier)
@@ -781,8 +807,8 @@ func cacheViewFromFile(
 			scope.Tx.cachedViews.Set(loadView)
 		}
 	}
-	if !cacheExists {
-		scope.StoreFilePath(tableIdentifier.Literal, filePath)
+	if 0 < len(filePathForCacheKey) {
+		scope.StoreFilePath(filePathForCacheKey, filePath)
 	}
 	return filePath, nil
 }

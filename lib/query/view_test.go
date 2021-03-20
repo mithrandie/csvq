@@ -2338,9 +2338,10 @@ var viewLoadTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{column1, column2}"),
+						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2359,8 +2360,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "jt",
+				Path:      "",
 				Format:    cmd.JSON,
+				Delimiter: ',',
 				JsonQuery: "{column1, column2}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
@@ -2380,9 +2382,10 @@ var viewLoadTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2395,9 +2398,10 @@ var viewLoadTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{column1, column2}"),
+						Path:          parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2410,39 +2414,42 @@ var viewLoadTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewNullValue(),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewNullValue(),
+						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
 			},
 		},
-		Error: "json query is empty",
+		Error: "invalid json query: NULL",
 	},
 	{
 		Name: "LoadView Json Table JsonText is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.NewNullValue(),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{column1, column2}"),
+						Path:          parser.NewNullValue(),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
 			},
 		},
-		Error: "json table is empty",
+		Error: "inline table is empty",
 	},
 	{
 		Name: "LoadView Json Table Loading Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2"),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{column1, column2"),
+						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2455,9 +2462,10 @@ var viewLoadTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{}"),
-						JsonText: parser.Identifier{Literal: "table"},
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table"},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2476,8 +2484,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "jt",
+				Path:      "",
 				Format:    cmd.JSON,
+				Delimiter: ',',
 				JsonQuery: "{}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
@@ -2497,15 +2506,16 @@ var viewLoadTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{}"),
-						JsonText: parser.Identifier{Literal: "table"},
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table"},
 					},
 				},
 			},
 		},
 		Result: &View{
-			Header: NewHeader("", []string{"item1", "item2"}),
+			Header: NewHeader("table", []string{"item1", "item2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
@@ -2519,22 +2529,30 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "",
 				Format:    cmd.JSON,
+				Delimiter: ',',
 				JsonQuery: "{}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"TABLE": "",
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "LoadView Json Table From File Path Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{}"),
-						JsonText: parser.Identifier{Literal: "notexist"},
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "notexist"},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
