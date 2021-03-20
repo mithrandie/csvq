@@ -1158,12 +1158,12 @@ func RegExpMatch(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.
 	s, regExp, err := prepareRegExpMatch(fn, args)
 	if err != nil {
 		if err == regExpStrIsNull {
-			return value.NewNull(), nil
+			return value.NewTernary(ternary.UNKNOWN), nil
 		}
 		return nil, err
 	}
 
-	return value.NewBoolean(regExp.MatchString(s)), nil
+	return value.NewTernary(ternary.ConvertFromBool(regExp.MatchString(s))), nil
 }
 
 func RegExpFind(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {

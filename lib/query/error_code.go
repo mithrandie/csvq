@@ -33,9 +33,10 @@ const (
 	ErrorSubqueryTooManyFields                = 10602
 	ErrorJsonQueryTooManyRecords              = 10701
 	ErrorLoadJson                             = 10702
-	ErrorEmptyJsonQuery                       = 10703
-	ErrorEmptyJsonTable                       = 10801
+	ErrorEmptyJsonQuery                       = 10703 // Not in use after v1.14.0
+	ErrorEmptyJsonTable                       = 10801 // Not in use after v1.14.0
 	ErrorIncorrectLateralUsage                = 10802
+	ErrorEmptyInlineTable                     = 10803
 	ErrorInvalidTableObject                   = 10901
 	ErrorTableObjectInvalidDelimiter          = 10902
 	ErrorTableObjectInvalidDelimiterPositions = 10903
@@ -132,8 +133,9 @@ const (
 	ErrorFileUnableToRead = 90183
 
 	//System Error
-	ErrorSystemError     = 90320
-	ErrorExternalCommand = 30330
+	ErrorSystemError      = 90320
+	ErrorExternalCommand  = 30330
+	ErrorHttpRequestError = 30400
 
 	//User Triggered Error
 	ErrorExit          = 90640

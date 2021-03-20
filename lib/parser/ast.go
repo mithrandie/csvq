@@ -819,17 +819,17 @@ func tableName(expr QueryExpression) Identifier {
 			BaseExpr: file.BaseExpr,
 			Literal:  FormatTableName(file.Literal),
 		}
-	case TableObject:
-		obj, _ := expr.(TableObject)
-		return tableName(obj.Path)
-	case JsonQuery, Subquery:
-		return Identifier{
-			BaseExpr: expr.GetBaseExpr(),
-		}
-	default:
+	case Stdin:
 		return Identifier{
 			BaseExpr: expr.GetBaseExpr(),
 			Literal:  expr.String(),
+		}
+	case TableObject:
+		obj, _ := expr.(TableObject)
+		return tableName(obj.Path)
+	default:
+		return Identifier{
+			BaseExpr: expr.GetBaseExpr(),
 		}
 	}
 }

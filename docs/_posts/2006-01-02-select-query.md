@@ -114,7 +114,7 @@ table
 table_entity
   : table_identifier
   | table_object
-  | json_inline_table
+  | inline_table_object
 
 table_identifier
   : table_name
@@ -150,9 +150,11 @@ table_object
   | JSON(json_query, table_identifier)
   | LTSV(table_identifier [, encoding [, without_null]])
 
-json_inline_table
-  : JSON_TABLE(json_query, json_file)
-  | JSON_TABLE(json_query, json_data)
+inline_table_object
+  : CSV_INLINE(delimiter, table_name [, encoding [, no_header [, without_null]]])
+  | CSV_INLINE(delimiter, csv_data)
+  | JSON_INLINE(json_query, table_name [, encoding [, no_header [, without_null]]])
+  | JSON_INLINE(json_query, json_data)
 
 ```
 
@@ -229,10 +231,6 @@ _no_header_
 
 _without_null_
 : [boolean]({{ '/reference/value.html#boolean' | relative_url }})
-
-> A Table Object Expression for JSON loads data from JSON file, and you can operate the data. 
-> A JSON Table Expression can load data from JSON file as well, but the result is treated as a inline table, so you can only refer the result within the query.
-
 
 #### Special Tables
 {: #special_tables}
