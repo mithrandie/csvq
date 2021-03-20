@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -32,7 +33,7 @@ import (
 const fileLoadingPreparedRecordSetCap = 300
 const fileLoadingBuffer = 300
 
-const inlineObjectHashPrefix = "@__io__?"
+const inlineObjectHashPrefix = "@__io__"
 
 type ApplyView struct {
 	View     *View
@@ -55,6 +56,15 @@ func isInlineObjectData(tablePath parser.QueryExpression) bool {
 
 func getInlineObjectData(tablePath parser.QueryExpression) string {
 	return tablePath.(parser.PrimitiveType).Value.(*value.String).Raw()
+}
+
+func isInlineObjectURL(tablePath parser.QueryExpression) bool {
+	i, ok := tablePath.(parser.Identifier)
+	if !ok {
+		return false
+	}
+
+	return strings.HasPrefix(i.Literal, "http://") || strings.HasPrefix(i.Literal, "https://")
 }
 
 type View struct {
@@ -129,6 +139,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		view = loadDualView()
 	case parser.TableObject:
 		tableObject := table.Object.(parser.TableObject)
+		tablePath := tableObject.Path
 		options := scope.Tx.Flags.ImportOptions.Copy()
 
 		var felem value.Primary
@@ -154,7 +165,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				if value.IsNull(txt) {
 					return nil, NewEmptyInlineTableError(tableObject)
 				}
-				tableObject.Path = parser.PrimitiveType{BaseExpr: tableObject.GetBaseExpr(), Value: txt}
+				tablePath = parser.PrimitiveType{BaseExpr: tableObject.GetBaseExpr(), Value: txt}
 			}
 
 			forUpdate = false
@@ -303,7 +314,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		view, err = loadObject(
 			ctx,
 			scope,
-			table.Object.(parser.TableObject).Path,
+			tablePath,
 			tableName,
 			forUpdate,
 			useInternalId,
@@ -656,6 +667,7 @@ func loadObject(
 		scope,
 		tablePath,
 		forUpdate,
+		isInlineObject,
 		options,
 	)
 	if err != nil {
@@ -700,6 +712,7 @@ func cacheViewFromFile(
 	scope *ReferenceScope,
 	tablePath parser.QueryExpression,
 	forUpdate bool,
+	isInlineObject bool,
 	options cmd.ImportOptions,
 ) (string, error) {
 	scope.Tx.viewLoadingMutex.Lock()
@@ -708,6 +721,9 @@ func cacheViewFromFile(
 	filePath, filePathForCacheKey, err := (func() (string, string, error) {
 		if isInlineObjectData(tablePath) {
 			return inlineObjectCacheKey(tablePath), "", nil
+		}
+		if isInlineObject && isInlineObjectURL(tablePath) {
+			return tablePath.(parser.Identifier).Literal, "", nil
 		}
 
 		ident := tablePath.(parser.Identifier)
@@ -732,7 +748,7 @@ func cacheViewFromFile(
 	view, ok := scope.Tx.cachedViews.Load(filePath)
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 		fileInfo, err := (func() (*FileInfo, error) {
-			if isInlineObjectData(tablePath) {
+			if isInlineObject && (isInlineObjectData(tablePath) || isInlineObjectURL(tablePath)) {
 				return &FileInfo{
 					Path:      filePath,
 					Format:    options.Format,
@@ -779,8 +795,20 @@ func cacheViewFromFile(
 			})()
 
 			var fp io.ReadSeeker
-			if isInlineObjectData(tablePath) {
+			if isInlineObject && isInlineObjectData(tablePath) {
 				fp = strings.NewReader(getInlineObjectData(tablePath))
+			} else if isInlineObject && isInlineObjectURL(tablePath) {
+				i := tablePath.(parser.Identifier)
+				res, err := http.Get(i.Literal)
+				if err != nil {
+					return filePath, NewHttpRequestError(tablePath, i.Literal, err.Error())
+				}
+				if res.StatusCode < 200 || 300 <= res.StatusCode {
+					return filePath, NewHttpRequestError(tablePath, i.Literal, fmt.Sprintf("code %d, status %q", res.StatusCode, res.Status))
+				}
+
+				body, _ := ioutil.ReadAll(res.Body)
+				fp = bytes.NewReader(body)
 			} else {
 				if forUpdate {
 					h, err := file.NewHandlerForUpdate(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)

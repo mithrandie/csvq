@@ -119,6 +119,7 @@ const (
 	ErrMsgUnknownFormatPlaceholder             = "%q is an unknown placeholder"
 	ErrMsgFormatUnexpectedTermination          = "unexpected termination of format string"
 	ErrMsgExternalCommand                      = "external command: %s"
+	ErrMsgHttpRequest                          = "http request to %s: %s"
 	ErrMsgInvalidReloadType                    = "%s is an unknown reload type"
 	ErrMsgLoadConfiguration                    = "configuration loading error: %s"
 	ErrMsgDuplicateStatementName               = "statement %s is a duplicate"
@@ -1363,6 +1364,16 @@ type ExternalCommandError struct {
 func NewExternalCommandError(expr parser.Expression, message string) error {
 	return &ExternalCommandError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgExternalCommand, message), ReturnCodeSystemError, ErrorExternalCommand),
+	}
+}
+
+type HttpRequestError struct {
+	*BaseError
+}
+
+func NewHttpRequestError(expr parser.Expression, url string, message string) error {
+	return &HttpRequestError{
+		NewBaseError(expr, fmt.Sprintf(ErrMsgHttpRequest, url, message), ReturnCodeSystemError, ErrorHttpRequestError),
 	}
 }
 

@@ -133,8 +133,9 @@ const (
 	ErrorFileUnableToRead = 90183
 
 	//System Error
-	ErrorSystemError     = 90320
-	ErrorExternalCommand = 30330
+	ErrorSystemError      = 90320
+	ErrorExternalCommand  = 30330
+	ErrorHttpRequestError = 30400
 
 	//User Triggered Error
 	ErrorExit          = 90640
