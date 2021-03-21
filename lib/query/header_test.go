@@ -176,6 +176,17 @@ func TestHeader_ContainsObject(t *testing.T) {
 			t.Errorf("%s: index = %d, want %d", v.Expr.String(), result, v.Result)
 		}
 	}
+
+	dual := NewDualView()
+	expr := parser.NewStringValue("")
+
+	result, ok := dual.Header.ContainsObject(expr)
+	if ok != false {
+		t.Errorf("%s: contains flag = %t, want %t", "<empty string>", ok, false)
+	}
+	if result != -1 {
+		t.Errorf("%s: index = %d, want %d", "<empty string>", result, -1)
+	}
 }
 
 var headerFieldNumberIndexTests = []struct {
