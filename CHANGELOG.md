@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.14.1
+
+Released on March 21, 2021
+
+- Fix a bug of dual table. ([GitHub #49](https://github.com/mithrandie/csvq/issues/49))
+
 ## Version 1.14.0
 
 Released on March 9, 2021
