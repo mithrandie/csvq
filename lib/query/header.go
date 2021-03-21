@@ -137,7 +137,7 @@ func (h Header) ContainsObject(obj parser.QueryExpression) (int, bool) {
 			continue
 		}
 
-		if !strings.EqualFold(f.Column, column) {
+		if (f.Number < 1 && len(f.Column) < 1) || !strings.EqualFold(f.Column, column) {
 			continue
 		}
 

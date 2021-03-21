@@ -136,7 +136,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 	switch table.Object.(type) {
 	case parser.Dual:
-		view = loadDualView()
+		view = NewDualView()
 	case parser.TableObject:
 		tableObject := table.Object.(parser.TableObject)
 		tablePath := tableObject.Path
@@ -1130,7 +1130,7 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 	return view, nil
 }
 
-func loadDualView() *View {
+func NewDualView() *View {
 	return &View{
 		Header:    NewEmptyHeader(1),
 		RecordSet: RecordSet{NewEmptyRecord(1)},
