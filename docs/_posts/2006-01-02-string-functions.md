@@ -8,9 +8,9 @@ category: reference
 
 | name | description |
 | :- | :- |
-| [TRIM](#trim) | Return a string with all leading and trailing characters removed |
-| [LTRIM](#ltrim) | Return a string with all leading characters removed |
-| [RTRIM](#rtrim) | Return a string with all trailing characters removed |
+| [TRIM](#trim) | Return a string with all the specified leading and trailing characters removed |
+| [LTRIM](#ltrim) | Return a string with all the specified leading characters removed |
+| [RTRIM](#rtrim) | Return a string with all the specified trailing characters removed |
 | [UPPER](#upper) | Return a string with all characters mapped to their upper case |
 | [LOWER](#lower) | Return a string with all characters mapped to their lower case |
 | [BASE64_ENCODE](#base64_encode) | Return a base64 encoding of a string |
