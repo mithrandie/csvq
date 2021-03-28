@@ -1,3 +1,3 @@
 package query
 
-var Version = "v1.14.1"
+var Version = "v1.15.0"
