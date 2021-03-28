@@ -373,11 +373,11 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: JsonQuery{
-								BaseExpr:  &BaseExpr{line: 1, char: 16},
-								JsonQuery: Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
-								Query:     NewStringValue("key"),
-								JsonText:  Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "table.json", Quoted: true},
+							Object: TableObject{
+								BaseExpr:      &BaseExpr{line: 1, char: 16},
+								Type:          Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
+								FormatElement: NewStringValue("key"),
+								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 34}, Literal: "table.json", Quoted: true},
 							},
 						},
 					}},
@@ -386,7 +386,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select c1 from json_table('key', '{\"key2\":1}') jt",
+		Input: "select c1 from csv_inline(',', `table.csv`, 'arg')",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -400,13 +400,13 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: JsonQuery{
-								BaseExpr:  &BaseExpr{line: 1, char: 16},
-								JsonQuery: Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
-								Query:     NewStringValue("key"),
-								JsonText:  NewStringValue("{\"key2\":1}"),
+							Object: TableObject{
+								BaseExpr:      &BaseExpr{line: 1, char: 16},
+								Type:          Token{Token: CSV_INLINE, Literal: "csv_inline", Line: 1, Char: 16},
+								FormatElement: NewStringValue(","),
+								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 32}, Literal: "table.csv", Quoted: true},
+								Args:          []QueryExpression{NewStringValue("arg")},
 							},
-							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 48}, Literal: "jt"},
 						},
 					}},
 				},
@@ -414,7 +414,7 @@ var parseTests = []struct {
 		},
 	},
 	{
-		Input: "select c1 from json_table('key', '{\"key2\":1}') as jt",
+		Input: "select c1 from json_inline('key', '{\"key2\":1}') jt",
 		Output: []Statement{
 			SelectQuery{
 				SelectEntity: SelectEntity{
@@ -428,14 +428,43 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: JsonQuery{
-								BaseExpr:  &BaseExpr{line: 1, char: 16},
-								JsonQuery: Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
-								Query:     NewStringValue("key"),
-								JsonText:  NewStringValue("{\"key2\":1}"),
+							Object: TableObject{
+								BaseExpr:      &BaseExpr{line: 1, char: 16},
+								Type:          Token{Token: JSON_INLINE, Literal: "json_inline", Line: 1, Char: 16},
+								FormatElement: NewStringValue("key"),
+								Path:          NewStringValue("{\"key2\":1}"),
 							},
-							As:    Token{Token: AS, Literal: "as", Line: 1, Char: 48},
-							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 51}, Literal: "jt"},
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 49}, Literal: "jt"},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 from json_table('key', '{\"key2\":1}', 'arg') as jt",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{
+							Object: TableObject{
+								BaseExpr:      &BaseExpr{line: 1, char: 16},
+								Type:          Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
+								FormatElement: NewStringValue("key"),
+								Path:          NewStringValue("{\"key2\":1}"),
+								Args:          []QueryExpression{NewStringValue("arg")},
+							},
+							As:    Token{Token: AS, Literal: "as", Line: 1, Char: 55},
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 58}, Literal: "jt"},
 						},
 					}},
 				},

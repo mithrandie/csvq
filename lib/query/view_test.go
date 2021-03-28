@@ -2334,13 +2334,14 @@ var viewLoadTests = []struct {
 		Error: "file notexist does not exist",
 	},
 	{
-		Name: "LoadView Json Table",
+		Name: "LoadView Json Inline Table",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{column1, column2}"),
+						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2359,8 +2360,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "jt",
+				Path:      "",
 				Format:    cmd.JSON,
+				Delimiter: ',',
 				JsonQuery: "{column1, column2}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
@@ -2376,13 +2378,14 @@ var viewLoadTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView Json Table Query Evaluation Error",
+		Name: "LoadView Json Inline Table Query Evaluation Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2391,13 +2394,14 @@ var viewLoadTests = []struct {
 		Error: "field notexists does not exist",
 	},
 	{
-		Name: "LoadView Json Table JsonText Evaluation Error",
+		Name: "LoadView Json Inline Table JsonText Evaluation Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{column1, column2}"),
+						Path:          parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2406,43 +2410,46 @@ var viewLoadTests = []struct {
 		Error: "field notexists does not exist",
 	},
 	{
-		Name: "LoadView Json Table Query is Null",
+		Name: "LoadView Json Inline Table Query is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewNullValue(),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewNullValue(),
+						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
 			},
 		},
-		Error: "json query is empty",
+		Error: "invalid json query: NULL",
 	},
 	{
-		Name: "LoadView Json Table JsonText is Null",
+		Name: "LoadView Json Inline Table JsonText is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2}"),
-						JsonText: parser.NewNullValue(),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{column1, column2}"),
+						Path:          parser.NewNullValue(),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
 			},
 		},
-		Error: "json table is empty",
+		Error: "inline table is empty",
 	},
 	{
-		Name: "LoadView Json Table Loading Error",
+		Name: "LoadView Json Inline Table Loading Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{column1, column2"),
-						JsonText: parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{column1, column2"),
+						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2451,13 +2458,14 @@ var viewLoadTests = []struct {
 		Error: "json loading error: column 17: unexpected termination",
 	},
 	{
-		Name: "LoadView Json Table From File",
+		Name: "LoadView Json Inline Table From File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{}"),
-						JsonText: parser.Identifier{Literal: "table"},
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_INLINE, Literal: "json_inline"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table"},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
@@ -2476,8 +2484,9 @@ var viewLoadTests = []struct {
 				}),
 			},
 			FileInfo: &FileInfo{
-				Path:      "jt",
+				Path:      "",
 				Format:    cmd.JSON,
+				Delimiter: ',',
 				JsonQuery: "{}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
@@ -2493,19 +2502,20 @@ var viewLoadTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView Json Table From File with No Alias",
+		Name: "LoadView Json Inline Table From File with No Alias",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{}"),
-						JsonText: parser.Identifier{Literal: "table"},
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table"},
 					},
 				},
 			},
 		},
 		Result: &View{
-			Header: NewHeader("", []string{"item1", "item2"}),
+			Header: NewHeader("table", []string{"item1", "item2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
@@ -2519,28 +2529,80 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "",
 				Format:    cmd.JSON,
+				Delimiter: ',',
 				JsonQuery: "{}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 				ViewType:  ViewTypeTemporaryTable,
 			},
 		},
-		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{}}, time.Time{}, nil),
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"TABLE": "",
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView Json Table From File Path Error",
+		Name: "LoadView Json Inline Table From File Path Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.JsonQuery{
-						Query:    parser.NewStringValue("{}"),
-						JsonText: parser.Identifier{Literal: "notexist"},
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "notexist"},
 					},
 					Alias: parser.Identifier{Literal: "jt"},
 				},
 			},
 		},
 		Error: "file notexist does not exist",
+	},
+	{
+		Name: "LoadView CSV Inline Table",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.CSV_INLINE, Literal: "csv_inline"},
+						FormatElement: parser.NewStringValue(","),
+						Path:          parser.NewStringValue("c1,c2\n1,a\n2,b\n"),
+					},
+					Alias: parser.Identifier{Literal: "ci"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("ci", []string{"c1", "c2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("a"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("b"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "",
+				Format:    cmd.CSV,
+				Delimiter: ',',
+				JsonQuery: "",
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeTemporaryTable,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"CI": "",
+				},
+			},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "LoadView Subquery",

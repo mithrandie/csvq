@@ -9,10 +9,13 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
+	gojson "encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"math"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -31,113 +34,118 @@ import (
 type BuiltInFunction func(parser.Function, []value.Primary, *cmd.Flags) (value.Primary, error)
 
 var Functions = map[string]BuiltInFunction{
-	"COALESCE":         Coalesce,
-	"IF":               If,
-	"IFNULL":           Ifnull,
-	"NULLIF":           Nullif,
-	"CEIL":             Ceil,
-	"FLOOR":            Floor,
-	"ROUND":            Round,
-	"ABS":              Abs,
-	"ACOS":             Acos,
-	"ASIN":             Asin,
-	"ATAN":             Atan,
-	"ATAN2":            Atan2,
-	"COS":              Cos,
-	"SIN":              Sin,
-	"TAN":              Tan,
-	"EXP":              Exp,
-	"EXP2":             Exp2,
-	"EXPM1":            Expm1,
-	"LOG":              MathLog,
-	"LOG10":            Log10,
-	"LOG2":             Log2,
-	"LOG1P":            Log1p,
-	"SQRT":             Sqrt,
-	"POW":              Pow,
-	"BIN_TO_DEC":       BinToDec,
-	"OCT_TO_DEC":       OctToDec,
-	"HEX_TO_DEC":       HexToDec,
-	"ENOTATION_TO_DEC": EnotationToDec,
-	"BIN":              Bin,
-	"OCT":              Oct,
-	"HEX":              Hex,
-	"ENOTATION":        Enotation,
-	"NUMBER_FORMAT":    NumberFormat,
-	"RAND":             Rand,
-	"TRIM":             Trim,
-	"LTRIM":            Ltrim,
-	"RTRIM":            Rtrim,
-	"UPPER":            Upper,
-	"LOWER":            Lower,
-	"BASE64_ENCODE":    Base64Encode,
-	"BASE64_DECODE":    Base64Decode,
-	"HEX_ENCODE":       HexEncode,
-	"HEX_DECODE":       HexDecode,
-	"LEN":              Len,
-	"BYTE_LEN":         ByteLen,
-	"WIDTH":            Width,
-	"LPAD":             Lpad,
-	"RPAD":             Rpad,
-	"SUBSTRING":        Substring,
-	"SUBSTR":           Substr,
-	"INSTR":            Instr,
-	"LIST_ELEM":        ListElem,
-	"REPLACE":          ReplaceFn,
-	"FORMAT":           Format,
-	"JSON_VALUE":       JsonValue,
-	"MD5":              Md5,
-	"SHA1":             Sha1,
-	"SHA256":           Sha256,
-	"SHA512":           Sha512,
-	"MD5_HMAC":         Md5Hmac,
-	"SHA1_HMAC":        Sha1Hmac,
-	"SHA256_HMAC":      Sha256Hmac,
-	"SHA512_HMAC":      Sha512Hmac,
-	"DATETIME_FORMAT":  DatetimeFormat,
-	"YEAR":             Year,
-	"MONTH":            Month,
-	"DAY":              Day,
-	"HOUR":             Hour,
-	"MINUTE":           Minute,
-	"SECOND":           Second,
-	"MILLISECOND":      Millisecond,
-	"MICROSECOND":      Microsecond,
-	"NANOSECOND":       Nanosecond,
-	"WEEKDAY":          Weekday,
-	"UNIX_TIME":        UnixTime,
-	"UNIX_NANO_TIME":   UnixNanoTime,
-	"DAY_OF_YEAR":      DayOfYear,
-	"WEEK_OF_YEAR":     WeekOfYear,
-	"ADD_YEAR":         AddYear,
-	"ADD_MONTH":        AddMonth,
-	"ADD_DAY":          AddDay,
-	"ADD_HOUR":         AddHour,
-	"ADD_MINUTE":       AddMinute,
-	"ADD_SECOND":       AddSecond,
-	"ADD_MILLI":        AddMilli,
-	"ADD_MICRO":        AddMicro,
-	"ADD_NANO":         AddNano,
-	"TRUNC_MONTH":      TruncMonth,
-	"TRUNC_DAY":        TruncDay,
-	"TRUNC_TIME":       TruncTime,
-	"TRUNC_HOUR":       TruncTime,
-	"TRUNC_MINUTE":     TruncMinute,
-	"TRUNC_SECOND":     TruncSecond,
-	"TRUNC_MILLI":      TruncMilli,
-	"TRUNC_MICRO":      TruncMicro,
-	"TRUNC_NANO":       TruncNano,
-	"DATE_DIFF":        DateDiff,
-	"TIME_DIFF":        TimeDiff,
-	"TIME_NANO_DIFF":   TimeNanoDiff,
-	"UTC":              UTC,
-	"NANO_TO_DATETIME": NanoToDatetime,
-	"STRING":           String,
-	"INTEGER":          Integer,
-	"FLOAT":            Float,
-	"BOOLEAN":          Boolean,
-	"TERNARY":          Ternary,
-	"DATETIME":         Datetime,
+	"COALESCE":               Coalesce,
+	"IF":                     If,
+	"IFNULL":                 Ifnull,
+	"NULLIF":                 Nullif,
+	"CEIL":                   Ceil,
+	"FLOOR":                  Floor,
+	"ROUND":                  Round,
+	"ABS":                    Abs,
+	"ACOS":                   Acos,
+	"ASIN":                   Asin,
+	"ATAN":                   Atan,
+	"ATAN2":                  Atan2,
+	"COS":                    Cos,
+	"SIN":                    Sin,
+	"TAN":                    Tan,
+	"EXP":                    Exp,
+	"EXP2":                   Exp2,
+	"EXPM1":                  Expm1,
+	"LOG":                    MathLog,
+	"LOG10":                  Log10,
+	"LOG2":                   Log2,
+	"LOG1P":                  Log1p,
+	"SQRT":                   Sqrt,
+	"POW":                    Pow,
+	"BIN_TO_DEC":             BinToDec,
+	"OCT_TO_DEC":             OctToDec,
+	"HEX_TO_DEC":             HexToDec,
+	"ENOTATION_TO_DEC":       EnotationToDec,
+	"BIN":                    Bin,
+	"OCT":                    Oct,
+	"HEX":                    Hex,
+	"ENOTATION":              Enotation,
+	"NUMBER_FORMAT":          NumberFormat,
+	"RAND":                   Rand,
+	"TRIM":                   Trim,
+	"LTRIM":                  Ltrim,
+	"RTRIM":                  Rtrim,
+	"UPPER":                  Upper,
+	"LOWER":                  Lower,
+	"BASE64_ENCODE":          Base64Encode,
+	"BASE64_DECODE":          Base64Decode,
+	"HEX_ENCODE":             HexEncode,
+	"HEX_DECODE":             HexDecode,
+	"LEN":                    Len,
+	"BYTE_LEN":               ByteLen,
+	"WIDTH":                  Width,
+	"LPAD":                   Lpad,
+	"RPAD":                   Rpad,
+	"SUBSTRING":              Substring,
+	"SUBSTR":                 Substr,
+	"INSTR":                  Instr,
+	"LIST_ELEM":              ListElem,
+	"REPLACE":                ReplaceFn,
+	"REGEXP_MATCH":           RegExpMatch,
+	"REGEXP_FIND":            RegExpFind,
+	"REGEXP_FIND_SUBMATCHES": RegExpFindSubMatches,
+	"REGEXP_FIND_ALL":        RegExpFindAll,
+	"REGEXP_REPLACE":         RegExpReplace,
+	"FORMAT":                 Format,
+	"JSON_VALUE":             JsonValue,
+	"MD5":                    Md5,
+	"SHA1":                   Sha1,
+	"SHA256":                 Sha256,
+	"SHA512":                 Sha512,
+	"MD5_HMAC":               Md5Hmac,
+	"SHA1_HMAC":              Sha1Hmac,
+	"SHA256_HMAC":            Sha256Hmac,
+	"SHA512_HMAC":            Sha512Hmac,
+	"DATETIME_FORMAT":        DatetimeFormat,
+	"YEAR":                   Year,
+	"MONTH":                  Month,
+	"DAY":                    Day,
+	"HOUR":                   Hour,
+	"MINUTE":                 Minute,
+	"SECOND":                 Second,
+	"MILLISECOND":            Millisecond,
+	"MICROSECOND":            Microsecond,
+	"NANOSECOND":             Nanosecond,
+	"WEEKDAY":                Weekday,
+	"UNIX_TIME":              UnixTime,
+	"UNIX_NANO_TIME":         UnixNanoTime,
+	"DAY_OF_YEAR":            DayOfYear,
+	"WEEK_OF_YEAR":           WeekOfYear,
+	"ADD_YEAR":               AddYear,
+	"ADD_MONTH":              AddMonth,
+	"ADD_DAY":                AddDay,
+	"ADD_HOUR":               AddHour,
+	"ADD_MINUTE":             AddMinute,
+	"ADD_SECOND":             AddSecond,
+	"ADD_MILLI":              AddMilli,
+	"ADD_MICRO":              AddMicro,
+	"ADD_NANO":               AddNano,
+	"TRUNC_MONTH":            TruncMonth,
+	"TRUNC_DAY":              TruncDay,
+	"TRUNC_TIME":             TruncTime,
+	"TRUNC_HOUR":             TruncTime,
+	"TRUNC_MINUTE":           TruncMinute,
+	"TRUNC_SECOND":           TruncSecond,
+	"TRUNC_MILLI":            TruncMilli,
+	"TRUNC_MICRO":            TruncMicro,
+	"TRUNC_NANO":             TruncNano,
+	"DATE_DIFF":              DateDiff,
+	"TIME_DIFF":              TimeDiff,
+	"TIME_NANO_DIFF":         TimeNanoDiff,
+	"UTC":                    UTC,
+	"NANO_TO_DATETIME":       NanoToDatetime,
+	"STRING":                 String,
+	"INTEGER":                Integer,
+	"FLOAT":                  Float,
+	"BOOLEAN":                Boolean,
+	"TERNARY":                Ternary,
+	"DATETIME":               Datetime,
 }
 
 type Direction string
@@ -1069,6 +1077,164 @@ func ReplaceFn(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Pr
 
 	r := strings.Replace(str, oldStr, newStr, -1)
 	return value.NewString(r), nil
+}
+
+var regExpStrIsNull = errors.New("cannot convert the value to string")
+
+func prepareRegExp(fn parser.Function, str value.Primary, expr value.Primary, flags value.Primary) (string, *regexp.Regexp, error) {
+	sVal := value.ToString(str)
+	if value.IsNull(sVal) {
+		return "", nil, regExpStrIsNull
+	}
+	s := sVal.(*value.String).Raw()
+	value.Discard(sVal)
+
+	exprVal := value.ToString(expr)
+	if value.IsNull(exprVal) {
+		return "", nil, NewFunctionInvalidArgumentError(fn, fn.Name, "pattern must be a string")
+	}
+	exprStr := exprVal.(*value.String).Raw()
+	value.Discard(exprVal)
+
+	if flags != nil && !value.IsNull(flags) {
+		flagsVal := value.ToString(flags)
+		if value.IsNull(flagsVal) {
+			return s, nil, NewFunctionInvalidArgumentError(fn, fn.Name, "flags must be a string")
+		}
+		flagsStr := flagsVal.(*value.String).Raw()
+		value.Discard(flagsVal)
+
+		if !validFlagsRegExp.MatchString(flagsStr) {
+			return s, nil, NewFunctionInvalidArgumentError(fn, fn.Name, fmt.Sprintf("invalid flag %q", flagsStr))
+		}
+
+		exprStr = strings.Join([]string{"(?", flagsStr, ")", exprStr}, "")
+	}
+
+	regExp, err := RegExps.Get(exprStr)
+	if err != nil {
+		return s, nil, NewFunctionInvalidArgumentError(fn, fn.Name, err.Error())
+	}
+
+	return s, regExp, nil
+}
+
+func prepareRegExpMatch(fn parser.Function, args []value.Primary) (string, *regexp.Regexp, error) {
+	if len(args) < 2 || 3 < len(args) {
+		return "", nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{2, 3})
+	}
+
+	var flags value.Primary
+	if 2 < len(args) {
+		flags = args[2]
+	}
+
+	return prepareRegExp(fn, args[0], args[1], flags)
+}
+
+func prepareRegExpReplace(fn parser.Function, args []value.Primary) (string, *regexp.Regexp, string, error) {
+	if len(args) < 3 || 4 < len(args) {
+		return "", nil, "", NewFunctionArgumentLengthError(fn, fn.Name, []int{3, 4})
+	}
+
+	var flags value.Primary
+	if 3 < len(args) {
+		flags = args[3]
+	}
+
+	s, regExp, err := prepareRegExp(fn, args[0], args[1], flags)
+
+	replVal := value.ToString(args[2])
+	if value.IsNull(replVal) {
+		return "", nil, "", NewFunctionInvalidArgumentError(fn, fn.Name, "replacement string must be a string")
+	}
+	replStr := replVal.(*value.String).Raw()
+	value.Discard(replVal)
+
+	return s, regExp, replStr, err
+}
+
+func RegExpMatch(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	s, regExp, err := prepareRegExpMatch(fn, args)
+	if err != nil {
+		if err == regExpStrIsNull {
+			return value.NewTernary(ternary.UNKNOWN), nil
+		}
+		return nil, err
+	}
+
+	return value.NewTernary(ternary.ConvertFromBool(regExp.MatchString(s))), nil
+}
+
+func RegExpFind(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	s, regExp, err := prepareRegExpMatch(fn, args)
+	if err != nil {
+		if err == regExpStrIsNull {
+			return value.NewNull(), nil
+		}
+		return nil, err
+	}
+
+	m := regExp.FindStringSubmatch(s)
+
+	switch len(m) {
+	case 0:
+		return value.NewNull(), nil
+	case 1:
+		return value.NewString(m[0]), nil
+	default:
+		return value.NewString(m[1]), err
+	}
+}
+
+func RegExpFindSubMatches(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	s, regExp, err := prepareRegExpMatch(fn, args)
+	if err != nil {
+		if err == regExpStrIsNull {
+			return value.NewNull(), nil
+		}
+		return nil, err
+	}
+
+	m := regExp.FindStringSubmatch(s)
+
+	if len(m) < 1 {
+		return value.NewNull(), nil
+	}
+
+	b, _ := gojson.Marshal(m)
+	return value.NewString(string(b)), err
+}
+
+func RegExpFindAll(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	s, regExp, err := prepareRegExpMatch(fn, args)
+	if err != nil {
+		if err == regExpStrIsNull {
+			return value.NewNull(), nil
+		}
+		return nil, err
+	}
+
+	m := regExp.FindAllStringSubmatch(s, 10)
+
+	if len(m) < 1 {
+		return value.NewNull(), nil
+	}
+
+	b, _ := gojson.Marshal(m)
+	return value.NewString(string(b)), err
+}
+
+func RegExpReplace(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	s, regExp, replStr, err := prepareRegExpReplace(fn, args)
+	if err != nil {
+		if err == regExpStrIsNull {
+			return value.NewNull(), nil
+		}
+		return nil, err
+	}
+
+	return value.NewString(regExp.ReplaceAllString(s, replStr)), nil
 }
 
 func Format(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {

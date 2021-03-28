@@ -16,20 +16,22 @@ import (
 var DatetimeFormats = NewDatetimeFormatMap()
 
 type DatetimeFormatMap struct {
-	m *sync.Map
+	m   *sync.Map
+	mtx *sync.Mutex
 }
 
-func NewDatetimeFormatMap() *DatetimeFormatMap {
-	return &DatetimeFormatMap{
-		m: &sync.Map{},
+func NewDatetimeFormatMap() DatetimeFormatMap {
+	return DatetimeFormatMap{
+		m:   &sync.Map{},
+		mtx: &sync.Mutex{},
 	}
 }
 
-func (dfmap *DatetimeFormatMap) Store(key string, value string) {
+func (dfmap DatetimeFormatMap) store(key string, value string) {
 	dfmap.m.Store(key, value)
 }
 
-func (dfmap *DatetimeFormatMap) Load(key string) (string, bool) {
+func (dfmap DatetimeFormatMap) load(key string) (string, bool) {
 	v, ok := dfmap.m.Load(key)
 	if ok {
 		return v.(string), ok
@@ -38,11 +40,19 @@ func (dfmap *DatetimeFormatMap) Load(key string) (string, bool) {
 }
 
 func (dfmap DatetimeFormatMap) Get(s string) string {
-	if f, ok := dfmap.Load(s); ok {
+	if f, ok := dfmap.load(s); ok {
 		return f
 	}
+
+	dfmap.mtx.Lock()
+	defer dfmap.mtx.Unlock()
+
+	if f, ok := dfmap.load(s); ok {
+		return f
+	}
+
 	f := ConvertDatetimeFormat(s)
-	dfmap.Store(s, f)
+	dfmap.store(s, f)
 	return f
 }
 

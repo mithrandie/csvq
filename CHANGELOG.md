@@ -1,5 +1,19 @@
 # Change Log
 
+## Version 1.15.0
+
+Released on March 28, 2021
+
+- Add regular expression functions.
+    - REGEXP_MATCH
+    - REGEXP_FIND
+    - REGEXP_FIND_SUBMATCHES
+    - REGEXP_FIND_ALL
+    - REGEXP_REPLACE
+- Add Table-Valued functions.
+    - CSV_INLINE
+    - JSON_INLINE
+
 ## Version 1.14.1
 
 Released on March 21, 2021

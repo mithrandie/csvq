@@ -114,11 +114,15 @@ table
 table_entity
   : table_identifier
   | table_object
-  | json_inline_table
+  | inline_table_object
 
 table_identifier
   : table_name
   | STDIN
+  
+inline_table_identifier
+  : table_name
+  | url
 
 laterable_table
   : subquery
@@ -150,9 +154,11 @@ table_object
   | JSON(json_query, table_identifier)
   | LTSV(table_identifier [, encoding [, without_null]])
 
-json_inline_table
-  : JSON_TABLE(json_query, json_file)
-  | JSON_TABLE(json_query, json_data)
+inline_table_object
+  : CSV_INLINE(delimiter, inline_table_identifier [, encoding [, no_header [, without_null]]])
+  | CSV_INLINE(delimiter, csv_data)
+  | JSON_INLINE(json_query, inline_table_identifier [, encoding [, no_header [, without_null]]])
+  | JSON_INLINE(json_query, json_data)
 
 ```
 
@@ -174,6 +180,11 @@ _table_name_
   If you want to specify the different attributes for each file, you can use _table_object_ expressions for each file to load.
 
   Once a file is loaded, then the data is cached and it can be loaded with only file name after that within the transaction.
+
+_url_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+  A URL of the http or https scheme to refer to a resource.
 
 _alias_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
@@ -208,6 +219,9 @@ _json_file_
   
   If a file name extension is ".json", you can omit it. 
 
+_csv_data_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
 _json_data_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
@@ -229,10 +243,6 @@ _no_header_
 
 _without_null_
 : [boolean]({{ '/reference/value.html#boolean' | relative_url }})
-
-> A Table Object Expression for JSON loads data from JSON file, and you can operate the data. 
-> A JSON Table Expression can load data from JSON file as well, but the result is treated as a inline table, so you can only refer the result within the query.
-
 
 #### Special Tables
 {: #special_tables}

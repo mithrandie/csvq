@@ -1995,6 +1995,376 @@ func TestReplaceFn(t *testing.T) {
 	testFunction(t, ReplaceFn, replaceFnTests)
 }
 
+var regExpMatchTests = []functionTest{
+	{
+		Name: "RegExpMatch",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("cd"),
+			value.NewNull(),
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "RegExpMatch Not Match",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("CD"),
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "RegExpMatch Ignore Case",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("CD"),
+			value.NewString("i"),
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "RegExpMatch First Argument is not a String",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+			value.NewString("CD"),
+		},
+		Result: value.NewTernary(ternary.UNKNOWN),
+	},
+	{
+		Name: "RegExpMatch Arguments Length Error",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+		},
+		Error: "function regexp_match takes 2 or 3 arguments",
+	},
+	{
+		Name: "RegExpMatch Pattern Not Valid Error",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewNull(),
+		},
+		Error: "pattern must be a string for function regexp_match",
+	},
+	{
+		Name: "RegExpMatch Invalid Pattern Error",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("(?a)a"),
+		},
+		Error: "failed to compile pattern \"(?a)a\" for function regexp_match",
+	},
+	{
+		Name: "RegExpMatch Flags Not Valud Error",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("CD"),
+			value.NewBoolean(true),
+		},
+		Error: "flags must be a string for function regexp_match",
+	},
+	{
+		Name: "RegExpMatch Invalid Flag Error",
+		Function: parser.Function{
+			Name: "regexp_match",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("CD"),
+			value.NewString("a"),
+		},
+		Error: "invalid flag \"a\" for function regexp_match",
+	},
+}
+
+func TestRegExpMatch(t *testing.T) {
+	testFunction(t, RegExpMatch, regExpMatchTests)
+}
+
+var regExpFindTests = []functionTest{
+	{
+		Name: "RegExpFind",
+		Function: parser.Function{
+			Name: "regexp_find",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("cd"),
+		},
+		Result: value.NewString("cd"),
+	},
+	{
+		Name: "RegExpFind Sub-Matching",
+		Function: parser.Function{
+			Name: "regexp_find",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("b(c\\w+)e(f)"),
+		},
+		Result: value.NewString("cd"),
+	},
+	{
+		Name: "RegExpFind Not Match",
+		Function: parser.Function{
+			Name: "regexp_find",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("not"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "RegExpFind First Argument is not a String",
+		Function: parser.Function{
+			Name: "regexp_find",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+			value.NewString("cd"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "RegExpFind Arguments Length Error",
+		Function: parser.Function{
+			Name: "regexp_find",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+		},
+		Error: "function regexp_find takes 2 or 3 arguments",
+	},
+}
+
+func TestRegExpFind(t *testing.T) {
+	testFunction(t, RegExpFind, regExpFindTests)
+}
+
+var regExpFindSubMatchesTests = []functionTest{
+	{
+		Name: "RegExpFindSubMatches",
+		Function: parser.Function{
+			Name: "regexp_find_submatches",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("cd"),
+		},
+		Result: value.NewString("[\"cd\"]"),
+	},
+	{
+		Name: "RegExpFindSubMatches Sub-Matching",
+		Function: parser.Function{
+			Name: "regexp_find_submatches",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("b(c\\w+)e(f)"),
+		},
+		Result: value.NewString("[\"bcdef\",\"cd\",\"f\"]"),
+	},
+	{
+		Name: "RegExpFindSubMatches Not Match",
+		Function: parser.Function{
+			Name: "regexp_find_submatches",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("not"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "RegExpFindSubMatches First Argument is not a String",
+		Function: parser.Function{
+			Name: "regexp_find_submatches",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+			value.NewString("cd"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "RegExpFindSubMatches Arguments Length Error",
+		Function: parser.Function{
+			Name: "regexp_find_submatches",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+		},
+		Error: "function regexp_find_submatches takes 2 or 3 arguments",
+	},
+}
+
+func TestRegExpFindSubMatches(t *testing.T) {
+	testFunction(t, RegExpFindSubMatches, regExpFindSubMatchesTests)
+}
+
+var regExpFindAllTests = []functionTest{
+	{
+		Name: "RegExpFindAll",
+		Function: parser.Function{
+			Name: "regexp_find_all",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("cd"),
+		},
+		Result: value.NewString("[[\"cd\"],[\"cd\"]]"),
+	},
+	{
+		Name: "RegExpFindAll Sub-Matching",
+		Function: parser.Function{
+			Name: "regexp_find_all",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("b(c\\w+)e(f)"),
+		},
+		Result: value.NewString("[[\"bcdef\",\"cd\",\"f\"],[\"bcdef\",\"cd\",\"f\"]]"),
+	},
+	{
+		Name: "RegExpFindAll Not Match",
+		Function: parser.Function{
+			Name: "regexp_find_all",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("not match"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "RegExpFindAll First Argument is not a String",
+		Function: parser.Function{
+			Name: "regexp_find_all",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+			value.NewString("cd"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "RegExpFindAll Arguments Length Error",
+		Function: parser.Function{
+			Name: "regexp_find_all",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+		},
+		Error: "function regexp_find_all takes 2 or 3 arguments",
+	},
+}
+
+func TestRegExpFindAll(t *testing.T) {
+	testFunction(t, RegExpFindAll, regExpFindAllTests)
+}
+
+var regExpReplaceTests = []functionTest{
+	{
+		Name: "RegExpReplace",
+		Function: parser.Function{
+			Name: "regexp_find_all",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("c.e"),
+			value.NewString("S"),
+		},
+		Result: value.NewString("abSfg abSfg"),
+	},
+	{
+		Name: "RegExpReplace Submatching",
+		Function: parser.Function{
+			Name: "regexp_find_all",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("C(.)e(f)"),
+			value.NewString("$1${2}"),
+			value.NewString("i"),
+		},
+		Result: value.NewString("abdfg abdfg"),
+	},
+	{
+		Name: "RegExpReplace Submatching with Replacement Text",
+		Function: parser.Function{
+			Name: "regexp_find_all",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("c(.)e(f)"),
+			value.NewString("${1}Sub${2}Match"),
+		},
+		Result: value.NewString("abdSubfMatchg abdSubfMatchg"),
+	},
+	{
+		Name: "RegExpReplace First Argument is not a String",
+		Function: parser.Function{
+			Name: "regexp_replace",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+			value.NewString("cd"),
+			value.NewString("S"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "RegExpReplace Third Argument is not a String",
+		Function: parser.Function{
+			Name: "regexp_replace",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+			value.NewString("cd"),
+			value.NewNull(),
+		},
+		Error: "replacement string must be a string for function regexp_replace",
+	},
+	{
+		Name: "RegExpReplace Arguments Length Error",
+		Function: parser.Function{
+			Name: "regexp_replace",
+		},
+		Args: []value.Primary{
+			value.NewString("abcdefg abcdefg"),
+		},
+		Error: "function regexp_replace takes 3 or 4 arguments",
+	},
+}
+
+func TestRegExpReplace(t *testing.T) {
+	testFunction(t, RegExpReplace, regExpReplaceTests)
+}
+
 var formatTests = []functionTest{
 	{
 		Name: "Format",

@@ -8,7 +8,7 @@ ifneq ($(shell command -v git && git remote -v 2>/dev/null | grep mithrandie/csv
 endif
 
 ifdef VERSION
-	LDFLAGS := -ldflags="-X github.com/mithrandie/csvq/lib/query.Version=$(VERSION) -s -w -buildid="
+	LDFLAGS := -ldflags="-X github.com/mithrandie/csvq/lib/query.Version=$(VERSION) -s -w"
 endif
 
 DIST_DIRS := find * -type d -exec
@@ -19,7 +19,7 @@ $(BINARY): build
 
 .PHONY: build
 build:
-	go build $(LDFLAGS) -o $(GOPATH)/bin/$(BINARY)
+	go build -trimpath $(LDFLAGS) -o $(GOPATH)/bin/
 
 .PHONY: install
 install:
@@ -29,21 +29,25 @@ install:
 clean:
 	go clean -i -cache -modcache
 
-.PHONY: install-gox
-install-gox:
-ifeq ($(shell command -v gox 2>/dev/null),)
-	go get github.com/mitchellh/gox
-endif
-
 .PHONY: build-all
-build-all: install-gox
-	gox $(LDFLAGS) --osarch="$(RELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+build-all:
+	IFS='/'; \
+	for TARGET in $(RELEASE_ARCH); \
+	do \
+		set -- $$TARGET; \
+		GOOS=$$1 GOARCH=$$2 go build -trimpath $(LDFLAGS) -o "dist/$(BINARY)-$(VERSION)-$${1}-$${2}/"; \
+	done
 
 .PHONY: build-pre-release
-build-pre-release: install-gox
-	gox $(LDFLAGS) --osarch="$(PRERELEASE_ARCH)" -output="dist/${BINARY}-${VERSION}-{{.OS}}-{{.Arch}}/{{.Dir}}"
+build-pre-release:
+	IFS='/'; \
+	for TARGET in $(PRERELEASE_ARCH); \
+	do \
+		set -- $$TARGET; \
+		GOOS=$$1 GOARCH=$$2 go build -trimpath $(LDFLAGS) -o "dist/$(BINARY)-$(VERSION)-$${1}-$${2}/"; \
+	done
 
-.PHONY: dist
+.PHONY: dist -
 dist:
 	cd dist && \
 	$(DIST_DIRS) cp ../LICENSE {} \; && \

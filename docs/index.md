@@ -13,10 +13,10 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 ## Latest Release
 
-Version 1.14.1
-: Released on March 21, 2021
+Version 1.15.0
+: Released on March 28, 2021
 
-  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.14.1">
+  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.15.0">
     <i class="material-icons left">file_download</i>download
   </a>
 

@@ -135,6 +135,8 @@ import (
 %type<queryexpr>   table_identifier
 %type<token>       table_object_type
 %type<queryexpr>   table_object
+%type<token>       inline_table_object_type
+%type<queryexpr>   inline_table_object
 %type<queryexpr>   updatable_table_identifier
 %type<queryexprs>  identified_tables
 %type<queryexprs>  updatable_tables
@@ -221,7 +223,8 @@ import (
 %token<token> VAR SHOW
 %token<token> TIES NULLS ROWS ONLY
 %token<token> CSV JSON FIXED LTSV
-%token<token> JSON_ROW JSON_TABLE
+%token<token> CSV_INLINE JSON_INLINE JSON_TABLE
+%token<token> JSON_ROW
 %token<token> SUBSTRING COUNT JSON_OBJECT
 %token<token> AGGREGATE_FUNCTION LIST_FUNCTION ANALYTIC_FUNCTION FUNCTION_NTH FUNCTION_WITH_INS
 %token<token> COMPARISON_OP STRING_OP SUBSTITUTION_OP
@@ -1964,6 +1967,20 @@ table_object_type
         $$ = $1
     }
 
+inline_table_object_type
+    : CSV_INLINE
+    {
+        $$ = $1
+    }
+    | JSON_INLINE
+    {
+        $$ = $1
+    }
+    | JSON_TABLE
+    {
+        $$ = $1
+    }
+
 table_object
     : table_object_type '(' table_identifier ')'
     {
@@ -1978,6 +1995,24 @@ table_object
         $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
     }
     | table_object_type '(' substantial_value ',' table_identifier ',' arguments ')'
+    {
+        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
+    }
+
+inline_table_object
+    : inline_table_object_type '(' substantial_value ',' identifier ')'
+    {
+        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
+    }
+    | inline_table_object_type '(' substantial_value ',' identifier ',' arguments ')'
+    {
+        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
+    }
+    | inline_table_object_type '(' substantial_value ',' substantial_value ')'
+    {
+        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
+    }
+    | inline_table_object_type '(' substantial_value ',' substantial_value ',' arguments ')'
     {
         $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
     }
@@ -1997,13 +2032,9 @@ virtual_table_object
     {
         $$ = $1
     }
-    | JSON_TABLE '(' substantial_value ',' identifier ')'
+    | inline_table_object
     {
-        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1, Query: $3, JsonText: $5}
-    }
-    | JSON_TABLE '(' substantial_value ',' substantial_value ')'
-    {
-        $$ = JsonQuery{BaseExpr: NewBaseExpr($1), JsonQuery: $1, Query: $3, JsonText: $5}
+        $$ = $1
     }
 
 laterable_query_table
