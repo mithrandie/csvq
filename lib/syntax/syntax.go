@@ -107,6 +107,13 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
+						Name: "inline_table_identifier",
+						Group: []Grammar{
+							{Identifier("table_name")},
+							{Identifier("url")},
+						},
+					},
+					{
 						Name: "laterable_table",
 						Group: []Grammar{
 							{Link("subquery")},
@@ -154,9 +161,9 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "inline_table_object",
 						Group: []Grammar{
-							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), Identifier("table_name"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
+							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), Link("inline_table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
 							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), String("csv_data"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), Identifier("table_name")}}},
+							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), Link("inline_table_identifier")}}},
 							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), String("json_data")}}},
 						},
 					},
@@ -2189,37 +2196,37 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "regexp_match",
 						Group: []Grammar{
-							{Function{Name: "REGEXP_MATCH", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("ternary")}},
+							{Function{Name: "REGEXP_MATCH", Args: []Element{String("str"), String("regexp"), Option{Link("flags_of_regular_expressions")}}, Return: Return("ternary")}},
 						},
-						Description: Description{Template: ""}, //TODO
+						Description: Description{Template: "Verifies the string %s matches with the regular expression %s.", Values: []Element{String("str"), String("regexp")}},
 					},
 					{
 						Name: "regexp_find",
 						Group: []Grammar{
-							{Function{Name: "REGEXP_FIND", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("string")}},
+							{Function{Name: "REGEXP_FIND", Args: []Element{String("str"), String("regexp"), Option{Link("flags_of_regular_expressions")}}, Return: Return("string")}},
 						},
-						Description: Description{Template: ""}, //TODO
+						Description: Description{Template: "Returns the string that matches the regular expression %s in %s.", Values: []Element{String("regexp"), String("str")}},
 					},
 					{
 						Name: "regexp_find_submatches",
 						Group: []Grammar{
-							{Function{Name: "REGEXP_FIND_SUBMATCHES", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("string")}},
+							{Function{Name: "REGEXP_FIND_SUBMATCHES", Args: []Element{String("str"), String("regexp"), Option{Link("flags_of_regular_expressions")}}, Return: Return("string")}},
 						},
-						Description: Description{Template: ""}, //TODO
+						Description: Description{Template: "Returns the string representing an array that matches the regular expression %s in %s.", Values: []Element{String("regexp"), String("str")}},
 					},
 					{
 						Name: "regexp_find_all",
 						Group: []Grammar{
-							{Function{Name: "REGEXP_FIND_ALL", Args: []Element{String("str"), String("regexp"), Option{String("flags")}}, Return: Return("string")}},
+							{Function{Name: "REGEXP_FIND_ALL", Args: []Element{String("str"), String("regexp"), Option{Link("flags_of_regular_expressions")}}, Return: Return("string")}},
 						},
-						Description: Description{Template: ""}, //TODO
+						Description: Description{Template: "Returns the string representing a nested array that matches the regular expression %s in %s.", Values: []Element{String("regexp"), String("str")}},
 					},
 					{
 						Name: "regexp_replace",
 						Group: []Grammar{
-							{Function{Name: "REGEXP_MATCH", Args: []Element{String("str"), String("regexp"), String("replacement_value"), Option{String("flags")}}, Return: Return("string")}},
+							{Function{Name: "REGEXP_REPLACE", Args: []Element{String("str"), String("regexp"), String("replacement_value"), Option{Link("flags_of_regular_expressions")}}, Return: Return("string")}},
 						},
-						Description: Description{Template: ""}, //TODO
+						Description: Description{Template: "Returns the string replaced substrings that match the regular expression %s with %s in %s.", Values: []Element{String("regexp"), String("replacement_value"), String("str")}},
 					},
 					{
 						Name: "format",
@@ -3088,6 +3095,27 @@ var CsvqSyntax = []Expression{
 						String("%m %b %y %H:%i %z"),
 					},
 				},
+			},
+		},
+	},
+	{
+		Label: "Flags of Regular Expressions",
+		Description: Description{
+			Template: "" +
+				"%s\n" +
+				"  > case-insensitive\n" +
+				"%s\n" +
+				"  > multi-line mode\n" +
+				"%s\n" +
+				"  > let . match \\n\n" +
+				"%s\n" +
+				"  > swap meaning of x* and x*?, x+ and x+?, etc.\n" +
+				"",
+			Values: []Element{
+				String("i"),
+				String("m"),
+				String("s"),
+				String("U"),
 			},
 		},
 	},

@@ -119,6 +119,10 @@ table_entity
 table_identifier
   : table_name
   | STDIN
+  
+inline_table_identifier
+  : table_name
+  | url
 
 laterable_table
   : subquery
@@ -151,9 +155,9 @@ table_object
   | LTSV(table_identifier [, encoding [, without_null]])
 
 inline_table_object
-  : CSV_INLINE(delimiter, table_name [, encoding [, no_header [, without_null]]])
+  : CSV_INLINE(delimiter, inline_table_identifier [, encoding [, no_header [, without_null]]])
   | CSV_INLINE(delimiter, csv_data)
-  | JSON_INLINE(json_query, table_name [, encoding [, no_header [, without_null]]])
+  | JSON_INLINE(json_query, inline_table_identifier [, encoding [, no_header [, without_null]]])
   | JSON_INLINE(json_query, json_data)
 
 ```
@@ -176,6 +180,11 @@ _table_name_
   If you want to specify the different attributes for each file, you can use _table_object_ expressions for each file to load.
 
   Once a file is loaded, then the data is cached and it can be loaded with only file name after that within the transaction.
+
+_url_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+  A URL of the http or https scheme to refer to a resource.
 
 _alias_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
@@ -209,6 +218,9 @@ _json_file_
   You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#options' | relative_url }}) as a json file path.
   
   If a file name extension is ".json", you can omit it. 
+
+_csv_data_
+: [string]({{ '/reference/value.html#string' | relative_url }})
 
 _json_data_
 : [string]({{ '/reference/value.html#string' | relative_url }})

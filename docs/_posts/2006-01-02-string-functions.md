@@ -27,6 +27,11 @@ category: reference
 | [INSTR](#instr) | Return the index of the first occurrence of a substring |
 | [LIST_ELEM](#list_elem) | Return a element of a list |
 | [REPLACE](#replace) | Return a string replaced the substrings with another string |
+| [REGEXP_MATCH](#regexp_match) | Verify a string matches with a regular expression |
+| [REGEXP_FIND](#regexp_find) | Return a string that matches a regular expression |
+| [REGEXP_FIND_SUBMATCHES](#regexp_find_submatches) | Return a string representing an array that matches a regular expression |
+| [REGEXP_FIND_ALL](#regexp_all) | Return a string representing a nested array that matches a regular expression |
+| [REGEXP_REPLACE](#regexp_replace) | Return a string replaced substrings that match a regular expression with another strings |
 | [FORMAT](#format) | Return a formatted string |
 | [JSON_VALUE](#json_value) | Return a value from json |
 | [JSON_OBJECT](#json_object) | Return a string formatted in json object |
@@ -439,6 +444,197 @@ _return_
 
 Returns the string that is replaced all occurrences of _old_ with _new_ in _str_.
 
+### REGEXP_MATCH
+{: #regexp_match}
+
+```
+REGEXP_MATCH(str, regexp [, flags])
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_regexp_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_flags_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  A string including the [flags of regular expressions](#flags-of-regular-expressions)
+
+_return_
+: [ternary]({{ '/reference/value.html#ternary' | relative_url }})
+
+Verifies the string _str_ matches with the regular expression _regexp_.
+
+### REGEXP_FIND
+{: #regexp_find}
+
+```
+REGEXP_FIND(str, regexp [, flags])
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_regexp_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_flags_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  A string including the [flags of regular expressions](#flags-of-regular-expressions)
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns the string that matches the regular expression _regexp_ in _str_.
+
+#### Examples
+
+```shell
+# Return the matched string.
+$ csvq "SELECT REGEXP_FIND('ABCDEFG abcdefg', 'cdef')"
++----------------------------------------+
+| REGEXP_FIND('ABCDEFG abcdefg', 'cdef') |
++----------------------------------------+
+| cdef                                   |
++----------------------------------------+
+
+# Return the submatched string if there is a submatch expression.
+$ csvq "SELECT REGEXP_FIND('ABCDEFG abcdefg', 'c(de)f')"
++------------------------------------------+
+| REGEXP_FIND('ABCDEFG abcdefg', 'c(de)f') |
++------------------------------------------+
+| de                                       |
++------------------------------------------+
+
+# Return the first matched string if there are multiple matched strings.
+$ csvq "SELECT REGEXP_FIND('ABCDEFG abcdefg', 'cdef', 'i')"
++---------------------------------------------+
+| REGEXP_FIND('ABCDEFG abcdefg', 'cdef', 'i') |
++---------------------------------------------+
+| CDEF                                        |
++---------------------------------------------+
+```
+
+### REGEXP_FIND_SUBMATCHES
+{: #regexp_find_submatches}
+
+```
+REGEXP_FIND_SUBMATCHES(str, regexp [, flags])
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_regexp_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_flags_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  A string including the [flags of regular expressions](#flags-of-regular-expressions)
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  A string representing a JSON array.
+
+Returns the string representing an array that matches the regular expression _regexp_ in _str_.
+
+#### Examples
+
+```shell
+# Return all the first matched strings including submatches.
+$ csvq "SELECT REGEXP_FIND_SUBMATCHES('ABCDEFG abcdefg', 'c(de)f', 'i')"
++----------------------------------------------------------+
+| REGEXP_FIND_SUBMATCHES('ABCDEFG abcdefg', 'c(de)f', 'i') |
++----------------------------------------------------------+
+| ["CDEF","DE"]                                            |
++----------------------------------------------------------+
+
+# Return only the submatched string.
+$ csvq "SELECT JSON_VALUE('[1]', REGEXP_FIND_SUBMATCHES('ABCDEFG abcdefg', 'c(de)f', 'i'))"
++-----------------------------------------------------------------------------+
+| JSON_VALUE('[1]', REGEXP_FIND_SUBMATCHES('ABCDEFG abcdefg', 'c(de)f', 'i')) |
++-----------------------------------------------------------------------------+
+| DE                                                                          |
++-----------------------------------------------------------------------------+
+```
+
+### REGEXP_FIND_ALL
+{: #regexp_all}
+
+```
+REGEXP_FIND_ALL(str, regexp [, flags])
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_regexp_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_flags_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  A string including the [flags of regular expressions](#flags-of-regular-expressions)
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  A string representing a nested JSON array.
+
+Returns the string representing a nested array that matches the regular expression _regexp_ in _str_.
+
+#### Examples
+
+```shell
+# Return all the matched strings.
+$ csvq "SELECT REGEXP_FIND_ALL('ABCDEFG abcdefg', 'c(de)f', 'i')"
++---------------------------------------------------+
+| REGEXP_FIND_ALL('ABCDEFG abcdefg', 'c(de)f', 'i') |
++---------------------------------------------------+
+| [["CDEF","DE"],["cdef","de"]]                     |
++---------------------------------------------------+
+
+# Return only submatched strings as an array.
+$ csvq "SELECT JSON_VALUE('[][1]', REGEXP_FIND_ALL('ABCDEFG abcdefg', 'c(de)f', 'i'))"
++------------------------------------------------------------------------+
+| JSON_VALUE('[][1]', REGEXP_FIND_ALL('ABCDEFG abcdefg', 'c(de)f', 'i')) |
++------------------------------------------------------------------------+
+| ["DE","de"]                                                            |
++------------------------------------------------------------------------+
+```
+
+### REGEXP_REPLACE
+{: #regexp_replace}
+
+```
+REGEXP_REPLACE(str, regexp, replacement_value [, flags])
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_regexp_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_replacement_value_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_flags_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+  A string including the [flags of regular expressions](#flags-of-regular-expressions)
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+
+Returns the string replaced substrings that match the regular expression _regexp_ with _replacement_value_ in _str_.
+
 ### FORMAT
 {: #format}
 
@@ -555,3 +751,13 @@ _return_
 Returns a string formatted in JSON.
 
 If no arguments are passed, then the object include all fields in the view.
+
+## Flags of regular expressions
+{: #flags-of-regular-expressions}
+
+| flag | description |
+|:-|:-|
+| i | case-insensitive |
+| m  | multi-line mode |
+| s | let . match \n |
+| U | swap meaning of x* and x*?, x+ and x+?, etc. |
