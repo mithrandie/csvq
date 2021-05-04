@@ -31,6 +31,7 @@ const (
 	WaitTimeoutFlag              = "WAIT_TIMEOUT"
 	ImportFormatFlag             = "IMPORT_FORMAT"
 	DelimiterFlag                = "DELIMITER"
+	AllowUnevenFieldsFlag        = "ALLOW_UNEVEN_FIELDS"
 	DelimiterPositionsFlag       = "DELIMITER_POSITIONS"
 	JsonQueryFlag                = "JSON_QUERY"
 	EncodingFlag                 = "ENCODING"
@@ -65,6 +66,7 @@ var FlagList = []string{
 	WaitTimeoutFlag,
 	ImportFormatFlag,
 	DelimiterFlag,
+	AllowUnevenFieldsFlag,
 	DelimiterPositionsFlag,
 	JsonQueryFlag,
 	EncodingFlag,
@@ -152,6 +154,7 @@ const (
 type ImportOptions struct {
 	Format             Format
 	Delimiter          rune
+	AllowUnevenFields  bool
 	DelimiterPositions []int
 	SingleLine         bool
 	JsonQuery          string
@@ -176,6 +179,7 @@ func NewImportOptions() ImportOptions {
 	return ImportOptions{
 		Format:             CSV,
 		Delimiter:          ',',
+		AllowUnevenFields:  false,
 		DelimiterPositions: nil,
 		SingleLine:         false,
 		JsonQuery:          "",
@@ -418,6 +422,10 @@ func (f *Flags) SetDelimiter(s string) error {
 
 	f.ImportOptions.Delimiter = delimiter
 	return nil
+}
+
+func (f *Flags) SetAllowUnevenFields(b bool) {
+	f.ImportOptions.AllowUnevenFields = b
 }
 
 func (f *Flags) SetDelimiterPositions(s string) error {

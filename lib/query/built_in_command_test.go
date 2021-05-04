@@ -431,6 +431,13 @@ var setFlagTests = []struct {
 		},
 	},
 	{
+		Name: "Set AllowUnevenFields",
+		Expr: parser.SetFlag{
+			Flag:  parser.Flag{Name: "allow_uneven_fields"},
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
 		Name: "Set JsonQuery",
 		Expr: parser.SetFlag{
 			Flag:  parser.Flag{Name: "json_query"},
@@ -982,6 +989,19 @@ var showFlagTests = []struct {
 			},
 		},
 		Result: "\033[34;1m@@DELIMITER:\033[0m \033[32m'\\t'\033[0m",
+	},
+	{
+		Name: "Show AllowUnevenFields",
+		Expr: parser.ShowFlag{
+			Flag: parser.Flag{Name: "allow_uneven_fields"},
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Flag:  parser.Flag{Name: "allow_uneven_fields"},
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+		},
+		Result: "\033[34;1m@@ALLOW_UNEVEN_FIELDS:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Show Delimiter Positions",
@@ -1628,6 +1648,7 @@ var showObjectsTests = []struct {
 	PreparedStatements      PreparedStatementMap
 	ImportFormat            cmd.Format
 	Delimiter               rune
+	AllowUnevenFields       bool
 	DelimiterPositions      fixedlen.DelimiterPositions
 	SingleLine              bool
 	JsonQuery               string
@@ -2186,6 +2207,7 @@ var showObjectsTests = []struct {
 			"              @@WAIT_TIMEOUT: 15\n" +
 			"             @@IMPORT_FORMAT: CSV\n" +
 			"                 @@DELIMITER: ','\n" +
+			"       @@ALLOW_UNEVEN_FIELDS: false\n" +
 			"       @@DELIMITER_POSITIONS: SPACES\n" +
 			"                @@JSON_QUERY: (empty)\n" +
 			"                  @@ENCODING: AUTO\n" +
@@ -2251,6 +2273,7 @@ func TestShowObjects(t *testing.T) {
 		if v.Delimiter != 0 {
 			TestTx.Flags.ImportOptions.Delimiter = v.Delimiter
 		}
+		TestTx.Flags.ImportOptions.AllowUnevenFields = v.AllowUnevenFields
 		TestTx.Flags.ImportOptions.DelimiterPositions = v.DelimiterPositions
 		TestTx.Flags.ImportOptions.SingleLine = v.SingleLine
 		TestTx.Flags.ImportOptions.JsonQuery = v.JsonQuery

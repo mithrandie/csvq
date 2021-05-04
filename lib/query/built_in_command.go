@@ -223,7 +223,7 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 			return NewFlagValueNotAllowedFormatError(expr)
 		}
 		val = p.(*value.String).Raw()
-	case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag,
+	case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag, cmd.AllowUnevenFieldsFlag,
 		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag, cmd.EncloseAllFlag,
 		cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
 		cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag, cmd.ColorFlag,
@@ -267,7 +267,8 @@ func AddFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.AddF
 		}
 		return SetFlag(ctx, scope, e)
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag, cmd.StrictEqualFlag,
-		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
+		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.AllowUnevenFieldsFlag, cmd.DelimiterPositionsFlag,
+		cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.ExportEncodingFlag, cmd.FormatFlag, cmd.ExportDelimiterFlag, cmd.ExportDelimiterPositionsFlag,
 		cmd.LineBreakFlag, cmd.JsonEscapeFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag,
 		cmd.EncloseAllFlag, cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
@@ -315,7 +316,8 @@ func RemoveFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.R
 			return NewInvalidFlagValueToBeRemovedError(expr)
 		}
 	case cmd.RepositoryFlag, cmd.TimezoneFlag, cmd.AnsiQuotesFlag, cmd.StrictEqualFlag,
-		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.DelimiterPositionsFlag, cmd.JsonQueryFlag, cmd.EncodingFlag,
+		cmd.ImportFormatFlag, cmd.DelimiterFlag, cmd.AllowUnevenFieldsFlag, cmd.DelimiterPositionsFlag,
+		cmd.JsonQueryFlag, cmd.EncodingFlag,
 		cmd.ExportEncodingFlag, cmd.FormatFlag, cmd.ExportDelimiterFlag, cmd.ExportDelimiterPositionsFlag,
 		cmd.LineBreakFlag, cmd.JsonEscapeFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.WithoutHeaderFlag,
 		cmd.EncloseAllFlag, cmd.PrettyPrintFlag, cmd.StripEndingLineBreakFlag,
@@ -453,7 +455,7 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 		s = tx.Palette.Render(cmd.NumberEffect, val.(*value.Integer).String())
 	case cmd.WaitTimeoutFlag:
 		s = tx.Palette.Render(cmd.NumberEffect, val.(*value.Float).String())
-	case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag,
+	case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag, cmd.AllowUnevenFieldsFlag,
 		cmd.NoHeaderFlag, cmd.WithoutNullFlag, cmd.StripEndingLineBreakFlag,
 		cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
 		s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
