@@ -94,6 +94,32 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "(select 1) union (select 2)",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectSet{
+					LHS: Subquery{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Query: SelectQuery{
+							SelectEntity: SelectEntity{
+								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 2}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("1")}}},
+							},
+						},
+					},
+					Operator: Token{Token: UNION, Literal: "union", Line: 1, Char: 12},
+					RHS: Subquery{
+						BaseExpr: &BaseExpr{line: 1, char: 18},
+						Query: SelectQuery{
+							SelectEntity: SelectEntity{
+								SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 19}, Fields: []QueryExpression{Field{Object: NewIntegerValueFromString("2")}}},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		Input: "select 1 as a from dual",
 		Output: []Statement{
 			SelectQuery{
@@ -190,6 +216,98 @@ var parseTests = []struct {
 					},
 				},
 				Context: Token{Token: UPDATE, Literal: "update", Line: 1, Char: 45},
+			},
+		},
+	},
+	{
+		Input: "with ct as (select 1) select c1 into @var from stdin",
+		Output: []Statement{
+			SelectQuery{
+				WithClause: WithClause{
+					InlineTables: []QueryExpression{
+						InlineTable{
+							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										BaseExpr: &BaseExpr{line: 1, char: 13},
+										Fields: []QueryExpression{
+											Field{Object: NewIntegerValueFromString("1")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 23},
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "c1"}},
+							},
+						},
+					},
+					IntoClause: IntoClause{
+						Variables: []Variable{
+							{BaseExpr: &BaseExpr{line: 1, char: 38}, Name: "var"},
+						},
+					},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 48}}},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "with ct as (select 1) select c1 into @var from stdin offset 1 for update",
+		Output: []Statement{
+			SelectQuery{
+				WithClause: WithClause{
+					InlineTables: []QueryExpression{
+						InlineTable{
+							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										BaseExpr: &BaseExpr{line: 1, char: 13},
+										Fields: []QueryExpression{
+											Field{Object: NewIntegerValueFromString("1")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 23},
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 30}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 30}, Literal: "c1"}},
+							},
+						},
+					},
+					IntoClause: IntoClause{
+						Variables: []Variable{
+							{BaseExpr: &BaseExpr{line: 1, char: 38}, Name: "var"},
+						},
+					},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{Object: Stdin{BaseExpr: &BaseExpr{line: 1, char: 48}}},
+					}},
+				},
+				LimitClause: LimitClause{
+					BaseExpr: &BaseExpr{line: 1, char: 54},
+					OffsetClause: OffsetClause{
+						BaseExpr: &BaseExpr{line: 1, char: 54},
+						Value:    NewIntegerValueFromString("1"),
+					},
+				},
+				Context: Token{Token: UPDATE, Literal: "update", Line: 1, Char: 67},
 			},
 		},
 	},
@@ -991,6 +1109,40 @@ var parseTests = []struct {
 						Tables: []QueryExpression{Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 37}, Literal: "ct"}}},
 					},
 				},
+			},
+		},
+	},
+	{
+		Input: "with ct as (select 1) select * from ct for update",
+		Output: []Statement{
+			SelectQuery{
+				WithClause: WithClause{
+					InlineTables: []QueryExpression{
+						InlineTable{
+							Name: Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "ct"},
+							Query: SelectQuery{
+								SelectEntity: SelectEntity{
+									SelectClause: SelectClause{
+										BaseExpr: &BaseExpr{line: 1, char: 13},
+										Fields: []QueryExpression{
+											Field{Object: NewIntegerValueFromString("1")},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 23},
+						Fields:   []QueryExpression{Field{Object: AllColumns{BaseExpr: &BaseExpr{line: 1, char: 30}}}},
+					},
+					FromClause: FromClause{
+						Tables: []QueryExpression{Table{Object: Identifier{BaseExpr: &BaseExpr{line: 1, char: 37}, Literal: "ct"}}},
+					},
+				},
+				Context: Token{Token: UPDATE, Literal: "update", Line: 1, Char: 44},
 			},
 		},
 	},

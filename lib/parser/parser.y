@@ -1032,7 +1032,24 @@ trigger_statement
     }
 
 select_query
-    : with_clause select_entity order_by_clause limit_clause
+    : select_entity order_by_clause limit_clause
+    {
+        $$ = SelectQuery{
+            SelectEntity:  $1,
+            OrderByClause: $2,
+            LimitClause:   $3,
+        }
+    }
+    | select_entity order_by_clause limit_clause FOR UPDATE
+    {
+        $$ = SelectQuery{
+            SelectEntity:  $1,
+            OrderByClause: $2,
+            LimitClause:   $3,
+            Context:       $5,
+        }
+    }
+    | with_clause select_entity order_by_clause limit_clause
     {
         $$ = SelectQuery{
             WithClause:    $1,
@@ -1053,7 +1070,38 @@ select_query
     }
 
 select_into_query
-    : with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause
+    : select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause
+    {
+        $$ = SelectQuery{
+            SelectEntity:  SelectEntity{
+                SelectClause:  $1,
+                IntoClause:    $2,
+                FromClause:    $3,
+                WhereClause:   $4,
+                GroupByClause: $5,
+                HavingClause:  $6,
+            },
+            OrderByClause: $7,
+            LimitClause:   $8,
+        }
+    }
+    | select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause FOR UPDATE
+    {
+        $$ = SelectQuery{
+            SelectEntity:  SelectEntity{
+                SelectClause:  $1,
+                IntoClause:    $2,
+                FromClause:    $3,
+                WhereClause:   $4,
+                GroupByClause: $5,
+                HavingClause:  $6,
+            },
+            OrderByClause: $7,
+            LimitClause:   $8,
+            Context:       $10,
+        }
+    }
+    | with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause
     {
         $$ = SelectQuery{
             WithClause:    $1,
