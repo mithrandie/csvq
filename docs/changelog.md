@@ -5,6 +5,14 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.15.1
+
+Released on May 5, 2021
+
+- Allow same table names on both sides of set operators. ([GitHub #53](https://github.com/mithrandie/csvq/issues/53))
+- Add the command option "--allow-uneven-fields". ([GitHub #54](https://github.com/mithrandie/csvq/issues/54))
+- Fix a bug in parsing of set operations.
+
 ## Version 1.15.0
 
 Released on March 28, 2021
