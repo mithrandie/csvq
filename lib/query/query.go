@@ -251,7 +251,10 @@ func selectSet(ctx context.Context, scope *ReferenceScope, set parser.SelectSet,
 			return nil, err
 		}
 	} else {
-		rview, err := selectSetEntity(ctx, scope, set.RHS, forUpdate)
+		queryScope := scope.CreateNode()
+		rview, err := selectSetEntity(ctx, queryScope, set.RHS, forUpdate)
+		queryScope.CloseCurrentNode()
+		queryScope = nil
 		if err != nil {
 			return nil, err
 		}

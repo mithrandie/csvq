@@ -1028,6 +1028,8 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Field delimiter for CSV.\n" +
 				"%s  <type::%s>\n" +
+				"  > Allow loading CSV files with uneven field length.\n" +
+				"%s  <type::%s>\n" +
 				"  > Delimiter positions for Fixed-Length Format.\n" +
 				"%s  <type::%s>\n" +
 				"  > Query for JSON data.\n" +
@@ -1081,6 +1083,7 @@ var CsvqSyntax = []Expression{
 				Flag("@@WAIT_TIMEOUT"), Float("float"),
 				Flag("@@IMPORT_FORMAT"), String("string"),
 				Flag("@@DELIMITER"), String("string"),
+				Flag("@@ALLOW_UNEVEN_FIELDS"), String("boolean"),
 				Flag("@@DELIMITER_POSITIONS"), String("string"),
 				Flag("@@JSON_QUERY"), String("string"),
 				Flag("@@ENCODING"), String("string"), Link("Encoding"),

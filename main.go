@@ -72,6 +72,10 @@ func main() {
 			Value: ",",
 			Usage: "field delimiter for CSV",
 		},
+		cli.BoolFlag{
+			Name:  "allow-uneven-fields",
+			Usage: "allow loading CSV files with uneven field length",
+		},
 		cli.StringFlag{
 			Name:  "delimiter-positions, m",
 			Usage: "delimiter positions for FIXED",
@@ -370,6 +374,9 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 		if err := tx.SetFlag(cmd.DelimiterFlag, c.GlobalString("delimiter")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
+	}
+	if c.GlobalIsSet("allow-uneven-fields") {
+		_ = tx.SetFlag(cmd.AllowUnevenFieldsFlag, c.GlobalBool("allow-uneven-fields"))
 	}
 	if c.GlobalIsSet("delimiter-positions") {
 		if err := tx.SetFlag(cmd.DelimiterPositionsFlag, c.GlobalString("delimiter-positions")); err != nil {

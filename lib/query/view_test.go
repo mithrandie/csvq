@@ -28,9 +28,11 @@ var viewLoadTests = []struct {
 	Stdin              string
 	ImportFormat       cmd.Format
 	Delimiter          rune
+	AllowUnevenFields  bool
 	DelimiterPositions []int
 	SingleLine         bool
 	JsonQuery          string
+	WithoutNull        bool
 	Scope              *ReferenceScope
 	Result             *View
 	ResultScope        *ReferenceScope
@@ -2740,6 +2742,91 @@ var viewLoadTests = []struct {
 		Error: fmt.Sprintf("data parse error in file %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
 	},
 	{
+		Name: "Allow Uneven Field Length",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "table_broken.csv"},
+				},
+			},
+		},
+		AllowUnevenFields: true,
+		Result: &View{
+			Header: NewHeader("table_broken", []string{"column1", "column2", "__@3__"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewNull(),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table_broken.csv",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"TABLE_BROKEN": strings.ToUpper(GetTestFilePath("table_broken.csv")),
+			}},
+		}, time.Time{}, nil),
+	},
+	{
+		Name: "Allow Uneven Field Length without Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "table_broken.csv"},
+				},
+			},
+		},
+		AllowUnevenFields: true,
+		WithoutNull:       true,
+		Result: &View{
+			Header: NewHeader("table_broken", []string{"column1", "column2", "__@3__"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString(""),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString(""),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table_broken.csv",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"TABLE_BROKEN": strings.ToUpper(GetTestFilePath("table_broken.csv")),
+			}},
+		}, time.Time{}, nil),
+	},
+	{
 		Name: "Inner Join Join Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -2836,10 +2923,12 @@ func TestView_Load(t *testing.T) {
 		if v.Delimiter != 0 {
 			TestTx.Flags.ImportOptions.Delimiter = v.Delimiter
 		}
+		TestTx.Flags.ImportOptions.AllowUnevenFields = v.AllowUnevenFields
 		TestTx.Flags.ImportOptions.DelimiterPositions = v.DelimiterPositions
 		TestTx.Flags.ImportOptions.SingleLine = v.SingleLine
 		TestTx.Flags.ImportOptions.JsonQuery = v.JsonQuery
 		TestTx.Flags.ImportOptions.NoHeader = v.NoHeader
+		TestTx.Flags.ImportOptions.WithoutNull = v.WithoutNull
 		if v.Encoding != text.AUTO {
 			TestTx.Flags.ImportOptions.Encoding = v.Encoding
 		} else {

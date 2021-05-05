@@ -283,7 +283,7 @@ func (sess *Session) GetStdinView(ctx context.Context, flags *cmd.Flags, fileInf
 			return nil, NewIOError(expr, err.Error())
 		}
 
-		view, err := loadViewFromFile(ctx, flags, bytes.NewReader(b), fileInfo, flags.ImportOptions.WithoutNull, expr)
+		view, err := loadViewFromFile(ctx, flags, bytes.NewReader(b), fileInfo, flags.ImportOptions, expr)
 		if err != nil {
 			if _, ok := err.(Error); !ok {
 				err = NewDataParsingError(expr, fileInfo.Path, err.Error())

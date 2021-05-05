@@ -831,7 +831,7 @@ func cacheViewFromFile(
 				}
 			}
 
-			loadView, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options.WithoutNull, tableIdentifier)
+			loadView, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tableIdentifier)
 			if err != nil {
 				if _, ok := err.(Error); !ok {
 					err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
@@ -848,16 +848,16 @@ func cacheViewFromFile(
 	return filePath, nil
 }
 
-func loadViewFromFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, options cmd.ImportOptions, expr parser.QueryExpression) (*View, error) {
 	switch fileInfo.Format {
 	case cmd.FIXED:
-		return loadViewFromFixedLengthTextFile(ctx, fp, fileInfo, withoutNull, expr)
+		return loadViewFromFixedLengthTextFile(ctx, fp, fileInfo, options.WithoutNull, expr)
 	case cmd.LTSV:
-		return loadViewFromLTSVFile(ctx, flags, fp, fileInfo, withoutNull, expr)
+		return loadViewFromLTSVFile(ctx, flags, fp, fileInfo, options.WithoutNull, expr)
 	case cmd.JSON:
 		return loadViewFromJsonFile(fp, fileInfo, expr)
 	}
-	return loadViewFromCSVFile(ctx, fp, fileInfo, withoutNull, expr)
+	return loadViewFromCSVFile(ctx, fp, fileInfo, options.AllowUnevenFields, options.WithoutNull, expr)
 }
 
 func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
@@ -934,7 +934,7 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, file
 	return view, nil
 }
 
-func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, allowUnevenFields bool, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
 	if err != nil {
 		return nil, NewCannotDetectFileEncodingError(expr)
@@ -947,6 +947,7 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 	}
 	reader.Delimiter = fileInfo.Delimiter
 	reader.WithoutNull = withoutNull
+	reader.AllowUnevenFields = allowUnevenFields
 
 	var header []string
 	if !fileInfo.NoHeader {
@@ -974,7 +975,33 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 	fileInfo.EncloseAll = reader.EnclosedAll
 
 	view := NewView()
-	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+
+	if allowUnevenFields {
+		if len(header) < reader.FieldsPerRecord {
+			header = append(header, make([]string, reader.FieldsPerRecord-len(header))...)
+		}
+		view.Header = NewHeaderWithAutofill(parser.FormatTableName(fileInfo.Path), header)
+
+		for i := range records {
+			if reader.FieldsPerRecord <= len(records[i]) {
+				continue
+			}
+
+			filling := make([]Cell, reader.FieldsPerRecord-len(records[i]))
+			for j := range filling {
+				if withoutNull {
+					filling[j] = NewCell(value.NewString(""))
+				} else {
+					filling[j] = NewCell(value.NewNull())
+				}
+			}
+
+			records[i] = append(records[i], filling...)
+		}
+	} else {
+		view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+	}
+
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
