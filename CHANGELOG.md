@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.15.2
+
+Released on June 13, 2021
+
+- Allow empty key names in JSON output. ([GitHub #57](https://github.com/mithrandie/csvq/issues/57))
+- Fix a bug of the "--allow-uneven-fields" option. ([GitHub #59](https://github.com/mithrandie/csvq/issues/59))
+
 ## Version 1.15.1
 
 Released on May 5, 2021
