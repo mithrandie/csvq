@@ -410,6 +410,48 @@ var convertTableValueToJsonStructureTests = []struct {
 	{
 		Fields: []string{
 			"column1",
+			"",
+		},
+		Rows: [][]value.Primary{
+			{
+				value.NewString("a"),
+				value.NewInteger(1),
+			},
+			{
+				value.NewString("b"),
+				value.NewFloat(0.2),
+			},
+		},
+		Expect: json.Array{
+			json.Object{
+				Members: []json.ObjectMember{
+					{
+						Key:   "column1",
+						Value: json.String("a"),
+					},
+					{
+						Key:   "",
+						Value: json.Integer(1),
+					},
+				},
+			},
+			json.Object{
+				Members: []json.ObjectMember{
+					{
+						Key:   "column1",
+						Value: json.String("b"),
+					},
+					{
+						Key:   "",
+						Value: json.Float(0.2),
+					},
+				},
+			},
+		},
+	},
+	{
+		Fields: []string{
+			"column1",
 			"column2",
 		},
 		Rows: [][]value.Primary{
