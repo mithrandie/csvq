@@ -3196,6 +3196,7 @@ var CsvqSyntax = []Expression{
 						"| LTSV  | Labeled Tab-separated Values             |\n" +
 						"| GFM   | Text Table for GitHub Flavored Markdown  |\n" +
 						"| ORG   | Text Table for Emacs Org-mode            |\n" +
+						"| BOX   | Text Table using Box-drawing characters  |\n" +
 						"| TEXT  | Text Table for console                   |\n" +
 						"+-------+------------------------------------------+\n" +
 						"```",

@@ -423,12 +423,17 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, ORG, "org")
 	}
 
+	_ = flags.SetFormat("box", "")
+	if flags.ExportOptions.Format != BOX {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, BOX, "box")
+	}
+
 	_ = flags.SetFormat("text", "")
 	if flags.ExportOptions.Format != TEXT {
 		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, TEXT, "text")
 	}
 
-	expectErr := "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT"
+	expectErr := "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|BOX|TEXT"
 	err := flags.SetFormat("error", "")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")

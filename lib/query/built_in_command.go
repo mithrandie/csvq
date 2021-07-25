@@ -435,7 +435,7 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 		}
 	case cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag:
 		switch tx.Flags.ExportOptions.Format {
-		case cmd.GFM, cmd.ORG, cmd.TEXT:
+		case cmd.GFM, cmd.ORG, cmd.BOX, cmd.TEXT:
 			s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.Boolean).String())

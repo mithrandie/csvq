@@ -34,7 +34,7 @@ func EncodeView(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 		return "", encodeJson(ctx, fp, view, options, palette)
 	case cmd.LTSV:
 		return "", encodeLTSV(ctx, fp, view, options)
-	case cmd.GFM, cmd.ORG, cmd.TEXT:
+	case cmd.GFM, cmd.ORG, cmd.BOX, cmd.TEXT:
 		return encodeText(ctx, fp, view, options, palette)
 	case cmd.TSV:
 		options.Delimiter = '\t'
@@ -249,6 +249,9 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 	case cmd.ORG:
 		tableFormat = table.OrgTable
 	default:
+		if options.Format == cmd.BOX {
+			tableFormat = table.BoxTable
+		}
 		if view.FieldLen() < 1 {
 			return "Empty Fields", EmptyResultSetError
 		}
@@ -290,7 +293,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 		rfields := make([]table.Field, fieldLen)
 		for j := range view.RecordSet[i] {
 			str, effect, align := ConvertFieldContents(view.RecordSet[i][j][0], isPlainTable)
-			if options.Format == cmd.TEXT {
+			if options.Format == cmd.TEXT || options.Format == cmd.BOX {
 				textStrBuf.Reset()
 				textLineBuf.Reset()
 

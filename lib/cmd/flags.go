@@ -103,6 +103,7 @@ const (
 	LTSV
 	GFM
 	ORG
+	BOX
 	TEXT
 )
 
@@ -114,6 +115,7 @@ var FormatLiteral = map[Format]string{
 	LTSV:  "LTSV",
 	GFM:   "GFM",
 	ORG:   "ORG",
+	BOX:   "BOX",
 	TEXT:  "TEXT",
 }
 

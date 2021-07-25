@@ -2716,6 +2716,7 @@ var completerAlterArgsTests = []completerTest{
 		OrigLine: "alter table `newtable.csv` set format to ",
 		Index:    40,
 		Expect: readline.CandidateList{
+			{Name: []rune("BOX")},
 			{Name: []rune("CSV")},
 			{Name: []rune("FIXED")},
 			{Name: []rune("GFM")},
@@ -3152,6 +3153,7 @@ var completerSetArgsTests = []completerTest{
 		OrigLine: "set @@format to ",
 		Index:    16,
 		Expect: readline.CandidateList{
+			{Name: []rune("BOX")},
 			{Name: []rune("CSV")},
 			{Name: []rune("FIXED")},
 			{Name: []rune("GFM")},
