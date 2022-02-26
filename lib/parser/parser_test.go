@@ -397,6 +397,35 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select c1 from jsonl('[]', `table.txt`) as t",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{
+							Object: TableObject{
+								BaseExpr:      &BaseExpr{line: 1, char: 16},
+								Type:          Token{Token: JSONL, Literal: "jsonl", Line: 1, Char: 16},
+								FormatElement: NewStringValue("[]"),
+								Path:          Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "table.txt", Quoted: true},
+							},
+							As:    Token{Token: AS, Literal: "as", Line: 1, Char: 41},
+							Alias: Identifier{BaseExpr: &BaseExpr{line: 1, char: 44}, Literal: "t"},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
 		Input: "select c1 from ltsv(`table.ltsv`)",
 		Output: []Statement{
 			SelectQuery{
@@ -6460,6 +6489,21 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "json"}},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select jsonl",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Fields: []QueryExpression{
+						Field{
+							Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "jsonl"}},
 						},
 					},
 				},

@@ -32,6 +32,7 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
   * LTSV
   * Fixed-Length Format
   * JSON
+  * JSON Lines
 * Support following file encodings
   * UTF-8
   * UTF-16
@@ -54,7 +55,7 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 #### Requirements
 
-Go 1.14 or later (ref. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
+Go 1.16 or later (cf. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
 
 #### Build command
 
@@ -72,7 +73,7 @@ Installing using a package manager does not ensure that you always get the lates
 
 #### macOS (unofficial)
 
-1. Install homebrew (ref. [The missing package manager for macOS (or Linux) — Homebrew](https://brew.sh))
+1. Install homebrew (cf. [The missing package manager for macOS (or Linux) — Homebrew](https://brew.sh))
 2. ```$ brew install csvq```
 
 ## Usage

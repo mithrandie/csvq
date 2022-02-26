@@ -153,6 +153,8 @@ func setup() {
 	_ = copyfile(filepath.Join(TestDir, "table_h.json"), filepath.Join(TestDataDir, "table_h.json"))
 	_ = copyfile(filepath.Join(TestDir, "table_a.json"), filepath.Join(TestDataDir, "table_a.json"))
 
+	_ = copyfile(filepath.Join(TestDir, "table7.jsonl"), filepath.Join(TestDataDir, "table7.jsonl"))
+
 	_ = copyfile(filepath.Join(TestDir, "table6.ltsv"), filepath.Join(TestDataDir, "table6.ltsv"))
 	_ = copyfile(filepath.Join(TestDir, "table6_bom.ltsv"), filepath.Join(TestDataDir, "table6_bom.ltsv"))
 

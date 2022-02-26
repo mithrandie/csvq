@@ -152,6 +152,7 @@ table_object
   : CSV(delimiter, table_identifier [, encoding [, no_header [, without_null]]])
   | FIXED(delimiter_positions, table_identifier [, encoding [, no_header [, without_null]]])
   | JSON(json_query, table_identifier)
+  | JSONL(json_query, table_identifier)
   | LTSV(table_identifier [, encoding [, without_null]])
 
 inline_table_object

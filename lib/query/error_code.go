@@ -34,6 +34,7 @@ const (
 	ErrorJsonQueryTooManyRecords              = 10701
 	ErrorLoadJson                             = 10702
 	ErrorEmptyJsonQuery                       = 10703 // Not in use after v1.14.0
+	ErrorJsonLinesStructure                   = 10704
 	ErrorEmptyJsonTable                       = 10801 // Not in use after v1.14.0
 	ErrorIncorrectLateralUsage                = 10802
 	ErrorEmptyInlineTable                     = 10803

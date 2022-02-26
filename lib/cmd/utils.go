@@ -339,6 +339,8 @@ func ParseFormat(s string, et txjson.EscapeType) (Format, txjson.EscapeType, err
 		fm = FIXED
 	case "JSON":
 		fm = JSON
+	case "JSONL":
+		fm = JSONL
 	case "LTSV":
 		fm = LTSV
 	case "GFM":
@@ -356,7 +358,7 @@ func ParseFormat(s string, et txjson.EscapeType) (Format, txjson.EscapeType, err
 		fm = JSON
 		et = txjson.AllWithHexDigits
 	default:
-		return fm, et, errors.New("format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|BOX|TEXT")
+		return fm, et, errors.New("format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV|GFM|ORG|BOX|TEXT")
 	}
 	return fm, et, nil
 }
