@@ -155,6 +155,7 @@ var CsvqSyntax = []Expression{
 							{Function{Name: "CSV", Args: []Element{String("delimiter"), Link("table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
 							{Function{Name: "FIXED", Args: []Element{String("delimiter_positions"), Link("table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
 							{Function{Name: "JSON", Args: []Element{String("json_query"), Link("table_identifier")}}},
+							{Function{Name: "JSONL", Args: []Element{String("json_query"), Link("table_identifier")}}},
 							{Function{Name: "LTSV", Args: []Element{Link("table_identifier"), Option{String("encoding"), Boolean("without_null")}}}},
 						},
 					},
@@ -876,21 +877,21 @@ var CsvqSyntax = []Expression{
 			{
 				Name: "arithmetic_operation",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("Arithmetic Operators")},
 				},
 			},
 			{
 				Name: "string_operation",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("String Operators")},
 				},
 			},
 			{
 				Name: "function",
 				Description: Description{
-					Template: "ref.\n" +
+					Template: "cf.\n" +
 						"   > %s\n" +
 						"   > %s\n" +
 						"   > %s\n" +
@@ -925,35 +926,35 @@ var CsvqSyntax = []Expression{
 			{
 				Name: "variable",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("Variables")},
 				},
 			},
 			{
 				Name: "variable_substitution",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("variable_substitution")},
 				},
 			},
 			{
 				Name: "environment_variable",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("Environment Variables")},
 				},
 			},
 			{
 				Name: "runtime_information",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("Runtime Information")},
 				},
 			},
 			{
 				Name: "flag",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("Flags")},
 				},
 			},
@@ -973,14 +974,14 @@ var CsvqSyntax = []Expression{
 			{
 				Name: "comparison_operation",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("Comparison Operators")},
 				},
 			},
 			{
 				Name: "logic_operation",
 				Description: Description{
-					Template: "ref. %s",
+					Template: "cf. %s",
 					Values:   []Element{Link("Logic Operators")},
 				},
 			},
@@ -2956,7 +2957,7 @@ var CsvqSyntax = []Expression{
 						"CSV_INLINE CUME_DIST CURRENT CURSOR DECLARE DEFAULT DELETE DENSE_RANK DESC DISPOSE " +
 						"DISTINCT DO DROP DUAL ECHO ELSE ELSEIF END EXCEPT EXECUTE EXISTS " +
 						"EXIT FALSE FETCH FIRST FIRST_VALUE FOLLOWING FOR FROM FULL FUNCTION " +
-						"GROUP HAVING IF IGNORE IN INNER INSERT INTERSECT INTO IS JOIN " +
+						"GROUP HAVING IF IGNORE IN INNER INSERT INTERSECT INTO IS JOIN JSONL " +
 						"JSON_AGG JSON_INLINE JSON_OBJECT JSON_ROW JSON_TABLE LAG LAST LAST_VALUE LATERAL LEAD " +
 						"LEFT LIKE LIMIT LISTAGG MAX MEDIAN MIN NATURAL NEXT NOT NTH_VALUE " +
 						"NTILE NULL OFFSET ON ONLY OPEN OR ORDER OUTER OVER PARTITION PERCENT " +
@@ -3193,9 +3194,11 @@ var CsvqSyntax = []Expression{
 						"| TSV   | Tab separated values                     |\n" +
 						"| FIXED | Fixed-Length Format                      |\n" +
 						"| JSON  | JSON Format                              |\n" +
+						"| JSONL | JSON Lines Format                        |\n" +
 						"| LTSV  | Labeled Tab-separated Values             |\n" +
 						"| GFM   | Text Table for GitHub Flavored Markdown  |\n" +
 						"| ORG   | Text Table for Emacs Org-mode            |\n" +
+						"| BOX   | Text Table using Box-drawing characters  |\n" +
 						"| TEXT  | Text Table for console                   |\n" +
 						"+-------+------------------------------------------+\n" +
 						"```",

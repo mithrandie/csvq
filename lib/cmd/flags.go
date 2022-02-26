@@ -100,9 +100,11 @@ const (
 	TSV
 	FIXED
 	JSON
+	JSONL
 	LTSV
 	GFM
 	ORG
+	BOX
 	TEXT
 )
 
@@ -111,9 +113,11 @@ var FormatLiteral = map[Format]string{
 	TSV:   "TSV",
 	FIXED: "FIXED",
 	JSON:  "JSON",
+	JSONL: "JSONL",
 	LTSV:  "LTSV",
 	GFM:   "GFM",
 	ORG:   "ORG",
+	BOX:   "BOX",
 	TEXT:  "TEXT",
 }
 
@@ -126,6 +130,7 @@ var ImportFormats = []Format{
 	TSV,
 	FIXED,
 	JSON,
+	JSONL,
 	LTSV,
 }
 
@@ -143,6 +148,7 @@ const (
 	CsvExt      = ".csv"
 	TsvExt      = ".tsv"
 	JsonExt     = ".json"
+	JsonlExt    = ".jsonl"
 	LtsvExt     = ".ltsv"
 	GfmExt      = ".md"
 	OrgExt      = ".org"
@@ -398,16 +404,16 @@ func (f *Flags) SetWaitTimeout(t float64) {
 func (f *Flags) SetImportFormat(s string) error {
 	fm, _, err := ParseFormat(s, f.ExportOptions.JsonEscape)
 	if err != nil {
-		return errors.New("import format must be one of CSV|TSV|FIXED|JSON|LTSV")
+		return errors.New("import format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV")
 	}
 
 	switch fm {
-	case CSV, TSV, FIXED, JSON, LTSV:
+	case CSV, TSV, FIXED, JSON, JSONL, LTSV:
 		f.ImportOptions.Format = fm
 		return nil
 	}
 
-	return errors.New("import format must be one of CSV|TSV|FIXED|JSON|LTSV")
+	return errors.New("import format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV")
 }
 
 func (f *Flags) SetDelimiter(s string) error {
@@ -482,6 +488,8 @@ func (f *Flags) SetFormat(s string, outfile string) error {
 			fm = TSV
 		case JsonExt:
 			fm = JSON
+		case JsonlExt:
+			fm = JSONL
 		case LtsvExt:
 			fm = LTSV
 		case GfmExt:

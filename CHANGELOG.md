@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.16.0
+
+Released on Feb 26, 2022
+
+- Support JSON Lines format. ([GitHub #58](https://github.com/mithrandie/csvq/issues/58))
+- Support BOX format as an export format. ([GitHub #61](https://github.com/mithrandie/csvq/issues/61))
+
 ## Version 1.15.2
 
 Released on June 13, 2021

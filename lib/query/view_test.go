@@ -425,6 +425,64 @@ var viewLoadTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
+		Name: "LoadView Json Lines From Stdin",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:        "{\"column1\": 1, \"column2\": \"str1\"}\n{\"column1\": 2, \"column2\": \"str2\"}",
+		ImportFormat: cmd.JSONL,
+		JsonQuery:    "",
+		Result: &View{
+			Header: NewHeader("t", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("str2"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "STDIN",
+				Delimiter: ',',
+				JsonQuery: "",
+				Format:    cmd.JSONL,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeStdin,
+			},
+		},
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
+						FileInfo: &FileInfo{Path: "STDIN"},
+					},
+				},
+			},
+		}, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"T": "STDIN",
+			}},
+		}, time.Time{}, nil),
+	},
+	{
+		Name: "LoadView Json Lines From Stdin, Json Structure Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:        "{\"column1\": 1, \"column2\": \"str1\"}\n\"str\"",
+		ImportFormat: cmd.JSONL,
+		JsonQuery:    "",
+		Error:        "json lines must be an array of objects",
+	},
+	{
 		Name: "LoadView JsonH From Stdin",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -1349,6 +1407,47 @@ var viewLoadTests = []struct {
 			},
 		},
 		Error: "file notexist does not exist",
+	},
+	{
+		Name: "LoadView TableObject From Json Lines File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSONL, Literal: "jsonl"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table7"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewInteger(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewInteger(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table7.jsonl",
+				Delimiter: ',',
+				JsonQuery: "{}",
+				Format:    cmd.JSONL,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"JT": strings.ToUpper(GetTestFilePath("table7.jsonl")),
+			}},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "LoadView TableObject From LTSV File",

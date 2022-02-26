@@ -26,6 +26,8 @@ import (
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/csv"
 	"github.com/mithrandie/go-text/fixedlen"
+	txjson "github.com/mithrandie/go-text/json"
+	"github.com/mithrandie/go-text/jsonl"
 	"github.com/mithrandie/go-text/ltsv"
 	"github.com/mithrandie/ternary"
 )
@@ -229,7 +231,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 			options.DelimiterPositions = positions
 			options.Format = cmd.FIXED
-		case parser.JSON:
+		case parser.JSON, parser.JSONL:
 			if felem == nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, "json query is not specified")
 			}
@@ -239,9 +241,14 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			if 0 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
 			}
+
 			options.JsonQuery = felem.(*value.String).Raw()
-			options.Format = cmd.JSON
 			options.Encoding = text.UTF8
+			if tableObject.Type.Token == parser.JSONL {
+				options.Format = cmd.JSONL
+			} else {
+				options.Format = cmd.JSON
+			}
 		case parser.LTSV:
 			if 2 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 3)
@@ -587,8 +594,11 @@ func loadObject(
 			options.Format = scope.Tx.Flags.ImportOptions.Format
 		}
 
-		if options.Format == cmd.TSV {
+		switch options.Format {
+		case cmd.TSV:
 			options.Delimiter = '\t'
+		case cmd.JSON, cmd.JSONL:
+			options.Encoding = text.UTF8
 		}
 
 		fileInfo := &FileInfo{
@@ -856,6 +866,8 @@ func loadViewFromFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, f
 		return loadViewFromLTSVFile(ctx, flags, fp, fileInfo, options.WithoutNull, expr)
 	case cmd.JSON:
 		return loadViewFromJsonFile(fp, fileInfo, expr)
+	case cmd.JSONL:
+		return loadViewFromJsonLinesFile(ctx, flags, fp, fileInfo, expr)
 	}
 	return loadViewFromCSVFile(ctx, fp, fileInfo, options.AllowUnevenFields, options.WithoutNull, expr)
 }
@@ -1153,6 +1165,146 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 	view := NewView()
 	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
 	view.RecordSet = records
+	view.FileInfo = fileInfo
+	return view, nil
+}
+
+func loadViewFromJsonLinesFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
+	var err error
+	headerList := make([]string, 0, 32)
+	headerMap := make(map[string]bool, 32)
+	objectList := make([]txjson.Object, 0, fileLoadingPreparedRecordSetCap)
+
+	escapeType := txjson.Backslash
+	fileSize := fileSize(fp)
+	jsonQuery, err := json.Query.Parse(fileInfo.JsonQuery)
+	if err != nil {
+		return nil, NewLoadJsonError(expr, err.Error())
+	}
+
+	rowch := make(chan txjson.Object, fileLoadingBuffer)
+	pos := 0
+
+	reader := jsonl.NewReader(fp)
+	reader.SetUseInteger(true)
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		for {
+			row, ok := <-rowch
+			if !ok {
+				break
+			}
+
+			for _, v := range row.Keys() {
+				if _, ok := headerMap[v]; !ok {
+					headerMap[v] = true
+					headerList = append(headerList, v)
+				}
+			}
+
+			if 0 < fileSize && len(objectList) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
+				l := int((float64(fileSize) / float64(pos)) * fileLoadingPreparedRecordSetCap * 1.2)
+				newSet := make([]txjson.Object, fileLoadingPreparedRecordSetCap, l)
+				copy(newSet, objectList)
+				objectList = newSet
+			}
+
+			objectList = append(objectList, row)
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		i := 0
+		for {
+			if i&15 == 0 && ctx.Err() != nil {
+				err = ConvertContextError(ctx.Err())
+				break
+			}
+
+			row, et, e := reader.Read()
+			if e == io.EOF {
+				break
+			}
+			if e != nil {
+				err = e
+				break
+			}
+
+			rowObj, ok := row.(txjson.Object)
+			if !ok {
+				err = NewJsonLinesStructureError(expr)
+				break
+			}
+
+			if jsonQuery != nil {
+				jstruct, e := json.Extract(jsonQuery, rowObj)
+				if e != nil {
+					err = e
+					break
+				}
+				jarray, ok := jstruct.(txjson.Array)
+				if !ok || len(jarray) < 1 {
+					err = e
+					break
+				}
+				rowObj, ok = jarray[0].(txjson.Object)
+				if !ok {
+					err = e
+					break
+				}
+			}
+
+			if escapeType < et {
+				escapeType = et
+			}
+
+			if 0 < fileSize && i < fileLoadingPreparedRecordSetCap {
+				pos = reader.Pos()
+			}
+
+			rowch <- rowObj
+			i++
+		}
+		close(rowch)
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
+	}
+
+	recordSet := make(RecordSet, len(objectList))
+
+	if err = NewGoroutineTaskManager(len(objectList), -1, flags.CPU).Run(ctx, func(index int) error {
+		values := make([]value.Primary, len(headerList))
+
+		for i, v := range headerList {
+			if objectList[index].Exists(v) {
+				values[i] = json.ConvertToValue(objectList[index].Value(v))
+			} else {
+				values[i] = value.NewNull()
+			}
+		}
+
+		recordSet[index] = NewRecord(values)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	fileInfo.Encoding = text.UTF8
+	fileInfo.JsonEscape = escapeType
+
+	view := NewView()
+	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerList)
+	view.RecordSet = recordSet
 	view.FileInfo = fileInfo
 	return view, nil
 }

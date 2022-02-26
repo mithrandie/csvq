@@ -32,9 +32,11 @@ func EncodeView(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 		return "", encodeFixedLengthFormat(ctx, fp, view, options)
 	case cmd.JSON:
 		return "", encodeJson(ctx, fp, view, options, palette)
+	case cmd.JSONL:
+		return "", encodeJsonLines(ctx, fp, view, options, palette)
 	case cmd.LTSV:
 		return "", encodeLTSV(ctx, fp, view, options)
-	case cmd.GFM, cmd.ORG, cmd.TEXT:
+	case cmd.GFM, cmd.ORG, cmd.BOX, cmd.TEXT:
 		return encodeText(ctx, fp, view, options, palette)
 	case cmd.TSV:
 		options.Delimiter = '\t'
@@ -239,6 +241,60 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 	return nil
 }
 
+func encodeJsonLines(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions, palette *color.Palette) error {
+	fields := view.Header.TableColumnNames()
+	pathes, err := json.ParsePathes(fields)
+	if err != nil {
+		return err
+	}
+
+	e := txjson.NewEncoder()
+	e.EscapeType = options.JsonEscape
+	e.LineBreak = options.LineBreak
+	e.PrettyPrint = options.PrettyPrint
+	if options.PrettyPrint && options.Color {
+		e.Palette = palette
+	}
+	defer func() {
+		if options.Color {
+			palette.Enable()
+		} else {
+			palette.Disable()
+		}
+	}()
+
+	lineBreak := e.LineBreak.Value()
+	w := bufio.NewWriter(fp)
+	row := make([]value.Primary, view.FieldLen())
+
+	for i := range view.RecordSet {
+		if i&15 == 0 && ctx.Err() != nil {
+			return ConvertContextError(ctx.Err())
+		}
+
+		for j := range view.RecordSet[i] {
+			row[j] = view.RecordSet[i][j][0]
+		}
+		rowStrct, err := json.ConvertRecordValueToJsonStructure(pathes, row)
+		if err != nil {
+			return NewDataEncodingError(err.Error())
+		}
+		rowStr := e.Encode(rowStrct)
+
+		if _, err = w.WriteString(rowStr); err != nil {
+			return NewSystemError(err.Error())
+		}
+		if _, err = w.WriteString(lineBreak); err != nil {
+			return NewSystemError(err.Error())
+		}
+	}
+	if err = w.Flush(); err != nil {
+		return NewSystemError(err.Error())
+	}
+
+	return nil
+}
+
 func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions, palette *color.Palette) (string, error) {
 	isPlainTable := false
 
@@ -249,6 +305,9 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 	case cmd.ORG:
 		tableFormat = table.OrgTable
 	default:
+		if options.Format == cmd.BOX {
+			tableFormat = table.BoxTable
+		}
 		if view.FieldLen() < 1 {
 			return "Empty Fields", EmptyResultSetError
 		}
@@ -290,7 +349,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 		rfields := make([]table.Field, fieldLen)
 		for j := range view.RecordSet[i] {
 			str, effect, align := ConvertFieldContents(view.RecordSet[i][j][0], isPlainTable)
-			if options.Format == cmd.TEXT {
+			if options.Format == cmd.TEXT || options.Format == cmd.BOX {
 				textStrBuf.Reset()
 				textLineBuf.Reset()
 

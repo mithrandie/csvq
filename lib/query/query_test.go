@@ -4330,7 +4330,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "format"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT",
+		Error: "format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV|GFM|ORG|BOX|TEXT",
 	},
 	{
 		Name: "Set Encoding to SJIS",

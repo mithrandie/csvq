@@ -30,9 +30,9 @@ PARAMETERS:
    Timezone
        Local | UTC
    Import Format
-       CSV | TSV | FIXED | JSON | LTSV
+       CSV | TSV | FIXED | JSON | JSONL | LTSV
    Export Format
-       CSV | TSV | FIXED | JSON | LTSV | GFM | ORG | TEXT
+       CSV | TSV | FIXED | JSON | JSONL | LTSV | GFM | ORG | BOX | TEXT
    Import Character Encodings
        AUTO | UTF8 | UTF8M | UTF16 | UTF16BE | UTF16LE | UTF16BEM | UTF16LEM | SJIS
    Export Character Encodings

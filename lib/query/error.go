@@ -48,6 +48,7 @@ const (
 	ErrMsgSubqueryTooManyFields                = "subquery returns too many fields, should return only one field"
 	ErrMsgJsonQueryTooManyRecords              = "json query returns too many records, should return only one record"
 	ErrMsgLoadJson                             = "json loading error: %s"
+	ErrMsgJsonLinesStructure                   = "json lines must be an array of objects"
 	ErrMsgIncorrectLateralUsage                = "LATERAL cannot to be used in a RIGHT or FULL outer join"
 	ErrMsgEmptyInlineTable                     = "inline table is empty"
 	ErrMsgInvalidTableObject                   = "invalid table object: %s"
@@ -640,6 +641,16 @@ type LoadJsonError struct {
 func NewLoadJsonError(expr parser.QueryExpression, message string) error {
 	return &LoadJsonError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgLoadJson, message), ReturnCodeApplicationError, ErrorLoadJson),
+	}
+}
+
+type JsonLinesStructureError struct {
+	*BaseError
+}
+
+func NewJsonLinesStructureError(expr parser.QueryExpression) error {
+	return &JsonLinesStructureError{
+		NewBaseError(expr, ErrMsgJsonLinesStructure, ReturnCodeApplicationError, ErrorJsonLinesStructure),
 	}
 }
 

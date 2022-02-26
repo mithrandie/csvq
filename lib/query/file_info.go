@@ -106,7 +106,7 @@ func NewFileInfo(
 	switch format {
 	case cmd.TSV:
 		delimiter = '\t'
-	case cmd.JSON:
+	case cmd.JSON, cmd.JSONL:
 		encoding = text.UTF8
 	}
 
@@ -178,7 +178,7 @@ func (f *FileInfo) SetFormat(s string) error {
 	switch format {
 	case cmd.TSV:
 		delimiter = '\t'
-	case cmd.JSON:
+	case cmd.JSON, cmd.JSONL:
 		encoding = text.UTF8
 	}
 
@@ -196,7 +196,7 @@ func (f *FileInfo) SetEncoding(s string) error {
 	}
 
 	switch f.Format {
-	case cmd.JSON:
+	case cmd.JSON, cmd.JSONL:
 		if encoding != text.UTF8 {
 			return errors.New("json format is supported only UTF8")
 		}
@@ -300,6 +300,8 @@ func SearchFilePath(filename parser.Identifier, repository string, options cmd.I
 		fpath, err = SearchCSVFilePath(filename, repository)
 	case cmd.JSON:
 		fpath, err = SearchJsonFilePath(filename, repository)
+	case cmd.JSONL:
+		fpath, err = SearchJsonlFilePath(filename, repository)
 	case cmd.FIXED:
 		fpath, err = SearchFixedLengthFilePath(filename, repository)
 	case cmd.LTSV:
@@ -313,6 +315,8 @@ func SearchFilePath(filename parser.Identifier, repository string, options cmd.I
 				format = cmd.TSV
 			case cmd.JsonExt:
 				format = cmd.JSON
+			case cmd.JsonlExt:
+				format = cmd.JSONL
 			case cmd.LtsvExt:
 				format = cmd.LTSV
 			default:
@@ -332,6 +336,10 @@ func SearchJsonFilePath(filename parser.Identifier, repository string) (string, 
 	return SearchFilePathWithExtType(filename, repository, []string{cmd.JsonExt})
 }
 
+func SearchJsonlFilePath(filename parser.Identifier, repository string) (string, error) {
+	return SearchFilePathWithExtType(filename, repository, []string{cmd.JsonlExt})
+}
+
 func SearchFixedLengthFilePath(filename parser.Identifier, repository string) (string, error) {
 	return SearchFilePathWithExtType(filename, repository, []string{cmd.TextExt})
 }
@@ -341,7 +349,7 @@ func SearchLTSVFilePath(filename parser.Identifier, repository string) (string, 
 }
 
 func SearchFilePathFromAllTypes(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt})
+	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.JsonlExt, cmd.LtsvExt, cmd.TextExt})
 }
 
 func SearchFilePathWithExtType(filename parser.Identifier, repository string, extTypes []string) (string, error) {
@@ -401,6 +409,9 @@ func NewFileInfoForCreate(filename parser.Identifier, repository string, delimit
 	case cmd.JsonExt:
 		encoding = text.UTF8
 		format = cmd.JSON
+	case cmd.JsonlExt:
+		encoding = text.UTF8
+		format = cmd.JSONL
 	case cmd.LtsvExt:
 		format = cmd.LTSV
 	case cmd.GfmExt:

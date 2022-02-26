@@ -376,7 +376,7 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 		}
 	case cmd.ExportEncodingFlag:
 		switch tx.Flags.ExportOptions.Format {
-		case cmd.JSON:
+		case cmd.JSON, cmd.JSONL:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.String).Raw())
 		default:
 			s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).Raw())
@@ -421,21 +421,21 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 		}
 	case cmd.JsonEscapeFlag:
 		switch tx.Flags.ExportOptions.Format {
-		case cmd.JSON:
+		case cmd.JSON, cmd.JSONL:
 			s = tx.Palette.Render(cmd.StringEffect, val.(*value.String).Raw())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.String).Raw())
 		}
 	case cmd.PrettyPrintFlag:
 		switch tx.Flags.ExportOptions.Format {
-		case cmd.JSON:
+		case cmd.JSON, cmd.JSONL:
 			s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.Boolean).String())
 		}
 	case cmd.EastAsianEncodingFlag, cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag:
 		switch tx.Flags.ExportOptions.Format {
-		case cmd.GFM, cmd.ORG, cmd.TEXT:
+		case cmd.GFM, cmd.ORG, cmd.BOX, cmd.TEXT:
 			s = tx.Palette.Render(cmd.BooleanEffect, val.(*value.Boolean).String())
 		default:
 			s = tx.Palette.Render(cmd.NullEffect, IgnoredFlagPrefix+val.(*value.Boolean).String())
@@ -739,7 +739,7 @@ func writeTableAttribute(w *ObjectWriter, flags *cmd.Flags, info *FileInfo) {
 
 		w.WriteColorWithoutLineBreak("Delimiter Positions: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(dp)
-	case cmd.JSON:
+	case cmd.JSON, cmd.JSONL:
 		escapeStr := cmd.JsonEscapeTypeToString(info.JsonEscape)
 		w.WriteColorWithoutLineBreak("Escape: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(escapeStr)
@@ -769,7 +769,7 @@ func writeTableAttribute(w *ObjectWriter, flags *cmd.Flags, info *FileInfo) {
 
 	w.WriteColor("Encoding: ", cmd.LableEffect)
 	switch info.Format {
-	case cmd.JSON:
+	case cmd.JSON, cmd.JSONL:
 		w.WriteColorWithoutLineBreak(text.UTF8.String(), cmd.NullEffect)
 	default:
 		w.WriteWithoutLineBreak(info.Encoding.String())
@@ -782,7 +782,7 @@ func writeTableAttribute(w *ObjectWriter, flags *cmd.Flags, info *FileInfo) {
 	}
 
 	switch info.Format {
-	case cmd.JSON:
+	case cmd.JSON, cmd.JSONL:
 		w.WriteSpaces(6 - (cmd.TextWidth(info.LineBreak.String(), flags)))
 		w.WriteColorWithoutLineBreak("Pretty Print: ", cmd.LableEffect)
 		w.WriteWithoutLineBreak(strconv.FormatBool(info.PrettyPrint))
