@@ -196,7 +196,7 @@ func TestFlags_SetImportFormat(t *testing.T) {
 		t.Errorf("importFormat = %s, expect to set %s for empty string", flags.ImportOptions.Format, JSON)
 	}
 
-	expectErr := "import format must be one of CSV|TSV|FIXED|JSON|LTSV"
+	expectErr := "import format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV"
 	err := flags.SetImportFormat("error")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")
@@ -357,6 +357,11 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, JSON, "foo.json")
 	}
 
+	_ = flags.SetFormat("", "foo.jsonl")
+	if flags.ExportOptions.Format != JSONL {
+		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, JSONL, "foo.jsonl")
+	}
+
 	_ = flags.SetFormat("", "foo.ltsv")
 	if flags.ExportOptions.Format != LTSV {
 		t.Errorf("format = %s, expect to set %s for empty string with file %q", flags.ExportOptions.Format, LTSV, "foo.ltsv")
@@ -390,6 +395,11 @@ func TestFlags_SetFormat(t *testing.T) {
 	_ = flags.SetFormat("json", "")
 	if flags.ExportOptions.Format != JSON {
 		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, JSON, "json")
+	}
+
+	_ = flags.SetFormat("jsonl", "")
+	if flags.ExportOptions.Format != JSONL {
+		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, JSONL, "jsonl")
 	}
 
 	_ = flags.SetFormat("ltsv", "")
@@ -433,7 +443,7 @@ func TestFlags_SetFormat(t *testing.T) {
 		t.Errorf("format = %s, expect to set %s for %s", flags.ExportOptions.Format, TEXT, "text")
 	}
 
-	expectErr := "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|BOX|TEXT"
+	expectErr := "format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV|GFM|ORG|BOX|TEXT"
 	err := flags.SetFormat("error", "")
 	if err == nil {
 		t.Errorf("no error, want error %q for %s", expectErr, "error")

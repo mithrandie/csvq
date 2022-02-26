@@ -222,7 +222,7 @@ import (
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
 %token<token> TIES NULLS ROWS ONLY
-%token<token> CSV JSON FIXED LTSV
+%token<token> CSV JSON JSONL FIXED LTSV
 %token<token> CSV_INLINE JSON_INLINE JSON_TABLE
 %token<token> JSON_ROW
 %token<token> SUBSTRING COUNT JSON_OBJECT
@@ -2006,6 +2006,10 @@ table_object_type
     {
         $$ = $1
     }
+    | JSONL
+    {
+        $$ = $1
+    }
     | FIXED
     {
         $$ = $1
@@ -2619,6 +2623,10 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | JSON
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | JSONL
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

@@ -40,12 +40,13 @@ Version 1.15.2
   * LTSV
   * Fixed-Length Format
   * [JSON]({{ '/reference/json.html' | relative_url }})
+  * JSON Lines
 * Support following file encodings
   * UTF-8
   * UTF-16
   * Shift_JIS
 
-  > JSON Format supports only UTF-8.
+  > JSON and JSON Lines formats support only UTF-8.
 
 ## Installation
 

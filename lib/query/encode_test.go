@@ -432,6 +432,39 @@ var encodeViewTests = []struct {
 			"]",
 	},
 	{
+		Name: "JSONL",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abc\\defghi/jk\rlmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
+			},
+		},
+		Format: cmd.JSONL,
+		Result: "{" +
+			"\"c1\":-1," +
+			"\"c2\\nsecond line\":null," +
+			"\"c3\":true" +
+			"}\n" +
+			"{" +
+			"\"c1\":-1," +
+			"\"c2\\nsecond line\":false," +
+			"\"c3\":true" +
+			"}\n" +
+			"{" +
+			"\"c1\":2.0123," +
+			"\"c2\\nsecond line\":\"2016-02-01T16:00:00.123456-07:00\"," +
+			"\"c3\":\"abcdef\"" +
+			"}\n" +
+			"{" +
+			"\"c1\":34567890," +
+			"\"c2\\nsecond line\":\" abc\\\\defghi\\/jk\\rlmn\\topqrstuvwxyzabcdefg\\nhi\\\"jk\\n\"," +
+			"\"c3\":null" +
+			"}\n",
+	},
+	{
 		Name: "LTSV",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),

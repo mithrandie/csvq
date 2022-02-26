@@ -1,3 +1,4 @@
+//go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || windows
 // +build darwin dragonfly freebsd linux netbsd openbsd solaris windows
 
 package query
@@ -83,6 +84,7 @@ var tableObjectCandidates = []string{
 	"CSV()",
 	"FIXED()",
 	"JSON()",
+	"JSONL()",
 	"LTSV()",
 }
 
@@ -2099,7 +2101,7 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 
 func (c *Completer) SearchAllTables(line string, _ string, _ int) readline.CandidateList {
 	tableKeys := c.scope.Tx.cachedViews.SortedKeys()
-	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, c.scope.Tx.Flags.Repository)
+	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.JsonlExt, cmd.LtsvExt, cmd.TextExt}, c.scope.Tx.Flags.Repository)
 
 	defaultDir := c.scope.Tx.Flags.Repository
 	if len(defaultDir) < 1 {
@@ -2695,7 +2697,7 @@ func (c *Completer) combineFunction() {
 
 func (c *Completer) isTableObject(token parser.Token) bool {
 	switch token.Token {
-	case parser.CSV, parser.JSON, parser.FIXED, parser.LTSV, parser.JSON_TABLE:
+	case parser.CSV, parser.JSON, parser.JSONL, parser.FIXED, parser.LTSV, parser.JSON_TABLE:
 		return true
 	}
 	return false

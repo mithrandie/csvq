@@ -1714,6 +1714,29 @@ var showObjectsTests = []struct {
 			{
 				Header: NewHeader("table1", []string{"col1", "col2"}),
 				FileInfo: &FileInfo{
+					Path:        "table1.jsonl",
+					JsonQuery:   "{}",
+					Format:      cmd.JSONL,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
+					PrettyPrint: false,
+				},
+			},
+			{
+				Header: NewHeader("table2", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table2.jsonl",
+					JsonQuery:   "",
+					Format:      cmd.JSONL,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
+					JsonEscape:  json.HexDigits,
+					PrettyPrint: false,
+				},
+			},
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
 					Path:               "table1.txt",
 					DelimiterPositions: []int{3, 12},
 					Format:             cmd.FIXED,
@@ -1746,6 +1769,10 @@ var showObjectsTests = []struct {
 			"     Fields: col1, col2\n" +
 			"     Format: JSON    Escape: BACKSLASH  Query: {}\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
+			" table1.jsonl\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: JSONL   Escape: BACKSLASH  Query: {}\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table1.tsv\n" +
 			"     Fields: col1, col2\n" +
 			"     Format: TSV     Delimiter: '\\t'  Enclose All: false\n" +
@@ -1757,6 +1784,10 @@ var showObjectsTests = []struct {
 			" table2.json\n" +
 			"     Fields: col1, col2\n" +
 			"     Format: JSON    Escape: HEX      Query: (empty)\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
+			" table2.jsonl\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: JSONL   Escape: HEX      Query: (empty)\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" table2.txt\n" +
 			"     Fields: col1, col2\n" +
@@ -1796,6 +1827,17 @@ var showObjectsTests = []struct {
 					Path:        "table1.json",
 					JsonQuery:   "{}",
 					Format:      cmd.JSON,
+					Encoding:    text.UTF8,
+					LineBreak:   text.LF,
+					PrettyPrint: false,
+				},
+			},
+			{
+				Header: NewHeader("table1", []string{"col1", "col2"}),
+				FileInfo: &FileInfo{
+					Path:        "table1.jsonl",
+					JsonQuery:   "{}",
+					Format:      cmd.JSONL,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
 					PrettyPrint: false,
@@ -1855,6 +1897,10 @@ var showObjectsTests = []struct {
 			" table1.json\n" +
 			"     Fields: col1, col2\n" +
 			"     Format: JSON    Escape: BACKSLASH  Query: {}\n" +
+			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
+			" table1.jsonl\n" +
+			"     Fields: col1, col2\n" +
+			"     Format: JSONL   Escape: BACKSLASH  Query: {}\n" +
 			"     Encoding: UTF8  LineBreak: LF    Pretty Print: false\n" +
 			" *Created* table1.tsv\n" +
 			"     Fields: col1, col2\n" +
