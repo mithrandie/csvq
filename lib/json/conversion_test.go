@@ -23,7 +23,7 @@ var convertToValueTests = []struct {
 	},
 	{
 		Input:  json.Number(234),
-		Expect: value.NewInteger(234),
+		Expect: value.NewFloat(234),
 	},
 	{
 		Input:  json.String("abc"),
@@ -143,14 +143,14 @@ var convertToTableValueTests = []struct {
 		},
 		ExpectRows: [][]value.Primary{
 			{
-				value.NewInteger(1),
-				value.NewInteger(2),
-				value.NewInteger(3),
+				value.NewFloat(1),
+				value.NewFloat(2),
+				value.NewFloat(3),
 			},
 			{
 				value.NewNull(),
-				value.NewInteger(22),
-				value.NewInteger(23),
+				value.NewFloat(22),
+				value.NewFloat(23),
 			},
 		},
 	},

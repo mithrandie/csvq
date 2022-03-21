@@ -54,7 +54,7 @@ func load(queryString string, jsontext string) (json.Structure, json.EscapeType,
 	}
 
 	d := json.NewDecoder()
-	d.UseInteger = true
+	d.UseInteger = false
 	data, et, err := d.Decode(jsontext)
 	if err != nil {
 		return nil, et, err

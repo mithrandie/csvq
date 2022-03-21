@@ -1186,7 +1186,7 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *cmd.Flags, fp io.Read
 	pos := 0
 
 	reader := jsonl.NewReader(fp)
-	reader.SetUseInteger(true)
+	reader.SetUseInteger(false)
 
 	wg := sync.WaitGroup{}
 

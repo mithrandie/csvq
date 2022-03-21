@@ -24,6 +24,7 @@ var jpToknames = [...]string{
 	"OBJECT_PATH",
 	"'.'",
 }
+
 var jpStatenames = [...]string{}
 
 const jpEofCode = 1
@@ -51,45 +52,45 @@ const jpPrivate = 57344
 const jpLast = 7
 
 var jpAct = [...]int{
-
 	4, 2, 3, 1, 0, 0, 5,
 }
-var jpPact = [...]int{
 
+var jpPact = [...]int{
 	-2, -1000, -1000, -5, -2, -1000,
 }
-var jpPgo = [...]int{
 
+var jpPgo = [...]int{
 	0, 3, 1,
 }
-var jpR1 = [...]int{
 
+var jpR1 = [...]int{
 	0, 1, 1, 2, 2,
 }
-var jpR2 = [...]int{
 
+var jpR2 = [...]int{
 	0, 0, 1, 1, 3,
 }
-var jpChk = [...]int{
 
+var jpChk = [...]int{
 	-1000, -1, -2, 4, 5, -2,
 }
-var jpDef = [...]int{
 
+var jpDef = [...]int{
 	1, -2, 2, 3, 0, 4,
 }
-var jpTok1 = [...]int{
 
+var jpTok1 = [...]int{
 	1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 5,
 }
-var jpTok2 = [...]int{
 
+var jpTok2 = [...]int{
 	2, 3, 4,
 }
+
 var jpTok3 = [...]int{
 	0,
 }
@@ -433,27 +434,27 @@ jpdefault:
 
 	case 1:
 		jpDollar = jpS[jppt-0 : jppt+1]
-		//line path_parser.y:20
+//line path_parser.y:20
 		{
 			jpVAL.expression = ObjectPath{}
 			jplex.(*PathLexer).path = jpVAL.expression
 		}
 	case 2:
 		jpDollar = jpS[jppt-1 : jppt+1]
-		//line path_parser.y:25
+//line path_parser.y:25
 		{
 			jpVAL.expression = jpDollar[1].member
 			jplex.(*PathLexer).path = jpVAL.expression
 		}
 	case 3:
 		jpDollar = jpS[jppt-1 : jppt+1]
-		//line path_parser.y:32
+//line path_parser.y:32
 		{
 			jpVAL.member = ObjectPath{Name: jpDollar[1].token.Literal}
 		}
 	case 4:
 		jpDollar = jpS[jppt-3 : jppt+1]
-		//line path_parser.y:36
+//line path_parser.y:36
 		{
 			jpVAL.member = ObjectPath{Name: jpDollar[1].token.Literal, Child: jpDollar[3].member}
 		}
