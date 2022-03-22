@@ -203,7 +203,7 @@ func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser
 		return nil, err
 	}
 
-	if pi := value.ToInteger(ope); !value.IsNull(pi) {
+	if pi := value.ToIntegerStrictly(ope); !value.IsNull(pi) {
 		val := pi.(*value.Integer).Raw()
 		value.Discard(pi)
 		switch expr.Operator.Token {
@@ -226,7 +226,7 @@ func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser
 		val = val * -1
 	}
 
-	return value.ParseFloat64(val), nil
+	return value.NewFloat(val), nil
 }
 
 func evalConcat(ctx context.Context, scope *ReferenceScope, expr parser.Concat) (value.Primary, error) {

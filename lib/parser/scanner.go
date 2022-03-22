@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -217,7 +218,7 @@ func (s *Scanner) Scan() (Token, error) {
 
 	switch {
 	case s.isDecimal(ch):
-		token = s.scanNumber(ch)
+		token, err = s.scanNumber(ch)
 		literal = s.literal.String()
 	case s.isIdentRune(ch):
 		s.scanIdentifier(ch)
@@ -358,8 +359,9 @@ func (s *Scanner) isDecimal(ch rune) bool {
 	return '0' <= ch && ch <= '9'
 }
 
-func (s *Scanner) scanNumber(head rune) rune {
+func (s *Scanner) scanNumber(head rune) (rune, error) {
 	s.literal.Reset()
+	var numType rune = INTEGER
 
 	s.literal.WriteRune(head)
 	for s.isDecimal(s.peek()) {
@@ -367,14 +369,38 @@ func (s *Scanner) scanNumber(head rune) rune {
 	}
 
 	if s.peek() == '.' {
+		numType = FLOAT
+
 		s.literal.WriteRune(s.next())
 		for s.isDecimal(s.peek()) {
 			s.literal.WriteRune(s.next())
 		}
-		return FLOAT
 	}
 
-	return INTEGER
+	if s.peek() == 'e' || s.peek() == 'E' {
+		numType = FLOAT
+
+		s.literal.WriteRune(s.next())
+		if s.peek() == '+' || s.peek() == '-' {
+			s.literal.WriteRune(s.next())
+		}
+		for s.isDecimal(s.peek()) {
+			s.literal.WriteRune(s.next())
+		}
+	}
+
+	if numType == INTEGER {
+		if _, err := strconv.ParseInt(s.literal.String(), 10, 64); err == nil {
+			return numType, nil
+		}
+		numType = FLOAT
+	}
+
+	if _, err := strconv.ParseFloat(s.literal.String(), 64); err == nil {
+		return numType, nil
+	}
+
+	return numType, errors.New(fmt.Sprintf("cound not convert %q to a number", s.literal.String()))
 }
 
 func (s *Scanner) scanOperator(head rune) {

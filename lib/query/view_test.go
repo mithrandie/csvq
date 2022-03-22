@@ -396,7 +396,7 @@ var viewLoadTests = []struct {
 			Header: NewHeader("t", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
+					value.NewFloat(1),
 					value.NewString("str1"),
 				}),
 			},
@@ -438,11 +438,11 @@ var viewLoadTests = []struct {
 			Header: NewHeader("t", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
+					value.NewFloat(1),
 					value.NewString("str1"),
 				}),
 				NewRecord([]value.Primary{
-					value.NewInteger(2),
+					value.NewFloat(2),
 					value.NewString("str2"),
 				}),
 			},
@@ -497,11 +497,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value\"1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -546,11 +546,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1255,11 +1255,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1296,11 +1296,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value\"1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1338,11 +1338,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1427,11 +1427,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2452,12 +2452,12 @@ var viewLoadTests = []struct {
 			Header: NewHeader("jt", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
+					value.NewFloat(1),
+					value.NewFloat(2),
 				}),
 				NewRecord([]value.Primary{
-					value.NewInteger(3),
-					value.NewInteger(4),
+					value.NewFloat(3),
+					value.NewFloat(4),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2577,11 +2577,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2620,11 +2620,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -4043,7 +4043,7 @@ var viewSelectTests = []struct {
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
 					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2")}),
-					NewCell(value.NewInteger(3)),
+					NewCell(value.NewFloat(3)),
 				},
 			},
 			selectFields: []int{3},
@@ -4135,7 +4135,7 @@ var viewSelectTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
 					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2")}),
 					NewCell(value.NewInteger(1)),
-					NewCell(value.NewInteger(4)),
+					NewCell(value.NewFloat(4)),
 				},
 			},
 			selectFields: []int{3, 4},

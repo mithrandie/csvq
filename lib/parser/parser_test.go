@@ -6556,6 +6556,36 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select 1",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Fields: []QueryExpression{
+						Field{
+							Object: NewIntegerValueFromString("1"),
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select 12345678901234567890",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Fields: []QueryExpression{
+						Field{
+							Object: NewFloatValueFromString("12345678901234567890"),
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
 		Input: "'abc'",
 		Output: []Statement{
 			NewStringValue("abc"),

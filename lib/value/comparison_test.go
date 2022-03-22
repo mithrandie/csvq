@@ -26,11 +26,6 @@ var compareCombinedlyTests = []struct {
 		Result: IsIncommensurable,
 	},
 	{
-		LHS:    NewIntegerFromString("1"),
-		RHS:    NewInteger(1),
-		Result: IsEqual,
-	},
-	{
 		LHS:    NewInteger(1),
 		RHS:    NewInteger(2),
 		Result: IsLess,
@@ -41,8 +36,8 @@ var compareCombinedlyTests = []struct {
 		Result: IsGreater,
 	},
 	{
-		LHS:    NewFloatFromString("1.5"),
-		RHS:    NewFloat(1.5),
+		LHS:    NewInteger(2),
+		RHS:    NewInteger(2),
 		Result: IsEqual,
 	},
 	{
@@ -54,6 +49,51 @@ var compareCombinedlyTests = []struct {
 		LHS:    NewFloat(1.5),
 		RHS:    NewFloat(1.0),
 		Result: IsGreater,
+	},
+	{
+		LHS:    NewFloat(1.5),
+		RHS:    NewFloat(1.5),
+		Result: IsEqual,
+	},
+	{
+		LHS:    NewString("1"),
+		RHS:    NewInteger(2),
+		Result: IsLess,
+	},
+	{
+		LHS:    NewString("2"),
+		RHS:    NewInteger(1),
+		Result: IsGreater,
+	},
+	{
+		LHS:    NewString("2"),
+		RHS:    NewInteger(2),
+		Result: IsEqual,
+	},
+	{
+		LHS:    NewString("1.0"),
+		RHS:    NewFloat(1.5),
+		Result: IsLess,
+	},
+	{
+		LHS:    NewString("2.0"),
+		RHS:    NewFloat(1.5),
+		Result: IsGreater,
+	},
+	{
+		LHS:    NewString("1.5"),
+		RHS:    NewFloat(1.5),
+		Result: IsEqual,
+	},
+	{
+		LHS:    NewInteger(1),
+		RHS:    NewFloat(1.5),
+		Result: IsLess,
+	},
+	{
+		LHS:    NewString("1"),
+		RHS:    NewString("1.5"),
+		Result: IsLess,
 	},
 	{
 		LHS:    NewDatetimeFromString("2006-01-02T15:04:05-07:00", nil, location),

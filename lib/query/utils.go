@@ -142,7 +142,7 @@ func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary, flags *c
 func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
 	if value.IsNull(val) {
 		serializeNull(buf)
-	} else if in := value.ToInteger(val); !value.IsNull(in) {
+	} else if in := value.ToIntegerStrictly(val); !value.IsNull(in) {
 		serializeInteger(buf, in.(*value.Integer).String())
 		value.Discard(in)
 	} else if f := value.ToFloat(val); !value.IsNull(f) {

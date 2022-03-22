@@ -297,7 +297,7 @@ _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the value in a previous row.
 If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are null will be skipped. 
@@ -331,7 +331,7 @@ _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
 Returns the value in a following row.
 If _IGNORE NULLS_ keywords are specified, then rows that _expr_ values are null will be skipped. 
@@ -422,7 +422,7 @@ _partition_clause_
 : [Partition Clause](#syntax)
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the sum of float values of _expr_.
 If all values are null, then returns a null.
@@ -442,7 +442,7 @@ _partition_clause_
 : [Partition Clause](#syntax)
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the average of float values of _expr_.
 If all values are null, then returns a null.
@@ -462,7 +462,7 @@ _partition_clause_
 : [Partition Clause](#syntax)
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the sample standard deviation of float values of _expr_.
 If all values are null, then returns a null.
@@ -482,7 +482,7 @@ _partition_clause_
 : [Partition Clause](#syntax)
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the population standard deviation of float values of _expr_.
 If all values are null, then returns a null.
@@ -502,7 +502,7 @@ _partition_clause_
 : [Partition Clause](#syntax)
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the sample variance of float values of _expr_.
 If all values are null, then returns a null.
@@ -522,7 +522,7 @@ _partition_clause_
 : [Partition Clause](#syntax)
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the population variance of float values of _expr_.
 If all values are null, then returns a null.
@@ -542,7 +542,7 @@ _partition_clause_
 : [Partition Clause](#syntax)
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the median of float or datetime values of _expr_.
 If all values are null, then returns a null.
@@ -570,6 +570,9 @@ _partition_clause_
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
 
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
 Returns the string result with the concatenated non-null values of _expr_.
 If all values are null, then returns a null.
 
@@ -592,5 +595,8 @@ _partition_clause_
 
 _order_by_clause_
 : [Order By Clause]({{ '/reference/select-query.html#order_by_clause' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
 
 Returns the string formatted in JSON array of _expr_.

@@ -89,7 +89,7 @@ func Sum(list []value.Primary, _ *cmd.Flags) value.Primary {
 	if len(values) < 1 {
 		return value.NewNull()
 	}
-	return value.ParseFloat64(sum(values))
+	return value.NewFloat(sum(values))
 }
 
 func Avg(list []value.Primary, _ *cmd.Flags) value.Primary {
@@ -97,7 +97,7 @@ func Avg(list []value.Primary, _ *cmd.Flags) value.Primary {
 	if len(values) < 1 {
 		return value.NewNull()
 	}
-	return value.ParseFloat64(average(values))
+	return value.NewFloat(average(values))
 }
 
 func StdEV(list []value.Primary, _ *cmd.Flags) value.Primary {
@@ -105,7 +105,7 @@ func StdEV(list []value.Primary, _ *cmd.Flags) value.Primary {
 	if len(values) < 2 {
 		return value.NewNull()
 	}
-	return value.ParseFloat64(standardDeviation(values, false))
+	return value.NewFloat(standardDeviation(values, false))
 }
 
 func StdEVP(list []value.Primary, _ *cmd.Flags) value.Primary {
@@ -113,7 +113,7 @@ func StdEVP(list []value.Primary, _ *cmd.Flags) value.Primary {
 	if len(values) < 1 {
 		return value.NewNull()
 	}
-	return value.ParseFloat64(standardDeviation(values, true))
+	return value.NewFloat(standardDeviation(values, true))
 }
 
 func Var(list []value.Primary, _ *cmd.Flags) value.Primary {
@@ -121,7 +121,7 @@ func Var(list []value.Primary, _ *cmd.Flags) value.Primary {
 	if len(values) < 2 {
 		return value.NewNull()
 	}
-	return value.ParseFloat64(variance(values, false))
+	return value.NewFloat(variance(values, false))
 }
 
 func VarP(list []value.Primary, _ *cmd.Flags) value.Primary {
@@ -129,7 +129,7 @@ func VarP(list []value.Primary, _ *cmd.Flags) value.Primary {
 	if len(values) < 1 {
 		return value.NewNull()
 	}
-	return value.ParseFloat64(variance(values, true))
+	return value.NewFloat(variance(values, true))
 }
 
 func floatList(list []value.Primary) []float64 {
@@ -212,7 +212,7 @@ func Median(list []value.Primary, flags *cmd.Flags) value.Primary {
 		idx := (len(values) / 2) - 1
 		median = (values[idx] + values[idx+1]) / float64(2)
 	}
-	return value.ParseFloat64(median)
+	return value.NewFloat(median)
 }
 
 func ListAgg(list []value.Primary, separator string) value.Primary {

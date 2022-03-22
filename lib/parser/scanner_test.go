@@ -135,6 +135,21 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "Flaot with Exponential Notation",
+		Input: "1.234e+2",
+		Output: []scanResult{
+			{
+				Token:   FLOAT,
+				Literal: "1.234e+2",
+			},
+		},
+	},
+	{
+		Name:  "Invalid Number",
+		Input: "1.234e+",
+		Error: "cound not convert \"1.234e+\" to a number",
+	},
+	{
 		Name:  "Ternary",
 		Input: "true",
 		Output: []scanResult{
