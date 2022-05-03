@@ -5,7 +5,7 @@
 Released on May 3, 2022
 
 - Support column name wildcard for tables. ([GitHub #68](https://github.com/mithrandie/csvq/issues/68))
-- Add a built-in function.
+- Add a string function.
     - TITLE_CASE ([GitHub #48](https://github.com/mithrandie/csvq/issues/48))
 - Modify integer and float handling.
     - Fixed a bug in the conversion between integer and float.
