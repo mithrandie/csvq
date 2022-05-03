@@ -1058,7 +1058,9 @@ func Syntax(ctx context.Context, scope *ReferenceScope, expr parser.Syntax) (str
 	for _, key := range expr.Keywords {
 		var keystr string
 		if fr, ok := key.(parser.FieldReference); ok {
-			keystr = fr.Column.Literal
+			if col, ok := fr.Column.(parser.Identifier); ok {
+				keystr = col.Literal
+			}
 		} else {
 			if p, err := Evaluate(ctx, scope, key); err == nil {
 				if s := value.ToString(p); !value.IsNull(s) {

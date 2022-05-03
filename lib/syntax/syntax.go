@@ -66,6 +66,8 @@ var CsvqSyntax = []Expression{
 						Group: []Grammar{
 							{Link("value")},
 							{Link("value"), Keyword("AS"), Identifier("alias")},
+							{Keyword("*")},
+							{ConnectedGroup{Identifier("table_name"), Token("."), Keyword("*")}},
 						},
 					},
 				},

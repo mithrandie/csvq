@@ -26,7 +26,9 @@ func FormatFieldIdentifier(e QueryExpression) string {
 		return pt.Value.String()
 	}
 	if fr, ok := e.(FieldReference); ok {
-		return fr.Column.Literal
+		if col, ok := fr.Column.(Identifier); ok {
+			return col.Literal
+		}
 	}
 	return e.String()
 }

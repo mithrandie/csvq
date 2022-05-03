@@ -1288,7 +1288,8 @@ var parseTests = []struct {
 			" bar.foo, \n" +
 			" stdin.foo, \n" +
 			" bar.3, \n" +
-			" stdin.3",
+			" stdin.3, \n" +
+			" foo.*",
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{
 				SelectClause: SelectClause{BaseExpr: &BaseExpr{line: 1, char: 1},
@@ -1298,6 +1299,7 @@ var parseTests = []struct {
 						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 3, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 3, char: 2}, Literal: "stdin"}, Column: Identifier{BaseExpr: &BaseExpr{line: 3, char: 8}, Literal: "foo"}}},
 						Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 4, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 4, char: 2}, Literal: "bar"}, Number: value.NewInteger(3)}},
 						Field{Object: ColumnNumber{BaseExpr: &BaseExpr{line: 5, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 5, char: 2}, Literal: "stdin"}, Number: value.NewInteger(3)}},
+						Field{Object: FieldReference{BaseExpr: &BaseExpr{line: 6, char: 2}, View: Identifier{BaseExpr: &BaseExpr{line: 6, char: 2}, Literal: "foo"}, Column: AllColumns{BaseExpr: &BaseExpr{line: 6, char: 6}}}},
 					},
 				},
 			}},

@@ -2247,6 +2247,10 @@ field
     {
         $$ = Field{Object: $1}
     }
+    | identifier '.' wildcard
+    {
+        $$ = Field{Object: FieldReference{BaseExpr: $1.BaseExpr, View: $1, Column: $3}}
+    }
 
 case_expr
     : CASE case_value case_expr_when case_expr_else END
