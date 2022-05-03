@@ -2365,6 +2365,41 @@ func TestRegExpReplace(t *testing.T) {
 	testFunction(t, RegExpReplace, regExpReplaceTests)
 }
 
+var titleCaseTests = []functionTest{
+	{
+		Name: "TitleCase",
+		Function: parser.Function{
+			Name: "title_case",
+		},
+		Args: []value.Primary{
+			value.NewString("capitalize initials of all names"),
+		},
+		Result: value.NewString("Capitalize Initials Of All Names"),
+	},
+	{
+		Name: "TitleCase Argument Length Error",
+		Function: parser.Function{
+			Name: "title_case",
+		},
+		Args:  []value.Primary{},
+		Error: "function title_case takes exactly 1 argument",
+	},
+	{
+		Name: "TitleCase Argument Value Error",
+		Function: parser.Function{
+			Name: "title_case",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+		},
+		Error: "the first argument must be a string for function title_case",
+	},
+}
+
+func TestTitleCase(t *testing.T) {
+	testFunction(t, TitleCase, titleCaseTests)
+}
+
 var formatTests = []functionTest{
 	{
 		Name: "Format",

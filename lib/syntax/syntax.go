@@ -2233,11 +2233,18 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the string replaced substrings that match the regular expression %s with %s in %s.", Values: []Element{String("regexp"), String("replacement_value"), String("str")}},
 					},
 					{
+						Name: "title_case",
+						Group: []Grammar{
+							{Function{Name: "TITLE_CASE", Args: []Element{String("str")}, Return: Return("string")}},
+						},
+						Description: Description{Template: "Returns a string with the first letter of each word in %s capitalized.", Values: []Element{String("str")}},
+					},
+					{
 						Name: "format",
 						Group: []Grammar{
 							{Function{Name: "FORMAT", Args: []Element{String("format"), Option{ContinuousOption{Link("replace_value")}}}, Return: Return("string")}},
 						},
-						Description: Description{Template: "Returns the formatted string replaced %s with %s in %s.", Values: []Element{Link("placeholders"), Link("replace_value"), String("format")}},
+						Description: Description{Template: "Returns a formatted string replaced %s with %s in %s.", Values: []Element{Link("placeholders"), Link("replace_value"), String("format")}},
 					},
 					{
 						Name: "json_value",

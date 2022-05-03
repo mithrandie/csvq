@@ -12,6 +12,8 @@ import (
 	gojson "encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"hash"
 	"math"
 	"os/exec"
@@ -92,6 +94,7 @@ var Functions = map[string]BuiltInFunction{
 	"REGEXP_FIND_SUBMATCHES": RegExpFindSubMatches,
 	"REGEXP_FIND_ALL":        RegExpFindAll,
 	"REGEXP_REPLACE":         RegExpReplace,
+	"TITLE_CASE":             TitleCase,
 	"FORMAT":                 Format,
 	"JSON_VALUE":             JsonValue,
 	"MD5":                    Md5,
@@ -1235,6 +1238,20 @@ func RegExpReplace(fn parser.Function, args []value.Primary, _ *cmd.Flags) (valu
 	}
 
 	return value.NewString(regExp.ReplaceAllString(s, replStr)), nil
+}
+
+func TitleCase(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	format := value.ToString(args[0])
+	if value.IsNull(format) {
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
+	}
+
+	c := cases.Title(language.English, cases.NoLower)
+	return value.NewString(c.String(format.(*value.String).Raw())), nil
 }
 
 func Format(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
