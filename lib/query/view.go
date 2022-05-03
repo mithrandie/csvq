@@ -275,7 +275,11 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 			var p value.Primary = value.NewNull()
 			if fr, ok := a.(parser.FieldReference); ok {
-				a = parser.NewStringValue(fr.Column.Literal)
+				if col, ok := fr.Column.(parser.Identifier); ok {
+					a = parser.NewStringValue(col.Literal)
+				} else {
+					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as an argument: %s", tableObject.Args[encodingIdx].String()))
+				}
 			}
 			if pv, err := Evaluate(ctx, scope, a); err == nil {
 				p = pv
@@ -1186,7 +1190,7 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *cmd.Flags, fp io.Read
 	pos := 0
 
 	reader := jsonl.NewReader(fp)
-	reader.SetUseInteger(true)
+	reader.SetUseInteger(false)
 
 	wg := sync.WaitGroup{}
 
@@ -1550,42 +1554,44 @@ func (view *View) Having(ctx context.Context, scope *ReferenceScope, clause pars
 }
 
 func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause parser.SelectClause) error {
-	var parseAllColumns = func(view *View, fields []parser.QueryExpression) []parser.QueryExpression {
-		insertIdx := -1
-
-		for i, field := range fields {
-			if _, ok := field.(parser.Field).Object.(parser.AllColumns); ok {
-				insertIdx = i
-				break
-			}
-		}
-
-		if insertIdx < 0 {
-			return fields
-		}
+	var parseWildcard = func(view *View, fields []parser.QueryExpression) []parser.QueryExpression {
+		list := make([]parser.QueryExpression, 0, len(fields))
 
 		columns := view.Header.TableColumns()
-		insertLen := len(columns)
-		insert := make([]parser.QueryExpression, insertLen)
-		for i, c := range columns {
-			insert[i] = parser.Field{
-				Object: c,
-			}
-		}
 
-		list := make([]parser.QueryExpression, len(fields)-1+insertLen)
-		for i, field := range fields {
-			switch {
-			case i == insertIdx:
+		for _, v := range fields {
+			field := v.(parser.Field)
+
+			if _, ok := field.Object.(parser.AllColumns); ok {
+				for _, c := range columns {
+					list = append(list, parser.Field{
+						Object: c,
+					})
+				}
+
 				continue
-			case i < insertIdx:
-				list[i] = field
-			default:
-				list[i+insertLen-1] = field
 			}
-		}
-		for i, field := range insert {
-			list[i+insertIdx] = field
+
+			if fieldReference, ok := field.Object.(parser.FieldReference); ok {
+				if _, ok := fieldReference.Column.(parser.AllColumns); ok {
+					viewName := fieldReference.View.Literal
+
+					for _, c := range columns {
+						cref := c.(parser.FieldReference)
+						if cref.View.Literal != viewName {
+							continue
+						}
+
+						list = append(list, parser.Field{
+							Object: c,
+						})
+					}
+
+					continue
+				}
+			}
+
+			list = append(list, field)
 		}
 
 		return list
@@ -1618,7 +1624,7 @@ func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause pars
 		return nil
 	}
 
-	fields := parseAllColumns(view, clause.Fields)
+	fields := parseWildcard(view, clause.Fields)
 
 	origFieldLen := view.FieldLen()
 	err := evalFields(view, fields)

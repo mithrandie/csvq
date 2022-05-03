@@ -108,7 +108,7 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 
 	if value.IsNull(val) {
 		sortValue.Type = NullType
-	} else if i := value.ToInteger(val); !value.IsNull(i) {
+	} else if i := value.ToIntegerStrictly(val); !value.IsNull(i) {
 		s := value.ToString(val)
 		sortValue.Type = IntegerType
 		sortValue.Integer = i.(*value.Integer).Raw()

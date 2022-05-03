@@ -105,7 +105,7 @@ Integer
 : An integer is a word that contains only \[0-9\].
 
 Float
-: A float is a word that contains only \[0-9\] with a decimal point.
+: A float is a word that contains only \[0-9\] with a decimal point, or its exponential notation.
 
 Ternary
 : A ternary is represented by any one keyword of TRUE, UNKNOWN or FALSE.

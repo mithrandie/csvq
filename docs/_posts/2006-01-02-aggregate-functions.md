@@ -98,7 +98,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the sum of float values of _expr_.
 If all values are null, then returns a null.
@@ -114,7 +114,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the average of float values of _expr_.
 If all values are null, then returns a null.
@@ -130,7 +130,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the sample standard deviation of float values of _expr_.
 If all values are null, then returns a null.
@@ -146,7 +146,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the population standard deviation of float values of _expr_.
 If all values are null, then returns a null.
@@ -162,7 +162,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the sample variance of float values of _expr_.
 If all values are null, then returns a null.
@@ -179,7 +179,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the population variance of float values of _expr_.
 If all values are null, then returns a null.
@@ -196,7 +196,7 @@ _expr_
 : [value]({{ '/reference/value.html' | relative_url }})
 
 _return_
-: [float]({{ '/reference/value.html#float' | relative_url }}) or [integer]({{ '/reference/value.html#integer' | relative_url }})
+: [float]({{ '/reference/value.html#float' | relative_url }})
 
 Returns the median of float or datetime values of _expr_.
 If all values are null, then returns a null.

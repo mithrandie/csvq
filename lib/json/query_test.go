@@ -63,9 +63,9 @@ var loadRowValueTests = []struct {
 		Query: "key[]",
 		Json:  "{\"key\":[1, 2, 3]}",
 		Expect: []value.Primary{
-			value.NewInteger(1),
-			value.NewInteger(2),
-			value.NewInteger(3),
+			value.NewFloat(1),
+			value.NewFloat(2),
+			value.NewFloat(3),
 		},
 	},
 	{
@@ -115,12 +115,12 @@ var loadTableTests = []struct {
 		ExpectHeader: []string{"key2", "key3"},
 		ExpectValues: [][]value.Primary{
 			{
-				value.NewInteger(2),
-				value.NewInteger(3),
+				value.NewFloat(2),
+				value.NewFloat(3),
 			},
 			{
-				value.NewInteger(4),
-				value.NewInteger(5),
+				value.NewFloat(4),
+				value.NewFloat(5),
 			},
 		},
 	},

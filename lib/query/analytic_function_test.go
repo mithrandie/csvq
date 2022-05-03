@@ -372,27 +372,27 @@ var analyzeTests = []struct {
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(1),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("a"),
 					value.NewInteger(2),
-					value.NewInteger(3),
+					value.NewFloat(3),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("b"),
 					value.NewInteger(1),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("b"),
 					value.NewNull(),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("b"),
 					value.NewInteger(1),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			sortValuesInEachCell: [][]*SortValue{

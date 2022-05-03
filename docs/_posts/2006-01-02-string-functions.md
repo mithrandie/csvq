@@ -32,6 +32,7 @@ category: reference
 | [REGEXP_FIND_SUBMATCHES](#regexp_find_submatches) | Return a string representing an array that matches a regular expression |
 | [REGEXP_FIND_ALL](#regexp_all) | Return a string representing a nested array that matches a regular expression |
 | [REGEXP_REPLACE](#regexp_replace) | Return a string replaced substrings that match a regular expression with another strings |
+| [TITLE_CASE](#title_case) | Returns a string converted to Title Case |
 | [FORMAT](#format) | Return a formatted string |
 | [JSON_VALUE](#json_value) | Return a value from json |
 | [JSON_OBJECT](#json_object) | Return a string formatted in json object |
@@ -635,6 +636,21 @@ _return_
 
 Returns the string replaced substrings that match the regular expression _regexp_ with _replacement_value_ in _str_.
 
+### TITLE_CASE
+{: #title_case}
+
+```
+TITLE_CASE(str)
+```
+
+_str_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns a string with the first letter of each word in _str_ capitalized.
+
 ### FORMAT
 {: #format}
 
@@ -648,7 +664,10 @@ _format_
 _replace_value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-Returns the formatted string replaced placeholders with _replace_ in _format_.
+_return_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+Returns a formatted string replaced placeholders with _replace_ in _format_.
 
 #### Format Placeholder
 

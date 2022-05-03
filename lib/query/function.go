@@ -12,6 +12,8 @@ import (
 	gojson "encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"hash"
 	"math"
 	"os/exec"
@@ -92,6 +94,7 @@ var Functions = map[string]BuiltInFunction{
 	"REGEXP_FIND_SUBMATCHES": RegExpFindSubMatches,
 	"REGEXP_FIND_ALL":        RegExpFindAll,
 	"REGEXP_REPLACE":         RegExpReplace,
+	"TITLE_CASE":             TitleCase,
 	"FORMAT":                 Format,
 	"JSON_VALUE":             JsonValue,
 	"MD5":                    Md5,
@@ -246,7 +249,7 @@ func Ceil(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary
 
 	pow := math.Pow(10, place)
 	r := math.Ceil(pow*number) / pow
-	return value.ParseFloat64(r), nil
+	return value.NewFloat(r), nil
 }
 
 func Floor(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -260,7 +263,7 @@ func Floor(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primar
 
 	pow := math.Pow(10, place)
 	r := math.Floor(pow*number) / pow
-	return value.ParseFloat64(r), nil
+	return value.NewFloat(r), nil
 }
 
 func round(f float64, place float64) float64 {
@@ -283,7 +286,7 @@ func Round(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primar
 		return value.NewNull(), nil
 	}
 
-	return value.ParseFloat64(round(number, place)), nil
+	return value.NewFloat(round(number, place)), nil
 }
 
 func execMath1Arg(fn parser.Function, args []value.Primary, mathf func(float64) float64) (value.Primary, error) {
@@ -301,7 +304,7 @@ func execMath1Arg(fn parser.Function, args []value.Primary, mathf func(float64) 
 	if math.IsInf(result, 0) || math.IsNaN(result) {
 		return value.NewNull(), nil
 	}
-	return value.ParseFloat64(result), nil
+	return value.NewFloat(result), nil
 }
 
 func execMath2Args(fn parser.Function, args []value.Primary, mathf func(float64, float64) float64) (value.Primary, error) {
@@ -326,7 +329,7 @@ func execMath2Args(fn parser.Function, args []value.Primary, mathf func(float64,
 	if math.IsInf(result, 0) || math.IsNaN(result) {
 		return value.NewNull(), nil
 	}
-	return value.ParseFloat64(result), nil
+	return value.NewFloat(result), nil
 }
 
 func Abs(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -464,7 +467,7 @@ func EnotationToDec(fn parser.Function, args []value.Primary, _ *cmd.Flags) (val
 		return value.NewNull(), nil
 	}
 
-	return value.ParseFloat64(f), nil
+	return value.NewFloat(f), nil
 }
 
 func Bin(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -1237,6 +1240,20 @@ func RegExpReplace(fn parser.Function, args []value.Primary, _ *cmd.Flags) (valu
 	return value.NewString(regExp.ReplaceAllString(s, replStr)), nil
 }
 
+func TitleCase(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	format := value.ToString(args[0])
+	if value.IsNull(format) {
+		return nil, NewFunctionInvalidArgumentError(fn, fn.Name, "the first argument must be a string")
+	}
+
+	c := cases.Title(language.English, cases.NoLower)
+	return value.NewString(c.String(format.(*value.String).Raw())), nil
+}
+
 func Format(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	if len(args) < 1 {
 		return nil, NewFunctionArgumentLengthErrorWithCustomArgs(fn, fn.Name, "at least 1 argument")
@@ -1689,7 +1706,7 @@ func timeDiff(fn parser.Function, args []value.Primary, durf func(time.Duration)
 }
 
 func durationSeconds(dur time.Duration) value.Primary {
-	return value.ParseFloat64(dur.Seconds())
+	return value.NewFloat(dur.Seconds())
 }
 
 func durationNanoseconds(dur time.Duration) value.Primary {
@@ -1802,32 +1819,23 @@ func Ternary(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prim
 
 func Datetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
 	conv := func(p value.Primary, location *time.Location) value.Primary {
-		switch p.(type) {
-		case *value.Integer:
-			return value.NewDatetime(value.TimeFromUnixTime(p.(*value.Integer).Raw(), 0, location))
-		case *value.Float:
-			return value.NewDatetime(value.Float64ToTime(p.(*value.Float).Raw(), location))
-		case *value.String:
-			s := cmd.TrimSpace(p.(*value.String).Raw())
-			if dt, ok := value.StrToTime(s, flags.DatetimeFormat, location); ok {
-				return value.NewDatetime(dt)
-			}
-			if value.MaybeInteger(s) {
-				if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-					dt := value.TimeFromUnixTime(i, 0, location)
-					return value.NewDatetime(dt)
-				}
-			}
-			if value.MaybeNumber(s) {
-				if f, e := strconv.ParseFloat(s, 64); e == nil {
-					dt := value.Float64ToTime(f, location)
-					return value.NewDatetime(dt)
-				}
-			}
-			return value.NewNull()
-		default:
-			return value.ToDatetime(p, flags.DatetimeFormat, location)
+		if dt := value.ToDatetime(p, flags.DatetimeFormat, location); !value.IsNull(dt) {
+			return dt
 		}
+
+		if i := value.ToIntegerStrictly(p); !value.IsNull(i) {
+			val := i.(*value.Integer).Raw()
+			value.Discard(i)
+			return value.NewDatetime(value.TimeFromUnixTime(val, 0, location))
+		}
+
+		if f := value.ToFloat(p); !value.IsNull(f) {
+			val := f.(*value.Float).Raw()
+			value.Discard(f)
+			return value.NewDatetime(value.Float64ToTime(val, location))
+		}
+
+		return value.NewNull()
 	}
 
 	if len(args) < 1 || 2 < len(args) {

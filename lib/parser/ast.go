@@ -188,7 +188,7 @@ func (i Identifier) String() string {
 type FieldReference struct {
 	*BaseExpr
 	View   Identifier
-	Column Identifier
+	Column QueryExpression
 }
 
 func (e FieldReference) String() string {
@@ -913,7 +913,9 @@ func (f Field) Name() string {
 		return t.Literal
 	}
 	if fr, ok := f.Object.(FieldReference); ok {
-		return fr.Column.Literal
+		if col, ok := fr.Column.(Identifier); ok {
+			return col.Literal
+		}
 	}
 	return f.Object.String()
 }

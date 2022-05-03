@@ -65,13 +65,13 @@ var calculateTests = []struct {
 		LHS:      value.NewString("9.5"),
 		RHS:      value.NewString("2"),
 		Operator: '*',
-		Result:   value.NewInteger(19),
+		Result:   value.NewFloat(19),
 	},
 	{
 		LHS:      value.NewString("9"),
 		RHS:      value.NewString("2"),
 		Operator: '/',
-		Result:   value.NewFloat(4.5),
+		Result:   value.NewInteger(4),
 	},
 	{
 		LHS:      value.NewString("8.5"),

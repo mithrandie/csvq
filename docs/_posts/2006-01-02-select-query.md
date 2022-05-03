@@ -82,6 +82,8 @@ You can use DISTINCT keyword to retrieve only unique records.
 field
   : value
   | value AS alias
+  | *
+  | table_name.*
 ```
 
 _value_
@@ -89,6 +91,14 @@ _value_
 
 _alias_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+_table_name_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+_*_
+: Asterisk(U+002A `*`) denotes all columns. 
+
+  When used alone, the asterisk selects all columns in all tables; when used with a table name, it selects all columns in that table.
 
 ## From Clause
 {: #from_clause}

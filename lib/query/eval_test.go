@@ -2634,7 +2634,7 @@ var evaluateTests = []struct {
 				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 			},
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewFloat(2),
 	},
 	{
 		Name: "Aggregate Function Argument Length Error",

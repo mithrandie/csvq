@@ -396,7 +396,7 @@ var viewLoadTests = []struct {
 			Header: NewHeader("t", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
+					value.NewFloat(1),
 					value.NewString("str1"),
 				}),
 			},
@@ -438,11 +438,11 @@ var viewLoadTests = []struct {
 			Header: NewHeader("t", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
+					value.NewFloat(1),
 					value.NewString("str1"),
 				}),
 				NewRecord([]value.Primary{
-					value.NewInteger(2),
+					value.NewFloat(2),
 					value.NewString("str2"),
 				}),
 			},
@@ -497,11 +497,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value\"1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -546,11 +546,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1255,11 +1255,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1296,11 +1296,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value\"1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1338,11 +1338,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1427,11 +1427,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2452,12 +2452,12 @@ var viewLoadTests = []struct {
 			Header: NewHeader("jt", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
+					value.NewFloat(1),
+					value.NewFloat(2),
 				}),
 				NewRecord([]value.Primary{
-					value.NewInteger(3),
-					value.NewInteger(4),
+					value.NewFloat(3),
+					value.NewFloat(4),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2577,11 +2577,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2620,11 +2620,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -3929,6 +3929,122 @@ var viewSelectTests = []struct {
 		},
 	},
 	{
+		Name: "Select using Table Wildcard",
+		View: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: InternalIdColumn},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
+				{View: "table2", Column: InternalIdColumn},
+				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
+			},
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(2),
+					value.NewString("3"),
+					value.NewString("str33"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(3),
+					value.NewString("1"),
+					value.NewString("str44"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.QueryExpression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2"}},
+				parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.AllColumns{}}},
+				parser.Field{Object: parser.NewIntegerValueFromString("1"), Alias: parser.Identifier{Literal: "a"}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2a"}},
+				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: value.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21"}},
+				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: value.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21a"}},
+				parser.Field{Object: parser.PrimitiveType{
+					Literal: "2012-01-01",
+					Value:   value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: InternalIdColumn},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Aliases: []string{"c2", "c2a"}, Number: 2, IsFromTable: true},
+				{View: "table2", Column: InternalIdColumn},
+				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
+				{Column: "1", Aliases: []string{"a"}},
+				{Column: "2012-01-01T00:00:00Z"},
+			},
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(2),
+					value.NewString("3"),
+					value.NewString("str33"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(3),
+					value.NewString("1"),
+					value.NewString("str44"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}),
+			},
+			selectFields: []int{2, 4, 5, 6, 2, 4, 4, 7},
+		},
+	},
+	{
 		Name: "Select Distinct",
 		View: &View{
 			Header: []HeaderField{
@@ -4043,7 +4159,7 @@ var viewSelectTests = []struct {
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
 					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2")}),
-					NewCell(value.NewInteger(3)),
+					NewCell(value.NewFloat(3)),
 				},
 			},
 			selectFields: []int{3},
@@ -4135,7 +4251,7 @@ var viewSelectTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
 					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2")}),
 					NewCell(value.NewInteger(1)),
-					NewCell(value.NewInteger(4)),
+					NewCell(value.NewFloat(4)),
 				},
 			},
 			selectFields: []int{3, 4},

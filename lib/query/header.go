@@ -179,7 +179,12 @@ func (h Header) FieldIndex(fieldRef parser.FieldReference) (int, error) {
 	if 0 < len(fieldRef.View.Literal) {
 		view = fieldRef.View.Literal
 	}
-	column := strings.TrimSpace(fieldRef.Column.Literal)
+
+	col, ok := fieldRef.Column.(parser.Identifier)
+	if !ok {
+		return -1, errFieldAmbiguous
+	}
+	column := strings.TrimSpace(col.Literal)
 
 	idx := -1
 

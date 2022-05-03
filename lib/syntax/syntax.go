@@ -66,6 +66,8 @@ var CsvqSyntax = []Expression{
 						Group: []Grammar{
 							{Link("value")},
 							{Link("value"), Keyword("AS"), Identifier("alias")},
+							{Keyword("*")},
+							{ConnectedGroup{Identifier("table_name"), Token("."), Keyword("*")}},
 						},
 					},
 				},
@@ -1544,140 +1546,140 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "ceil",
 						Group: []Grammar{
-							{Function{Name: "CEIL", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float or integer")}},
+							{Function{Name: "CEIL", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Rounds %s up to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
 					},
 					{
 						Name: "floor",
 						Group: []Grammar{
-							{Function{Name: "FLOOR", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float or integer")}},
+							{Function{Name: "FLOOR", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Rounds %s down to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
 					},
 					{
 						Name: "round",
 						Group: []Grammar{
-							{Function{Name: "ROUND", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float or integer")}},
+							{Function{Name: "ROUND", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Rounds %s to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
 					},
 					{
 						Name: "abs",
 						Group: []Grammar{
-							{Function{Name: "ABS", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "ABS", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the absolute value of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "acos",
 						Group: []Grammar{
-							{Function{Name: "ACOS", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "ACOS", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the arc cosine of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "asin",
 						Group: []Grammar{
-							{Function{Name: "ASIN", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "ASIN", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the arc sine of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "atan",
 						Group: []Grammar{
-							{Function{Name: "ATAN", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "ATAN", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the arc tangent of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "atan2",
 						Group: []Grammar{
-							{Function{Name: "ATAN2", Args: []Element{Float("number2"), Float("number1")}, Return: Return("float or integer")}},
+							{Function{Name: "ATAN2", Args: []Element{Float("number2"), Float("number1")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the arc tangent of %s / %s, using the signs of the two to determine the quadrant of the return value.", Values: []Element{Float("number2"), Float("number1")}},
 					},
 					{
 						Name: "cos",
 						Group: []Grammar{
-							{Function{Name: "COS", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "COS", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the cosine of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "sin",
 						Group: []Grammar{
-							{Function{Name: "SIN", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "SIN", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the sine of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "tan",
 						Group: []Grammar{
-							{Function{Name: "TAN", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "TAN", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the tangent of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "exp",
 						Group: []Grammar{
-							{Function{Name: "EXP", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "EXP", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the value of base %s raised to the power of %s.", Values: []Element{Italic("e"), Float("number")}},
 					},
 					{
 						Name: "exp2",
 						Group: []Grammar{
-							{Function{Name: "EXP2", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "EXP2", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the value of base 2 raised to the power of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "expm1",
 						Group: []Grammar{
-							{Function{Name: "EXPM1", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "EXPM1", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the value of base %s raised to the power of %s nimus %s.", Values: []Element{Italic("e"), Float("number"), Italic("1")}},
 					},
 					{
 						Name: "log",
 						Group: []Grammar{
-							{Function{Name: "LOG", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "LOG", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the natural logarithm of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "log10",
 						Group: []Grammar{
-							{Function{Name: "LOG10", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "LOG10", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the decimal logarithm of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "log2",
 						Group: []Grammar{
-							{Function{Name: "LOG2", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "LOG2", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the binary logarithm of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "log1p",
 						Group: []Grammar{
-							{Function{Name: "LOG1P", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "LOG1P", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the natural logarithm of 1 plus %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "sqrt",
 						Group: []Grammar{
-							{Function{Name: "SQRT", Args: []Element{Float("number")}, Return: Return("float or integer")}},
+							{Function{Name: "SQRT", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the square root of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "pow",
 						Group: []Grammar{
-							{Function{Name: "POW", Args: []Element{Float("base"), Float("exponent")}, Return: Return("float or integer")}},
+							{Function{Name: "POW", Args: []Element{Float("base"), Float("exponent")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the value of %s raised to the power of %s.", Values: []Element{Float("base"), Float("exponent")}},
 					},
@@ -1705,7 +1707,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "enotation_to_dec",
 						Group: []Grammar{
-							{Function{Name: "ENOTATION_TO_DEC", Args: []Element{String("enotation")}, Return: Return("float or integer")}},
+							{Function{Name: "ENOTATION_TO_DEC", Args: []Element{String("enotation")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Converts %s representing a number with exponential notation to an integer or a float.", Values: []Element{String("enotation")}},
 					},
@@ -1998,7 +2000,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "time_diff",
 						Group: []Grammar{
-							{Function{Name: "TIME_DIFF", Args: []Element{Datetime("datetime1"), Datetime("datetime2")}, Return: Return("float or integer")}},
+							{Function{Name: "TIME_DIFF", Args: []Element{Datetime("datetime1"), Datetime("datetime2")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the difference of time between two %s values as seconds. In the return value, the integer part represents seconds and the fractional part represents nanoseconds.", Values: []Element{Datetime("datetime")}},
 					},
@@ -2233,11 +2235,18 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the string replaced substrings that match the regular expression %s with %s in %s.", Values: []Element{String("regexp"), String("replacement_value"), String("str")}},
 					},
 					{
+						Name: "title_case",
+						Group: []Grammar{
+							{Function{Name: "TITLE_CASE", Args: []Element{String("str")}, Return: Return("string")}},
+						},
+						Description: Description{Template: "Returns a string with the first letter of each word in %s capitalized.", Values: []Element{String("str")}},
+					},
+					{
 						Name: "format",
 						Group: []Grammar{
 							{Function{Name: "FORMAT", Args: []Element{String("format"), Option{ContinuousOption{Link("replace_value")}}}, Return: Return("string")}},
 						},
-						Description: Description{Template: "Returns the formatted string replaced %s with %s in %s.", Values: []Element{Link("placeholders"), Link("replace_value"), String("format")}},
+						Description: Description{Template: "Returns a formatted string replaced %s with %s in %s.", Values: []Element{Link("placeholders"), Link("replace_value"), String("format")}},
 					},
 					{
 						Name: "json_value",
@@ -2428,7 +2437,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "sum",
 						Group: []Grammar{
-							{Function{Name: "SUM", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+							{Function{Name: "SUM", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the sum of float values of %s. " +
@@ -2439,7 +2448,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "avg",
 						Group: []Grammar{
-							{Function{Name: "AVG", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+							{Function{Name: "AVG", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the average of float values of %s. " +
@@ -2450,7 +2459,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "stdev",
 						Group: []Grammar{
-							{Function{Name: "STDEV", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+							{Function{Name: "STDEV", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the sample standard deviation of float values of %s. " +
@@ -2461,7 +2470,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "stdevp",
 						Group: []Grammar{
-							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the population standard deviation of float values of %s. " +
@@ -2472,7 +2481,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "var",
 						Group: []Grammar{
-							{Function{Name: "VAR", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+							{Function{Name: "VAR", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the sample variance of float values of %s. " +
@@ -2483,7 +2492,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "varp",
 						Group: []Grammar{
-							{Function{Name: "VARP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+							{Function{Name: "VARP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the population variance of float values of %s. " +
@@ -2494,7 +2503,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "median",
 						Group: []Grammar{
-							{Function{Name: "MEDIAN", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float or integer")}},
+							{Function{Name: "MEDIAN", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the median of float or datetime values of %s. " +
@@ -2587,7 +2596,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "ntile",
 						Group: []Grammar{
-							{Function{Name: "NTILE", Args: []Element{Integer("number_of_groups")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause")}}}, Return: Return("float")}},
+							{Function{Name: "NTILE", Args: []Element{Integer("number_of_groups")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause")}}}, Return: Return("integer")}},
 						},
 						Description: Description{
 							Template: "Splits the records into %s groups, then returns the sequential numbers of the groups.",
@@ -2630,7 +2639,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "lag",
 						Group: []Grammar{
-							{Function{Name: "LAG", Args: []Element{Link("value"), Option{ArgWithDefValue{Arg: Integer("offset"), Default: Integer("1")}, ArgWithDefValue{Arg: Link("default_value"), Default: Null("NULL")}}}, AfterArgs: []Element{Option{Keyword("IGNORE"), Keyword("NULLS")}, Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause")}}}, Return: Return("float or integer")}},
+							{Function{Name: "LAG", Args: []Element{Link("value"), Option{ArgWithDefValue{Arg: Integer("offset"), Default: Integer("1")}, ArgWithDefValue{Arg: Link("default_value"), Default: Null("NULL")}}}, AfterArgs: []Element{Option{Keyword("IGNORE"), Keyword("NULLS")}, Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause")}}}, Return: Return("primitive type")}},
 						},
 						Description: Description{
 							Template: "Returns the value in a previous row. " +
@@ -2641,7 +2650,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "lead",
 						Group: []Grammar{
-							{Function{Name: "LEAD", Args: []Element{Link("value"), Option{ArgWithDefValue{Arg: Integer("offset"), Default: Integer("1")}, ArgWithDefValue{Arg: Link("default_value"), Default: Null("NULL")}}}, AfterArgs: []Element{Option{Keyword("IGNORE"), Keyword("NULLS")}, Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause")}}}, Return: Return("float or integer")}},
+							{Function{Name: "LEAD", Args: []Element{Link("value"), Option{ArgWithDefValue{Arg: Integer("offset"), Default: Integer("1")}, ArgWithDefValue{Arg: Link("default_value"), Default: Null("NULL")}}}, AfterArgs: []Element{Option{Keyword("IGNORE"), Keyword("NULLS")}, Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause")}}}, Return: Return("primitive type")}},
 						},
 						Description: Description{
 							Template: "Returns the value in a following row. " +
@@ -2683,7 +2692,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "sum",
 						Group: []Grammar{
-							{Function{Name: "SUM", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+							{Function{Name: "SUM", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the sum of float values of %s. If all values are null, then returns %s.",
@@ -2693,7 +2702,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "avg",
 						Group: []Grammar{
-							{Function{Name: "AVG", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+							{Function{Name: "AVG", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the average of float values of %s. If all values are null, then returns %s.",
@@ -2703,7 +2712,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "stdev",
 						Group: []Grammar{
-							{Function{Name: "STDEV", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+							{Function{Name: "STDEV", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the sample standard deviation of float values of %s. If all values are null, then returns %s.",
@@ -2713,7 +2722,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "stdevp",
 						Group: []Grammar{
-							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+							{Function{Name: "STDEVP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the population standard deviation of float values of %s. If all values are null, then returns %s.",
@@ -2723,7 +2732,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "var",
 						Group: []Grammar{
-							{Function{Name: "VAR", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+							{Function{Name: "VAR", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the sample variance of float values of %s. If all values are null, then returns %s.",
@@ -2733,7 +2742,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "varp",
 						Group: []Grammar{
-							{Function{Name: "VARP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+							{Function{Name: "VARP", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the population variance of float values of %s. If all values are null, then returns %s.",
@@ -2743,7 +2752,7 @@ var CsvqSyntax = []Expression{
 					{
 						Name: "median",
 						Group: []Grammar{
-							{Function{Name: "MEDIAN", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float or integer")}},
+							{Function{Name: "MEDIAN", Args: []Element{Option{Keyword("DISTINCT")}, Link("value")}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Option{Link("partition_clause")}, Option{Link("order_by_clause"), Option{Link("windowing_clause")}}}}, Return: Return("float")}},
 						},
 						Description: Description{
 							Template: "Returns the sumedianm of float or datetime values of %s. If all values are null, then returns %s.\n" +

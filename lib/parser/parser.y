@@ -1379,7 +1379,14 @@ primitive_type
     }
     | INTEGER
     {
-        $$ = NewIntegerValueFromString($1.Literal)
+        i, err := strconv.ParseInt($1.Literal, 10, 64)
+        if err != nil {
+          $$ = NewFloatValueFromString($1.Literal)
+        } else {
+          iv := NewIntegerValue(i)
+          iv.Literal = $1.Literal
+          $$ = iv
+        }
     }
     | FLOAT
     {
@@ -2239,6 +2246,10 @@ field
     | wildcard
     {
         $$ = Field{Object: $1}
+    }
+    | identifier '.' wildcard
+    {
+        $$ = Field{Object: FieldReference{BaseExpr: $1.BaseExpr, View: $1, Column: $3}}
     }
 
 case_expr
