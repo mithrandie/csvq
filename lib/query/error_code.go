@@ -21,6 +21,7 @@ const (
 	ErrorFieldNotGroupKey                     = 10103
 	ErrorDuplicateFieldName                   = 10104
 	ErrorNotGroupingRecords                   = 10201
+	ErrorNotAllowedAnalyticFunction           = 10202
 	ErrorUndeclaredVariable                   = 10301
 	ErrorVariableRedeclared                   = 10302
 	ErrorFunctionNotExist                     = 10401

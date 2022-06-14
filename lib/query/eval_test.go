@@ -3650,6 +3650,100 @@ var evaluateTests = []struct {
 		Error: "function json_agg takes exactly 1 argument",
 	},
 	{
+		Name: "Analytic Function",
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: append(
+						NewHeader("table1", []string{"column1", "column2"}),
+						HeaderField{Identifier: "RANK() OVER (PARTITION BY column1 ORDER BY column2)", Column: "RANK() OVER (PARTITION BY column1 ORDER BY column2)"},
+					),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("a"),
+							value.NewInteger(11),
+							value.NewInteger(1),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("b"),
+							value.NewInteger(22),
+							value.NewInteger(2),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("c"),
+							value.NewInteger(33),
+							value.NewInteger(3),
+						}),
+					},
+				},
+				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
+			},
+		}),
+		Expr: parser.AnalyticFunction{
+			Name: "rank",
+			AnalyticClause: parser.AnalyticClause{
+				PartitionClause: parser.PartitionClause{
+					Values: []parser.QueryExpression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+			},
+		},
+		Result: value.NewInteger(2),
+	},
+	{
+		Name: "Analytic Function Not Allowed Error",
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeader("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecord([]value.Primary{
+							value.NewString("a"),
+							value.NewInteger(11),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("b"),
+							value.NewInteger(22),
+						}),
+						NewRecord([]value.Primary{
+							value.NewString("c"),
+							value.NewInteger(33),
+						}),
+					},
+				},
+				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
+			},
+		}),
+		Expr: parser.AnalyticFunction{
+			Name: "rank",
+			AnalyticClause: parser.AnalyticClause{
+				PartitionClause: parser.PartitionClause{
+					Values: []parser.QueryExpression{
+						parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+					},
+				},
+				OrderByClause: parser.OrderByClause{
+					Items: []parser.QueryExpression{
+						parser.OrderItem{
+							Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+						},
+					},
+				},
+			},
+		},
+		Error: "analytic function rank is only available in select clause or order by clause",
+	},
+	{
 		Name: "CaseExpr Comparison",
 		Expr: parser.CaseExpr{
 			Value: parser.NewIntegerValue(2),

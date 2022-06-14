@@ -12,6 +12,7 @@ const InternalIdColumn = "@__internal_id"
 
 type HeaderField struct {
 	View         string
+	Identifier   string
 	Column       string
 	Aliases      []string
 	Number       int
@@ -67,9 +68,10 @@ func NewEmptyHeader(len int) Header {
 	return make([]HeaderField, len, len+2)
 }
 
-func AddHeaderField(h Header, column string, alias string) (header Header, index int) {
+func AddHeaderField(h Header, identifier string, column string, alias string) (header Header, index int) {
 	hfield := HeaderField{
-		Column: column,
+		Identifier: identifier,
+		Column:     column,
 	}
 	if 0 < len(alias) && !strings.EqualFold(column, alias) {
 		hfield.Aliases = append(hfield.Aliases, alias)
@@ -115,14 +117,9 @@ func (h Header) TableColumnNames() []string {
 }
 
 func (h Header) ContainsObject(obj parser.QueryExpression) (int, bool) {
-	if fref, ok := obj.(parser.FieldReference); ok {
-		if n, err := h.SearchIndex(fref); err == nil {
-			return n, true
-		} else {
-			return -1, false
-		}
-	} else if cnum, ok := obj.(parser.ColumnNumber); ok {
-		if n, err := h.FieldNumberIndex(cnum); err == nil {
+	switch obj.(type) {
+	case parser.FieldReference, parser.ColumnNumber:
+		if n, err := h.SearchIndex(obj); err == nil {
 			return n, true
 		} else {
 			return -1, false
@@ -133,11 +130,11 @@ func (h Header) ContainsObject(obj parser.QueryExpression) (int, bool) {
 
 	idx := -1
 	for i, f := range h {
-		if f.IsFromTable {
+		if f.IsFromTable || len(f.Identifier) < 1 {
 			continue
 		}
 
-		if (f.Number < 1 && len(f.Column) < 1) || !strings.EqualFold(f.Column, column) {
+		if !strings.EqualFold(f.Identifier, column) {
 			continue
 		}
 

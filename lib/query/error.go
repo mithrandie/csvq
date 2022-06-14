@@ -35,6 +35,7 @@ const (
 	ErrMsgFieldNotGroupKey                     = "field %s is not a group key"
 	ErrMsgDuplicateFieldName                   = "field name %s is a duplicate"
 	ErrMsgNotGroupingRecords                   = "function %s cannot aggregate not grouping records"
+	ErrMsgNotAllowedAnalyticFunction           = "analytic function %s is only available in select clause or order by clause"
 	ErrMsgUndeclaredVariable                   = "variable %s is undeclared"
 	ErrMsgVariableRedeclared                   = "variable %s is redeclared"
 	ErrMsgFunctionNotExist                     = "function %s does not exist"
@@ -489,6 +490,16 @@ type NotGroupingRecordsError struct {
 func NewNotGroupingRecordsError(expr parser.QueryExpression, funcname string) error {
 	return &NotGroupingRecordsError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgNotGroupingRecords, funcname), ReturnCodeApplicationError, ErrorNotGroupingRecords),
+	}
+}
+
+type NotAllowedAnalyticFunctionError struct {
+	*BaseError
+}
+
+func NewNotAllowedAnalyticFunctionError(expr parser.AnalyticFunction) error {
+	return &NotAllowedAnalyticFunctionError{
+		NewBaseError(expr, fmt.Sprintf(ErrMsgNotAllowedAnalyticFunction, expr.Name), ReturnCodeApplicationError, ErrorNotAllowedAnalyticFunction),
 	}
 }
 

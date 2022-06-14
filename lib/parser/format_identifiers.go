@@ -17,6 +17,35 @@ func FormatTableName(s string) string {
 
 func FormatFieldIdentifier(e QueryExpression) string {
 	if pt, ok := e.(PrimitiveType); ok {
+		prefix := "@__PT:"
+		switch pt.Value.(type) {
+		case *value.String:
+			prefix = prefix + "S"
+		case *value.Integer:
+			prefix = prefix + "I"
+		case *value.Float:
+			prefix = prefix + "F"
+		case *value.Boolean:
+			prefix = prefix + "B"
+		case *value.Ternary:
+			prefix = prefix + "T"
+		case *value.Datetime:
+			prefix = prefix + "D"
+		case *value.Null:
+			prefix = prefix + "N"
+		}
+		return prefix + ":" + FormatFieldLabel(e)
+	}
+	if fr, ok := e.(FieldReference); ok {
+		if col, ok := fr.Column.(Identifier); ok {
+			return "@__IDENT:" + col.Literal
+		}
+	}
+	return e.String()
+}
+
+func FormatFieldLabel(e QueryExpression) string {
+	if pt, ok := e.(PrimitiveType); ok {
 		if s, ok := pt.Value.(*value.String); ok {
 			return s.Raw()
 		}

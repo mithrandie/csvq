@@ -84,7 +84,10 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: append(
+				NewHeader("table1", []string{"column1", "column2"}),
+				HeaderField{Identifier: "RANK() OVER (PARTITION BY column1 ORDER BY column2)", Column: "RANK() OVER (PARTITION BY column1 ORDER BY column2)"},
+			),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
@@ -169,7 +172,10 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header:                 NewHeader("table1", []string{"column1", "column2"}),
+			Header: append(
+				NewHeader("table1", []string{"column1", "column2"}),
+				HeaderField{Identifier: "RANK() OVER (PARTITION BY column1 ORDER BY column2)", Column: "RANK() OVER (PARTITION BY column1 ORDER BY column2)"},
+			),
 			RecordSet:              []Record{},
 			sortValuesInEachCell:   [][]*SortValue{},
 			sortValuesInEachRecord: []SortValues{},
@@ -277,7 +283,10 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: append(
+				NewHeader("table1", []string{"column1", "column2"}),
+				HeaderField{Identifier: "COUNT(*) OVER (PARTITION BY column1)", Column: "COUNT(*) OVER (PARTITION BY column1)"},
+			),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
@@ -367,7 +376,10 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: append(
+				NewHeader("table1", []string{"column1", "column2"}),
+				HeaderField{Identifier: "SUM(column2) OVER (PARTITION BY column1 ORDER BY column1 ROWS UNBOUNDED PRECEDING)", Column: "SUM(column2) OVER (PARTITION BY column1 ORDER BY column1 ROWS UNBOUNDED PRECEDING)"},
+			),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
@@ -454,7 +466,10 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: append(
+				NewHeader("table1", []string{"column1", "column2"}),
+				HeaderField{Identifier: "COUNT(DISTINCT column2) OVER (PARTITION BY column1)", Column: "COUNT(DISTINCT column2) OVER (PARTITION BY column1)"},
+			),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
@@ -658,7 +673,10 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: append(
+				NewHeader("table1", []string{"column1", "column2"}),
+				HeaderField{Identifier: "USERAGGFUNC(column2, 0) OVER (PARTITION BY column1)", Column: "USERAGGFUNC(column2, 0) OVER (PARTITION BY column1)"},
+			),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
@@ -816,7 +834,10 @@ var analyzeTests = []struct {
 		},
 		PartitionIndices: []int{0},
 		Result: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
+			Header: append(
+				NewHeader("table1", []string{"column1", "column2"}),
+				HeaderField{Identifier: "USERAGGFUNC(column2, 0) OVER (PARTITION BY column1 ORDER BY column1 ROWS UNBOUNDED PRECEDING)", Column: "USERAGGFUNC(column2, 0) OVER (PARTITION BY column1 ORDER BY column1 ROWS UNBOUNDED PRECEDING)"},
+			),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("a"),
