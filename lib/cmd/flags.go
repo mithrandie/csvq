@@ -476,7 +476,7 @@ func (f *Flags) SetWithoutNull(b bool) {
 
 func (f *Flags) SetFormat(s string, outfile string) error {
 	var fm Format
-	var escape txjson.EscapeType
+	var escape = txjson.Backslash
 	var err error
 
 	switch s {
