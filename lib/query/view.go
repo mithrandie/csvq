@@ -1615,13 +1615,10 @@ func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause pars
 	}
 
 	fields := parseWildcard(clause.Fields)
-	fieldObjects := func() []parser.QueryExpression {
-		objects := make([]parser.QueryExpression, len(fields))
-		for i := range fields {
-			objects[i] = fields[i].Object
-		}
-		return objects
-	}()
+	fieldObjects := make([]parser.QueryExpression, len(fields))
+	for i := range fields {
+		fieldObjects[i] = fields[i].Object
+	}
 
 	if !view.isGrouped {
 		hasAggregateFunction, err := HasAggregateFunctionInList(fieldObjects, scope)
@@ -1644,17 +1641,12 @@ func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause pars
 		}
 	}
 
-	fieldsObjects := make([]parser.QueryExpression, len(fields))
-	for i, f := range fields {
-		fieldsObjects[i] = f.Object
-	}
-
 	analyticFunctions, err := SearchAnalyticFunctionsInList(fieldObjects)
 	if err != nil {
 		return err
 	}
 
-	if err := view.ExtendRecordCapacity(ctx, scope, fieldsObjects, analyticFunctions); err != nil {
+	if err := view.ExtendRecordCapacity(ctx, scope, fieldObjects, analyticFunctions); err != nil {
 		return err
 	}
 
