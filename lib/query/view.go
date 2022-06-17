@@ -84,8 +84,6 @@ type View struct {
 	sortDirections             []int
 	sortNullPositions          []int
 
-	tempRecord Record
-
 	offset int
 }
 
@@ -1320,10 +1318,10 @@ func NewDualView() *View {
 	}
 }
 
-func NewViewFromGroupedRecord(ctx context.Context, flags *cmd.Flags, referenceRecor ReferenceRecord) (*View, error) {
+func NewViewFromGroupedRecord(ctx context.Context, flags *cmd.Flags, referenceRecord ReferenceRecord) (*View, error) {
 	view := NewView()
-	view.Header = referenceRecor.view.Header
-	record := referenceRecor.view.RecordSet[referenceRecor.recordIndex]
+	view.Header = referenceRecord.view.Header
+	record := referenceRecord.view.RecordSet[referenceRecord.recordIndex]
 
 	view.RecordSet = make(RecordSet, record.GroupLen())
 
@@ -1554,8 +1552,8 @@ func (view *View) Having(ctx context.Context, scope *ReferenceScope, clause pars
 }
 
 func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause parser.SelectClause) error {
-	var parseWildcard = func(view *View, fields []parser.QueryExpression) []parser.QueryExpression {
-		list := make([]parser.QueryExpression, 0, len(fields))
+	var parseWildcard = func(fields []parser.QueryExpression) []parser.Field {
+		list := make([]parser.Field, 0, len(fields))
 
 		columns := view.Header.TableColumns()
 
@@ -1597,19 +1595,10 @@ func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause pars
 		return list
 	}
 
-	var evalFields = func(view *View, fields []parser.QueryExpression) error {
-		fieldsObjects := make([]parser.QueryExpression, len(fields))
-		for i, f := range fields {
-			fieldsObjects[i] = f.(parser.Field).Object
-		}
-		if err := view.ExtendRecordCapacity(ctx, scope, fieldsObjects); err != nil {
-			return err
-		}
-
+	var evalFields = func(fields []parser.Field) error {
 		view.selectFields = make([]int, len(fields))
 		view.selectLabels = make([]string, len(fields))
-		for i, f := range fields {
-			field := f.(parser.Field)
+		for i, field := range fields {
 			alias := ""
 			if field.Alias != nil {
 				alias = field.Alias.(parser.Identifier).Literal
@@ -1621,37 +1610,56 @@ func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause pars
 			view.selectFields[i] = idx
 			view.selectLabels[i] = field.Name()
 		}
+
 		return nil
 	}
 
-	fields := parseWildcard(view, clause.Fields)
+	fields := parseWildcard(clause.Fields)
+	fieldObjects := make([]parser.QueryExpression, len(fields))
+	for i := range fields {
+		fieldObjects[i] = fields[i].Object
+	}
 
-	origFieldLen := view.FieldLen()
-	err := evalFields(view, fields)
-	if err != nil {
-		if _, ok := err.(*NotGroupingRecordsError); ok {
-			view.Header = view.Header[:origFieldLen]
-			if 0 < view.RecordLen() && view.FieldLen() < len(view.RecordSet[0]) {
-				for i := range view.RecordSet {
-					view.RecordSet[i] = view.RecordSet[i][:origFieldLen]
-				}
-			}
+	if !view.isGrouped {
+		hasAggregateFunction, err := HasAggregateFunctionInList(fieldObjects, scope)
+		if err != nil {
+			return err
+		}
 
+		if hasAggregateFunction {
 			if err = view.group(ctx, scope, nil); err != nil {
 				return err
 			}
 
-			if err = evalFields(view, fields); err != nil {
-				return err
+			if view.RecordLen() < 1 {
+				record := make(Record, view.FieldLen())
+				for i := range record {
+					record[i] = make(Cell, 0)
+				}
+				view.RecordSet = append(view.RecordSet, record)
 			}
+		}
+	}
 
-			if view.tempRecord != nil {
-				view.RecordSet = append(view.RecordSet, view.tempRecord)
-				view.tempRecord = nil
-			}
-		} else {
+	analyticFunctions, err := SearchAnalyticFunctionsInList(fieldObjects)
+	if err != nil {
+		return err
+	}
+
+	if err := view.ExtendRecordCapacity(ctx, scope, fieldObjects, analyticFunctions); err != nil {
+		return err
+	}
+
+	for _, fn := range analyticFunctions {
+		err = view.evalAnalyticFunction(ctx, scope, fn)
+		if err != nil {
 			return err
 		}
+	}
+
+	err = evalFields(fields)
+	if err != nil {
+		return err
 	}
 
 	if clause.IsDistinct() {
@@ -1724,12 +1732,29 @@ func (view *View) SelectAllColumns(ctx context.Context, scope *ReferenceScope) e
 }
 
 func (view *View) OrderBy(ctx context.Context, scope *ReferenceScope, clause parser.OrderByClause) error {
+	if view.RecordLen() < 2 {
+		return nil
+	}
+
 	orderValues := make([]parser.QueryExpression, len(clause.Items))
 	for i, item := range clause.Items {
 		orderValues[i] = item.(parser.OrderItem).Value
 	}
-	if err := view.ExtendRecordCapacity(ctx, scope, orderValues); err != nil {
+
+	analyticFunctions, err := SearchAnalyticFunctionsInList(orderValues)
+	if err != nil {
 		return err
+	}
+
+	if err := view.ExtendRecordCapacity(ctx, scope, orderValues, analyticFunctions); err != nil {
+		return err
+	}
+
+	for _, fn := range analyticFunctions {
+		err = view.evalAnalyticFunction(ctx, scope, fn)
+		if err != nil {
+			return err
+		}
 	}
 
 	sortIndices := make([]int, len(clause.Items))
@@ -1792,141 +1817,97 @@ func (view *View) OrderBy(ctx context.Context, scope *ReferenceScope, clause par
 	return nil
 }
 
-func (view *View) additionalColumns(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression) (map[string]bool, error) {
-	m := make(map[string]bool, 5)
+func (view *View) numberOfColumnsToBeAdded(exprs []parser.QueryExpression, funcs []parser.AnalyticFunction) int {
+	n := 0
 
-	switch expr.(type) {
-	case parser.FieldReference, parser.ColumnNumber:
-		return nil, nil
-	case parser.Function:
-		if udfn, err := scope.GetFunction(expr, expr.(parser.Function).Name); err == nil {
-			if udfn.IsAggregate && !view.isGrouped {
-				return nil, NewNotGroupingRecordsError(expr, expr.(parser.Function).Name)
-			}
+	analyticFunctionIdentifiers := make(map[string]bool, len(funcs))
+
+	numberInAnalyticFunction := func(fn parser.AnalyticFunction) int {
+		if _, ok := view.Header.ContainsObject(fn); ok {
+			return 0
 		}
-	case parser.AggregateFunction:
-		if !view.isGrouped {
-			return nil, NewNotGroupingRecordsError(expr, expr.(parser.AggregateFunction).Name)
+
+		identifier := parser.FormatFieldIdentifier(fn)
+
+		if _, ok := analyticFunctionIdentifiers[identifier]; ok {
+			return 0
 		}
-	case parser.ListFunction:
-		if !view.isGrouped {
-			return nil, NewNotGroupingRecordsError(expr, expr.(parser.ListFunction).Name)
-		}
-	case parser.AnalyticFunction:
-		fn := expr.(parser.AnalyticFunction)
-		pvalues := fn.AnalyticClause.PartitionValues()
-		ovalues := []parser.QueryExpression(nil)
+
+		analyticFunctionIdentifiers[identifier] = true
+		partitionExprs := fn.AnalyticClause.PartitionValues()
+		numberInPartitionClause := view.numberOfColumnsToBeAdded(partitionExprs, nil)
+
+		numberInOrderByClause := 0
 		if fn.AnalyticClause.OrderByClause != nil {
-			ovalues = fn.AnalyticClause.OrderByClause.(parser.OrderByClause).Items
+			orderByExprs := GetValuesInOrderByClause(fn.AnalyticClause.OrderByClause.(parser.OrderByClause))
+			numberInOrderByClause = view.numberOfColumnsToBeAdded(orderByExprs, nil)
 		}
 
-		if pvalues != nil {
-			for _, pvalue := range pvalues {
-				columns, err := view.additionalColumns(ctx, scope, pvalue)
-				if err != nil {
-					return nil, err
-				}
-				for k := range columns {
-					if _, ok := m[k]; !ok {
-						m[k] = true
-					}
-				}
-			}
-		}
-		if ovalues != nil {
-			for _, v := range ovalues {
-				item := v.(parser.OrderItem)
-				columns, err := view.additionalColumns(ctx, scope, item.Value)
-				if err != nil {
-					return nil, err
-				}
-				for k := range columns {
-					if _, ok := m[k]; !ok {
-						m[k] = true
-					}
-				}
-			}
+		return 1 + numberInOrderByClause + numberInPartitionClause
+	}
+
+	for _, expr := range exprs {
+		switch expr.(type) {
+		case parser.FieldReference, parser.ColumnNumber:
+			continue
+		case parser.AnalyticFunction:
+			n = n + numberInAnalyticFunction(expr.(parser.AnalyticFunction))
+		default:
+			n = n + 1
 		}
 	}
 
-	if _, ok := view.Header.ContainsObject(expr); !ok {
-		s := expr.String()
-		if _, ok := m[s]; !ok {
-			m[s] = true
-		}
+	for _, expr := range funcs {
+		n = n + numberInAnalyticFunction(expr)
 	}
 
-	return m, nil
+	return n
 }
 
-func (view *View) ExtendRecordCapacity(ctx context.Context, scope *ReferenceScope, exprs []parser.QueryExpression) error {
-	additions := make(map[string]bool, 5)
-	for _, expr := range exprs {
-		columns, err := view.additionalColumns(ctx, scope, expr)
-		if err != nil {
-			return err
-		}
-		for k := range columns {
-			if _, ok := additions[k]; !ok {
-				additions[k] = true
-			}
-		}
-	}
-
-	currentLen := view.FieldLen()
-	fieldCap := currentLen + len(additions)
+func (view *View) ExtendRecordCapacity(ctx context.Context, scope *ReferenceScope, exprs []parser.QueryExpression, funcs []parser.AnalyticFunction) error {
+	fieldCap := view.FieldLen() + view.numberOfColumnsToBeAdded(exprs, funcs)
 
 	if 0 < view.RecordLen() && fieldCap <= cap(view.RecordSet[0]) {
 		return nil
 	}
 
 	return NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
-		record := make(Record, currentLen, fieldCap)
+		record := make(Record, view.FieldLen(), fieldCap)
 		copy(record, view.RecordSet[index])
 		view.RecordSet[index] = record
 		return nil
 	})
 }
 
-func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj parser.QueryExpression, alias string) (idx int, err error) {
-	idx, ok := view.Header.ContainsObject(obj)
-	if ok {
-		rScope := scope.CreateScopeForRecordEvaluation(view, -1)
-		if _, err = Evaluate(ctx, rScope, obj); err != nil {
-			return
-		}
-	} else {
-		if analyticFunction, ok := obj.(parser.AnalyticFunction); ok {
-			err = view.evalAnalyticFunction(ctx, scope, analyticFunction)
-			if err != nil {
-				return
-			}
-		} else if view.RecordLen() < 1 {
-			if view.tempRecord == nil {
-				view.tempRecord = NewEmptyRecord(view.FieldLen())
-			}
+func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj parser.QueryExpression, alias string) (int, error) {
+	var idx = -1
+	var ok = false
 
-			rScope := scope.CreateScopeForRecordEvaluation(view, -1)
-			primary, e := Evaluate(ctx, rScope, obj)
+	switch obj.(type) {
+	case parser.FieldReference, parser.ColumnNumber, parser.AnalyticFunction:
+		idx, ok = view.Header.ContainsObject(obj)
+
+		switch obj.(type) {
+		case parser.FieldReference, parser.ColumnNumber:
+			if ok && view.isGrouped && view.Header[idx].IsFromTable && !view.Header[idx].IsGroupKey {
+				return idx, NewFieldNotGroupKeyError(obj)
+			}
+		}
+	}
+
+	if !ok {
+		if err := EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
+			primary, e := Evaluate(ctx, seqScope, obj)
 			if e != nil {
-				err = e
-				return
+				return e
 			}
-			view.tempRecord = append(view.tempRecord, NewCell(primary))
-		} else {
-			if err = EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
-				primary, e := Evaluate(ctx, seqScope, obj)
-				if e != nil {
-					return e
-				}
 
-				view.RecordSet[rIdx] = append(view.RecordSet[rIdx], NewCell(primary))
-				return nil
-			}); err != nil {
-				return
-			}
+			view.RecordSet[rIdx] = append(view.RecordSet[rIdx], NewCell(primary))
+			return nil
+		}); err != nil {
+			return idx, err
 		}
-		view.Header, idx = AddHeaderField(view.Header, parser.FormatFieldIdentifier(obj), alias)
+		view.Header, idx = AddHeaderField(view.Header, parser.FormatFieldIdentifier(obj), parser.FormatFieldLabel(obj), alias)
 	}
 
 	if 0 < len(alias) {
@@ -1935,10 +1916,14 @@ func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj par
 		}
 	}
 
-	return
+	return idx, nil
 }
 
 func (view *View) evalAnalyticFunction(ctx context.Context, scope *ReferenceScope, expr parser.AnalyticFunction) error {
+	if _, ok := view.Header.ContainsObject(expr); ok {
+		return nil
+	}
+
 	name := strings.ToUpper(expr.Name)
 	if _, ok := AggregateFunctions[name]; !ok {
 		if _, ok := AnalyticFunctions[name]; !ok {
@@ -2328,6 +2313,7 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 		colNumber++
 
 		hfields[i] = view.Header[idx]
+		hfields[i].Identifier = ""
 		hfields[i].Aliases = nil
 		hfields[i].Number = colNumber
 		hfields[i].IsFromTable = true
@@ -2349,7 +2335,6 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 	view.sortDirections = nil
 	view.sortNullPositions = nil
 	view.offset = 0
-	view.tempRecord = nil
 	return nil
 }
 

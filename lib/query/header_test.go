@@ -105,6 +105,11 @@ var headerContainsObjectTests = []struct {
 		Ok:     true,
 	},
 	{
+		Expr:   parser.NewStringValue("1"),
+		Result: -1,
+		Ok:     false,
+	},
+	{
 		Expr:   parser.NewIntegerValueFromString("2"),
 		Result: -1,
 		Ok:     false,
@@ -153,14 +158,17 @@ func TestHeader_ContainsObject(t *testing.T) {
 			IsFromTable: true,
 		},
 		{
+			Identifier:  "COUNT(*)",
 			Column:      "count(*)",
 			IsFromTable: false,
 		},
 		{
+			Identifier:  "@__PT:I:1",
 			Column:      "1",
 			IsFromTable: false,
 		},
 		{
+			Identifier:  "@__PT:I:1",
 			Column:      "1",
 			IsFromTable: false,
 		},

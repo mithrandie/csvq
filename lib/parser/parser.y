@@ -110,7 +110,6 @@ import (
 %type<queryexprs>  row_values
 %type<queryexprs>  order_items
 %type<queryexpr>   order_item
-%type<queryexpr>   order_value
 %type<token>       order_direction
 %type<token>       order_null_position
 %type<queryexpr>   subquery
@@ -146,7 +145,6 @@ import (
 %type<queryexpr>   table
 %type<queryexpr>   join
 %type<queryexpr>   join_condition
-%type<queryexpr>   field_object
 %type<queryexpr>   field
 %type<queryexpr>   case_expr
 %type<queryexpr>   case_value
@@ -1474,6 +1472,10 @@ substantial_value
     {
         $$ = $1
     }
+    | analytic_function
+    {
+        $$ = $1
+    }
     | case_expr
     {
         $$ = $1
@@ -1564,23 +1566,13 @@ order_items
     }
 
 order_item
-    : order_value order_direction
+    : value order_direction
     {
         $$ = OrderItem{Value: $1, Direction: $2}
     }
-    | order_value order_direction NULLS order_null_position
+    | value order_direction NULLS order_null_position
     {
         $$ = OrderItem{Value: $1, Direction: $2, NullsPosition: $4}
-    }
-
-order_value
-    : value
-    {
-        $$ = $1
-    }
-    | analytic_function
-    {
-        $$ = $1
     }
 
 order_direction
@@ -2224,22 +2216,12 @@ join_condition
         $$ = JoinCondition{Using: $3}
     }
 
-field_object
-    : value
-    {
-        $$ = $1
-    }
-    | analytic_function
-    {
-        $$ = $1
-    }
-
 field
-    : field_object
+    : value
     {
         $$ = Field{Object: $1}
     }
-    | field_object AS identifier
+    | value AS identifier
     {
         $$ = Field{Object: $1, As: $2, Alias: $3}
     }

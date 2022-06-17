@@ -401,11 +401,17 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	if c.GlobalIsSet("strip-ending-line-break") {
 		_ = tx.SetFlag(cmd.StripEndingLineBreakFlag, c.GlobalBool("strip-ending-line-break"))
 	}
-	if c.GlobalIsSet("format") {
-		if err := tx.SetFormatFlag(c.GlobalString("format"), c.GlobalString("out")); err != nil {
-			return query.NewIncorrectCommandUsageError(err.Error())
+
+	setFormat := func() string {
+		if c.GlobalIsSet("format") {
+			return c.GlobalString("format")
 		}
+		return ""
+	}()
+	if err := tx.SetFormatFlag(setFormat, c.GlobalString("out")); err != nil {
+		return query.NewIncorrectCommandUsageError(err.Error())
 	}
+
 	if c.GlobalIsSet("write-encoding") {
 		if err := tx.SetFlag(cmd.ExportEncodingFlag, c.GlobalString("write-encoding")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())

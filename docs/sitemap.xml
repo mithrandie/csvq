@@ -6,7 +6,7 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
         <loc>https://mithrandie.github.io/csvq/</loc>
-        <lastmod>2022-05-03T15:12:21+00:00</lastmod>
+        <lastmod>2022-06-17T12:34:27+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference.html</loc>
@@ -18,7 +18,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/command.html</loc>
-        <lastmod>2022-02-26T17:23:41+00:00</lastmod>
+        <lastmod>2022-06-17T12:04:02+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/statement.html</loc>
@@ -178,7 +178,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/changelog.html</loc>
-        <lastmod>2022-02-26T18:19:50+00:00</lastmod>
+        <lastmod>2022-06-17T12:34:27+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/license.html</loc>

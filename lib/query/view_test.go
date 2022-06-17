@@ -3880,8 +3880,8 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
-				{Column: "1", Aliases: []string{"a"}},
-				{Column: "2012-01-01T00:00:00Z"},
+				{Identifier: "@__PT:I:1", Column: "1", Aliases: []string{"a"}},
+				{Identifier: "@__PT:D:2012-01-01T00:00:00Z", Column: "2012-01-01T00:00:00Z"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -3996,8 +3996,8 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
-				{Column: "1", Aliases: []string{"a"}},
-				{Column: "2012-01-01T00:00:00Z"},
+				{Identifier: "@__PT:I:1", Column: "1", Aliases: []string{"a"}},
+				{Identifier: "@__PT:D:2012-01-01T00:00:00Z", Column: "2012-01-01T00:00:00Z"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -4100,7 +4100,7 @@ var viewSelectTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", IsFromTable: true},
-				{Column: "1", Aliases: []string{"a"}},
+				{Identifier: "@__PT:I:1", Column: "1", Aliases: []string{"a"}},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -4152,7 +4152,7 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{Column: "SUM(column1)"},
+				{Identifier: "SUM(column1)", Column: "SUM(column1)"},
 			},
 			RecordSet: []Record{
 				{
@@ -4242,8 +4242,8 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{Column: "1"},
-				{Column: "SUM(column1) + 1"},
+				{Identifier: "@__PT:I:1", Column: "1"},
+				{Identifier: "SUM(column1) + 1", Column: "SUM(column1) + 1"},
 			},
 			RecordSet: []Record{
 				{
@@ -4314,7 +4314,7 @@ var viewSelectTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{Column: "ROW_NUMBER() OVER (PARTITION BY column1 ORDER BY column2)", Aliases: []string{"rownum"}},
+				{Identifier: "ROW_NUMBER() OVER (PARTITION BY column1 ORDER BY column2)", Column: "ROW_NUMBER() OVER (PARTITION BY column1 ORDER BY column2)", Aliases: []string{"rownum"}},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -4614,7 +4614,7 @@ var viewSelectTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{Column: "USERAGGFUNC(column2) OVER ()"},
+				{Identifier: "USERAGGFUNC(column2) OVER ()", Column: "USERAGGFUNC(column2) OVER ()"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -4657,6 +4657,7 @@ var viewSelectTests = []struct {
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
+				parser.Field{Object: parser.NewIntegerValue(1)},
 				parser.Field{Object: parser.AggregateFunction{Name: "count", Args: []parser.QueryExpression{parser.AllColumns{}}}},
 				parser.Field{Object: parser.AggregateFunction{Name: "sum", Args: []parser.QueryExpression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}}}},
 			},
@@ -4665,18 +4666,20 @@ var viewSelectTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{Column: "COUNT(*)"},
-				{Column: "SUM(column1)"},
+				{Identifier: "@__PT:I:1", Column: "1"},
+				{Identifier: "COUNT(*)", Column: "COUNT(*)"},
+				{Identifier: "SUM(column1)", Column: "SUM(column1)"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewNull(),
-					value.NewNull(),
+					nil,
+					nil,
+					value.NewInteger(1),
 					value.NewInteger(0),
 					value.NewNull(),
 				}),
 			},
-			selectFields: []int{2, 3},
+			selectFields: []int{2, 3, 4},
 		},
 	},
 	{
@@ -4704,12 +4707,12 @@ var viewSelectTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{Column: "COALESCE(SUM(column1), 0)"},
+				{Identifier: "COALESCE(SUM(column1), 0)", Column: "COALESCE(SUM(column1), 0)"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewNull(),
-					value.NewNull(),
+					nil,
+					nil,
 					value.NewInteger(0),
 				}),
 			},
@@ -4816,7 +4819,7 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{View: "table1", Column: "column3", IsFromTable: true},
-				{Column: "1"},
+				{Identifier: "@__PT:I:1", Column: "1"},
 			},
 			RecordSet: []Record{
 				NewRecordWithId(5, []value.Primary{
@@ -5071,7 +5074,7 @@ func TestView_OrderBy(t *testing.T) {
 	}
 }
 
-var viewExtendRecordCapacity = []struct {
+var viewExtendRecordCapacityTests = []struct {
 	Name   string
 	View   *View
 	Scope  *ReferenceScope
@@ -5110,6 +5113,7 @@ var viewExtendRecordCapacity = []struct {
 		}, nil, time.Time{}, nil),
 		Exprs: []parser.QueryExpression{
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(2)},
 			parser.Function{
 				Name: "userfunc",
 				Args: []parser.QueryExpression{
@@ -5125,19 +5129,6 @@ var viewExtendRecordCapacity = []struct {
 						Args: []parser.QueryExpression{
 							parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 						},
-					},
-				},
-			},
-			parser.ListFunction{
-				Name:     "listagg",
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.QueryExpression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					parser.NewStringValue(","),
-				},
-				OrderBy: parser.OrderByClause{
-					Items: []parser.QueryExpression{
-						parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 					},
 				},
 			},
@@ -5172,187 +5163,18 @@ var viewExtendRecordCapacity = []struct {
 				Operator: parser.Token{Token: '+', Literal: "+"},
 			},
 		},
-		Result: 9,
-	},
-	{
-		Name: "ExtendRecordCapacity UserDefinedFunction Not Grouped Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
-			{
-				scopeNameFunctions: {
-					"USERFUNC": &UserDefinedFunction{
-						Name: parser.Identifier{Literal: "userfunc"},
-						Parameters: []parser.Variable{
-							{Name: "arg1"},
-						},
-						RequiredArgs: 1,
-						Statements: []parser.Statement{
-							parser.Return{Value: parser.Variable{Name: "arg1"}},
-						},
-						IsAggregate: true,
-					},
-				},
-			},
-		}, nil, time.Time{}, nil),
-		Exprs: []parser.QueryExpression{
-			parser.Function{
-				Name: "userfunc",
-				Args: []parser.QueryExpression{
-					parser.NewIntegerValueFromString("1"),
-				},
-			},
-		},
-		Error: "function userfunc cannot aggregate not grouping records",
-	},
-	{
-		Name: "ExtendRecordCapacity AggregateFunction Not Grouped Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Exprs: []parser.QueryExpression{
-			parser.AggregateFunction{
-				Name: "avg",
-				Args: []parser.QueryExpression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				},
-			},
-		},
-		Error: "function avg cannot aggregate not grouping records",
-	},
-	{
-		Name: "ExtendRecordCapacity ListAgg Not Grouped Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Exprs: []parser.QueryExpression{
-			parser.ListFunction{
-				Name:     "listagg",
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.QueryExpression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					parser.NewStringValue(","),
-				},
-				OrderBy: parser.OrderByClause{
-					Items: []parser.QueryExpression{
-						parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
-					},
-				},
-			},
-		},
-		Error: "function listagg cannot aggregate not grouping records",
-	},
-	{
-		Name: "ExtendRecordCapacity AnalyticFunction Partition Value Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Exprs: []parser.QueryExpression{
-			parser.AnalyticFunction{
-				Name: "rank",
-				AnalyticClause: parser.AnalyticClause{
-					PartitionClause: parser.PartitionClause{
-						Values: []parser.QueryExpression{
-							parser.AggregateFunction{
-								Name: "avg",
-								Args: []parser.QueryExpression{
-									parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-								},
-							},
-						},
-					},
-					OrderByClause: parser.OrderByClause{
-						Items: []parser.QueryExpression{
-							parser.OrderItem{
-								Value: parser.Arithmetic{
-									LHS:      parser.NewIntegerValueFromString("3"),
-									RHS:      parser.NewIntegerValueFromString("4"),
-									Operator: parser.Token{Token: '+', Literal: "+"},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Error: "function avg cannot aggregate not grouping records",
-	},
-	{
-		Name: "ExtendRecordCapacity AnalyticFunction OrderBy Value Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Exprs: []parser.QueryExpression{
-			parser.AnalyticFunction{
-				Name: "rank",
-				AnalyticClause: parser.AnalyticClause{
-					PartitionClause: parser.PartitionClause{
-						Values: []parser.QueryExpression{
-							parser.Arithmetic{
-								LHS:      parser.NewIntegerValueFromString("1"),
-								RHS:      parser.NewIntegerValueFromString("2"),
-								Operator: parser.Token{Token: '+', Literal: "+"},
-							},
-						},
-					},
-					OrderByClause: parser.OrderByClause{
-						Items: []parser.QueryExpression{
-							parser.OrderItem{
-								Value: parser.AggregateFunction{
-									Name: "avg",
-									Args: []parser.QueryExpression{
-										parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Error: "function avg cannot aggregate not grouping records",
+		Result: 8,
 	},
 }
 
 func TestView_ExtendRecordCapacity(t *testing.T) {
 	ctx := context.Background()
-	for _, v := range viewExtendRecordCapacity {
+	for _, v := range viewExtendRecordCapacityTests {
 		if v.Scope == nil {
 			v.Scope = NewReferenceScope(TestTx)
 		}
 
-		err := v.View.ExtendRecordCapacity(ctx, v.Scope, v.Exprs)
+		err := v.View.ExtendRecordCapacity(ctx, v.Scope, v.Exprs, nil)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

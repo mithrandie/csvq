@@ -5,12 +5,19 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.17.1
+
+Released on Jun 17, 2022
+
+- Allow analytic functions to be used as operands in expressions. ([GitHub #36](https://github.com/mithrandie/csvq/issues/36))
+- Set output format from file extension. ([GitHub #76](https://github.com/mithrandie/csvq/issues/76))
+
 ## Version 1.17.0
 
 Released on May 3, 2022
 
 - Support column name wildcard for tables. ([GitHub #68](https://github.com/mithrandie/csvq/issues/68))
-- Add a built-in function.
+- Add a string function.
   - TITLE_CASE ([GitHub #48](https://github.com/mithrandie/csvq/issues/48))
 - Modify integer and float handling.
   - Fixed a bug in the conversion between integer and float.
