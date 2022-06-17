@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.17.1
+
+Released on Jun 17, 2022
+
+- Allow analytic functions to be used as operands in expressions. ([GitHub #36](https://github.com/mithrandie/csvq/issues/36))
+- Set output format from file extension. ([GitHub #76](https://github.com/mithrandie/csvq/issues/76))
+
 ## Version 1.17.0
 
 Released on May 3, 2022
