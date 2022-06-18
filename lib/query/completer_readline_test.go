@@ -3691,6 +3691,7 @@ var completerSearchValuesTests = []completerTest{
 		OrigLine: "select c",
 		Index:    8,
 		Expect: readline.CandidateList{
+			{Name: []rune("COUNT()"), AppendSpace: false},
 			{Name: []rune("CASE"), AppendSpace: true},
 			{Name: []rune("CURSOR"), AppendSpace: true},
 		},
