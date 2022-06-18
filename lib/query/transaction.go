@@ -437,7 +437,7 @@ func (tx *Transaction) setFlag(key string, value interface{}, outFile string) er
 		}
 	case cmd.FormatFlag:
 		if s, ok := value.(string); ok {
-			err = tx.Flags.SetFormat(s, outFile)
+			err = tx.Flags.SetFormat(s, outFile, tx.Session.CanOutputToPipe)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
