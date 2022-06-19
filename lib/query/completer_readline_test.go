@@ -1,5 +1,4 @@
 //go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || windows
-// +build darwin dragonfly freebsd linux netbsd openbsd solaris windows
 
 package query
 
@@ -3692,6 +3691,7 @@ var completerSearchValuesTests = []completerTest{
 		OrigLine: "select c",
 		Index:    8,
 		Expect: readline.CandidateList{
+			{Name: []rune("COUNT()"), AppendSpace: false},
 			{Name: []rune("CASE"), AppendSpace: true},
 			{Name: []rune("CURSOR"), AppendSpace: true},
 		},
