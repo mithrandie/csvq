@@ -1,6 +1,9 @@
 name: Test on the previous Go version
 
-on: push
+on:
+  push:
+    branches:
+      - '**'
 
 jobs:
   test:
