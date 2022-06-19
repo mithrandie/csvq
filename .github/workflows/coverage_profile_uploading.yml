@@ -1,0 +1,43 @@
+name: Coverage profile uploading
+
+on:
+  workflow_run:
+    workflows:
+      - Test
+    branches:
+      - master
+      - develop
+    types:
+      - completed
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.x
+
+      - name: Create Coverage Profile
+        run: go test -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - name: Upload Coverage Profile
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.txt
+          fail_ci_if_error: true
+          verbose: true
+  fail:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+
+    steps:
+      - run: |
+          echo '::error::Testing was failed'
+          exit 1
