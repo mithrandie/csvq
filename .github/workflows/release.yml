@@ -48,7 +48,7 @@ jobs:
           body: |
             ${{ github.event.head_commit.message }}
           draft: false
-          prerelease: true
+          prerelease: false
 
       - name: Upload Release Assets
         id: upload-release-assets
