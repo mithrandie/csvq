@@ -2,8 +2,9 @@
 
 SQL-like query language for csv
 
-[![Build Status](https://travis-ci.org/mithrandie/csvq.svg?branch=master)](https://travis-ci.org/mithrandie/csvq)
+[![Test](https://github.com/mithrandie/csvq/actions/workflows/test.yml/badge.svg)](https://github.com/mithrandie/csvq/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/mithrandie/csvq/branch/master/graph/badge.svg)](https://codecov.io/gh/mithrandie/csvq)
+[![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
 
 csvq is a command line tool to operate CSV files. 
 You can read, update, delete CSV records with SQL-like query.
@@ -59,7 +60,7 @@ Go 1.17 or later (cf. [Getting Started - The Go Programming Language](https://go
 
 #### Build command
 
-```$ env GO111MODULE=on go get github.com/mithrandie/csvq```
+```$ go install github.com/mithrandie/csvq```
 
 ### Install using package manager
 

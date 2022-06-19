@@ -107,8 +107,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "format, f",
-			Value: "TEXT",
-			Usage: "format of query results",
+			Usage: "format of query results. (default: \"CSV\" for output to pipe, \"TEXT\" otherwise)",
 		},
 		cli.StringFlag{
 			Name:  "write-encoding, E",
@@ -402,13 +401,7 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 		_ = tx.SetFlag(cmd.StripEndingLineBreakFlag, c.GlobalBool("strip-ending-line-break"))
 	}
 
-	setFormat := func() string {
-		if c.GlobalIsSet("format") {
-			return c.GlobalString("format")
-		}
-		return ""
-	}()
-	if err := tx.SetFormatFlag(setFormat, c.GlobalString("out")); err != nil {
+	if err := tx.SetFormatFlag(c.GlobalString("format"), c.GlobalString("out")); err != nil {
 		return query.NewIncorrectCommandUsageError(err.Error())
 	}
 

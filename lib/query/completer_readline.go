@@ -1,5 +1,4 @@
 //go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || windows
-// +build darwin dragonfly freebsd linux netbsd openbsd solaris windows
 
 package query
 
@@ -166,6 +165,8 @@ type Completer struct {
 	tokens            []parser.Token
 	lastIdx           int
 	selectIntoEnabled bool
+
+	isInAndAfterSelect bool
 }
 
 func NewCompleter(scope *ReferenceScope) *Completer {
@@ -1218,13 +1219,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"LIMIT",
 						}, true)...)
 						customList = append(customList, c.SearchValues(line, origLine, index)...)
-						customList = append(customList, c.aggregateFunctionCandidateList(line)...)
-						customList = append(customList, c.analyticFunctionCandidateList(line)...)
 					}
 				} else {
 					customList = append(customList, c.SearchValues(line, origLine, index)...)
-					customList = append(customList, c.aggregateFunctionCandidateList(line)...)
-					customList = append(customList, c.analyticFunctionCandidateList(line)...)
 				}
 
 				if customList != nil {
@@ -1407,8 +1404,6 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 					}
 				}
 				customList = append(customList, c.SearchValues(line, origLine, index)...)
-				customList = append(customList, c.aggregateFunctionCandidateList(line)...)
-				customList = append(customList, c.analyticFunctionCandidateList(line)...)
 				customList.Sort()
 				return keywords, customList, true
 			}
@@ -2179,6 +2174,12 @@ func (c *Completer) SearchValues(line string, origLine string, index int) readli
 	}
 
 	var cands readline.CandidateList
+
+	if c.isInAndAfterSelect {
+		cands = append(cands, c.aggregateFunctionCandidateList(line)...)
+		cands = append(cands, c.analyticFunctionCandidateList(line)...)
+	}
+
 	if len(searchWord) < 1 {
 		return cands
 	}
@@ -2534,6 +2535,8 @@ func (c *Completer) UpdateTokens(line string, origLine string) {
 		c.tokens = append(c.tokens, t)
 	}
 
+	c.setCursorIsInAndAfterSelect()
+
 	if 0 < len(c.tokens) {
 		c.tokens = c.tokens[c.searchStartIndex():]
 	}
@@ -2549,6 +2552,37 @@ func (c *Completer) SetLastIndex(line string) {
 	if 0 < len(c.tokens) && 0 < len(line) {
 		c.tokens[len(c.tokens)-1].Token = parser.IDENTIFIER
 		c.lastIdx--
+	}
+}
+
+func (c *Completer) setCursorIsInAndAfterSelect() {
+	c.isInAndAfterSelect = false
+
+	blockLevel := 0
+
+InAndAfterSelectLoop:
+	for i := len(c.tokens) - 1; i >= 0; i-- {
+		switch c.tokens[i].Token {
+		case ';',
+			parser.FROM, parser.WHERE, parser.GROUP, parser.HAVING, parser.LIMIT, parser.FETCH, parser.OFFSET,
+			parser.INTO:
+
+			break InAndAfterSelectLoop
+		case '(':
+			blockLevel--
+		case ')':
+			blockLevel++
+		case parser.SELECT:
+			if blockLevel <= 0 {
+				c.isInAndAfterSelect = true
+				break InAndAfterSelectLoop
+			}
+		case parser.BY:
+			if blockLevel <= 0 && 0 < i && c.tokens[i-1].Token == parser.ORDER {
+				c.isInAndAfterSelect = true
+				break InAndAfterSelectLoop
+			}
+		}
 	}
 }
 
