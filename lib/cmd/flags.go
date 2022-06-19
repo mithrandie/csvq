@@ -474,41 +474,35 @@ func (f *Flags) SetWithoutNull(b bool) {
 	f.ImportOptions.WithoutNull = b
 }
 
-func (f *Flags) SetFormat(s string, outfile string, canOutputToPipe bool) error {
-	if len(s) < 1 {
-		if len(outfile) < 1 {
-			if canOutputToPipe {
-				f.ExportOptions.Format = CSV
-			} else {
-				f.ExportOptions.Format = TEXT
-			}
-			return nil
-		}
+func (f *Flags) SetFormat(s string, outfile string) error {
+	var fm Format
+	var escape = txjson.Backslash
+	var err error
 
+	switch s {
+	case "":
 		switch strings.ToLower(filepath.Ext(outfile)) {
 		case CsvExt:
-			f.ExportOptions.Format = CSV
+			fm = CSV
 		case TsvExt:
-			f.ExportOptions.Format = TSV
+			fm = TSV
 		case JsonExt:
-			f.ExportOptions.Format = JSON
+			fm = JSON
 		case JsonlExt:
-			f.ExportOptions.Format = JSONL
+			fm = JSONL
 		case LtsvExt:
-			f.ExportOptions.Format = LTSV
+			fm = LTSV
 		case GfmExt:
-			f.ExportOptions.Format = GFM
+			fm = GFM
 		case OrgExt:
-			f.ExportOptions.Format = ORG
+			fm = ORG
 		default:
-			f.ExportOptions.Format = TEXT
+			return nil
 		}
-		return nil
-	}
-
-	fm, escape, err := ParseFormat(s, f.ExportOptions.JsonEscape)
-	if err != nil {
-		return err
+	default:
+		if fm, escape, err = ParseFormat(s, f.ExportOptions.JsonEscape); err != nil {
+			return err
+		}
 	}
 
 	f.ExportOptions.Format = fm

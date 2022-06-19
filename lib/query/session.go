@@ -22,7 +22,7 @@ var (
 	stderr   io.WriteCloser = os.Stderr
 )
 
-func isNamedPipe(fp *os.File) bool {
+func isReadableFromPipeOrRedirection(fp *os.File) bool {
 	fi, err := fp.Stat()
 	if err == nil && (fi.Mode()&os.ModeNamedPipe != 0 || 0 < fi.Size()) {
 		return true
@@ -177,9 +177,7 @@ type Session struct {
 	outFile  io.Writer
 	terminal VirtualTerminal
 
-	CanReadStdin    bool
-	CanOutputToPipe bool
-
+	CanReadStdin bool
 	stdinViewMap ViewMap
 	stdinLocker  *StdinLocker
 
@@ -187,8 +185,7 @@ type Session struct {
 }
 
 func NewSession() *Session {
-	canReadStdin := isNamedPipe(os.Stdin)
-	canOutputToPipe := isNamedPipe(os.Stdout)
+	canReadStdin := isReadableFromPipeOrRedirection(os.Stdin)
 
 	return &Session{
 		screenFd: screenFd,
@@ -198,9 +195,7 @@ func NewSession() *Session {
 		outFile:  nil,
 		terminal: nil,
 
-		CanReadStdin:    canReadStdin,
-		CanOutputToPipe: canOutputToPipe,
-
+		CanReadStdin: canReadStdin,
 		stdinViewMap: NewViewMap(),
 		stdinLocker:  NewStdinLocker(),
 
@@ -243,7 +238,7 @@ func (sess *Session) SetStdinContext(ctx context.Context, r io.ReadCloser) error
 
 	sess.CanReadStdin = false
 	if r != nil {
-		if fp, ok := r.(*os.File); !ok || (ok && isNamedPipe(fp)) {
+		if fp, ok := r.(*os.File); !ok || (ok && isReadableFromPipeOrRedirection(fp)) {
 			sess.CanReadStdin = true
 		}
 	}
