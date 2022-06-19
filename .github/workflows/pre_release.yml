@@ -3,7 +3,7 @@ name: Pre-release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+-pre.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-pr.[0-9]+'
 
 jobs:
   test:
