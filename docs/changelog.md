@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.17.2
+
+Released on Jun 19, 2022
+
+- Set the default format to csv when the output is piped. ([GitHub #71](https://github.com/mithrandie/csvq/issues/71))
+
 ## Version 1.17.1
 
 Released on Jun 17, 2022
