@@ -10,9 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: ./github/workflows/test.yml@pre-release
+      - uses: actions/checkout@pre-release
+      - uses: ./github/workflows/test.yml
 
   release:
     needs: test
