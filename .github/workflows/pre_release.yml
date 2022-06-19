@@ -1,18 +1,22 @@
 name: Pre-release
 
 on:
-  workflow_run:
-    workflows:
-      - Test
-    tag:
+  push:
+    tags:
       - 'v[0-9]+.[0-9]+.[0-9]+-pre.[0-9]+'
-    types:
-      - completed
 
 jobs:
-  release:
+  test:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./github/workflows/test.yml@pre-release
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -48,12 +52,3 @@ jobs:
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: ./dist/*.tar.gz
-
-  fail:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-
-    steps:
-      - run: |
-          echo '::error::Testing was failed'
-          exit 1
