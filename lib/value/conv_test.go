@@ -296,23 +296,6 @@ func TestFloat64ToTime(t *testing.T) {
 	}
 }
 
-func TestParseFloat64(t *testing.T) {
-	var p Primary
-	var f float64
-
-	f = 1.000
-	p = ParseFloat64(f)
-	if _, ok := p.(*Integer); !ok {
-		t.Errorf("primary type = %T, want Integer for %f", p, f)
-	}
-
-	f = 1.234
-	p = ParseFloat64(f)
-	if _, ok := p.(*Float); !ok {
-		t.Errorf("primary type = %T, want Float for %f", p, f)
-	}
-}
-
 func TestToInteger(t *testing.T) {
 	var p Primary
 	var i Primary
@@ -331,7 +314,7 @@ func TestToInteger(t *testing.T) {
 
 	p = NewFloat(1.6)
 	i = ToInteger(p)
-	if _, ok := i.(*Null); !ok {
+	if _, ok := i.(*Integer); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
@@ -355,7 +338,7 @@ func TestToInteger(t *testing.T) {
 
 	p = NewString("1.5")
 	i = ToInteger(p)
-	if _, ok := i.(*Null); !ok {
+	if _, ok := i.(*Integer); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
@@ -391,6 +374,53 @@ func TestToInteger(t *testing.T) {
 
 	p = NewString("")
 	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+}
+
+func TestToIntegerStrictly(t *testing.T) {
+	var p Primary
+	var i Primary
+
+	p = NewInteger(1)
+	i = ToIntegerStrictly(p)
+	if _, ok := i.(*Integer); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+
+	p = NewFloat(1)
+	i = ToIntegerStrictly(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewFloat(1.6)
+	i = ToIntegerStrictly(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewString(" 1")
+	i = ToIntegerStrictly(p)
+	if _, ok := i.(*Integer); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+
+	p = NewString("-1")
+	i = ToIntegerStrictly(p)
+	if _, ok := i.(*Integer); !ok {
+		t.Errorf("primary type = %T, want Integer for %#v", i, p)
+	}
+
+	p = NewString("1e+02")
+	i = ToIntegerStrictly(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewString("2002-02-02")
+	i = ToIntegerStrictly(p)
 	if _, ok := i.(*Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
@@ -537,65 +567,6 @@ func TestToString(t *testing.T) {
 	s = ToString(p)
 	if _, ok := s.(*Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", s, p)
-	}
-}
-
-var maybeNumberTests = []struct {
-	Input  string
-	Expect bool
-}{
-	{
-		Input:  "",
-		Expect: false,
-	},
-	{
-		Input:  "12345",
-		Expect: true,
-	},
-	{
-		Input:  "+1234567",
-		Expect: true,
-	},
-	{
-		Input:  "12.345",
-		Expect: true,
-	},
-	{
-		Input:  "1e+02",
-		Expect: true,
-	},
-	{
-		Input:  "1.123e-3",
-		Expect: true,
-	},
-	{
-		Input:  "12345.",
-		Expect: false,
-	},
-	{
-		Input:  "1e",
-		Expect: false,
-	},
-	{
-		Input:  "1ea",
-		Expect: false,
-	},
-	{
-		Input:  "abc",
-		Expect: false,
-	},
-	{
-		Input:  "+",
-		Expect: false,
-	},
-}
-
-func TestMaybeNumber(t *testing.T) {
-	for _, v := range maybeNumberTests {
-		result := MaybeNumber(v.Input)
-		if result != v.Expect {
-			t.Errorf("result = %t, want %t for %q", result, v.Expect, v.Input)
-		}
 	}
 }
 

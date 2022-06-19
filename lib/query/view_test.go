@@ -28,9 +28,11 @@ var viewLoadTests = []struct {
 	Stdin              string
 	ImportFormat       cmd.Format
 	Delimiter          rune
+	AllowUnevenFields  bool
 	DelimiterPositions []int
 	SingleLine         bool
 	JsonQuery          string
+	WithoutNull        bool
 	Scope              *ReferenceScope
 	Result             *View
 	ResultScope        *ReferenceScope
@@ -394,7 +396,7 @@ var viewLoadTests = []struct {
 			Header: NewHeader("t", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
+					value.NewFloat(1),
 					value.NewString("str1"),
 				}),
 			},
@@ -423,6 +425,64 @@ var viewLoadTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
+		Name: "LoadView Json Lines From Stdin",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:        "{\"column1\": 1, \"column2\": \"str1\"}\n{\"column1\": 2, \"column2\": \"str2\"}",
+		ImportFormat: cmd.JSONL,
+		JsonQuery:    "",
+		Result: &View{
+			Header: NewHeader("t", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewFloat(1),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewFloat(2),
+					value.NewString("str2"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "STDIN",
+				Delimiter: ',',
+				JsonQuery: "",
+				Format:    cmd.JSONL,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeStdin,
+			},
+		},
+		ResultScope: GenerateReferenceScope([]map[string]map[string]interface{}{
+			{
+				scopeNameTempTables: {
+					"STDIN": &View{
+						FileInfo: &FileInfo{Path: "STDIN"},
+					},
+				},
+			},
+		}, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"T": "STDIN",
+			}},
+		}, time.Time{}, nil),
+	},
+	{
+		Name: "LoadView Json Lines From Stdin, Json Structure Error",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{Object: parser.Stdin{}, Alias: parser.Identifier{Literal: "t"}},
+			},
+		},
+		Stdin:        "{\"column1\": 1, \"column2\": \"str1\"}\n\"str\"",
+		ImportFormat: cmd.JSONL,
+		JsonQuery:    "",
+		Error:        "json lines must be an array of objects",
+	},
+	{
 		Name: "LoadView JsonH From Stdin",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -437,11 +497,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value\"1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -486,11 +546,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1195,11 +1255,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1236,11 +1296,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value\"1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1278,11 +1338,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -1347,6 +1407,47 @@ var viewLoadTests = []struct {
 			},
 		},
 		Error: "file notexist does not exist",
+	},
+	{
+		Name: "LoadView TableObject From Json Lines File",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.JSONL, Literal: "jsonl"},
+						FormatElement: parser.NewStringValue("{}"),
+						Path:          parser.Identifier{Literal: "table7"},
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewFloat(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewFloat(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table7.jsonl",
+				Delimiter: ',',
+				JsonQuery: "{}",
+				Format:    cmd.JSONL,
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"JT": strings.ToUpper(GetTestFilePath("table7.jsonl")),
+			}},
+		}, time.Time{}, nil),
 	},
 	{
 		Name: "LoadView TableObject From LTSV File",
@@ -2351,12 +2452,12 @@ var viewLoadTests = []struct {
 			Header: NewHeader("jt", []string{"column1", "column2"}),
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
+					value.NewFloat(1),
+					value.NewFloat(2),
 				}),
 				NewRecord([]value.Primary{
-					value.NewInteger(3),
-					value.NewInteger(4),
+					value.NewFloat(3),
+					value.NewFloat(4),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2476,11 +2577,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2519,11 +2620,11 @@ var viewLoadTests = []struct {
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
 					value.NewString("value1"),
-					value.NewInteger(1),
+					value.NewFloat(1),
 				}),
 				NewRecord([]value.Primary{
 					value.NewString("value2"),
-					value.NewInteger(2),
+					value.NewFloat(2),
 				}),
 			},
 			FileInfo: &FileInfo{
@@ -2740,6 +2841,91 @@ var viewLoadTests = []struct {
 		Error: fmt.Sprintf("data parse error in file %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
 	},
 	{
+		Name: "Allow Uneven Field Length",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "table_broken.csv"},
+				},
+			},
+		},
+		AllowUnevenFields: true,
+		Result: &View{
+			Header: NewHeader("table_broken", []string{"column1", "column2", "__@3__"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewNull(),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewNull(),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table_broken.csv",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"TABLE_BROKEN": strings.ToUpper(GetTestFilePath("table_broken.csv")),
+			}},
+		}, time.Time{}, nil),
+	},
+	{
+		Name: "Allow Uneven Field Length without Null",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "table_broken.csv"},
+				},
+			},
+		},
+		AllowUnevenFields: true,
+		WithoutNull:       true,
+		Result: &View{
+			Header: NewHeader("table_broken", []string{"column1", "column2", "__@3__"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewString(""),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+					value.NewString(""),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table_broken.csv",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"TABLE_BROKEN": strings.ToUpper(GetTestFilePath("table_broken.csv")),
+			}},
+		}, time.Time{}, nil),
+	},
+	{
 		Name: "Inner Join Join Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -2836,10 +3022,12 @@ func TestView_Load(t *testing.T) {
 		if v.Delimiter != 0 {
 			TestTx.Flags.ImportOptions.Delimiter = v.Delimiter
 		}
+		TestTx.Flags.ImportOptions.AllowUnevenFields = v.AllowUnevenFields
 		TestTx.Flags.ImportOptions.DelimiterPositions = v.DelimiterPositions
 		TestTx.Flags.ImportOptions.SingleLine = v.SingleLine
 		TestTx.Flags.ImportOptions.JsonQuery = v.JsonQuery
 		TestTx.Flags.ImportOptions.NoHeader = v.NoHeader
+		TestTx.Flags.ImportOptions.WithoutNull = v.WithoutNull
 		if v.Encoding != text.AUTO {
 			TestTx.Flags.ImportOptions.Encoding = v.Encoding
 		} else {
@@ -3692,8 +3880,8 @@ var viewSelectTests = []struct {
 				{View: "table2", Column: InternalIdColumn},
 				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, IsFromTable: true},
 				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
-				{Column: "1", Aliases: []string{"a"}},
-				{Column: "2012-01-01T00:00:00Z"},
+				{Identifier: "@__PT:I:1", Column: "1", Aliases: []string{"a"}},
+				{Identifier: "@__PT:D:2012-01-01T00:00:00Z", Column: "2012-01-01T00:00:00Z"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -3738,6 +3926,122 @@ var viewSelectTests = []struct {
 				}),
 			},
 			selectFields: []int{2, 1, 2, 4, 5, 6, 2, 4, 4, 7},
+		},
+	},
+	{
+		Name: "Select using Table Wildcard",
+		View: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: InternalIdColumn},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
+				{View: "table2", Column: InternalIdColumn},
+				{View: "table2", Column: "column3", Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
+			},
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(2),
+					value.NewString("3"),
+					value.NewString("str33"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(3),
+					value.NewString("1"),
+					value.NewString("str44"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+				}),
+			},
+		},
+		Select: parser.SelectClause{
+			Fields: []parser.QueryExpression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2"}},
+				parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "table2"}, Column: parser.AllColumns{}}},
+				parser.Field{Object: parser.NewIntegerValueFromString("1"), Alias: parser.Identifier{Literal: "a"}},
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}, Alias: parser.Identifier{Literal: "c2a"}},
+				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: value.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21"}},
+				parser.Field{Object: parser.ColumnNumber{View: parser.Identifier{Literal: "table2"}, Number: value.NewInteger(1)}, Alias: parser.Identifier{Literal: "t21a"}},
+				parser.Field{Object: parser.PrimitiveType{
+					Literal: "2012-01-01",
+					Value:   value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}},
+			},
+		},
+		Result: &View{
+			Header: []HeaderField{
+				{View: "table1", Column: InternalIdColumn},
+				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
+				{View: "table1", Column: "column2", Aliases: []string{"c2", "c2a"}, Number: 2, IsFromTable: true},
+				{View: "table2", Column: InternalIdColumn},
+				{View: "table2", Column: "column3", Aliases: []string{"t21", "t21a"}, Number: 1, IsFromTable: true},
+				{View: "table2", Column: "column4", Number: 2, IsFromTable: true},
+				{Identifier: "@__PT:I:1", Column: "1", Aliases: []string{"a"}},
+				{Identifier: "@__PT:D:2012-01-01T00:00:00Z", Column: "2012-01-01T00:00:00Z"},
+			},
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(2),
+					value.NewString("3"),
+					value.NewString("str33"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(1),
+					value.NewString("1"),
+					value.NewString("str1"),
+					value.NewInteger(3),
+					value.NewString("1"),
+					value.NewString("str44"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}),
+				NewRecord([]value.Primary{
+					value.NewInteger(2),
+					value.NewString("2"),
+					value.NewString("str2"),
+					value.NewInteger(1),
+					value.NewString("2"),
+					value.NewString("str22"),
+					value.NewInteger(1),
+					value.NewDatetime(time.Date(2012, 1, 1, 0, 0, 0, 0, GetTestLocation())),
+				}),
+			},
+			selectFields: []int{2, 4, 5, 6, 2, 4, 4, 7},
 		},
 	},
 	{
@@ -3796,7 +4100,7 @@ var viewSelectTests = []struct {
 		Result: &View{
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", IsFromTable: true},
-				{Column: "1", Aliases: []string{"a"}},
+				{Identifier: "@__PT:I:1", Column: "1", Aliases: []string{"a"}},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -3848,14 +4152,14 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{Column: "SUM(column1)"},
+				{Identifier: "SUM(column1)", Column: "SUM(column1)"},
 			},
 			RecordSet: []Record{
 				{
 					NewGroupCell([]value.Primary{value.NewInteger(1), value.NewInteger(2)}),
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
 					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2")}),
-					NewCell(value.NewInteger(3)),
+					NewCell(value.NewFloat(3)),
 				},
 			},
 			selectFields: []int{3},
@@ -3938,8 +4242,8 @@ var viewSelectTests = []struct {
 				{View: "table1", Column: InternalIdColumn},
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{Column: "1"},
-				{Column: "SUM(column1) + 1"},
+				{Identifier: "@__PT:I:1", Column: "1"},
+				{Identifier: "SUM(column1) + 1", Column: "SUM(column1) + 1"},
 			},
 			RecordSet: []Record{
 				{
@@ -3947,7 +4251,7 @@ var viewSelectTests = []struct {
 					NewGroupCell([]value.Primary{value.NewString("1"), value.NewString("2")}),
 					NewGroupCell([]value.Primary{value.NewString("str1"), value.NewString("str2")}),
 					NewCell(value.NewInteger(1)),
-					NewCell(value.NewInteger(4)),
+					NewCell(value.NewFloat(4)),
 				},
 			},
 			selectFields: []int{3, 4},
@@ -4010,7 +4314,7 @@ var viewSelectTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{Column: "ROW_NUMBER() OVER (PARTITION BY column1 ORDER BY column2)", Aliases: []string{"rownum"}},
+				{Identifier: "ROW_NUMBER() OVER (PARTITION BY column1 ORDER BY column2)", Column: "ROW_NUMBER() OVER (PARTITION BY column1 ORDER BY column2)", Aliases: []string{"rownum"}},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -4310,7 +4614,7 @@ var viewSelectTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", Number: 1, IsFromTable: true},
 				{View: "table1", Column: "column2", Number: 2, IsFromTable: true},
-				{Column: "USERAGGFUNC(column2) OVER ()"},
+				{Identifier: "USERAGGFUNC(column2) OVER ()", Column: "USERAGGFUNC(column2) OVER ()"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
@@ -4353,6 +4657,7 @@ var viewSelectTests = []struct {
 		},
 		Select: parser.SelectClause{
 			Fields: []parser.QueryExpression{
+				parser.Field{Object: parser.NewIntegerValue(1)},
 				parser.Field{Object: parser.AggregateFunction{Name: "count", Args: []parser.QueryExpression{parser.AllColumns{}}}},
 				parser.Field{Object: parser.AggregateFunction{Name: "sum", Args: []parser.QueryExpression{parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}}}},
 			},
@@ -4361,18 +4666,20 @@ var viewSelectTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{Column: "COUNT(*)"},
-				{Column: "SUM(column1)"},
+				{Identifier: "@__PT:I:1", Column: "1"},
+				{Identifier: "COUNT(*)", Column: "COUNT(*)"},
+				{Identifier: "SUM(column1)", Column: "SUM(column1)"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewNull(),
-					value.NewNull(),
+					nil,
+					nil,
+					value.NewInteger(1),
 					value.NewInteger(0),
 					value.NewNull(),
 				}),
 			},
-			selectFields: []int{2, 3},
+			selectFields: []int{2, 3, 4},
 		},
 	},
 	{
@@ -4400,12 +4707,12 @@ var viewSelectTests = []struct {
 			Header: []HeaderField{
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
-				{Column: "COALESCE(SUM(column1), 0)"},
+				{Identifier: "COALESCE(SUM(column1), 0)", Column: "COALESCE(SUM(column1), 0)"},
 			},
 			RecordSet: []Record{
 				NewRecord([]value.Primary{
-					value.NewNull(),
-					value.NewNull(),
+					nil,
+					nil,
 					value.NewInteger(0),
 				}),
 			},
@@ -4512,7 +4819,7 @@ var viewOrderByTests = []struct {
 				{View: "table1", Column: "column1", IsFromTable: true},
 				{View: "table1", Column: "column2", IsFromTable: true},
 				{View: "table1", Column: "column3", IsFromTable: true},
-				{Column: "1"},
+				{Identifier: "@__PT:I:1", Column: "1"},
 			},
 			RecordSet: []Record{
 				NewRecordWithId(5, []value.Primary{
@@ -4767,7 +5074,7 @@ func TestView_OrderBy(t *testing.T) {
 	}
 }
 
-var viewExtendRecordCapacity = []struct {
+var viewExtendRecordCapacityTests = []struct {
 	Name   string
 	View   *View
 	Scope  *ReferenceScope
@@ -4806,6 +5113,7 @@ var viewExtendRecordCapacity = []struct {
 		}, nil, time.Time{}, nil),
 		Exprs: []parser.QueryExpression{
 			parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			parser.ColumnNumber{View: parser.Identifier{Literal: "table1"}, Number: value.NewInteger(2)},
 			parser.Function{
 				Name: "userfunc",
 				Args: []parser.QueryExpression{
@@ -4821,19 +5129,6 @@ var viewExtendRecordCapacity = []struct {
 						Args: []parser.QueryExpression{
 							parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
 						},
-					},
-				},
-			},
-			parser.ListFunction{
-				Name:     "listagg",
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.QueryExpression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					parser.NewStringValue(","),
-				},
-				OrderBy: parser.OrderByClause{
-					Items: []parser.QueryExpression{
-						parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
 					},
 				},
 			},
@@ -4868,187 +5163,18 @@ var viewExtendRecordCapacity = []struct {
 				Operator: parser.Token{Token: '+', Literal: "+"},
 			},
 		},
-		Result: 9,
-	},
-	{
-		Name: "ExtendRecordCapacity UserDefinedFunction Not Grouped Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{
-			{
-				scopeNameFunctions: {
-					"USERFUNC": &UserDefinedFunction{
-						Name: parser.Identifier{Literal: "userfunc"},
-						Parameters: []parser.Variable{
-							{Name: "arg1"},
-						},
-						RequiredArgs: 1,
-						Statements: []parser.Statement{
-							parser.Return{Value: parser.Variable{Name: "arg1"}},
-						},
-						IsAggregate: true,
-					},
-				},
-			},
-		}, nil, time.Time{}, nil),
-		Exprs: []parser.QueryExpression{
-			parser.Function{
-				Name: "userfunc",
-				Args: []parser.QueryExpression{
-					parser.NewIntegerValueFromString("1"),
-				},
-			},
-		},
-		Error: "function userfunc cannot aggregate not grouping records",
-	},
-	{
-		Name: "ExtendRecordCapacity AggregateFunction Not Grouped Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Exprs: []parser.QueryExpression{
-			parser.AggregateFunction{
-				Name: "avg",
-				Args: []parser.QueryExpression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-				},
-			},
-		},
-		Error: "function avg cannot aggregate not grouping records",
-	},
-	{
-		Name: "ExtendRecordCapacity ListAgg Not Grouped Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Exprs: []parser.QueryExpression{
-			parser.ListFunction{
-				Name:     "listagg",
-				Distinct: parser.Token{Token: parser.DISTINCT, Literal: "distinct"},
-				Args: []parser.QueryExpression{
-					parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-					parser.NewStringValue(","),
-				},
-				OrderBy: parser.OrderByClause{
-					Items: []parser.QueryExpression{
-						parser.OrderItem{Value: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
-					},
-				},
-			},
-		},
-		Error: "function listagg cannot aggregate not grouping records",
-	},
-	{
-		Name: "ExtendRecordCapacity AnalyticFunction Partition Value Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Exprs: []parser.QueryExpression{
-			parser.AnalyticFunction{
-				Name: "rank",
-				AnalyticClause: parser.AnalyticClause{
-					PartitionClause: parser.PartitionClause{
-						Values: []parser.QueryExpression{
-							parser.AggregateFunction{
-								Name: "avg",
-								Args: []parser.QueryExpression{
-									parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-								},
-							},
-						},
-					},
-					OrderByClause: parser.OrderByClause{
-						Items: []parser.QueryExpression{
-							parser.OrderItem{
-								Value: parser.Arithmetic{
-									LHS:      parser.NewIntegerValueFromString("3"),
-									RHS:      parser.NewIntegerValueFromString("4"),
-									Operator: parser.Token{Token: '+', Literal: "+"},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Error: "function avg cannot aggregate not grouping records",
-	},
-	{
-		Name: "ExtendRecordCapacity AnalyticFunction OrderBy Value Error",
-		View: &View{
-			Header: NewHeader("table1", []string{"column1", "column2"}),
-			RecordSet: RecordSet{
-				NewRecord([]value.Primary{
-					value.NewInteger(1),
-					value.NewInteger(2),
-				}),
-			},
-		},
-		Exprs: []parser.QueryExpression{
-			parser.AnalyticFunction{
-				Name: "rank",
-				AnalyticClause: parser.AnalyticClause{
-					PartitionClause: parser.PartitionClause{
-						Values: []parser.QueryExpression{
-							parser.Arithmetic{
-								LHS:      parser.NewIntegerValueFromString("1"),
-								RHS:      parser.NewIntegerValueFromString("2"),
-								Operator: parser.Token{Token: '+', Literal: "+"},
-							},
-						},
-					},
-					OrderByClause: parser.OrderByClause{
-						Items: []parser.QueryExpression{
-							parser.OrderItem{
-								Value: parser.AggregateFunction{
-									Name: "avg",
-									Args: []parser.QueryExpression{
-										parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Error: "function avg cannot aggregate not grouping records",
+		Result: 8,
 	},
 }
 
 func TestView_ExtendRecordCapacity(t *testing.T) {
 	ctx := context.Background()
-	for _, v := range viewExtendRecordCapacity {
+	for _, v := range viewExtendRecordCapacityTests {
 		if v.Scope == nil {
 			v.Scope = NewReferenceScope(TestTx)
 		}
 
-		err := v.View.ExtendRecordCapacity(ctx, v.Scope, v.Exprs)
+		err := v.View.ExtendRecordCapacity(ctx, v.Scope, v.Exprs, nil)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)

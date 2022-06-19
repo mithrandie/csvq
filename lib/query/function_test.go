@@ -208,7 +208,7 @@ var ceilTests = []functionTest{
 		Args: []value.Primary{
 			value.NewFloat(2.345),
 		},
-		Result: value.NewInteger(3),
+		Result: value.NewFloat(3),
 	},
 	{
 		Name: "Ceil Null",
@@ -337,7 +337,7 @@ var absTests = []functionTest{
 		Args: []value.Primary{
 			value.NewInteger(-2),
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewFloat(2),
 	},
 	{
 		Name: "Abs Null",
@@ -509,7 +509,7 @@ var exp2Tests = []functionTest{
 		Args: []value.Primary{
 			value.NewInteger(2),
 		},
-		Result: value.NewInteger(4),
+		Result: value.NewFloat(4),
 	},
 }
 
@@ -560,7 +560,7 @@ var log10Tests = []functionTest{
 		Args: []value.Primary{
 			value.NewFloat(100),
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewFloat(2),
 	},
 }
 
@@ -577,7 +577,7 @@ var log2Tests = []functionTest{
 		Args: []value.Primary{
 			value.NewFloat(16),
 		},
-		Result: value.NewInteger(4),
+		Result: value.NewFloat(4),
 	},
 }
 
@@ -611,7 +611,7 @@ var sqrtTests = []functionTest{
 		Args: []value.Primary{
 			value.NewFloat(4),
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewFloat(2),
 	},
 	{
 		Name: "Sqrt Cannot Calculate",
@@ -639,7 +639,7 @@ var powTests = []functionTest{
 			value.NewFloat(2),
 			value.NewFloat(2),
 		},
-		Result: value.NewInteger(4),
+		Result: value.NewFloat(4),
 	},
 	{
 		Name: "Pow First Argument is Null",
@@ -786,7 +786,7 @@ var enotationToDecTests = []functionTest{
 		Args: []value.Primary{
 			value.NewString("1.23e+12"),
 		},
-		Result: value.NewInteger(1230000000000),
+		Result: value.NewFloat(1230000000000),
 	},
 	{
 		Name: "EnotationToDec Null",
@@ -2363,6 +2363,41 @@ var regExpReplaceTests = []functionTest{
 
 func TestRegExpReplace(t *testing.T) {
 	testFunction(t, RegExpReplace, regExpReplaceTests)
+}
+
+var titleCaseTests = []functionTest{
+	{
+		Name: "TitleCase",
+		Function: parser.Function{
+			Name: "title_case",
+		},
+		Args: []value.Primary{
+			value.NewString("capitalize initials of all names"),
+		},
+		Result: value.NewString("Capitalize Initials Of All Names"),
+	},
+	{
+		Name: "TitleCase Argument Length Error",
+		Function: parser.Function{
+			Name: "title_case",
+		},
+		Args:  []value.Primary{},
+		Error: "function title_case takes exactly 1 argument",
+	},
+	{
+		Name: "TitleCase Argument Value Error",
+		Function: parser.Function{
+			Name: "title_case",
+		},
+		Args: []value.Primary{
+			value.NewNull(),
+		},
+		Error: "the first argument must be a string for function title_case",
+	},
+}
+
+func TestTitleCase(t *testing.T) {
+	testFunction(t, TitleCase, titleCaseTests)
 }
 
 var formatTests = []functionTest{

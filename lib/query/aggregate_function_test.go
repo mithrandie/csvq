@@ -110,7 +110,7 @@ var sumTests = []aggregateTests{
 			value.NewInteger(4),
 			value.NewNull(),
 		},
-		Result: value.NewInteger(8),
+		Result: value.NewFloat(8),
 	},
 	{
 		List: []value.Primary{
@@ -139,7 +139,7 @@ var avgTests = []aggregateTests{
 			value.NewInteger(4),
 			value.NewNull(),
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewFloat(2),
 	},
 	{
 		List: []value.Primary{
@@ -175,7 +175,7 @@ var stdEVTests = []aggregateTests{
 			value.NewInteger(0),
 			value.NewInteger(0),
 		},
-		Result: value.NewInteger(0),
+		Result: value.NewFloat(0),
 	},
 	{
 		List: []value.Primary{
@@ -211,7 +211,7 @@ var stdEVPTests = []aggregateTests{
 			value.NewInteger(0),
 			value.NewInteger(0),
 		},
-		Result: value.NewInteger(0),
+		Result: value.NewFloat(0),
 	},
 	{
 		List: []value.Primary{
@@ -247,7 +247,7 @@ var varTests = []aggregateTests{
 			value.NewInteger(0),
 			value.NewInteger(0),
 		},
-		Result: value.NewInteger(0),
+		Result: value.NewFloat(0),
 	},
 	{
 		List: []value.Primary{
@@ -276,14 +276,14 @@ var varPTests = []aggregateTests{
 			value.NewInteger(4),
 			value.NewInteger(5),
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewFloat(2),
 	},
 	{
 		List: []value.Primary{
 			value.NewInteger(0),
 			value.NewInteger(0),
 		},
-		Result: value.NewInteger(0),
+		Result: value.NewFloat(0),
 	},
 	{
 		List: []value.Primary{
@@ -326,14 +326,14 @@ var medianTests = []aggregateTests{
 			value.NewInteger(2),
 			value.NewNull(),
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewFloat(2),
 	},
 	{
 		List: []value.Primary{
 			value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())),
 			value.NewDatetime(time.Date(2012, 2, 5, 9, 18, 15, 0, GetTestLocation())),
 		},
-		Result: value.NewInteger(time.Date(2012, 2, 4, 9, 18, 15, 0, GetTestLocation()).Unix()),
+		Result: value.NewFloat(float64(time.Date(2012, 2, 4, 9, 18, 15, 0, GetTestLocation()).UnixNano()) / 1e9),
 	},
 	{
 		List: []value.Primary{

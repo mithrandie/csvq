@@ -13,10 +13,10 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 
 ## Latest Release
 
-Version 1.14.1
-: Released on March 21, 2021
+Version 1.17.1
+: Released on Jun 17, 2022
 
-  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.14.1">
+  <a class="waves-effect waves-light btn" href="https://github.com/mithrandie/csvq/releases/tag/v1.17.1">
     <i class="material-icons left">file_download</i>download
   </a>
 
@@ -40,12 +40,13 @@ Version 1.14.1
   * LTSV
   * Fixed-Length Format
   * [JSON]({{ '/reference/json.html' | relative_url }})
+  * JSON Lines
 * Support following file encodings
   * UTF-8
   * UTF-16
   * Shift_JIS
 
-  > JSON Format supports only UTF-8.
+  > JSON and JSON Lines formats support only UTF-8.
 
 ## Installation
 

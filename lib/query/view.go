@@ -26,6 +26,8 @@ import (
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/csv"
 	"github.com/mithrandie/go-text/fixedlen"
+	txjson "github.com/mithrandie/go-text/json"
+	"github.com/mithrandie/go-text/jsonl"
 	"github.com/mithrandie/go-text/ltsv"
 	"github.com/mithrandie/ternary"
 )
@@ -81,8 +83,6 @@ type View struct {
 	sortValuesInEachRecord     []SortValues
 	sortDirections             []int
 	sortNullPositions          []int
-
-	tempRecord Record
 
 	offset int
 }
@@ -229,7 +229,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 			options.DelimiterPositions = positions
 			options.Format = cmd.FIXED
-		case parser.JSON:
+		case parser.JSON, parser.JSONL:
 			if felem == nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, "json query is not specified")
 			}
@@ -239,9 +239,14 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			if 0 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
 			}
+
 			options.JsonQuery = felem.(*value.String).Raw()
-			options.Format = cmd.JSON
 			options.Encoding = text.UTF8
+			if tableObject.Type.Token == parser.JSONL {
+				options.Format = cmd.JSONL
+			} else {
+				options.Format = cmd.JSON
+			}
 		case parser.LTSV:
 			if 2 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 3)
@@ -268,7 +273,11 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 			var p value.Primary = value.NewNull()
 			if fr, ok := a.(parser.FieldReference); ok {
-				a = parser.NewStringValue(fr.Column.Literal)
+				if col, ok := fr.Column.(parser.Identifier); ok {
+					a = parser.NewStringValue(col.Literal)
+				} else {
+					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as an argument: %s", tableObject.Args[encodingIdx].String()))
+				}
 			}
 			if pv, err := Evaluate(ctx, scope, a); err == nil {
 				p = pv
@@ -587,8 +596,11 @@ func loadObject(
 			options.Format = scope.Tx.Flags.ImportOptions.Format
 		}
 
-		if options.Format == cmd.TSV {
+		switch options.Format {
+		case cmd.TSV:
 			options.Delimiter = '\t'
+		case cmd.JSON, cmd.JSONL:
+			options.Encoding = text.UTF8
 		}
 
 		fileInfo := &FileInfo{
@@ -831,7 +843,7 @@ func cacheViewFromFile(
 				}
 			}
 
-			loadView, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options.WithoutNull, tableIdentifier)
+			loadView, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tableIdentifier)
 			if err != nil {
 				if _, ok := err.(Error); !ok {
 					err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
@@ -848,16 +860,18 @@ func cacheViewFromFile(
 	return filePath, nil
 }
 
-func loadViewFromFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, options cmd.ImportOptions, expr parser.QueryExpression) (*View, error) {
 	switch fileInfo.Format {
 	case cmd.FIXED:
-		return loadViewFromFixedLengthTextFile(ctx, fp, fileInfo, withoutNull, expr)
+		return loadViewFromFixedLengthTextFile(ctx, fp, fileInfo, options.WithoutNull, expr)
 	case cmd.LTSV:
-		return loadViewFromLTSVFile(ctx, flags, fp, fileInfo, withoutNull, expr)
+		return loadViewFromLTSVFile(ctx, flags, fp, fileInfo, options.WithoutNull, expr)
 	case cmd.JSON:
 		return loadViewFromJsonFile(fp, fileInfo, expr)
+	case cmd.JSONL:
+		return loadViewFromJsonLinesFile(ctx, flags, fp, fileInfo, expr)
 	}
-	return loadViewFromCSVFile(ctx, fp, fileInfo, withoutNull, expr)
+	return loadViewFromCSVFile(ctx, fp, fileInfo, options.AllowUnevenFields, options.WithoutNull, expr)
 }
 
 func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
@@ -934,7 +948,7 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, file
 	return view, nil
 }
 
-func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, allowUnevenFields bool, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
 	if err != nil {
 		return nil, NewCannotDetectFileEncodingError(expr)
@@ -947,6 +961,7 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 	}
 	reader.Delimiter = fileInfo.Delimiter
 	reader.WithoutNull = withoutNull
+	reader.AllowUnevenFields = allowUnevenFields
 
 	var header []string
 	if !fileInfo.NoHeader {
@@ -974,7 +989,33 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 	fileInfo.EncloseAll = reader.EnclosedAll
 
 	view := NewView()
-	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+
+	if allowUnevenFields {
+		if len(header) < reader.FieldsPerRecord {
+			header = append(header, make([]string, reader.FieldsPerRecord-len(header))...)
+		}
+		view.Header = NewHeaderWithAutofill(parser.FormatTableName(fileInfo.Path), header)
+
+		for i := range records {
+			if reader.FieldsPerRecord <= len(records[i]) {
+				continue
+			}
+
+			filling := make([]Cell, reader.FieldsPerRecord-len(records[i]))
+			for j := range filling {
+				if withoutNull {
+					filling[j] = NewCell(value.NewString(""))
+				} else {
+					filling[j] = NewCell(value.NewNull())
+				}
+			}
+
+			records[i] = append(records[i], filling...)
+		}
+	} else {
+		view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+	}
+
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
@@ -1130,6 +1171,146 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 	return view, nil
 }
 
+func loadViewFromJsonLinesFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
+	var err error
+	headerList := make([]string, 0, 32)
+	headerMap := make(map[string]bool, 32)
+	objectList := make([]txjson.Object, 0, fileLoadingPreparedRecordSetCap)
+
+	escapeType := txjson.Backslash
+	fileSize := fileSize(fp)
+	jsonQuery, err := json.Query.Parse(fileInfo.JsonQuery)
+	if err != nil {
+		return nil, NewLoadJsonError(expr, err.Error())
+	}
+
+	rowch := make(chan txjson.Object, fileLoadingBuffer)
+	pos := 0
+
+	reader := jsonl.NewReader(fp)
+	reader.SetUseInteger(false)
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		for {
+			row, ok := <-rowch
+			if !ok {
+				break
+			}
+
+			for _, v := range row.Keys() {
+				if _, ok := headerMap[v]; !ok {
+					headerMap[v] = true
+					headerList = append(headerList, v)
+				}
+			}
+
+			if 0 < fileSize && len(objectList) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
+				l := int((float64(fileSize) / float64(pos)) * fileLoadingPreparedRecordSetCap * 1.2)
+				newSet := make([]txjson.Object, fileLoadingPreparedRecordSetCap, l)
+				copy(newSet, objectList)
+				objectList = newSet
+			}
+
+			objectList = append(objectList, row)
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		i := 0
+		for {
+			if i&15 == 0 && ctx.Err() != nil {
+				err = ConvertContextError(ctx.Err())
+				break
+			}
+
+			row, et, e := reader.Read()
+			if e == io.EOF {
+				break
+			}
+			if e != nil {
+				err = e
+				break
+			}
+
+			rowObj, ok := row.(txjson.Object)
+			if !ok {
+				err = NewJsonLinesStructureError(expr)
+				break
+			}
+
+			if jsonQuery != nil {
+				jstruct, e := json.Extract(jsonQuery, rowObj)
+				if e != nil {
+					err = e
+					break
+				}
+				jarray, ok := jstruct.(txjson.Array)
+				if !ok || len(jarray) < 1 {
+					err = e
+					break
+				}
+				rowObj, ok = jarray[0].(txjson.Object)
+				if !ok {
+					err = e
+					break
+				}
+			}
+
+			if escapeType < et {
+				escapeType = et
+			}
+
+			if 0 < fileSize && i < fileLoadingPreparedRecordSetCap {
+				pos = reader.Pos()
+			}
+
+			rowch <- rowObj
+			i++
+		}
+		close(rowch)
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	if err != nil {
+		return nil, err
+	}
+
+	recordSet := make(RecordSet, len(objectList))
+
+	if err = NewGoroutineTaskManager(len(objectList), -1, flags.CPU).Run(ctx, func(index int) error {
+		values := make([]value.Primary, len(headerList))
+
+		for i, v := range headerList {
+			if objectList[index].Exists(v) {
+				values[i] = json.ConvertToValue(objectList[index].Value(v))
+			} else {
+				values[i] = value.NewNull()
+			}
+		}
+
+		recordSet[index] = NewRecord(values)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	fileInfo.Encoding = text.UTF8
+	fileInfo.JsonEscape = escapeType
+
+	view := NewView()
+	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerList)
+	view.RecordSet = recordSet
+	view.FileInfo = fileInfo
+	return view, nil
+}
+
 func NewDualView() *View {
 	return &View{
 		Header:    NewEmptyHeader(1),
@@ -1137,10 +1318,10 @@ func NewDualView() *View {
 	}
 }
 
-func NewViewFromGroupedRecord(ctx context.Context, flags *cmd.Flags, referenceRecor ReferenceRecord) (*View, error) {
+func NewViewFromGroupedRecord(ctx context.Context, flags *cmd.Flags, referenceRecord ReferenceRecord) (*View, error) {
 	view := NewView()
-	view.Header = referenceRecor.view.Header
-	record := referenceRecor.view.RecordSet[referenceRecor.recordIndex]
+	view.Header = referenceRecord.view.Header
+	record := referenceRecord.view.RecordSet[referenceRecord.recordIndex]
 
 	view.RecordSet = make(RecordSet, record.GroupLen())
 
@@ -1371,60 +1552,53 @@ func (view *View) Having(ctx context.Context, scope *ReferenceScope, clause pars
 }
 
 func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause parser.SelectClause) error {
-	var parseAllColumns = func(view *View, fields []parser.QueryExpression) []parser.QueryExpression {
-		insertIdx := -1
-
-		for i, field := range fields {
-			if _, ok := field.(parser.Field).Object.(parser.AllColumns); ok {
-				insertIdx = i
-				break
-			}
-		}
-
-		if insertIdx < 0 {
-			return fields
-		}
+	var parseWildcard = func(fields []parser.QueryExpression) []parser.Field {
+		list := make([]parser.Field, 0, len(fields))
 
 		columns := view.Header.TableColumns()
-		insertLen := len(columns)
-		insert := make([]parser.QueryExpression, insertLen)
-		for i, c := range columns {
-			insert[i] = parser.Field{
-				Object: c,
-			}
-		}
 
-		list := make([]parser.QueryExpression, len(fields)-1+insertLen)
-		for i, field := range fields {
-			switch {
-			case i == insertIdx:
+		for _, v := range fields {
+			field := v.(parser.Field)
+
+			if _, ok := field.Object.(parser.AllColumns); ok {
+				for _, c := range columns {
+					list = append(list, parser.Field{
+						Object: c,
+					})
+				}
+
 				continue
-			case i < insertIdx:
-				list[i] = field
-			default:
-				list[i+insertLen-1] = field
 			}
-		}
-		for i, field := range insert {
-			list[i+insertIdx] = field
+
+			if fieldReference, ok := field.Object.(parser.FieldReference); ok {
+				if _, ok := fieldReference.Column.(parser.AllColumns); ok {
+					viewName := fieldReference.View.Literal
+
+					for _, c := range columns {
+						cref := c.(parser.FieldReference)
+						if cref.View.Literal != viewName {
+							continue
+						}
+
+						list = append(list, parser.Field{
+							Object: c,
+						})
+					}
+
+					continue
+				}
+			}
+
+			list = append(list, field)
 		}
 
 		return list
 	}
 
-	var evalFields = func(view *View, fields []parser.QueryExpression) error {
-		fieldsObjects := make([]parser.QueryExpression, len(fields))
-		for i, f := range fields {
-			fieldsObjects[i] = f.(parser.Field).Object
-		}
-		if err := view.ExtendRecordCapacity(ctx, scope, fieldsObjects); err != nil {
-			return err
-		}
-
+	var evalFields = func(fields []parser.Field) error {
 		view.selectFields = make([]int, len(fields))
 		view.selectLabels = make([]string, len(fields))
-		for i, f := range fields {
-			field := f.(parser.Field)
+		for i, field := range fields {
 			alias := ""
 			if field.Alias != nil {
 				alias = field.Alias.(parser.Identifier).Literal
@@ -1436,37 +1610,56 @@ func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause pars
 			view.selectFields[i] = idx
 			view.selectLabels[i] = field.Name()
 		}
+
 		return nil
 	}
 
-	fields := parseAllColumns(view, clause.Fields)
+	fields := parseWildcard(clause.Fields)
+	fieldObjects := make([]parser.QueryExpression, len(fields))
+	for i := range fields {
+		fieldObjects[i] = fields[i].Object
+	}
 
-	origFieldLen := view.FieldLen()
-	err := evalFields(view, fields)
-	if err != nil {
-		if _, ok := err.(*NotGroupingRecordsError); ok {
-			view.Header = view.Header[:origFieldLen]
-			if 0 < view.RecordLen() && view.FieldLen() < len(view.RecordSet[0]) {
-				for i := range view.RecordSet {
-					view.RecordSet[i] = view.RecordSet[i][:origFieldLen]
-				}
-			}
+	if !view.isGrouped {
+		hasAggregateFunction, err := HasAggregateFunctionInList(fieldObjects, scope)
+		if err != nil {
+			return err
+		}
 
+		if hasAggregateFunction {
 			if err = view.group(ctx, scope, nil); err != nil {
 				return err
 			}
 
-			if err = evalFields(view, fields); err != nil {
-				return err
+			if view.RecordLen() < 1 {
+				record := make(Record, view.FieldLen())
+				for i := range record {
+					record[i] = make(Cell, 0)
+				}
+				view.RecordSet = append(view.RecordSet, record)
 			}
+		}
+	}
 
-			if view.tempRecord != nil {
-				view.RecordSet = append(view.RecordSet, view.tempRecord)
-				view.tempRecord = nil
-			}
-		} else {
+	analyticFunctions, err := SearchAnalyticFunctionsInList(fieldObjects)
+	if err != nil {
+		return err
+	}
+
+	if err := view.ExtendRecordCapacity(ctx, scope, fieldObjects, analyticFunctions); err != nil {
+		return err
+	}
+
+	for _, fn := range analyticFunctions {
+		err = view.evalAnalyticFunction(ctx, scope, fn)
+		if err != nil {
 			return err
 		}
+	}
+
+	err = evalFields(fields)
+	if err != nil {
+		return err
 	}
 
 	if clause.IsDistinct() {
@@ -1539,12 +1732,29 @@ func (view *View) SelectAllColumns(ctx context.Context, scope *ReferenceScope) e
 }
 
 func (view *View) OrderBy(ctx context.Context, scope *ReferenceScope, clause parser.OrderByClause) error {
+	if view.RecordLen() < 2 {
+		return nil
+	}
+
 	orderValues := make([]parser.QueryExpression, len(clause.Items))
 	for i, item := range clause.Items {
 		orderValues[i] = item.(parser.OrderItem).Value
 	}
-	if err := view.ExtendRecordCapacity(ctx, scope, orderValues); err != nil {
+
+	analyticFunctions, err := SearchAnalyticFunctionsInList(orderValues)
+	if err != nil {
 		return err
+	}
+
+	if err := view.ExtendRecordCapacity(ctx, scope, orderValues, analyticFunctions); err != nil {
+		return err
+	}
+
+	for _, fn := range analyticFunctions {
+		err = view.evalAnalyticFunction(ctx, scope, fn)
+		if err != nil {
+			return err
+		}
 	}
 
 	sortIndices := make([]int, len(clause.Items))
@@ -1607,141 +1817,97 @@ func (view *View) OrderBy(ctx context.Context, scope *ReferenceScope, clause par
 	return nil
 }
 
-func (view *View) additionalColumns(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression) (map[string]bool, error) {
-	m := make(map[string]bool, 5)
+func (view *View) numberOfColumnsToBeAdded(exprs []parser.QueryExpression, funcs []parser.AnalyticFunction) int {
+	n := 0
 
-	switch expr.(type) {
-	case parser.FieldReference, parser.ColumnNumber:
-		return nil, nil
-	case parser.Function:
-		if udfn, err := scope.GetFunction(expr, expr.(parser.Function).Name); err == nil {
-			if udfn.IsAggregate && !view.isGrouped {
-				return nil, NewNotGroupingRecordsError(expr, expr.(parser.Function).Name)
-			}
+	analyticFunctionIdentifiers := make(map[string]bool, len(funcs))
+
+	numberInAnalyticFunction := func(fn parser.AnalyticFunction) int {
+		if _, ok := view.Header.ContainsObject(fn); ok {
+			return 0
 		}
-	case parser.AggregateFunction:
-		if !view.isGrouped {
-			return nil, NewNotGroupingRecordsError(expr, expr.(parser.AggregateFunction).Name)
+
+		identifier := parser.FormatFieldIdentifier(fn)
+
+		if _, ok := analyticFunctionIdentifiers[identifier]; ok {
+			return 0
 		}
-	case parser.ListFunction:
-		if !view.isGrouped {
-			return nil, NewNotGroupingRecordsError(expr, expr.(parser.ListFunction).Name)
-		}
-	case parser.AnalyticFunction:
-		fn := expr.(parser.AnalyticFunction)
-		pvalues := fn.AnalyticClause.PartitionValues()
-		ovalues := []parser.QueryExpression(nil)
+
+		analyticFunctionIdentifiers[identifier] = true
+		partitionExprs := fn.AnalyticClause.PartitionValues()
+		numberInPartitionClause := view.numberOfColumnsToBeAdded(partitionExprs, nil)
+
+		numberInOrderByClause := 0
 		if fn.AnalyticClause.OrderByClause != nil {
-			ovalues = fn.AnalyticClause.OrderByClause.(parser.OrderByClause).Items
+			orderByExprs := GetValuesInOrderByClause(fn.AnalyticClause.OrderByClause.(parser.OrderByClause))
+			numberInOrderByClause = view.numberOfColumnsToBeAdded(orderByExprs, nil)
 		}
 
-		if pvalues != nil {
-			for _, pvalue := range pvalues {
-				columns, err := view.additionalColumns(ctx, scope, pvalue)
-				if err != nil {
-					return nil, err
-				}
-				for k := range columns {
-					if _, ok := m[k]; !ok {
-						m[k] = true
-					}
-				}
-			}
-		}
-		if ovalues != nil {
-			for _, v := range ovalues {
-				item := v.(parser.OrderItem)
-				columns, err := view.additionalColumns(ctx, scope, item.Value)
-				if err != nil {
-					return nil, err
-				}
-				for k := range columns {
-					if _, ok := m[k]; !ok {
-						m[k] = true
-					}
-				}
-			}
+		return 1 + numberInOrderByClause + numberInPartitionClause
+	}
+
+	for _, expr := range exprs {
+		switch expr.(type) {
+		case parser.FieldReference, parser.ColumnNumber:
+			continue
+		case parser.AnalyticFunction:
+			n = n + numberInAnalyticFunction(expr.(parser.AnalyticFunction))
+		default:
+			n = n + 1
 		}
 	}
 
-	if _, ok := view.Header.ContainsObject(expr); !ok {
-		s := expr.String()
-		if _, ok := m[s]; !ok {
-			m[s] = true
-		}
+	for _, expr := range funcs {
+		n = n + numberInAnalyticFunction(expr)
 	}
 
-	return m, nil
+	return n
 }
 
-func (view *View) ExtendRecordCapacity(ctx context.Context, scope *ReferenceScope, exprs []parser.QueryExpression) error {
-	additions := make(map[string]bool, 5)
-	for _, expr := range exprs {
-		columns, err := view.additionalColumns(ctx, scope, expr)
-		if err != nil {
-			return err
-		}
-		for k := range columns {
-			if _, ok := additions[k]; !ok {
-				additions[k] = true
-			}
-		}
-	}
-
-	currentLen := view.FieldLen()
-	fieldCap := currentLen + len(additions)
+func (view *View) ExtendRecordCapacity(ctx context.Context, scope *ReferenceScope, exprs []parser.QueryExpression, funcs []parser.AnalyticFunction) error {
+	fieldCap := view.FieldLen() + view.numberOfColumnsToBeAdded(exprs, funcs)
 
 	if 0 < view.RecordLen() && fieldCap <= cap(view.RecordSet[0]) {
 		return nil
 	}
 
 	return NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU).Run(ctx, func(index int) error {
-		record := make(Record, currentLen, fieldCap)
+		record := make(Record, view.FieldLen(), fieldCap)
 		copy(record, view.RecordSet[index])
 		view.RecordSet[index] = record
 		return nil
 	})
 }
 
-func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj parser.QueryExpression, alias string) (idx int, err error) {
-	idx, ok := view.Header.ContainsObject(obj)
-	if ok {
-		rScope := scope.CreateScopeForRecordEvaluation(view, -1)
-		if _, err = Evaluate(ctx, rScope, obj); err != nil {
-			return
-		}
-	} else {
-		if analyticFunction, ok := obj.(parser.AnalyticFunction); ok {
-			err = view.evalAnalyticFunction(ctx, scope, analyticFunction)
-			if err != nil {
-				return
-			}
-		} else if view.RecordLen() < 1 {
-			if view.tempRecord == nil {
-				view.tempRecord = NewEmptyRecord(view.FieldLen())
-			}
+func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj parser.QueryExpression, alias string) (int, error) {
+	var idx = -1
+	var ok = false
 
-			rScope := scope.CreateScopeForRecordEvaluation(view, -1)
-			primary, e := Evaluate(ctx, rScope, obj)
+	switch obj.(type) {
+	case parser.FieldReference, parser.ColumnNumber, parser.AnalyticFunction:
+		idx, ok = view.Header.ContainsObject(obj)
+
+		switch obj.(type) {
+		case parser.FieldReference, parser.ColumnNumber:
+			if ok && view.isGrouped && view.Header[idx].IsFromTable && !view.Header[idx].IsGroupKey {
+				return idx, NewFieldNotGroupKeyError(obj)
+			}
+		}
+	}
+
+	if !ok {
+		if err := EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
+			primary, e := Evaluate(ctx, seqScope, obj)
 			if e != nil {
-				err = e
-				return
+				return e
 			}
-			view.tempRecord = append(view.tempRecord, NewCell(primary))
-		} else {
-			if err = EvaluateSequentially(ctx, scope, view, func(seqScope *ReferenceScope, rIdx int) error {
-				primary, e := Evaluate(ctx, seqScope, obj)
-				if e != nil {
-					return e
-				}
 
-				view.RecordSet[rIdx] = append(view.RecordSet[rIdx], NewCell(primary))
-				return nil
-			}); err != nil {
-				return
-			}
+			view.RecordSet[rIdx] = append(view.RecordSet[rIdx], NewCell(primary))
+			return nil
+		}); err != nil {
+			return idx, err
 		}
-		view.Header, idx = AddHeaderField(view.Header, parser.FormatFieldIdentifier(obj), alias)
+		view.Header, idx = AddHeaderField(view.Header, parser.FormatFieldIdentifier(obj), parser.FormatFieldLabel(obj), alias)
 	}
 
 	if 0 < len(alias) {
@@ -1750,10 +1916,14 @@ func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj par
 		}
 	}
 
-	return
+	return idx, nil
 }
 
 func (view *View) evalAnalyticFunction(ctx context.Context, scope *ReferenceScope, expr parser.AnalyticFunction) error {
+	if _, ok := view.Header.ContainsObject(expr); ok {
+		return nil
+	}
+
 	name := strings.ToUpper(expr.Name)
 	if _, ok := AggregateFunctions[name]; !ok {
 		if _, ok := AnalyticFunctions[name]; !ok {
@@ -2143,6 +2313,7 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 		colNumber++
 
 		hfields[i] = view.Header[idx]
+		hfields[i].Identifier = ""
 		hfields[i].Aliases = nil
 		hfields[i].Number = colNumber
 		hfields[i].IsFromTable = true
@@ -2164,7 +2335,6 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 	view.sortDirections = nil
 	view.sortNullPositions = nil
 	view.offset = 0
-	view.tempRecord = nil
 	return nil
 }
 

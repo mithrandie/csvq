@@ -60,6 +60,8 @@ func Evaluate(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpre
 		val, err = evalAggregateFunction(ctx, scope, expr.(parser.AggregateFunction))
 	case parser.ListFunction:
 		val, err = evalListFunction(ctx, scope, expr.(parser.ListFunction))
+	case parser.AnalyticFunction:
+		val, err = evalAnalyticFunction(scope, expr.(parser.AnalyticFunction))
 	case parser.CaseExpr:
 		val, err = evalCaseExpr(ctx, scope, expr.(parser.CaseExpr))
 	case parser.Logic:
@@ -203,7 +205,7 @@ func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser
 		return nil, err
 	}
 
-	if pi := value.ToInteger(ope); !value.IsNull(pi) {
+	if pi := value.ToIntegerStrictly(ope); !value.IsNull(pi) {
 		val := pi.(*value.Integer).Raw()
 		value.Discard(pi)
 		switch expr.Operator.Token {
@@ -226,7 +228,7 @@ func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser
 		val = val * -1
 	}
 
-	return value.ParseFloat64(val), nil
+	return value.NewFloat(val), nil
 }
 
 func evalConcat(ctx context.Context, scope *ReferenceScope, expr parser.Concat) (value.Primary, error) {
@@ -695,6 +697,19 @@ func evalListFunction(ctx context.Context, scope *ReferenceScope, expr parser.Li
 		return JsonAgg(list), nil
 	}
 	return ListAgg(list, separator), nil
+}
+
+func evalAnalyticFunction(scope *ReferenceScope, expr parser.AnalyticFunction) (value.Primary, error) {
+	if 0 < len(scope.Records) {
+		fieldIndex, ok := scope.Records[0].view.Header.ContainsObject(expr)
+		if ok {
+			if !scope.Records[0].IsInRange() {
+				return value.NewNull(), nil
+			}
+			return scope.Records[0].view.RecordSet[scope.Records[0].recordIndex][fieldIndex][0], nil
+		}
+	}
+	return nil, NewNotAllowedAnalyticFunctionError(expr)
 }
 
 func checkArgsForListFunction(ctx context.Context, scope *ReferenceScope, expr parser.ListFunction) (string, error) {

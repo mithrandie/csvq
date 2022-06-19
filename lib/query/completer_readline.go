@@ -1,4 +1,4 @@
-// +build darwin dragonfly freebsd linux netbsd openbsd solaris windows
+//go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || windows
 
 package query
 
@@ -83,6 +83,7 @@ var tableObjectCandidates = []string{
 	"CSV()",
 	"FIXED()",
 	"JSON()",
+	"JSONL()",
 	"LTSV()",
 }
 
@@ -164,6 +165,8 @@ type Completer struct {
 	tokens            []parser.Token
 	lastIdx           int
 	selectIntoEnabled bool
+
+	isInAndAfterSelect bool
 }
 
 func NewCompleter(scope *ReferenceScope) *Completer {
@@ -1216,13 +1219,9 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 							"LIMIT",
 						}, true)...)
 						customList = append(customList, c.SearchValues(line, origLine, index)...)
-						customList = append(customList, c.aggregateFunctionCandidateList(line)...)
-						customList = append(customList, c.analyticFunctionCandidateList(line)...)
 					}
 				} else {
 					customList = append(customList, c.SearchValues(line, origLine, index)...)
-					customList = append(customList, c.aggregateFunctionCandidateList(line)...)
-					customList = append(customList, c.analyticFunctionCandidateList(line)...)
 				}
 
 				if customList != nil {
@@ -1405,8 +1404,6 @@ func (c *Completer) SelectArgs(line string, origLine string, index int) readline
 					}
 				}
 				customList = append(customList, c.SearchValues(line, origLine, index)...)
-				customList = append(customList, c.aggregateFunctionCandidateList(line)...)
-				customList = append(customList, c.analyticFunctionCandidateList(line)...)
 				customList.Sort()
 				return keywords, customList, true
 			}
@@ -1896,7 +1893,8 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 						return nil, c.candidateList(c.encodingList(), false), true
 					case cmd.ExportEncodingFlag:
 						return nil, c.candidateList(exportEncodingsCandidates, false), true
-					case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag, cmd.NoHeaderFlag, cmd.WithoutNullFlag,
+					case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag, cmd.AllowUnevenFieldsFlag,
+						cmd.NoHeaderFlag, cmd.WithoutNullFlag,
 						cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
 						cmd.StripEndingLineBreakFlag, cmd.EastAsianEncodingFlag,
 						cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
@@ -2098,7 +2096,7 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 
 func (c *Completer) SearchAllTables(line string, _ string, _ int) readline.CandidateList {
 	tableKeys := c.scope.Tx.cachedViews.SortedKeys()
-	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.LtsvExt, cmd.TextExt}, c.scope.Tx.Flags.Repository)
+	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.JsonlExt, cmd.LtsvExt, cmd.TextExt}, c.scope.Tx.Flags.Repository)
 
 	defaultDir := c.scope.Tx.Flags.Repository
 	if len(defaultDir) < 1 {
@@ -2176,6 +2174,12 @@ func (c *Completer) SearchValues(line string, origLine string, index int) readli
 	}
 
 	var cands readline.CandidateList
+
+	if c.isInAndAfterSelect {
+		cands = append(cands, c.aggregateFunctionCandidateList(line)...)
+		cands = append(cands, c.analyticFunctionCandidateList(line)...)
+	}
+
 	if len(searchWord) < 1 {
 		return cands
 	}
@@ -2531,6 +2535,8 @@ func (c *Completer) UpdateTokens(line string, origLine string) {
 		c.tokens = append(c.tokens, t)
 	}
 
+	c.setCursorIsInAndAfterSelect()
+
 	if 0 < len(c.tokens) {
 		c.tokens = c.tokens[c.searchStartIndex():]
 	}
@@ -2546,6 +2552,37 @@ func (c *Completer) SetLastIndex(line string) {
 	if 0 < len(c.tokens) && 0 < len(line) {
 		c.tokens[len(c.tokens)-1].Token = parser.IDENTIFIER
 		c.lastIdx--
+	}
+}
+
+func (c *Completer) setCursorIsInAndAfterSelect() {
+	c.isInAndAfterSelect = false
+
+	blockLevel := 0
+
+InAndAfterSelectLoop:
+	for i := len(c.tokens) - 1; i >= 0; i-- {
+		switch c.tokens[i].Token {
+		case ';',
+			parser.FROM, parser.WHERE, parser.GROUP, parser.HAVING, parser.LIMIT, parser.FETCH, parser.OFFSET,
+			parser.INTO:
+
+			break InAndAfterSelectLoop
+		case '(':
+			blockLevel--
+		case ')':
+			blockLevel++
+		case parser.SELECT:
+			if blockLevel <= 0 {
+				c.isInAndAfterSelect = true
+				break InAndAfterSelectLoop
+			}
+		case parser.BY:
+			if blockLevel <= 0 && 0 < i && c.tokens[i-1].Token == parser.ORDER {
+				c.isInAndAfterSelect = true
+				break InAndAfterSelectLoop
+			}
+		}
 	}
 }
 
@@ -2694,7 +2731,7 @@ func (c *Completer) combineFunction() {
 
 func (c *Completer) isTableObject(token parser.Token) bool {
 	switch token.Token {
-	case parser.CSV, parser.JSON, parser.FIXED, parser.LTSV, parser.JSON_TABLE:
+	case parser.CSV, parser.JSON, parser.JSONL, parser.FIXED, parser.LTSV, parser.JSON_TABLE:
 		return true
 	}
 	return false

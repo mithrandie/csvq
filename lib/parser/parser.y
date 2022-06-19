@@ -110,7 +110,6 @@ import (
 %type<queryexprs>  row_values
 %type<queryexprs>  order_items
 %type<queryexpr>   order_item
-%type<queryexpr>   order_value
 %type<token>       order_direction
 %type<token>       order_null_position
 %type<queryexpr>   subquery
@@ -146,7 +145,6 @@ import (
 %type<queryexpr>   table
 %type<queryexpr>   join
 %type<queryexpr>   join_condition
-%type<queryexpr>   field_object
 %type<queryexpr>   field
 %type<queryexpr>   case_expr
 %type<queryexpr>   case_value
@@ -222,7 +220,7 @@ import (
 %token<token> IGNORE WITHIN
 %token<token> VAR SHOW
 %token<token> TIES NULLS ROWS ONLY
-%token<token> CSV JSON FIXED LTSV
+%token<token> CSV JSON JSONL FIXED LTSV
 %token<token> CSV_INLINE JSON_INLINE JSON_TABLE
 %token<token> JSON_ROW
 %token<token> SUBSTRING COUNT JSON_OBJECT
@@ -1032,7 +1030,24 @@ trigger_statement
     }
 
 select_query
-    : with_clause select_entity order_by_clause limit_clause
+    : select_entity order_by_clause limit_clause
+    {
+        $$ = SelectQuery{
+            SelectEntity:  $1,
+            OrderByClause: $2,
+            LimitClause:   $3,
+        }
+    }
+    | select_entity order_by_clause limit_clause FOR UPDATE
+    {
+        $$ = SelectQuery{
+            SelectEntity:  $1,
+            OrderByClause: $2,
+            LimitClause:   $3,
+            Context:       $5,
+        }
+    }
+    | with_clause select_entity order_by_clause limit_clause
     {
         $$ = SelectQuery{
             WithClause:    $1,
@@ -1053,7 +1068,38 @@ select_query
     }
 
 select_into_query
-    : with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause
+    : select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause
+    {
+        $$ = SelectQuery{
+            SelectEntity:  SelectEntity{
+                SelectClause:  $1,
+                IntoClause:    $2,
+                FromClause:    $3,
+                WhereClause:   $4,
+                GroupByClause: $5,
+                HavingClause:  $6,
+            },
+            OrderByClause: $7,
+            LimitClause:   $8,
+        }
+    }
+    | select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause FOR UPDATE
+    {
+        $$ = SelectQuery{
+            SelectEntity:  SelectEntity{
+                SelectClause:  $1,
+                IntoClause:    $2,
+                FromClause:    $3,
+                WhereClause:   $4,
+                GroupByClause: $5,
+                HavingClause:  $6,
+            },
+            OrderByClause: $7,
+            LimitClause:   $8,
+            Context:       $10,
+        }
+    }
+    | with_clause select_clause into_clause from_clause where_clause group_by_clause having_clause order_by_clause limit_clause
     {
         $$ = SelectQuery{
             WithClause:    $1,
@@ -1331,7 +1377,14 @@ primitive_type
     }
     | INTEGER
     {
-        $$ = NewIntegerValueFromString($1.Literal)
+        i, err := strconv.ParseInt($1.Literal, 10, 64)
+        if err != nil {
+          $$ = NewFloatValueFromString($1.Literal)
+        } else {
+          iv := NewIntegerValue(i)
+          iv.Literal = $1.Literal
+          $$ = iv
+        }
     }
     | FLOAT
     {
@@ -1416,6 +1469,10 @@ substantial_value
         $$ = $1
     }
     | aggregate_function
+    {
+        $$ = $1
+    }
+    | analytic_function
     {
         $$ = $1
     }
@@ -1509,23 +1566,13 @@ order_items
     }
 
 order_item
-    : order_value order_direction
+    : value order_direction
     {
         $$ = OrderItem{Value: $1, Direction: $2}
     }
-    | order_value order_direction NULLS order_null_position
+    | value order_direction NULLS order_null_position
     {
         $$ = OrderItem{Value: $1, Direction: $2, NullsPosition: $4}
-    }
-
-order_value
-    : value
-    {
-        $$ = $1
-    }
-    | analytic_function
-    {
-        $$ = $1
     }
 
 order_direction
@@ -1958,6 +2005,10 @@ table_object_type
     {
         $$ = $1
     }
+    | JSONL
+    {
+        $$ = $1
+    }
     | FIXED
     {
         $$ = $1
@@ -2165,28 +2216,22 @@ join_condition
         $$ = JoinCondition{Using: $3}
     }
 
-field_object
-    : value
-    {
-        $$ = $1
-    }
-    | analytic_function
-    {
-        $$ = $1
-    }
-
 field
-    : field_object
+    : value
     {
         $$ = Field{Object: $1}
     }
-    | field_object AS identifier
+    | value AS identifier
     {
         $$ = Field{Object: $1, As: $2, Alias: $3}
     }
     | wildcard
     {
         $$ = Field{Object: $1}
+    }
+    | identifier '.' wildcard
+    {
+        $$ = Field{Object: FieldReference{BaseExpr: $1.BaseExpr, View: $1, Column: $3}}
     }
 
 case_expr
@@ -2571,6 +2616,10 @@ identifier
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }
     | JSON
+    {
+        $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
+    }
+    | JSONL
     {
         $$ = Identifier{BaseExpr: NewBaseExpr($1), Literal: $1.Literal, Quoted: $1.Quoted}
     }

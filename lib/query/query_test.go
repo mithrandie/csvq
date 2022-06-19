@@ -691,6 +691,70 @@ var selectTests = []struct {
 		},
 	},
 	{
+		Name: "Separate scopes on both sides of a set operator",
+		Query: parser.SelectQuery{
+			SelectEntity: parser.SelectSet{
+				LHS: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.QueryExpression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.QueryExpression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+				},
+				Operator: parser.Token{Token: parser.UNION, Literal: "union"},
+				All:      parser.Token{Token: parser.ALL, Literal: "all"},
+				RHS: parser.SelectEntity{
+					SelectClause: parser.SelectClause{
+						Fields: []parser.QueryExpression{
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+							parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column2"}}},
+						},
+					},
+					FromClause: parser.FromClause{
+						Tables: []parser.QueryExpression{
+							parser.Table{Object: parser.Identifier{Literal: "table1"}},
+						},
+					},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+		},
+	},
+	{
 		Name: "Union with SubQuery",
 		Query: parser.SelectQuery{
 			SelectEntity: parser.SelectSet{
@@ -4266,7 +4330,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "format"},
 			Value:     parser.NewStringValue("invalid"),
 		},
-		Error: "format must be one of CSV|TSV|FIXED|JSON|LTSV|GFM|ORG|TEXT",
+		Error: "format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV|GFM|ORG|BOX|TEXT",
 	},
 	{
 		Name: "Set Encoding to SJIS",

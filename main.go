@@ -72,6 +72,10 @@ func main() {
 			Value: ",",
 			Usage: "field delimiter for CSV",
 		},
+		cli.BoolFlag{
+			Name:  "allow-uneven-fields",
+			Usage: "allow loading CSV files with uneven field length",
+		},
 		cli.StringFlag{
 			Name:  "delimiter-positions, m",
 			Usage: "delimiter positions for FIXED",
@@ -103,8 +107,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "format, f",
-			Value: "TEXT",
-			Usage: "format of query results",
+			Usage: "format of query results. (default: \"CSV\" for output to pipe, \"TEXT\" otherwise)",
 		},
 		cli.StringFlag{
 			Name:  "write-encoding, E",
@@ -371,6 +374,9 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
+	if c.GlobalIsSet("allow-uneven-fields") {
+		_ = tx.SetFlag(cmd.AllowUnevenFieldsFlag, c.GlobalBool("allow-uneven-fields"))
+	}
 	if c.GlobalIsSet("delimiter-positions") {
 		if err := tx.SetFlag(cmd.DelimiterPositionsFlag, c.GlobalString("delimiter-positions")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
@@ -394,11 +400,11 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	if c.GlobalIsSet("strip-ending-line-break") {
 		_ = tx.SetFlag(cmd.StripEndingLineBreakFlag, c.GlobalBool("strip-ending-line-break"))
 	}
-	if c.GlobalIsSet("format") {
-		if err := tx.SetFormatFlag(c.GlobalString("format"), c.GlobalString("out")); err != nil {
-			return query.NewIncorrectCommandUsageError(err.Error())
-		}
+
+	if err := tx.SetFormatFlag(c.GlobalString("format"), c.GlobalString("out")); err != nil {
+		return query.NewIncorrectCommandUsageError(err.Error())
 	}
+
 	if c.GlobalIsSet("write-encoding") {
 		if err := tx.SetFlag(cmd.ExportEncodingFlag, c.GlobalString("write-encoding")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())

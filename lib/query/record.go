@@ -56,7 +56,11 @@ func NewRecord(values []value.Primary) Record {
 	record := make(Record, len(values))
 
 	for i, v := range values {
-		record[i] = NewCell(v)
+		if v == nil {
+			record[i] = []value.Primary{}
+		} else {
+			record[i] = NewCell(v)
+		}
 	}
 
 	return record

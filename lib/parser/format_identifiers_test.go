@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/mithrandie/csvq/lib/value"
+
+	"github.com/mithrandie/ternary"
 )
 
 func TestFormatTableName(t *testing.T) {
@@ -41,28 +43,58 @@ func TestFormatFieldIdentifier(t *testing.T) {
 	location, _ := time.LoadLocation("UTC")
 
 	var e QueryExpression = NewStringValue("str")
-	expect := "str"
+	expect := "@__PT:S:str"
 	result := FormatFieldIdentifier(e)
 	if result != expect {
 		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
 	}
 
-	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00", nil, location)
-	expect = "2006-01-02T15:04:05-08:00"
-	result = FormatFieldIdentifier(e)
-	if result != expect {
-		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
-	}
-
 	e = NewIntegerValue(1)
-	expect = "1"
+	expect = "@__PT:I:1"
 	result = FormatFieldIdentifier(e)
 	if result != expect {
 		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
 	}
 
-	e = FieldReference{Column: Identifier{Literal: "column1"}}
-	expect = "column1"
+	e = NewFloatValue(1.2)
+	expect = "@__PT:F:1.2"
+	result = FormatFieldIdentifier(e)
+	if result != expect {
+		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = PrimitiveType{
+		Value: value.NewBoolean(true),
+	}
+	expect = "@__PT:B:true"
+	result = FormatFieldIdentifier(e)
+	if result != expect {
+		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = NewTernaryValue(ternary.TRUE)
+	expect = "@__PT:T:TRUE"
+	result = FormatFieldIdentifier(e)
+	if result != expect {
+		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00", nil, location)
+	expect = "@__PT:D:2006-01-02T15:04:05-08:00"
+	result = FormatFieldIdentifier(e)
+	if result != expect {
+		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = NewNullValue()
+	expect = "@__PT:N:NULL"
+	result = FormatFieldIdentifier(e)
+	if result != expect {
+		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = FieldReference{Column: Identifier{Literal: "column1", Quoted: true}}
+	expect = "@__IDENT:column1"
 	result = FormatFieldIdentifier(e)
 	if result != expect {
 		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
@@ -73,5 +105,44 @@ func TestFormatFieldIdentifier(t *testing.T) {
 	result = FormatFieldIdentifier(e)
 	if result != expect {
 		t.Errorf("field identifier = %q, want %q for %#v", result, expect, e)
+	}
+}
+
+func TestFormatFieldLabel(t *testing.T) {
+	location, _ := time.LoadLocation("UTC")
+
+	var e QueryExpression = NewStringValue("str")
+	expect := "str"
+	result := FormatFieldLabel(e)
+	if result != expect {
+		t.Errorf("field label = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = NewDatetimeValueFromString("2006-01-02 15:04:05 -08:00", nil, location)
+	expect = "2006-01-02T15:04:05-08:00"
+	result = FormatFieldLabel(e)
+	if result != expect {
+		t.Errorf("field label = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = NewIntegerValue(1)
+	expect = "1"
+	result = FormatFieldLabel(e)
+	if result != expect {
+		t.Errorf("field label = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = FieldReference{Column: Identifier{Literal: "column1"}}
+	expect = "column1"
+	result = FormatFieldLabel(e)
+	if result != expect {
+		t.Errorf("field label = %q, want %q for %#v", result, expect, e)
+	}
+
+	e = ColumnNumber{View: Identifier{Literal: "table1"}, Number: value.NewInteger(1)}
+	expect = "table1.1"
+	result = FormatFieldLabel(e)
+	if result != expect {
+		t.Errorf("field label = %q, want %q for %#v", result, expect, e)
 	}
 }

@@ -1,5 +1,60 @@
 # Change Log
 
+## Version 1.17.1
+
+Released on Jun 17, 2022
+
+- Allow analytic functions to be used as operands in expressions. ([GitHub #36](https://github.com/mithrandie/csvq/issues/36))
+- Set output format from file extension. ([GitHub #76](https://github.com/mithrandie/csvq/issues/76))
+
+## Version 1.17.0
+
+Released on May 3, 2022
+
+- Support column name wildcard for tables. ([GitHub #68](https://github.com/mithrandie/csvq/issues/68))
+- Add a string function.
+    - TITLE_CASE ([GitHub #48](https://github.com/mithrandie/csvq/issues/48))
+- Modify integer and float handling.
+    - Fixed a bug in the conversion between integer and float.
+    - Intuitive handling of integer and float.
+    - Allow exponential notation for float.
+
+## Version 1.16.0
+
+Released on Feb 26, 2022
+
+- Support JSON Lines format. ([GitHub #58](https://github.com/mithrandie/csvq/issues/58))
+- Support BOX format as an export format. ([GitHub #61](https://github.com/mithrandie/csvq/issues/61))
+
+## Version 1.15.2
+
+Released on June 13, 2021
+
+- Allow empty key names in JSON output. ([GitHub #57](https://github.com/mithrandie/csvq/issues/57))
+- Fix a bug of the "--allow-uneven-fields" option. ([GitHub #59](https://github.com/mithrandie/csvq/issues/59))
+
+## Version 1.15.1
+
+Released on May 5, 2021
+
+- Allow same table names on both sides of set operators. ([GitHub #53](https://github.com/mithrandie/csvq/issues/53))
+- Add the command option "--allow-uneven-fields". ([GitHub #54](https://github.com/mithrandie/csvq/issues/54))
+- Fix a bug in parsing of set operations.
+
+## Version 1.15.0
+
+Released on March 28, 2021
+
+- Add regular expression functions.
+    - REGEXP_MATCH
+    - REGEXP_FIND
+    - REGEXP_FIND_SUBMATCHES
+    - REGEXP_FIND_ALL
+    - REGEXP_REPLACE
+- Add Table-Valued functions.
+    - CSV_INLINE
+    - JSON_INLINE
+
 ## Version 1.14.1
 
 Released on March 21, 2021

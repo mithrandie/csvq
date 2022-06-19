@@ -34,24 +34,39 @@ func (cr ComparisonResult) String() string {
 	return comparisonResultLiterals[cr]
 }
 
+func compareInteger(v1 int64, v2 int64) ComparisonResult {
+	if v1 == v2 {
+		return IsEqual
+	}
+	if v1 < v2 {
+		return IsLess
+	}
+	return IsGreater
+}
+
+func compareFloat(v1 float64, v2 float64) ComparisonResult {
+	if v1 == v2 {
+		return IsEqual
+	}
+	if v1 < v2 {
+		return IsLess
+	}
+	return IsGreater
+}
+
 func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string, location *time.Location) ComparisonResult {
 	if IsNull(p1) || IsNull(p2) {
 		return IsIncommensurable
 	}
 
-	if i1 := ToInteger(p1); !IsNull(i1) {
-		if i2 := ToInteger(p2); !IsNull(i2) {
+	if i1 := ToIntegerStrictly(p1); !IsNull(i1) {
+		if i2 := ToIntegerStrictly(p2); !IsNull(i2) {
 			v1 := i1.(*Integer).Raw()
 			v2 := i2.(*Integer).Raw()
 			Discard(i1)
 			Discard(i2)
 
-			if v1 == v2 {
-				return IsEqual
-			} else if v1 < v2 {
-				return IsLess
-			}
-			return IsGreater
+			return compareInteger(v1, v2)
 		}
 		Discard(i1)
 	}
@@ -63,12 +78,7 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string, locatio
 			Discard(f1)
 			Discard(f2)
 
-			if v1 == v2 {
-				return IsEqual
-			} else if v1 < v2 {
-				return IsLess
-			}
-			return IsGreater
+			return compareFloat(v1, v2)
 		}
 		Discard(f1)
 	}

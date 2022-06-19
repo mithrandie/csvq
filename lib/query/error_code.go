@@ -21,6 +21,7 @@ const (
 	ErrorFieldNotGroupKey                     = 10103
 	ErrorDuplicateFieldName                   = 10104
 	ErrorNotGroupingRecords                   = 10201
+	ErrorNotAllowedAnalyticFunction           = 10202
 	ErrorUndeclaredVariable                   = 10301
 	ErrorVariableRedeclared                   = 10302
 	ErrorFunctionNotExist                     = 10401
@@ -34,6 +35,7 @@ const (
 	ErrorJsonQueryTooManyRecords              = 10701
 	ErrorLoadJson                             = 10702
 	ErrorEmptyJsonQuery                       = 10703 // Not in use after v1.14.0
+	ErrorJsonLinesStructure                   = 10704
 	ErrorEmptyJsonTable                       = 10801 // Not in use after v1.14.0
 	ErrorIncorrectLateralUsage                = 10802
 	ErrorEmptyInlineTable                     = 10803

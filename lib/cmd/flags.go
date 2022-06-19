@@ -31,6 +31,7 @@ const (
 	WaitTimeoutFlag              = "WAIT_TIMEOUT"
 	ImportFormatFlag             = "IMPORT_FORMAT"
 	DelimiterFlag                = "DELIMITER"
+	AllowUnevenFieldsFlag        = "ALLOW_UNEVEN_FIELDS"
 	DelimiterPositionsFlag       = "DELIMITER_POSITIONS"
 	JsonQueryFlag                = "JSON_QUERY"
 	EncodingFlag                 = "ENCODING"
@@ -65,6 +66,7 @@ var FlagList = []string{
 	WaitTimeoutFlag,
 	ImportFormatFlag,
 	DelimiterFlag,
+	AllowUnevenFieldsFlag,
 	DelimiterPositionsFlag,
 	JsonQueryFlag,
 	EncodingFlag,
@@ -98,9 +100,11 @@ const (
 	TSV
 	FIXED
 	JSON
+	JSONL
 	LTSV
 	GFM
 	ORG
+	BOX
 	TEXT
 )
 
@@ -109,9 +113,11 @@ var FormatLiteral = map[Format]string{
 	TSV:   "TSV",
 	FIXED: "FIXED",
 	JSON:  "JSON",
+	JSONL: "JSONL",
 	LTSV:  "LTSV",
 	GFM:   "GFM",
 	ORG:   "ORG",
+	BOX:   "BOX",
 	TEXT:  "TEXT",
 }
 
@@ -124,6 +130,7 @@ var ImportFormats = []Format{
 	TSV,
 	FIXED,
 	JSON,
+	JSONL,
 	LTSV,
 }
 
@@ -141,6 +148,7 @@ const (
 	CsvExt      = ".csv"
 	TsvExt      = ".tsv"
 	JsonExt     = ".json"
+	JsonlExt    = ".jsonl"
 	LtsvExt     = ".ltsv"
 	GfmExt      = ".md"
 	OrgExt      = ".org"
@@ -152,6 +160,7 @@ const (
 type ImportOptions struct {
 	Format             Format
 	Delimiter          rune
+	AllowUnevenFields  bool
 	DelimiterPositions []int
 	SingleLine         bool
 	JsonQuery          string
@@ -176,6 +185,7 @@ func NewImportOptions() ImportOptions {
 	return ImportOptions{
 		Format:             CSV,
 		Delimiter:          ',',
+		AllowUnevenFields:  false,
 		DelimiterPositions: nil,
 		SingleLine:         false,
 		JsonQuery:          "",
@@ -394,16 +404,16 @@ func (f *Flags) SetWaitTimeout(t float64) {
 func (f *Flags) SetImportFormat(s string) error {
 	fm, _, err := ParseFormat(s, f.ExportOptions.JsonEscape)
 	if err != nil {
-		return errors.New("import format must be one of CSV|TSV|FIXED|JSON|LTSV")
+		return errors.New("import format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV")
 	}
 
 	switch fm {
-	case CSV, TSV, FIXED, JSON, LTSV:
+	case CSV, TSV, FIXED, JSON, JSONL, LTSV:
 		f.ImportOptions.Format = fm
 		return nil
 	}
 
-	return errors.New("import format must be one of CSV|TSV|FIXED|JSON|LTSV")
+	return errors.New("import format must be one of CSV|TSV|FIXED|JSON|JSONL|LTSV")
 }
 
 func (f *Flags) SetDelimiter(s string) error {
@@ -418,6 +428,10 @@ func (f *Flags) SetDelimiter(s string) error {
 
 	f.ImportOptions.Delimiter = delimiter
 	return nil
+}
+
+func (f *Flags) SetAllowUnevenFields(b bool) {
+	f.ImportOptions.AllowUnevenFields = b
 }
 
 func (f *Flags) SetDelimiterPositions(s string) error {
@@ -460,33 +474,41 @@ func (f *Flags) SetWithoutNull(b bool) {
 	f.ImportOptions.WithoutNull = b
 }
 
-func (f *Flags) SetFormat(s string, outfile string) error {
-	var fm Format
-	var escape txjson.EscapeType
-	var err error
-
-	switch s {
-	case "":
-		switch strings.ToLower(filepath.Ext(outfile)) {
-		case CsvExt:
-			fm = CSV
-		case TsvExt:
-			fm = TSV
-		case JsonExt:
-			fm = JSON
-		case LtsvExt:
-			fm = LTSV
-		case GfmExt:
-			fm = GFM
-		case OrgExt:
-			fm = ORG
-		default:
+func (f *Flags) SetFormat(s string, outfile string, canOutputToPipe bool) error {
+	if len(s) < 1 {
+		if len(outfile) < 1 {
+			if canOutputToPipe {
+				f.ExportOptions.Format = CSV
+			} else {
+				f.ExportOptions.Format = TEXT
+			}
 			return nil
 		}
-	default:
-		if fm, escape, err = ParseFormat(s, f.ExportOptions.JsonEscape); err != nil {
-			return err
+
+		switch strings.ToLower(filepath.Ext(outfile)) {
+		case CsvExt:
+			f.ExportOptions.Format = CSV
+		case TsvExt:
+			f.ExportOptions.Format = TSV
+		case JsonExt:
+			f.ExportOptions.Format = JSON
+		case JsonlExt:
+			f.ExportOptions.Format = JSONL
+		case LtsvExt:
+			f.ExportOptions.Format = LTSV
+		case GfmExt:
+			f.ExportOptions.Format = GFM
+		case OrgExt:
+			f.ExportOptions.Format = ORG
+		default:
+			f.ExportOptions.Format = TEXT
 		}
+		return nil
+	}
+
+	fm, escape, err := ParseFormat(s, f.ExportOptions.JsonEscape)
+	if err != nil {
+		return err
 	}
 
 	f.ExportOptions.Format = fm

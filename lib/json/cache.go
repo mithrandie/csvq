@@ -34,9 +34,6 @@ func (pmap PathMap) load(key string) (PathExpression, bool) {
 
 func (pmap PathMap) Parse(s string) (PathExpression, error) {
 	s = strings.TrimSpace(s)
-	if len(s) < 1 {
-		return nil, nil
-	}
 
 	if e, ok := pmap.load(s); ok {
 		return e, nil

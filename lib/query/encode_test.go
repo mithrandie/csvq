@@ -94,6 +94,48 @@ var encodeViewTests = []struct {
 			"+--------+--------+",
 	},
 	{
+		Name: "Box",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
+			},
+		},
+		Format: cmd.BOX,
+		Result: "┌──────────┬─────────────────────────────────────┬────────┐\n" +
+			"│    c1    │                 c2                  │   c3   │\n" +
+			"│          │             second line             │        │\n" +
+			"├──────────┼─────────────────────────────────────┼────────┤\n" +
+			"│       -1 │               UNKNOWN               │  true  │\n" +
+			"│   2.0123 │ 2016-02-01T16:00:00.123456-07:00    │ abcdef │\n" +
+			"│ 34567890 │  abcdefghijklmnopqrstuvwxyzabcdefg  │  NULL  │\n" +
+			"│          │ hi\"jk日本語あアｱＡ（                │        │\n" +
+			"│          │                                     │        │\n" +
+			"└──────────┴─────────────────────────────────────┴────────┘",
+	},
+	{
+		Name: "Box with colors",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewString("abcde")}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewString("abcdef\r\nghijkl")}),
+			},
+		},
+		Format:   cmd.BOX,
+		UseColor: true,
+		Result: "" +
+			"┌────────┬────────┐\n" +
+			"│   c1   │   c2   │\n" +
+			"├────────┼────────┤\n" +
+			"│     \033[35m-1\033[0m │ \033[32mabcde\033[0m  │\n" +
+			"│ \033[35m2.0123\033[0m │ \033[32mabcdef\033[0m │\n" +
+			"│        │ \033[32mghijkl\033[0m │\n" +
+			"└────────┴────────┘",
+	},
+	{
 		Name: "Fixed-Length Format",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
@@ -388,6 +430,39 @@ var encodeViewTests = []struct {
 			"    \"c1\": \"abc\\u005cdef\"\n" +
 			"  }\n" +
 			"]",
+	},
+	{
+		Name: "JSONL",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.FALSE), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abc\\defghi/jk\rlmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
+			},
+		},
+		Format: cmd.JSONL,
+		Result: "{" +
+			"\"c1\":-1," +
+			"\"c2\\nsecond line\":null," +
+			"\"c3\":true" +
+			"}\n" +
+			"{" +
+			"\"c1\":-1," +
+			"\"c2\\nsecond line\":false," +
+			"\"c3\":true" +
+			"}\n" +
+			"{" +
+			"\"c1\":2.0123," +
+			"\"c2\\nsecond line\":\"2016-02-01T16:00:00.123456-07:00\"," +
+			"\"c3\":\"abcdef\"" +
+			"}\n" +
+			"{" +
+			"\"c1\":34567890," +
+			"\"c2\\nsecond line\":\" abc\\\\defghi\\/jk\\rlmn\\topqrstuvwxyzabcdefg\\nhi\\\"jk\\n\"," +
+			"\"c3\":null" +
+			"}\n",
 	},
 	{
 		Name: "LTSV",

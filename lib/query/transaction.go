@@ -399,6 +399,12 @@ func (tx *Transaction) setFlag(key string, value interface{}, outFile string) er
 		} else {
 			err = errNotAllowdFlagFormat
 		}
+	case cmd.AllowUnevenFieldsFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetAllowUnevenFields(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
 	case cmd.DelimiterPositionsFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetDelimiterPositions(s)
@@ -431,7 +437,7 @@ func (tx *Transaction) setFlag(key string, value interface{}, outFile string) er
 		}
 	case cmd.FormatFlag:
 		if s, ok := value.(string); ok {
-			err = tx.Flags.SetFormat(s, outFile)
+			err = tx.Flags.SetFormat(s, outFile, tx.Session.CanOutputToPipe)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
@@ -576,6 +582,8 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 		val = value.NewString(tx.Flags.ImportOptions.Format.String())
 	case cmd.DelimiterFlag:
 		val = value.NewString(string(tx.Flags.ImportOptions.Delimiter))
+	case cmd.AllowUnevenFieldsFlag:
+		val = value.NewBoolean(tx.Flags.ImportOptions.AllowUnevenFields)
 	case cmd.DelimiterPositionsFlag:
 		s := fixedlen.DelimiterPositions(tx.Flags.ImportOptions.DelimiterPositions).String()
 		if tx.Flags.ImportOptions.SingleLine {

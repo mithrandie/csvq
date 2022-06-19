@@ -2,7 +2,6 @@ package value
 
 import (
 	"bytes"
-	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -226,19 +225,23 @@ func ConvertDatetimeFormat(format string) string {
 
 func Float64ToTime(f float64, location *time.Location) time.Time {
 	s := Float64ToStr(f)
-	pointIdx := strings.Index(s, ".")
-	if -1 < pointIdx {
-		afterPLen := len(s) - 1 - pointIdx
-		if 9 < afterPLen {
-			s = s[:pointIdx+10]
-			afterPLen = 9
+	ar := strings.Split(s, ".")
+
+	sec, _ := strconv.ParseInt(ar[0], 10, 64)
+	nsec, _ := (func() (int64, error) {
+		if len(ar) < 2 {
+			return 0, nil
 		}
-		s = s[:pointIdx] + s[pointIdx+1:] + strings.Repeat("0", 9-afterPLen)
-	} else {
-		s = s + strings.Repeat("0", 9)
-	}
-	nsec, _ := strconv.ParseInt(s, 10, 64)
-	return TimeFromUnixTime(0, nsec, location)
+
+		if 9 < len(ar[1]) {
+			return strconv.ParseInt(ar[1][:9], 10, 64)
+		}
+
+		dec := ar[1] + strings.Repeat("0", 9-len(ar[1]))
+		return strconv.ParseInt(dec, 10, 64)
+	})()
+
+	return TimeFromUnixTime(sec, nsec, location)
 }
 
 func Int64ToStr(i int64) string {
@@ -249,35 +252,33 @@ func Float64ToStr(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
-func ParseFloat64(f float64) Primary {
-	if math.Remainder(f, 1) == 0 {
-		return NewInteger(int64(f))
-	}
-	return NewFloat(f)
-}
-
 func ToInteger(p Primary) Primary {
 	switch p.(type) {
 	case *Integer:
 		return NewInteger(p.(*Integer).Raw())
 	case *Float:
-		f := p.(*Float).Raw()
-		if math.Remainder(f, 1) == 0 {
-			return NewInteger(int64(f))
-		}
+		return NewInteger(int64(p.(*Float).Raw()))
 	case *String:
 		s := cmd.TrimSpace(p.(*String).Raw())
-		if MaybeInteger(s) {
-			if i, e := strconv.ParseInt(s, 10, 64); e == nil {
-				return NewInteger(i)
-			}
+		if i, e := strconv.ParseInt(s, 10, 64); e == nil {
+			return NewInteger(i)
 		}
-		if MaybeNumber(s) {
-			if f, e := strconv.ParseFloat(s, 64); e == nil {
-				if math.Remainder(f, 1) == 0 {
-					return NewInteger(int64(f))
-				}
-			}
+		if f, e := strconv.ParseFloat(s, 64); e == nil {
+			return NewInteger(int64(f))
+		}
+	}
+
+	return NewNull()
+}
+
+func ToIntegerStrictly(p Primary) Primary {
+	switch p.(type) {
+	case *Integer:
+		return NewInteger(p.(*Integer).Raw())
+	case *String:
+		s := cmd.TrimSpace(p.(*String).Raw())
+		if i, e := strconv.ParseInt(s, 10, 64); e == nil {
+			return NewInteger(i)
 		}
 	}
 
@@ -292,82 +293,12 @@ func ToFloat(p Primary) Primary {
 		return NewFloat(p.(*Float).Raw())
 	case *String:
 		s := cmd.TrimSpace(p.(*String).Raw())
-		if MaybeNumber(s) {
-			if f, e := strconv.ParseFloat(p.(*String).Raw(), 64); e == nil {
-				return NewFloat(f)
-			}
+		if f, e := strconv.ParseFloat(s, 64); e == nil {
+			return NewFloat(f)
 		}
 	}
 
 	return NewNull()
-}
-
-func MaybeInteger(s string) bool {
-	if len(s) < 1 {
-		return false
-	}
-
-	start := 0
-	if s[start] == '+' || s[start] == '-' {
-		start++
-	}
-
-	for i := start; i < len(s); i++ {
-		if !isDecimal(s[i]) {
-			return false
-		}
-	}
-	return true
-}
-
-func MaybeNumber(s string) bool {
-	if len(s) < 1 {
-		return false
-	}
-
-	start := 0
-	if s[start] == '+' || s[start] == '-' {
-		start++
-	}
-	if len(s) < start+1 {
-		return false
-	}
-
-	pointExists := false
-	eExists := false
-	for i := start; i < len(s); i++ {
-		if !pointExists && s[i] == '.' {
-			if len(s) < i+2 {
-				return false
-			}
-			pointExists = true
-			continue
-		}
-
-		if !eExists && (s[i] == 'e' || s[i] == 'E') {
-			i++
-			if len(s) < i+2 {
-				return false
-			}
-			if s[i] != '+' && s[i] != '-' {
-				return false
-			}
-			eExists = true
-			continue
-		}
-
-		if isDecimal(s[i]) {
-			continue
-		}
-
-		return false
-	}
-
-	return true
-}
-
-func isDecimal(b byte) bool {
-	return '0' <= b && b <= '9'
 }
 
 func ToDatetime(p Primary, formats []string, location *time.Location) Primary {

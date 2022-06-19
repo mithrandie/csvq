@@ -105,7 +105,7 @@ Integer
 : An integer is a word that contains only \[0-9\].
 
 Float
-: A float is a word that contains only \[0-9\] with a decimal point.
+: A float is a word that contains only \[0-9\] with a decimal point, or its exponential notation.
 
 Ternary
 : A ternary is represented by any one keyword of TRUE, UNKNOWN or FALSE.
@@ -186,7 +186,7 @@ FALSE FETCH FIRST FIRST_VALUE FOLLOWING FOR FROM FULL FUNCTION
 GROUP
 HAVING
 IF IGNORE IN INNER INSERT INTERSECT INTO IS
-JOIN JSON_AGG JSON_INLINE JSON_OBJECT JSON_ROW JSON_TABLE
+JOIN JSONL JSON_AGG JSON_INLINE JSON_OBJECT JSON_ROW JSON_TABLE
 LAG LAST LAST_VALUE LATERAL LEAD LEFT LIKE LIMIT LISTAGG
 MAX MEDIAN MIN
 NATURAL NEXT NOT NTH_VALUE NTILE NULL
