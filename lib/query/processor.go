@@ -349,7 +349,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 
 				view, e := LoadViewFromTableIdentifier(ctx, queryScope, tableIndentifier, false, false)
 				if e != nil {
-					return err
+					return e
 				}
 
 				proc.Log(fmt.Sprintf("file %q already exists.", filePath), proc.Tx.Flags.Quiet)
