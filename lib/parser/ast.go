@@ -1264,9 +1264,10 @@ type DeleteQuery struct {
 
 type CreateTable struct {
 	*BaseExpr
-	Table  Identifier
-	Fields []QueryExpression
-	Query  QueryExpression
+	Table       Identifier
+	Fields      []QueryExpression
+	Query       QueryExpression
+	IfNotExists bool
 }
 
 type AddColumns struct {

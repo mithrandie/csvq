@@ -35,6 +35,7 @@ import (
     replaceval  ReplaceValue
     replacevals []ReplaceValue
     token       Token
+    bool        bool
 }
 
 %type<program>     program
@@ -196,6 +197,7 @@ import (
 %type<token>       recursive
 %type<token>       as
 %type<token>       comparison_operator
+%type<bool>        if_not_exists
 
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME
 %token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND PLACEHOLDER
@@ -636,17 +638,17 @@ transaction_statement
     }
 
 table_operation_statement
-    : CREATE TABLE identifier '(' identifiers ')'
+    : CREATE TABLE if_not_exists identifier '(' identifiers ')'
     {
-        $$ = CreateTable{Table: $3, Fields: $5}
+        $$ = CreateTable{Table: $4, Fields: $6, IfNotExists: $3}
     }
-    | CREATE TABLE identifier '(' identifiers ')' as select_query
+    | CREATE TABLE if_not_exists identifier '(' identifiers ')' as select_query
     {
-        $$ = CreateTable{Table: $3, Fields: $5, Query: $8}
+        $$ = CreateTable{Table: $4, Fields: $6, Query: $9, IfNotExists: $3}
     }
-    | CREATE TABLE identifier as select_query
+    | CREATE TABLE if_not_exists identifier as select_query
     {
-        $$ = CreateTable{Table: $3, Query: $5}
+        $$ = CreateTable{Table: $4, Query: $6, IfNotExists: $3}
     }
     | ALTER TABLE updatable_table_identifier ADD column_default column_position
     {
@@ -2785,6 +2787,16 @@ comparison_operator
     {
         $1.Token = COMPARISON_OP
         $$ = $1
+    }
+
+if_not_exists
+    :
+    {
+        $$ = false
+    }
+    | IF NOT EXISTS
+    {
+        $$ = true
     }
 
 %%

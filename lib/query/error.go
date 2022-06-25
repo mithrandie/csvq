@@ -1331,9 +1331,9 @@ type FieldLengthNotMatchError struct {
 	*BaseError
 }
 
-func NewFieldLengthNotMatchError() error {
+func NewFieldLengthNotMatchError(expr parser.QueryExpression) error {
 	return &FieldLengthNotMatchError{
-		NewBaseError(parser.NewNullValue(), ErrMsgFieldLengthNotMatch, ReturnCodeApplicationError, ErrorFieldLengthNotMatch),
+		NewBaseError(expr, ErrMsgFieldLengthNotMatch, ReturnCodeApplicationError, ErrorFieldLengthNotMatch),
 	}
 }
 
