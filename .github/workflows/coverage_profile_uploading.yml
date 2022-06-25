@@ -4,11 +4,10 @@ on:
   workflow_run:
     workflows:
       - Test
-    branches:
-      - master
-      - develop
     types:
       - completed
+    branches:
+      - master
 
 jobs:
   upload:
@@ -31,7 +30,6 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.txt
-          override_branch: ${{ github.ref_name }}
           fail_ci_if_error: true
           verbose: false
   fail:
