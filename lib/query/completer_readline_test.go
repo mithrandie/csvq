@@ -2443,6 +2443,33 @@ var completerCreateArgsTests = []completerTest{
 		},
 	},
 	{
+		Name:     "CreateArgs after CREATE TABLE",
+		Line:     "",
+		OrigLine: "create table ",
+		Index:    13,
+		Expect: readline.CandidateList{
+			{Name: []rune("IF NOT EXISTS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "CreateArgs after CREATE TABLE IF",
+		Line:     "",
+		OrigLine: "create table if",
+		Index:    15,
+		Expect: readline.CandidateList{
+			{Name: []rune("NOT EXISTS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "CreateArgs after CREATE TABLE IF NOT",
+		Line:     "",
+		OrigLine: "create table if not",
+		Index:    19,
+		Expect: readline.CandidateList{
+			{Name: []rune("EXISTS"), AppendSpace: true},
+		},
+	},
+	{
 		Name:     "CreateArgs After Table Name",
 		Line:     "",
 		OrigLine: "create table newtable ",

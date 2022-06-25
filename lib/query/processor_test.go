@@ -806,6 +806,53 @@ var processorExecuteStatementTests = []struct {
 		Logs: fmt.Sprintf("file %q is created.\n", GetTestFilePath("newtable.csv")),
 	},
 	{
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.QueryExpression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+		},
+		Error:      fmt.Sprintf("file %s already exists", GetTestFilePath("table1.csv")),
+		ReturnCode: ReturnCodeIOError,
+	},
+	{
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.QueryExpression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			IfNotExists: true,
+		},
+		Logs: fmt.Sprintf("file %q already exists.\n", GetTestFilePath("table1.csv")),
+	},
+	{
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.QueryExpression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+				parser.Identifier{Literal: "column3"},
+			},
+			IfNotExists: true,
+		},
+		Error:      "field length does not match",
+		ReturnCode: ReturnCodeApplicationError,
+	},
+	{
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.QueryExpression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "col"},
+			},
+			IfNotExists: true,
+		},
+		Error:      "field col does not exist",
+		ReturnCode: ReturnCodeApplicationError,
+	},
+	{
 		Input: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{

@@ -327,10 +327,53 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			proc.showExecutionTime(ctx)
 		}
 	case parser.CreateTable:
-		info, e := CreateTable(ctx, proc.ReferenceScope, stmt.(parser.CreateTable))
+		createTableStatement := stmt.(parser.CreateTable)
+		info, e := CreateTable(ctx, proc.ReferenceScope, createTableStatement)
 		if e == nil {
 			proc.Tx.uncommittedViews.SetForCreatedView(info)
 			proc.Log(fmt.Sprintf("file %q is created.", info.Path), proc.Tx.Flags.Quiet)
+		} else if _, ok := e.(*FileAlreadyExistError); ok && createTableStatement.IfNotExists {
+			e := func() error {
+				filePath, e := CreateFilePath(createTableStatement.Table, proc.ReferenceScope.Tx.Flags.Repository)
+				if e != nil {
+					return NewIOError(createTableStatement.Table, err.Error())
+				}
+
+				tableIndentifier := parser.Identifier{
+					BaseExpr: createTableStatement.GetBaseExpr(),
+					Literal:  filePath,
+				}
+
+				queryScope := proc.ReferenceScope.CreateNode()
+				defer queryScope.CloseCurrentNode()
+
+				view, e := LoadViewFromTableIdentifier(ctx, queryScope, tableIndentifier, false, false)
+				if e != nil {
+					return e
+				}
+
+				proc.Log(fmt.Sprintf("file %q already exists.", filePath), proc.Tx.Flags.Quiet)
+
+				if createTableStatement.Fields != nil {
+					columns := view.Header.TableColumnNames()
+
+					if len(columns) != len(createTableStatement.Fields) {
+						return NewFieldLengthNotMatchError(createTableStatement.Fields[0])
+					}
+
+					for _, f := range createTableStatement.Fields {
+						if !InStrSliceWithCaseInsensitive(f.(parser.Identifier).Literal, columns) {
+							return NewFieldNotExistError(f)
+						}
+					}
+				}
+
+				return nil
+			}()
+
+			if e != nil {
+				err = e
+			}
 		} else {
 			err = e
 		}

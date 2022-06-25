@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.17.4
+
+Released on Jun 25, 2022
+
+- Add the IF NOT EXISTS clause to the syntax of the CREATE TABLE statement. ([GitHub #77](https://github.com/mithrandie/csvq/issues/77))
+
 ## Version 1.17.3
 
 Released on Jun 19, 2022

@@ -1598,6 +1598,17 @@ func (c *Completer) CreateArgs(line string, origLine string, index int) readline
 					return []string{"SELECT"}, nil, true
 				}
 			case parser.TABLE:
+				if i == c.lastIdx {
+					return []string{"IF NOT EXISTS"}, nil, true
+				}
+
+				if c.lastIdx == i+1 && c.tokens[c.lastIdx].Token == parser.IF {
+					return []string{"NOT EXISTS"}, nil, true
+				}
+				if c.lastIdx == i+2 && c.tokens[c.lastIdx].Token == parser.NOT && c.tokens[c.lastIdx-1].Token == parser.IF {
+					return []string{"EXISTS"}, nil, true
+				}
+
 				if (c.tokens[c.lastIdx].Token == ')' && c.BracketIsEnclosed()) ||
 					i == c.lastIdx-1 {
 					return []string{"AS", "SELECT"}, nil, true
