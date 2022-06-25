@@ -31,8 +31,9 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.txt
+          override_branch: ${{ github.ref_name }}
           fail_ci_if_error: true
-          verbose: true
+          verbose: false
   fail:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
