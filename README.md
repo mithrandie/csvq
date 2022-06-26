@@ -2,6 +2,8 @@
 
 SQL-like query language for csv
 
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mithrandie/csvq?color=%2320b2aa&label=GitHub%20Release&sort=semver)](https://github.com/mithrandie/csvq/releases/latest)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/qittu/csvq-deb?color=%2320b2aa&label=Lauchpad%20PPA)](https://launchpad.net/~mithrandie/+archive/ubuntu/csvq)
 [![Test](https://github.com/mithrandie/csvq/actions/workflows/test.yml/badge.svg)](https://github.com/mithrandie/csvq/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/mithrandie/csvq/branch/master/graph/badge.svg)](https://codecov.io/gh/mithrandie/csvq)
 [![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
