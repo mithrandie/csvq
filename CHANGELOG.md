@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.17.5
+
+Released on Jun 26, 2022
+
+- Fix a bug of the CASE expression. ([GitHub #78](https://github.com/mithrandie/csvq/issues/78))
+
 ## Version 1.17.4
 
 Released on Jun 25, 2022

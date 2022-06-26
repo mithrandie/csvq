@@ -52,7 +52,7 @@ func HasAggregateFunction(expr parser.QueryExpression, scope *ReferenceScope) (b
 		return hasAggFuncInRowValueComparison(e.LHS, e.Values, scope)
 	case parser.AnalyticFunction:
 		e := expr.(parser.AnalyticFunction)
-		values := make([]parser.QueryExpression, 0, len(e.Args))
+		values := make([]parser.QueryExpression, 0, len(e.Args)+2)
 		values = append(values, e.Args...)
 
 		if e.AnalyticClause.PartitionClause != nil {
@@ -66,7 +66,9 @@ func HasAggregateFunction(expr parser.QueryExpression, scope *ReferenceScope) (b
 	case parser.CaseExpr:
 		e := expr.(parser.CaseExpr)
 		values := make([]parser.QueryExpression, 0, len(e.When)+2)
-		values = append(values, e.Value)
+		if e.Value != nil {
+			values = append(values, e.Value)
+		}
 
 		for _, v := range e.When {
 			w := v.(parser.CaseExprWhen)
@@ -152,7 +154,7 @@ func SearchAnalyticFunctions(expr parser.QueryExpression) ([]parser.AnalyticFunc
 	switch expr.(type) {
 	case parser.AnalyticFunction:
 		e := expr.(parser.AnalyticFunction)
-		values := make([]parser.QueryExpression, 0, len(e.Args))
+		values := make([]parser.QueryExpression, 0, len(e.Args)+2)
 		values = append(values, e.Args...)
 
 		if e.AnalyticClause.PartitionClause != nil {
@@ -212,7 +214,9 @@ func SearchAnalyticFunctions(expr parser.QueryExpression) ([]parser.AnalyticFunc
 	case parser.CaseExpr:
 		e := expr.(parser.CaseExpr)
 		values := make([]parser.QueryExpression, 0, len(e.When)+2)
-		values = append(values, e.Value)
+		if e.Value != nil {
+			values = append(values, e.Value)
+		}
 
 		for _, v := range e.When {
 			w := v.(parser.CaseExprWhen)
