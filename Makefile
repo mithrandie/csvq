@@ -2,6 +2,7 @@ GOPATH := $(shell pwd)/build
 BINARY := csvq
 RELEASE_ARCH := darwin/amd64 darwin/arm64 linux/amd64 linux/386 linux/arm linux/arm64 freebsd/amd64 freebsd/386 freebsd/arm netbsd/amd64 netbsd/386 netbsd/arm openbsd/amd64 openbsd/386 windows/amd64 windows/386
 PRERELEASE_ARCH := darwin/amd64 darwin/arm64 linux/amd64 windows/amd64
+BUILD_TAGS := -tags urfave_cli_no_docs
 
 ifneq ($(shell command -v git && git remote -v 2>/dev/null | grep mithrandie/csvq.git && echo true),true)
 	VERSION := $(shell git describe --tags --always 2>/dev/null)
@@ -19,11 +20,11 @@ $(BINARY): build
 
 .PHONY: build
 build:
-	go build -trimpath $(LDFLAGS) -o $(GOPATH)/bin/
+	go build $(BUILD_TAGS) -trimpath $(LDFLAGS) -o $(GOPATH)/bin/
 
 .PHONY: install
 install:
-	go install $(LDFLAGS)
+	go install $(BUILD_TAGS) -trimpath $(LDFLAGS)
 
 .PHONY: clean
 clean:
@@ -35,7 +36,7 @@ build-all:
 	for TARGET in $(RELEASE_ARCH); \
 	do \
 		set -- $$TARGET; \
-		GOOS=$$1 GOARCH=$$2 go build -trimpath $(LDFLAGS) -o "dist/$(BINARY)-$(VERSION)-$${1}-$${2}/"; \
+		GOOS=$$1 GOARCH=$$2 go build $(BUILD_TAGS) -trimpath $(LDFLAGS) -o "dist/$(BINARY)-$(VERSION)-$${1}-$${2}/"; \
 	done
 
 .PHONY: build-pre-release
@@ -44,7 +45,7 @@ build-pre-release:
 	for TARGET in $(PRERELEASE_ARCH); \
 	do \
 		set -- $$TARGET; \
-		GOOS=$$1 GOARCH=$$2 go build -trimpath $(LDFLAGS) -o "dist/$(BINARY)-$(VERSION)-$${1}-$${2}/"; \
+		GOOS=$$1 GOARCH=$$2 go build $(BUILD_TAGS) -trimpath $(LDFLAGS) -o "dist/$(BINARY)-$(VERSION)-$${1}-$${2}/"; \
 	done
 
 .PHONY: dist -
