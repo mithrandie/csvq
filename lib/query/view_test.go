@@ -3004,7 +3004,7 @@ var viewLoadTests = []struct {
 func TestView_Load(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		_ = TestTx.Session.SetStdin(os.Stdin)
 		initFlag(TestTx.Flags)
 	}()
@@ -3014,7 +3014,7 @@ func TestView_Load(t *testing.T) {
 
 	for _, v := range viewLoadTests {
 		TestTx.UnlockStdin()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 
 		_ = TestTx.Session.SetStdin(os.Stdin)
 		TestTx.Flags.ImportOptions.Format = v.ImportFormat
@@ -3108,9 +3108,9 @@ func TestView_Load(t *testing.T) {
 		if !NodeScopeListEqual(queryScope.nodes, v.ResultScope.nodes) {
 			t.Errorf("%s: node list = %v, want %v", v.Name, queryScope.nodes, v.ResultScope.nodes)
 		}
-		for i := range queryScope.blocks {
-			if !reflect.DeepEqual(queryScope.blocks[i].temporaryTables.Keys(), v.ResultScope.blocks[i].temporaryTables.Keys()) {
-				t.Errorf("%s: temp view list = %v, want %v", v.Name, queryScope.blocks[i].temporaryTables.Keys(), v.ResultScope.blocks[i].temporaryTables.Keys())
+		for i := range queryScope.Blocks {
+			if !reflect.DeepEqual(queryScope.Blocks[i].TemporaryTables.Keys(), v.ResultScope.Blocks[i].TemporaryTables.Keys()) {
+				t.Errorf("%s: temp view list = %v, want %v", v.Name, queryScope.Blocks[i].TemporaryTables.Keys(), v.ResultScope.Blocks[i].TemporaryTables.Keys())
 			}
 		}
 

@@ -261,7 +261,7 @@ var inlineTableMapSetTests = []struct {
 
 func TestInlineTableMap_Set(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -272,7 +272,7 @@ func TestInlineTableMap_Set(t *testing.T) {
 	scope := NewReferenceScope(TestTx)
 	ctx := context.Background()
 	for _, v := range inlineTableMapSetTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		err := it.Set(ctx, scope, v.Expr)
 		if err != nil {
 			if len(v.Error) < 1 {

@@ -50,18 +50,18 @@ var getRuntimeInformationTests = []struct {
 
 func TestGetRuntimeInformation(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		TestTx.uncommittedViews.Clean()
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		TestTx.UncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
-	TestTx.cachedViews = GenerateViewMap([]*View{
+	TestTx.CachedViews = GenerateViewMap([]*View{
 		{FileInfo: &FileInfo{Path: "table1"}},
 		{FileInfo: &FileInfo{Path: "table2"}},
 		{FileInfo: &FileInfo{Path: "table3"}},
 		{FileInfo: &FileInfo{Path: "table4"}},
 	})
-	TestTx.uncommittedViews = UncommittedViews{
+	TestTx.UncommittedViews = UncommittedViews{
 		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			"TABLE1": {},

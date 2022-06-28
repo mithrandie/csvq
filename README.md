@@ -12,6 +12,9 @@ You can read, update, delete CSV records with SQL-like query.
 You can also execute multiple operations sequentially in managed transactions by passing a procedure or using the interactive shell.
 In the multiple operations, you can use variables, cursors, temporary tables, and other features. 
 
+## Latest Release
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mithrandie/csvq?color=%2320b2aa&label=GitHub%20Release&sort=semver)](https://github.com/mithrandie/csvq/releases/latest)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/qittu/csvq-deb?color=%2320b2aa&label=Launchpad%20PPA)](https://launchpad.net/~mithrandie/+archive/ubuntu/csvq)
 
 ## Features
 

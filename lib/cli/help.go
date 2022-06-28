@@ -1,4 +1,4 @@
-package main
+package cli
 
 var appHHelpTemplate = `NAME:
    {{.Name}}{{if .Usage}} - {{.Usage}}{{end}}
@@ -51,13 +51,14 @@ var commandHelpTemplate = `NAME:
    {{.HelpName}} - {{.Usage}}
 
 USAGE:
-   csvq [options] {{.Name}}{{if .VisibleFlags}} [subcommand options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
-{{if .Category}}
+   csvq [options] {{.Name}}{{if .VisibleFlags}} [subcommand options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{if .Category}}
+
 CATEGORY:
    {{.Category}}{{end}}{{if .Description}}
 
 DESCRIPTION:
    {{.Description}}{{end}}{{if .VisibleFlags}}
+
 OPTIONS:
    {{range .VisibleFlags}}{{.}}
    {{end}}{{end}}

@@ -225,9 +225,9 @@ func (h Header) ContainsInternalId(viewName string) (int, error) {
 }
 
 func (h Header) Update(reference string, fields []parser.QueryExpression) error {
-	if fields != nil {
+	if fields != nil && 0 < len(fields) {
 		if len(fields) != h.Len() {
-			return NewFieldLengthNotMatchError()
+			return NewFieldLengthNotMatchError(fields[0])
 		}
 
 		names := make(map[string]bool, len(fields))
@@ -242,7 +242,7 @@ func (h Header) Update(reference string, fields []parser.QueryExpression) error 
 
 	for i := range h {
 		h[i].View = reference
-		if fields != nil {
+		if fields != nil && 0 < len(fields) {
 			h[i].Column = fields[i].(parser.Identifier).Literal
 		}
 		h[i].Aliases = nil

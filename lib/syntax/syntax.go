@@ -359,8 +359,8 @@ var CsvqSyntax = []Expression{
 			{
 				Name: "create_table_statement",
 				Group: []Grammar{
-					{Keyword("CREATE"), Keyword("TABLE"), Identifier("file_path"), Parentheses{ContinuousOption{Identifier("column_name")}}},
-					{Keyword("CREATE"), Keyword("TABLE"), Identifier("file_path"), Option{Parentheses{ContinuousOption{Identifier("column_name")}}}, Option{Keyword("AS")}, Link("select_query")},
+					{Keyword("CREATE"), Keyword("TABLE"), Option{Keyword("IF NOT EXISTS")}, Identifier("file_path"), Parentheses{ContinuousOption{Identifier("column_name")}}},
+					{Keyword("CREATE"), Keyword("TABLE"), Option{Keyword("IF NOT EXISTS")}, Identifier("file_path"), Option{Parentheses{ContinuousOption{Identifier("column_name")}}}, Option{Keyword("AS")}, Link("select_query")},
 				},
 			},
 		},

@@ -1,6 +1,6 @@
 //go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || windows
 
-package query
+package terminal
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/query"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/readline-csvq"
@@ -104,19 +105,19 @@ func TestReadlineListener_OnChange(t *testing.T) {
 
 func TestCompleter_Update(t *testing.T) {
 	defer func() {
-		TestTx.PreparedStatements = NewPreparedStatementMap()
+		TestTx.PreparedStatements = query.NewPreparedStatementMap()
 	}()
 
-	scope := NewReferenceScope(TestTx)
+	scope := query.NewReferenceScope(TestTx)
 	ctx := context.Background()
 
-	scope.SetTemporaryTable(&View{
-		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
-		Header:   NewHeader("view1", []string{"col1", "col2"}),
+	scope.SetTemporaryTable(&query.View{
+		FileInfo: &query.FileInfo{Path: "view1", ViewType: query.ViewTypeTemporaryTable},
+		Header:   query.NewHeader("view1", []string{"col1", "col2"}),
 	})
-	scope.SetTemporaryTable(&View{
-		FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable},
-		Header:   NewHeader("view1", []string{"col3", "col4"}),
+	scope.SetTemporaryTable(&query.View{
+		FileInfo: &query.FileInfo{Path: "view2", ViewType: query.ViewTypeTemporaryTable},
+		Header:   query.NewHeader("view1", []string{"col3", "col4"}),
 	})
 	_ = scope.DeclareCursor(parser.CursorDeclaration{Cursor: parser.Identifier{Literal: "cur1"}})
 	_ = scope.DeclareFunction(parser.FunctionDeclaration{Name: parser.Identifier{Literal: "scalarfunc"}})
@@ -132,16 +133,16 @@ func TestCompleter_Update(t *testing.T) {
 	if len(c.flagList) != len(cmd.FlagList) || !strings.HasPrefix(c.flagList[0], cmd.FlagSign) {
 		t.Error("flags are not set correctly")
 	}
-	if len(c.runinfoList) != len(RuntimeInformatinList) || !strings.HasPrefix(c.runinfoList[0], cmd.RuntimeInformationSign) {
+	if len(c.runinfoList) != len(query.RuntimeInformatinList) || !strings.HasPrefix(c.runinfoList[0], cmd.RuntimeInformationSign) {
 		t.Error("runtime information are not set correctly")
 	}
-	if len(c.funcs) != len(Functions)+3 {
+	if len(c.funcs) != len(query.Functions)+3 {
 		t.Error("functions are not set correctly")
 	}
-	if len(c.aggFuncs) != len(AggregateFunctions)+2 {
+	if len(c.aggFuncs) != len(query.AggregateFunctions)+2 {
 		t.Error("aggregate functions are not set correctly")
 	}
-	if len(c.analyticFuncs) != len(AnalyticFunctions)+len(AggregateFunctions) {
+	if len(c.analyticFuncs) != len(query.AnalyticFunctions)+len(query.AggregateFunctions) {
 		t.Error("analytic functions are not set correctly")
 	}
 
@@ -158,13 +159,13 @@ func TestCompleter_Update(t *testing.T) {
 	if len(c.statementList) != 1 {
 		t.Error("statement list is not set correctly")
 	}
-	if len(c.funcList) != len(Functions)+3+1 || !strings.HasSuffix(c.funcList[0], "()") {
+	if len(c.funcList) != len(query.Functions)+3+1 || !strings.HasSuffix(c.funcList[0], "()") {
 		t.Error("function list is not set correctly")
 	}
-	if len(c.aggFuncList) != len(AggregateFunctions)+2+1 || !strings.HasSuffix(c.aggFuncList[0], "()") {
+	if len(c.aggFuncList) != len(query.AggregateFunctions)+2+1 || !strings.HasSuffix(c.aggFuncList[0], "()") {
 		t.Error("aggregate function list is not set correctly")
 	}
-	if len(c.analyticFuncList) != len(AnalyticFunctions)+len(AggregateFunctions)+1 || !strings.HasSuffix(c.analyticFuncList[0], "() OVER ()") {
+	if len(c.analyticFuncList) != len(query.AnalyticFunctions)+len(query.AggregateFunctions)+1 || !strings.HasSuffix(c.analyticFuncList[0], "() OVER ()") {
 		t.Error("analytic function list is not set correctly")
 	}
 	if !reflect.DeepEqual(c.varList, []string{"@var"}) {
@@ -180,7 +181,7 @@ func TestCompleter_Update(t *testing.T) {
 	}
 }
 
-var completer = NewCompleter(NewReferenceScope(TestTx))
+var completer = NewCompleter(query.NewReferenceScope(TestTx))
 
 type completerTest struct {
 	Name     string
@@ -195,8 +196,8 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 
 	defer func() {
 		_ = os.Chdir(wd)
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		TestTx.PreparedStatements = NewPreparedStatementMap()
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		TestTx.PreparedStatements = query.NewPreparedStatementMap()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -216,14 +217,14 @@ func testCompleter(t *testing.T, f func(line string, origLine string, index int)
 	completer.varList = []string{"@var1", "@var2"}
 	completer.envList = []string{"@%ENV1", "@%ENV2"}
 	completer.enclosedEnvList = []string{"@%`ENV1`", "@%`ENV2`"}
-	TestTx.cachedViews.Set(&View{
-		FileInfo: &FileInfo{
+	TestTx.CachedViews.Set(&query.View{
+		FileInfo: &query.FileInfo{
 			Path: filepath.Join(CompletionTestDir, "newtable.csv"),
 		},
-		Header: NewHeader("newtable", []string{"ncol1", "ncol2", "ncol3"}),
+		Header: query.NewHeader("newtable", []string{"ncol1", "ncol2", "ncol3"}),
 	})
-	TestTx.cachedViews.Set(&View{
-		FileInfo: &FileInfo{
+	TestTx.CachedViews.Set(&query.View{
+		FileInfo: &query.FileInfo{
 			Path: filepath.Join(CompletionTestDir, "sub", "table2.csv"),
 		},
 	})
@@ -2443,6 +2444,33 @@ var completerCreateArgsTests = []completerTest{
 		},
 	},
 	{
+		Name:     "CreateArgs after CREATE TABLE",
+		Line:     "",
+		OrigLine: "create table ",
+		Index:    13,
+		Expect: readline.CandidateList{
+			{Name: []rune("IF NOT EXISTS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "CreateArgs after CREATE TABLE IF",
+		Line:     "",
+		OrigLine: "create table if",
+		Index:    15,
+		Expect: readline.CandidateList{
+			{Name: []rune("NOT EXISTS"), AppendSpace: true},
+		},
+	},
+	{
+		Name:     "CreateArgs after CREATE TABLE IF NOT",
+		Line:     "",
+		OrigLine: "create table if not",
+		Index:    19,
+		Expect: readline.CandidateList{
+			{Name: []rune("EXISTS"), AppendSpace: true},
+		},
+	},
+	{
 		Name:     "CreateArgs After Table Name",
 		Line:     "",
 		OrigLine: "create table newtable ",
@@ -4016,7 +4044,7 @@ func TestCompleter_ListFiles(t *testing.T) {
 	wd, _ := os.Getwd()
 
 	_ = os.Chdir(CompletionTestDir)
-	completer := NewCompleter(NewReferenceScope(TestTx))
+	completer := NewCompleter(query.NewReferenceScope(TestTx))
 	for _, v := range completerListFilesTests {
 		result := completer.ListFiles(v.Line, v.IncludeExt, v.Repository)
 		if !reflect.DeepEqual(result, v.Expect) {
@@ -4029,29 +4057,29 @@ func TestCompleter_ListFiles(t *testing.T) {
 
 func TestCompleter_AllColumnList(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 	}()
 
-	scope := NewReferenceScope(TestTx)
-	scope.SetTemporaryTable(&View{
-		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
-		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
+	scope := query.NewReferenceScope(TestTx)
+	scope.SetTemporaryTable(&query.View{
+		FileInfo: &query.FileInfo{Path: "view1", ViewType: query.ViewTypeTemporaryTable},
+		Header:   query.NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	scope.SetTemporaryTable(&View{FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable}})
-	TestTx.cachedViews.Set(
-		&View{
-			FileInfo: &FileInfo{
+	scope.SetTemporaryTable(&query.View{FileInfo: &query.FileInfo{Path: "view2", ViewType: query.ViewTypeTemporaryTable}})
+	TestTx.CachedViews.Set(
+		&query.View{
+			FileInfo: &query.FileInfo{
 				Path: filepath.Join(CompletionTestDir, "newtable.csv"),
 			},
-			Header: NewHeader("newtable", []string{"ncol1", "col2", "ncol3"}),
+			Header: query.NewHeader("newtable", []string{"ncol1", "col2", "ncol3"}),
 		},
 	)
-	TestTx.cachedViews.Set(
-		&View{
-			FileInfo: &FileInfo{
+	TestTx.CachedViews.Set(
+		&query.View{
+			FileInfo: &query.FileInfo{
 				Path: filepath.Join(CompletionTestDir, "table1.csv"),
 			},
-			Header: NewHeader("newtable", []string{"tcol1", "col2", "tcol3"}),
+			Header: query.NewHeader("newtable", []string{"tcol1", "col2", "tcol3"}),
 		},
 	)
 
@@ -4095,30 +4123,30 @@ func TestCompleter_ColumnList(t *testing.T) {
 
 	defer func() {
 		_ = os.Chdir(wd)
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
-	scope := NewReferenceScope(TestTx)
-	scope.SetTemporaryTable(&View{
-		FileInfo: &FileInfo{Path: "view1", ViewType: ViewTypeTemporaryTable},
-		Header:   NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
+	scope := query.NewReferenceScope(TestTx)
+	scope.SetTemporaryTable(&query.View{
+		FileInfo: &query.FileInfo{Path: "view1", ViewType: query.ViewTypeTemporaryTable},
+		Header:   query.NewHeader("view1", []string{"v1col1", "v1col2", "v1col3"}),
 	})
-	scope.SetTemporaryTable(&View{FileInfo: &FileInfo{Path: "view2", ViewType: ViewTypeTemporaryTable}})
-	TestTx.cachedViews.Set(
-		&View{
-			FileInfo: &FileInfo{
+	scope.SetTemporaryTable(&query.View{FileInfo: &query.FileInfo{Path: "view2", ViewType: query.ViewTypeTemporaryTable}})
+	TestTx.CachedViews.Set(
+		&query.View{
+			FileInfo: &query.FileInfo{
 				Path: filepath.Join(CompletionTestDir, "newtable.csv"),
 			},
-			Header: NewHeader("newtable", []string{"ncol3", "ncol2", "ncol1"}),
+			Header: query.NewHeader("newtable", []string{"ncol3", "ncol2", "ncol1"}),
 		},
 	)
-	TestTx.cachedViews.Set(
-		&View{
-			FileInfo: &FileInfo{
+	TestTx.CachedViews.Set(
+		&query.View{
+			FileInfo: &query.FileInfo{
 				Path: filepath.Join(CompletionTestDir, "table1.csv"),
 			},
-			Header: NewHeader("newtable", []string{"tcol1", "tcol2", "tcol3"}),
+			Header: query.NewHeader("newtable", []string{"tcol1", "tcol2", "tcol3"}),
 		},
 	)
 
@@ -4340,7 +4368,7 @@ var completerUpdateTokensTests = []struct {
 }
 
 func TestCompleter_UpdateTokens(t *testing.T) {
-	c := NewCompleter(NewReferenceScope(TestTx))
+	c := NewCompleter(query.NewReferenceScope(TestTx))
 	c.userFuncs = []string{"userfunc"}
 	c.userAggFuncs = []string{"aggfunc"}
 	c.userFuncList = []string{"userfunc", "aggfunc"}

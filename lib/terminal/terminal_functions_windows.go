@@ -1,6 +1,6 @@
 //go:build windows
 
-package query
+package terminal
 
 import (
 	"io"

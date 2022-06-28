@@ -392,7 +392,7 @@ func Insert(ctx context.Context, scope *ReferenceScope, query parser.InsertQuery
 	if !view.FileInfo.IsFile() {
 		scope.ReplaceTemporaryTable(view)
 	} else {
-		scope.Tx.cachedViews.Set(view)
+		scope.Tx.CachedViews.Set(view)
 	}
 
 	return view.FileInfo, insertRecords, err
@@ -440,7 +440,7 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToUpdate[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToUpdate[viewKey], _ = queryScope.Tx.cachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToUpdate[viewKey], _ = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
 		}
 		if err = viewsToUpdate[viewKey].Header.Update(tableName.Literal, nil); err != nil {
 			return nil, nil, err
@@ -509,7 +509,7 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 		if !v.FileInfo.IsFile() {
 			scope.ReplaceTemporaryTable(v)
 		} else {
-			scope.Tx.cachedViews.Set(v)
+			scope.Tx.CachedViews.Set(v)
 		}
 
 		fileInfos = append(fileInfos, v.FileInfo)
@@ -565,7 +565,7 @@ func Replace(ctx context.Context, scope *ReferenceScope, query parser.ReplaceQue
 	if !view.FileInfo.IsFile() {
 		scope.ReplaceTemporaryTable(view)
 	} else {
-		scope.Tx.cachedViews.Set(view)
+		scope.Tx.CachedViews.Set(view)
 	}
 
 	return view.FileInfo, replaceRecords, err
@@ -623,7 +623,7 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToDelete[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToDelete[viewKey], _ = queryScope.Tx.cachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToDelete[viewKey], _ = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
 		}
 		if err = viewsToDelete[viewKey].Header.Update(tableName.Literal, nil); err != nil {
 			return nil, nil, err
@@ -669,7 +669,7 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 		if !v.FileInfo.IsFile() {
 			scope.ReplaceTemporaryTable(v)
 		} else {
-			scope.Tx.cachedViews.Set(v)
+			scope.Tx.CachedViews.Set(v)
 		}
 
 		fileInfos = append(fileInfos, v.FileInfo)
@@ -737,7 +737,7 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 
 	view.FileInfo = fileInfo
 
-	scope.Tx.cachedViews.Set(view)
+	scope.Tx.CachedViews.Set(view)
 
 	return view.FileInfo, nil
 }
@@ -855,7 +855,7 @@ func AddColumns(ctx context.Context, scope *ReferenceScope, query parser.AddColu
 	if !view.FileInfo.IsFile() {
 		scope.ReplaceTemporaryTable(view)
 	} else {
-		scope.Tx.cachedViews.Set(view)
+		scope.Tx.CachedViews.Set(view)
 	}
 
 	return view.FileInfo, len(fields), err
@@ -898,7 +898,7 @@ func DropColumns(ctx context.Context, scope *ReferenceScope, query parser.DropCo
 	if !view.FileInfo.IsFile() {
 		scope.ReplaceTemporaryTable(view)
 	} else {
-		scope.Tx.cachedViews.Set(view)
+		scope.Tx.CachedViews.Set(view)
 	}
 
 	return view.FileInfo, dropIndices.Len(), err
@@ -936,7 +936,7 @@ func RenameColumn(ctx context.Context, scope *ReferenceScope, query parser.Renam
 	if !view.FileInfo.IsFile() {
 		scope.ReplaceTemporaryTable(view)
 	} else {
-		scope.Tx.cachedViews.Set(view)
+		scope.Tx.CachedViews.Set(view)
 	}
 
 	return view.FileInfo, err
@@ -1034,6 +1034,6 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 	w.Title2Effect = cmd.IdentifierEffect
 	log = "\n" + w.String() + "\n"
 
-	scope.Tx.cachedViews.Set(view)
+	scope.Tx.CachedViews.Set(view)
 	return view.FileInfo, log, err
 }

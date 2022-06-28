@@ -131,7 +131,7 @@ func (m CursorMap) Count(name parser.Identifier) (int, error) {
 }
 
 type Cursor struct {
-	name      string
+	Name      string
 	query     parser.SelectQuery
 	statement parser.Identifier
 	view      *View
@@ -145,7 +145,7 @@ type Cursor struct {
 
 func NewCursor(e parser.CursorDeclaration) *Cursor {
 	return &Cursor{
-		name:      e.Cursor.Literal,
+		Name:      e.Cursor.Literal,
 		query:     e.Query,
 		statement: e.Statement,
 		mtx:       &sync.Mutex{},
@@ -164,7 +164,7 @@ func NewPseudoCursor(name string, values []value.Primary) *Cursor {
 	view.RecordSet = records
 
 	return &Cursor{
-		name:     name,
+		Name:     name,
 		view:     view,
 		index:    -1,
 		fetched:  false,

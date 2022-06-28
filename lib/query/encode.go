@@ -327,7 +327,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 
 	fieldLen := view.FieldLen()
 
-	if !options.WithoutHeader {
+	if !options.WithoutHeader || (options.Format != cmd.GFM && options.Format != cmd.ORG) {
 		hfields := make([]table.Field, fieldLen)
 		for i := range view.Header {
 			hfields[i] = table.NewField(view.Header[i].Column, text.Centering)

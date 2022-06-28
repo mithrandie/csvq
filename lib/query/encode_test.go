@@ -74,6 +74,29 @@ var encodeViewTests = []struct {
 			"+----------+-------------------------------------+--------+",
 	},
 	{
+		Name: "Text, --without--header option is ignored",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
+			},
+		},
+		Format:        cmd.TEXT,
+		WithoutHeader: true,
+		Result: "+----------+-------------------------------------+--------+\n" +
+			"|    c1    |                 c2                  |   c3   |\n" +
+			"|          |             second line             |        |\n" +
+			"+----------+-------------------------------------+--------+\n" +
+			"|       -1 |               UNKNOWN               |  true  |\n" +
+			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00    | abcdef |\n" +
+			"| 34567890 |  abcdefghijklmnopqrstuvwxyzabcdefg  |  NULL  |\n" +
+			"|          | hi\"jk日本語あアｱＡ（                |        |\n" +
+			"|          |                                     |        |\n" +
+			"+----------+-------------------------------------+--------+",
+	},
+	{
 		Name: "Text with colors",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2"}),
@@ -104,6 +127,29 @@ var encodeViewTests = []struct {
 			},
 		},
 		Format: cmd.BOX,
+		Result: "┌──────────┬─────────────────────────────────────┬────────┐\n" +
+			"│    c1    │                 c2                  │   c3   │\n" +
+			"│          │             second line             │        │\n" +
+			"├──────────┼─────────────────────────────────────┼────────┤\n" +
+			"│       -1 │               UNKNOWN               │  true  │\n" +
+			"│   2.0123 │ 2016-02-01T16:00:00.123456-07:00    │ abcdef │\n" +
+			"│ 34567890 │  abcdefghijklmnopqrstuvwxyzabcdefg  │  NULL  │\n" +
+			"│          │ hi\"jk日本語あアｱＡ（                │        │\n" +
+			"│          │                                     │        │\n" +
+			"└──────────┴─────────────────────────────────────┴────────┘",
+	},
+	{
+		Name: "Box, --without-header option is ignored",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
+			},
+		},
+		Format:        cmd.BOX,
+		WithoutHeader: true,
 		Result: "┌──────────┬─────────────────────────────────────┬────────┐\n" +
 			"│    c1    │                 c2                  │   c3   │\n" +
 			"│          │             second line             │        │\n" +

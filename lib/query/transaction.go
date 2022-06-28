@@ -30,8 +30,8 @@ type Transaction struct {
 	RetryDelay    time.Duration
 	FileContainer *file.Container
 
-	cachedViews      ViewMap
-	uncommittedViews UncommittedViews
+	CachedViews      ViewMap
+	UncommittedViews UncommittedViews
 
 	operationMutex   *sync.Mutex
 	viewLoadingMutex *sync.Mutex
@@ -73,8 +73,8 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		WaitTimeout:        file.DefaultWaitTimeout,
 		RetryDelay:         file.DefaultRetryDelay,
 		FileContainer:      file.NewContainer(),
-		cachedViews:        NewViewMap(),
-		uncommittedViews:   NewUncommittedViews(),
+		CachedViews:        NewViewMap(),
+		UncommittedViews:   NewUncommittedViews(),
 		operationMutex:     &sync.Mutex{},
 		viewLoadingMutex:   &sync.Mutex{},
 		stdinIsLocked:      false,
@@ -110,14 +110,14 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 	tx.operationMutex.Lock()
 	defer tx.operationMutex.Unlock()
 
-	createdFiles, updatedFiles := tx.uncommittedViews.UncommittedFiles()
+	createdFiles, updatedFiles := tx.UncommittedViews.UncommittedFiles()
 
 	createFileInfo := make([]*FileInfo, 0, len(createdFiles))
 	updateFileInfo := make([]*FileInfo, 0, len(updatedFiles))
 
 	if 0 < len(createdFiles) {
 		for _, fileinfo := range createdFiles {
-			view, _ := tx.cachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
+			view, _ := tx.CachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
 
 			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
@@ -143,7 +143,7 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 
 	if 0 < len(updatedFiles) {
 		for _, fileinfo := range updatedFiles {
-			view, _ := tx.cachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
+			view, _ := tx.CachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
 
 			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
@@ -171,22 +171,22 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 		if err := tx.FileContainer.Commit(f.Handler); err != nil {
 			return NewCommitError(expr, err.Error())
 		}
-		tx.uncommittedViews.Unset(f)
+		tx.UncommittedViews.Unset(f)
 		tx.LogNotice(fmt.Sprintf("Commit: file %q is created.", f.Path), tx.Flags.Quiet)
 	}
 	for _, f := range updateFileInfo {
 		if err := tx.FileContainer.Commit(f.Handler); err != nil {
 			return NewCommitError(expr, err.Error())
 		}
-		tx.uncommittedViews.Unset(f)
+		tx.UncommittedViews.Unset(f)
 		tx.LogNotice(fmt.Sprintf("Commit: file %q is updated.", f.Path), tx.Flags.Quiet)
 	}
 
-	msglist := scope.StoreTemporaryTable(tx.Session, tx.uncommittedViews.UncommittedTempViews())
+	msglist := scope.StoreTemporaryTable(tx.Session, tx.UncommittedViews.UncommittedTempViews())
 	if 0 < len(msglist) {
 		tx.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 	}
-	tx.uncommittedViews.Clean()
+	tx.UncommittedViews.Clean()
 	tx.UnlockStdin()
 	if err := tx.ReleaseResources(); err != nil {
 		return NewCommitError(expr, err.Error())
@@ -198,7 +198,7 @@ func (tx *Transaction) Rollback(scope *ReferenceScope, expr parser.Expression) e
 	tx.operationMutex.Lock()
 	defer tx.operationMutex.Unlock()
 
-	createdFiles, updatedFiles := tx.uncommittedViews.UncommittedFiles()
+	createdFiles, updatedFiles := tx.UncommittedViews.UncommittedFiles()
 
 	if 0 < len(createdFiles) {
 		for _, fileinfo := range createdFiles {
@@ -213,12 +213,12 @@ func (tx *Transaction) Rollback(scope *ReferenceScope, expr parser.Expression) e
 	}
 
 	if scope != nil {
-		msglist := scope.RestoreTemporaryTable(tx.uncommittedViews.UncommittedTempViews())
+		msglist := scope.RestoreTemporaryTable(tx.UncommittedViews.UncommittedTempViews())
 		if 0 < len(msglist) {
 			tx.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 		}
 	}
-	tx.uncommittedViews.Clean()
+	tx.UncommittedViews.Clean()
 	tx.UnlockStdin()
 	if err := tx.ReleaseResources(); err != nil {
 		return NewRollbackError(expr, err.Error())
@@ -231,7 +231,7 @@ func (tx *Transaction) quietForTemporaryViews(expr parser.Expression) bool {
 }
 
 func (tx *Transaction) ReleaseResources() error {
-	if err := tx.cachedViews.Clean(tx.FileContainer); err != nil {
+	if err := tx.CachedViews.Clean(tx.FileContainer); err != nil {
 		return err
 	}
 	if err := tx.FileContainer.CloseAll(); err != nil {
@@ -243,7 +243,7 @@ func (tx *Transaction) ReleaseResources() error {
 
 func (tx *Transaction) ReleaseResourcesWithErrors() error {
 	var errs []error
-	if err := tx.cachedViews.CleanWithErrors(tx.FileContainer); err != nil {
+	if err := tx.CachedViews.CleanWithErrors(tx.FileContainer); err != nil {
 		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
 	if err := tx.FileContainer.CloseAllWithErrors(); err != nil {

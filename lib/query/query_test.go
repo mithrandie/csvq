@@ -170,7 +170,7 @@ var fetchCursorTests = []struct {
 
 func TestFetchCursor(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -196,9 +196,9 @@ func TestFetchCursor(t *testing.T) {
 	}, nil, time.Time{}, nil)
 
 	ctx := context.Background()
-	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 	_ = scope.OpenCursor(ctx, parser.Identifier{Literal: "cur"}, nil)
-	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 	_ = scope.OpenCursor(ctx, parser.Identifier{Literal: "cur2"}, nil)
 
 	for _, v := range fetchCursorTests {
@@ -219,8 +219,8 @@ func TestFetchCursor(t *testing.T) {
 			t.Errorf("%s: success = %t, want %t", v.Name, success, v.Success)
 		}
 
-		if !SyncMapEqual(scope.blocks[0].variables, v.ResultScopes.blocks[0].variables) {
-			t.Errorf("%s: variables = %v, want %v", v.Name, scope.blocks, v.ResultScopes.blocks)
+		if !SyncMapEqual(scope.Blocks[0].Variables, v.ResultScopes.Blocks[0].Variables) {
+			t.Errorf("%s: variables = %v, want %v", v.Name, scope.Blocks, v.ResultScopes.Blocks)
 		}
 	}
 }
@@ -396,9 +396,9 @@ func TestDeclareView(t *testing.T) {
 
 	for _, v := range declareViewTests {
 		if v.ViewMap.SyncMap == nil {
-			scope.blocks[0].temporaryTables = NewViewMap()
+			scope.Blocks[0].TemporaryTables = NewViewMap()
 		} else {
-			scope.blocks[0].temporaryTables = v.ViewMap
+			scope.Blocks[0].TemporaryTables = v.ViewMap
 		}
 
 		err := DeclareView(ctx, scope, v.Expr)
@@ -414,8 +414,8 @@ func TestDeclareView(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !SyncMapEqual(scope.blocks[0].temporaryTables, v.Result) {
-			t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.Result)
+		if !SyncMapEqual(scope.Blocks[0].TemporaryTables, v.Result) {
+			t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.Result)
 		}
 	}
 }
@@ -1389,7 +1389,7 @@ var selectTests = []struct {
 
 func TestSelect(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1403,7 +1403,7 @@ func TestSelect(t *testing.T) {
 	}})
 
 	for _, v := range selectTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		result, err := Select(ctx, scope, v.Query)
 		if err != nil {
 			if len(v.Error) < 1 {
@@ -1757,7 +1757,7 @@ var insertTests = []struct {
 func TestInsert(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1806,7 +1806,7 @@ func TestInsert(t *testing.T) {
 			continue
 		}
 
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo.Handler != nil {
 				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
@@ -1827,13 +1827,13 @@ func TestInsert(t *testing.T) {
 		}
 
 		if v.ViewCache.SyncMap != nil {
-			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			if !SyncMapEqual(TestTx.CachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
 			}
 		}
 		if v.ResultScopes != nil {
-			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
+			if !SyncMapEqual(scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables)
 			}
 		}
 	}
@@ -2232,7 +2232,7 @@ var updateTests = []struct {
 func TestUpdate(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2281,7 +2281,7 @@ func TestUpdate(t *testing.T) {
 			continue
 		}
 
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo.Handler != nil {
 				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
@@ -2302,13 +2302,13 @@ func TestUpdate(t *testing.T) {
 		}
 
 		if v.ViewCache.SyncMap != nil {
-			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			if !SyncMapEqual(TestTx.CachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
 			}
 		}
 		if v.ResultScopes != nil {
-			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
+			if !SyncMapEqual(scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables)
 			}
 		}
 	}
@@ -2652,7 +2652,7 @@ var replaceTests = []struct {
 func TestReplace(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2701,7 +2701,7 @@ func TestReplace(t *testing.T) {
 			continue
 		}
 
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo.Handler != nil {
 				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
@@ -2722,13 +2722,13 @@ func TestReplace(t *testing.T) {
 		}
 
 		if v.ViewCache.SyncMap != nil {
-			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			if !SyncMapEqual(TestTx.CachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
 			}
 		}
 		if v.ResultScopes != nil {
-			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
+			if !SyncMapEqual(scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables)
 			}
 		}
 	}
@@ -3020,7 +3020,7 @@ var deleteTests = []struct {
 func TestDelete(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -3069,7 +3069,7 @@ func TestDelete(t *testing.T) {
 			continue
 		}
 
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo.Handler != nil {
 				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
@@ -3090,13 +3090,13 @@ func TestDelete(t *testing.T) {
 		}
 
 		if v.ViewCache.SyncMap != nil {
-			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			if !SyncMapEqual(TestTx.CachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
 			}
 		}
 		if v.ResultScopes != nil {
-			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
+			if !SyncMapEqual(scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables)
 			}
 		}
 	}
@@ -3277,7 +3277,7 @@ var createTableTests = []struct {
 func TestCreateTable(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -3295,7 +3295,7 @@ func TestCreateTable(t *testing.T) {
 			_ = TestTx.FileContainer.Close(result.Handler)
 			result.Handler = nil
 		}
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo != nil {
 				_ = TestTx.FileContainer.Close(view.FileInfo.Handler)
@@ -3322,8 +3322,8 @@ func TestCreateTable(t *testing.T) {
 		}
 
 		if v.ViewCache.SyncMap != nil {
-			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			if !SyncMapEqual(TestTx.CachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
 			}
 		}
 	}
@@ -3697,7 +3697,7 @@ var addColumnsTests = []struct {
 func TestAddColumns(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -3746,7 +3746,7 @@ func TestAddColumns(t *testing.T) {
 			continue
 		}
 
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo.Handler != nil {
 				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
@@ -3767,13 +3767,13 @@ func TestAddColumns(t *testing.T) {
 		}
 
 		if v.ViewCache.SyncMap != nil {
-			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			if !SyncMapEqual(TestTx.CachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
 			}
 		}
 		if v.ResultScopes != nil {
-			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
+			if !SyncMapEqual(scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables)
 			}
 		}
 	}
@@ -3892,7 +3892,7 @@ var dropColumnsTests = []struct {
 func TestDropColumns(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -3941,7 +3941,7 @@ func TestDropColumns(t *testing.T) {
 			continue
 		}
 
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo.Handler != nil {
 				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
@@ -3962,13 +3962,13 @@ func TestDropColumns(t *testing.T) {
 		}
 
 		if v.ViewCache.SyncMap != nil {
-			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			if !SyncMapEqual(TestTx.CachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
 			}
 		}
 		if v.ResultScopes != nil {
-			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
+			if !SyncMapEqual(scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables)
 			}
 		}
 	}
@@ -4094,7 +4094,7 @@ var renameColumnTests = []struct {
 func TestRenameColumn(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -4143,7 +4143,7 @@ func TestRenameColumn(t *testing.T) {
 			continue
 		}
 
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo.Handler != nil {
 				if view.FileInfo.Path != view.FileInfo.Handler.Path() {
@@ -4160,13 +4160,13 @@ func TestRenameColumn(t *testing.T) {
 		}
 
 		if v.ViewCache.SyncMap != nil {
-			if !SyncMapEqual(TestTx.cachedViews, v.ViewCache) {
-				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.cachedViews, v.ViewCache)
+			if !SyncMapEqual(TestTx.CachedViews, v.ViewCache) {
+				t.Errorf("%s: view cache = %v, want %v", v.Name, TestTx.CachedViews, v.ViewCache)
 			}
 		}
 		if v.ResultScopes != nil {
-			if !SyncMapEqual(scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables) {
-				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.blocks[0].temporaryTables, v.ResultScopes.blocks[0].temporaryTables)
+			if !SyncMapEqual(scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables) {
+				t.Errorf("%s: temporary views list = %v, want %v", v.Name, scope.Blocks[0].TemporaryTables, v.ResultScopes.Blocks[0].TemporaryTables)
 			}
 		}
 	}
@@ -4535,7 +4535,7 @@ var setTableAttributeTests = []struct {
 func TestSetTableAttribute(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -4585,7 +4585,7 @@ func TestSetTableAttribute(t *testing.T) {
 			continue
 		}
 
-		TestTx.cachedViews.Range(func(key, value interface{}) bool {
+		TestTx.CachedViews.Range(func(key, value interface{}) bool {
 			view := value.(*View)
 			if view.FileInfo.Handler != nil {
 				if view.FileInfo.Path != view.FileInfo.Handler.Path() {

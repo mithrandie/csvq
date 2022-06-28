@@ -4759,6 +4759,19 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "create table if not exists newtable (column1, column2)",
+		Output: []Statement{
+			CreateTable{
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "newtable"},
+				Fields: []QueryExpression{
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 47}, Literal: "column2"},
+				},
+				IfNotExists: true,
+			},
+		},
+	},
+	{
 		Input: "create table newtable (column1, column2) select 1, 2",
 		Output: []Statement{
 			CreateTable{
@@ -4786,6 +4799,34 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "create table if not exists newtable (column1, column2) select 1, 2",
+		Output: []Statement{
+			CreateTable{
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "newtable"},
+				Fields: []QueryExpression{
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 38}, Literal: "column1"},
+					Identifier{BaseExpr: &BaseExpr{line: 1, char: 47}, Literal: "column2"},
+				},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 56},
+							Fields: []QueryExpression{
+								Field{
+									Object: NewIntegerValueFromString("1"),
+								},
+								Field{
+									Object: NewIntegerValueFromString("2"),
+								},
+							},
+						},
+					},
+				},
+				IfNotExists: true,
+			},
+		},
+	},
+	{
 		Input: "create table newtable select 1, 2",
 		Output: []Statement{
 			CreateTable{
@@ -4805,6 +4846,30 @@ var parseTests = []struct {
 						},
 					},
 				},
+			},
+		},
+	},
+	{
+		Input: "create table if not exists newtable select 1, 2",
+		Output: []Statement{
+			CreateTable{
+				Table: Identifier{BaseExpr: &BaseExpr{line: 1, char: 28}, Literal: "newtable"},
+				Query: SelectQuery{
+					SelectEntity: SelectEntity{
+						SelectClause: SelectClause{
+							BaseExpr: &BaseExpr{line: 1, char: 37},
+							Fields: []QueryExpression{
+								Field{
+									Object: NewIntegerValueFromString("1"),
+								},
+								Field{
+									Object: NewIntegerValueFromString("2"),
+								},
+							},
+						},
+					},
+				},
+				IfNotExists: true,
 			},
 		},
 	},

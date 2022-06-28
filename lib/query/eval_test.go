@@ -4144,7 +4144,7 @@ var evaluateTests = []struct {
 
 func TestEvaluate(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -4165,7 +4165,7 @@ func TestEvaluate(t *testing.T) {
 	_, _ = scope.FetchCursor(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range evaluateTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 
 		if v.Scope == nil {
 			v.Scope = scope

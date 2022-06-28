@@ -806,6 +806,53 @@ var processorExecuteStatementTests = []struct {
 		Logs: fmt.Sprintf("file %q is created.\n", GetTestFilePath("newtable.csv")),
 	},
 	{
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.QueryExpression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+		},
+		Error:      fmt.Sprintf("file %s already exists", GetTestFilePath("table1.csv")),
+		ReturnCode: ReturnCodeIOError,
+	},
+	{
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.QueryExpression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+			},
+			IfNotExists: true,
+		},
+		Logs: fmt.Sprintf("file %q already exists.\n", GetTestFilePath("table1.csv")),
+	},
+	{
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.QueryExpression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "column2"},
+				parser.Identifier{Literal: "column3"},
+			},
+			IfNotExists: true,
+		},
+		Error:      "field length does not match",
+		ReturnCode: ReturnCodeApplicationError,
+	},
+	{
+		Input: parser.CreateTable{
+			Table: parser.Identifier{Literal: "table1.csv"},
+			Fields: []parser.QueryExpression{
+				parser.Identifier{Literal: "column1"},
+				parser.Identifier{Literal: "col"},
+			},
+			IfNotExists: true,
+		},
+		Error:      "field col does not exist",
+		ReturnCode: ReturnCodeApplicationError,
+	},
+	{
 		Input: parser.AddColumns{
 			Table: parser.Identifier{Literal: "table1.csv"},
 			Columns: []parser.ColumnDefault{
@@ -1041,7 +1088,7 @@ var processorExecuteStatementTests = []struct {
 func TestProcessor_ExecuteStatement(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.uncommittedViews.Clean()
+		TestTx.UncommittedViews.Clean()
 		TestTx.Session.SetStdout(NewDiscard())
 		initFlag(TestTx.Flags)
 	}()
@@ -1056,7 +1103,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 
 	for _, v := range processorExecuteStatementTests {
 		_ = TestTx.ReleaseResources()
-		TestTx.uncommittedViews = NewUncommittedViews()
+		TestTx.UncommittedViews = NewUncommittedViews()
 
 		out := NewOutput()
 		tx.Session.SetStdout(out)
@@ -1085,7 +1132,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 		}
 
 		if v.UncommittedViews.mtx != nil {
-			for _, r := range TestTx.uncommittedViews.Created {
+			for _, r := range TestTx.UncommittedViews.Created {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
@@ -1094,7 +1141,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 					r.Handler = nil
 				}
 			}
-			for _, r := range TestTx.uncommittedViews.Updated {
+			for _, r := range TestTx.UncommittedViews.Updated {
 				if r.Handler != nil {
 					if r.Path != r.Handler.Path() {
 						t.Errorf("file pointer = %q, want %q for %q", r.Handler.Path(), r.Path, v.Input)
@@ -1104,8 +1151,8 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 				}
 			}
 
-			if !reflect.DeepEqual(TestTx.uncommittedViews, v.UncommittedViews) {
-				t.Errorf("uncomitted views = %v, want %v for %q", TestTx.uncommittedViews, v.UncommittedViews, v.Input)
+			if !reflect.DeepEqual(TestTx.UncommittedViews, v.UncommittedViews) {
+				t.Errorf("uncomitted views = %v, want %v for %q", TestTx.UncommittedViews, v.UncommittedViews, v.Input)
 			}
 		}
 		if 0 < len(v.Logs) {
@@ -1694,15 +1741,15 @@ func TestProcessor_While(t *testing.T) {
 
 	for _, v := range processorWhileTests {
 		proc.returnVal = nil
-		if _, ok := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test"}); !ok {
+		if _, ok := proc.ReferenceScope.CurrentBlock().Variables.Get(parser.Variable{Name: "while_test"}); !ok {
 			_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 		}
-		_ = proc.ReferenceScope.CurrentBlock().variables.Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
+		_ = proc.ReferenceScope.CurrentBlock().Variables.Set(parser.Variable{Name: "while_test"}, value.NewInteger(0))
 
-		if _, ok := proc.ReferenceScope.CurrentBlock().variables.Get(parser.Variable{Name: "while_test_count"}); !ok {
+		if _, ok := proc.ReferenceScope.CurrentBlock().Variables.Get(parser.Variable{Name: "while_test_count"}); !ok {
 			_ = proc.ReferenceScope.DeclareVariableDirectly(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 		}
-		_ = proc.ReferenceScope.CurrentBlock().variables.Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
+		_ = proc.ReferenceScope.CurrentBlock().Variables.Set(parser.Variable{Name: "while_test_count"}, value.NewInteger(0))
 
 		out := NewOutput()
 		tx.Session.SetStdout(out)
@@ -1913,7 +1960,7 @@ var processorWhileInCursorTests = []struct {
 
 func TestProcessor_WhileInCursor(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		TestTx.Session.SetStdout(NewDiscard())
 		initFlag(TestTx.Flags)
 	}()
@@ -1939,7 +1986,7 @@ func TestProcessor_WhileInCursor(t *testing.T) {
 				},
 			},
 		}, nil, time.Time{}, nil)
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		_ = proc.ReferenceScope.OpenCursor(ctx, parser.Identifier{Literal: "cur"}, nil)
 
 		out := NewOutput()
