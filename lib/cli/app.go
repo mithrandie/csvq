@@ -30,6 +30,7 @@ func Run() {
 	app.Usage = "SQL-like query language for csv"
 	app.ArgsUsage = "[query|argument]"
 	app.Version = query.Version
+	app.Authors = []*cli.Author{{Name: "Yuki et al."}}
 	app.OnUsageError = onUsageError
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
@@ -56,13 +57,13 @@ func Run() {
 		&cli.BoolFlag{
 			Name:    "strict-equal",
 			Aliases: []string{"g"},
-			Usage:   "compare strictly that two values are equal for DISTINCT, GROUP BY and ORDER BY",
+			Usage:   "compare strictly equal or not in DISTINCT, GROUP BY and ORDER BY",
 		},
 		&cli.Float64Flag{
 			Name:    "wait-timeout",
 			Aliases: []string{"w"},
 			Value:   10,
-			Usage:   "limit of the waiting time in seconds to wait for locked files to be released",
+			Usage:   "maximum time in seconds to wait for locked files to be released",
 		},
 		&cli.StringFlag{
 			Name:    "source",
