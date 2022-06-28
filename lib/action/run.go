@@ -14,6 +14,7 @@ import (
 	csvqfile "github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
+	"github.com/mithrandie/csvq/lib/terminal"
 
 	"github.com/mithrandie/go-file/v2"
 )
@@ -65,11 +66,11 @@ func LaunchInteractiveShell(ctx context.Context, proc *query.Processor) error {
 		return query.NewIncorrectCommandUsageError("input from pipe or redirection cannot be used in interactive shell")
 	}
 
-	if err := proc.Tx.Session.SetStdin(query.GetStdinForREPL()); err != nil {
+	if err := proc.Tx.Session.SetStdin(terminal.GetStdinForREPL()); err != nil {
 		return query.NewIOError(nil, err.Error())
 	}
 
-	term, err := query.NewTerminal(ctx, proc.ReferenceScope)
+	term, err := terminal.NewTerminal(ctx, proc.ReferenceScope)
 	if err != nil {
 		return query.ConvertLoadConfigurationError(err)
 	}

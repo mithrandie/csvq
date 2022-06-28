@@ -20,7 +20,7 @@ import (
 func TestTransaction_Commit(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		TestTx.Session.SetStdout(NewDiscard())
 		initFlag(TestTx.Flags)
 	}()
@@ -30,7 +30,7 @@ func TestTransaction_Commit(t *testing.T) {
 	ch, _ := file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("created_file.csv"))
 	uh, _ := file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
 
-	TestTx.cachedViews = GenerateViewMap([]*View{
+	TestTx.CachedViews = GenerateViewMap([]*View{
 		{
 			Header:    NewHeader("created_file", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
@@ -70,7 +70,7 @@ func TestTransaction_Commit(t *testing.T) {
 		},
 	})
 
-	TestTx.uncommittedViews = UncommittedViews{
+	TestTx.UncommittedViews = UncommittedViews{
 		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {
@@ -136,7 +136,7 @@ func TestTransaction_Commit(t *testing.T) {
 	TestTx.Flags.ExportOptions.StripEndingLineBreak = true
 	ch, _ = file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("created_file_1.csv"))
 	uh, _ = file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
-	TestTx.cachedViews = GenerateViewMap([]*View{
+	TestTx.CachedViews = GenerateViewMap([]*View{
 		{
 			Header:    NewHeader("created_file_1", []string{"column1", "column2"}),
 			RecordSet: RecordSet{},
@@ -176,7 +176,7 @@ func TestTransaction_Commit(t *testing.T) {
 		},
 	})
 
-	TestTx.uncommittedViews = UncommittedViews{
+	TestTx.UncommittedViews = UncommittedViews{
 		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file_1.csv")): {
@@ -229,14 +229,14 @@ func TestTransaction_Commit(t *testing.T) {
 func TestTransaction_Rollback(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		TestTx.Session.SetStdout(NewDiscard())
 		initFlag(TestTx.Flags)
 	}()
 
 	TestTx.Flags.SetQuiet(false)
 
-	TestTx.uncommittedViews = UncommittedViews{
+	TestTx.UncommittedViews = UncommittedViews{
 		mtx: &sync.RWMutex{},
 		Created: map[string]*FileInfo{
 			strings.ToUpper(GetTestFilePath("created_file.csv")): {

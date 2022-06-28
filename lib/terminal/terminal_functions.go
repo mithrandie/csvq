@@ -1,11 +1,12 @@
 //go:build !windows
 
-package query
+package terminal
 
 import (
 	"io"
+	"os"
 )
 
 func GetStdinForREPL() io.ReadCloser {
-	return stdin
+	return os.Stdin
 }

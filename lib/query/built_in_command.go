@@ -471,15 +471,15 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 
 	switch strings.ToUpper(expr.Type.Literal) {
 	case ShowTables:
-		keys := scope.Tx.cachedViews.SortedKeys()
+		keys := scope.Tx.CachedViews.SortedKeys()
 
 		if len(keys) < 1 {
 			s = scope.Tx.Warn("No table is loaded")
 		} else {
-			createdFiles, updatedFiles := scope.Tx.uncommittedViews.UncommittedFiles()
+			createdFiles, updatedFiles := scope.Tx.UncommittedViews.UncommittedFiles()
 
 			for _, key := range keys {
-				if view, ok := scope.Tx.cachedViews.Load(key); ok {
+				if view, ok := scope.Tx.CachedViews.Load(key); ok {
 					fields := view.Header.TableColumnNames()
 					info := view.FileInfo
 					ufpath := strings.ToUpper(info.Path)
@@ -516,7 +516,7 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 		} else {
 			keys := views.SortedKeys()
 
-			updatedViews := scope.Tx.uncommittedViews.UncommittedTempViews()
+			updatedViews := scope.Tx.UncommittedViews.UncommittedTempViews()
 
 			for _, key := range keys {
 				if view, ok := views.Load(key); ok {
@@ -554,7 +554,7 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 				if cur, ok := cursors.Load(key); ok {
 					isOpen := cur.IsOpen()
 
-					w.WriteColor(cur.name, cmd.ObjectEffect)
+					w.WriteColor(cur.Name, cmd.ObjectEffect)
 					w.BeginBlock()
 
 					w.NewLine()
@@ -874,14 +874,14 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 	}
 
 	if !view.FileInfo.IsFile() {
-		updatedViews := scope.Tx.uncommittedViews.UncommittedTempViews()
+		updatedViews := scope.Tx.UncommittedViews.UncommittedTempViews()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
 		if _, ok := updatedViews[ufpath]; ok {
 			status = ObjectUpdated
 		}
 	} else {
-		createdViews, updatedView := scope.Tx.uncommittedViews.UncommittedFiles()
+		createdViews, updatedView := scope.Tx.UncommittedViews.UncommittedFiles()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
 		if _, ok := createdViews[ufpath]; ok {

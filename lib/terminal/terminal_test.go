@@ -1,4 +1,4 @@
-package query
+package terminal
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/excmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/query"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -40,7 +41,7 @@ var promptLoadConfigTests = []struct {
 }
 
 func TestPrompt_LoadConfig(t *testing.T) {
-	prompt := NewPrompt(NewReferenceScope(TestTx))
+	prompt := NewPrompt(query.NewReferenceScope(TestTx))
 
 	for _, v := range promptLoadConfigTests {
 		TestTx.Environment.InteractiveShell.Prompt = v.Prompt
@@ -75,7 +76,7 @@ var promptRenderPromptTests = []struct {
 	{
 		Sequence: nil,
 		UseColor: false,
-		Expect:   TerminalPrompt,
+		Expect:   DefaultPrompt,
 	},
 	{
 		Sequence: []PromptElement{
@@ -106,7 +107,7 @@ func TestPrompt_RenderPrompt(t *testing.T) {
 		initFlag(TestTx.Flags)
 	}()
 
-	prompt := NewPrompt(NewReferenceScope(TestTx))
+	prompt := NewPrompt(query.NewReferenceScope(TestTx))
 
 	for _, v := range promptRenderPromptTests {
 		TestTx.UseColor(v.UseColor)
@@ -141,7 +142,7 @@ var promptRenderContinuousPromptTests = []struct {
 	{
 		Sequence: nil,
 		UseColor: false,
-		Expect:   TerminalContinuousPrompt,
+		Expect:   DefaultContinuousPrompt,
 	},
 	{
 		Sequence: []PromptElement{
@@ -172,7 +173,7 @@ func TestPrompt_RenderContinuousPrompt(t *testing.T) {
 		initFlag(TestTx.Flags)
 	}()
 
-	prompt := NewPrompt(NewReferenceScope(TestTx))
+	prompt := NewPrompt(query.NewReferenceScope(TestTx))
 
 	for _, v := range promptRenderContinuousPromptTests {
 		TestTx.UseColor(v.UseColor)
@@ -262,7 +263,7 @@ var promptRenderTests = []struct {
 }
 
 func TestPrompt_Render(t *testing.T) {
-	scope := NewReferenceScope(TestTx)
+	scope := query.NewReferenceScope(TestTx)
 	_ = scope.DeclareVariableDirectly(parser.Variable{Name: "var"}, value.NewString("abc"))
 	prompt := NewPrompt(scope)
 
@@ -299,7 +300,7 @@ var promptStripEscapeSequenceTests = []struct {
 }
 
 func TestPrompt_StripEscapeSequence(t *testing.T) {
-	prompt := NewPrompt(NewReferenceScope(TestTx))
+	prompt := NewPrompt(query.NewReferenceScope(TestTx))
 
 	for _, v := range promptStripEscapeSequenceTests {
 		result := prompt.StripEscapeSequence(v.Input)

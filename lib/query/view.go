@@ -532,7 +532,7 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 	defer scope.Tx.viewLoadingMutex.Unlock()
 
 	var err error
-	view, ok := scope.Global().temporaryTables.Load(stdin.String())
+	view, ok := scope.Global().TemporaryTables.Load(stdin.String())
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 		if forUpdate {
 			if err = scope.Tx.LockStdinContext(ctx); err != nil {
@@ -548,19 +548,19 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 		if err != nil {
 			return nil, err
 		}
-		scope.Global().temporaryTables.Set(view)
+		scope.Global().TemporaryTables.Set(view)
 	}
 
 	pathIdent := parser.Identifier{Literal: stdin.String()}
 	if useInternalId {
-		if view, err = scope.Global().temporaryTables.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+		if view, err = scope.Global().TemporaryTables.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
 			if err == errTableNotLoaded {
 				err = NewUndeclaredTemporaryTableError(pathIdent)
 			}
 			return nil, err
 		}
 	} else {
-		if view, err = scope.Global().temporaryTables.Get(pathIdent); err != nil {
+		if view, err = scope.Global().TemporaryTables.Get(pathIdent); err != nil {
 			if err == errTableNotLoaded {
 				err = NewUndeclaredTemporaryTableError(pathIdent)
 			}
@@ -689,14 +689,14 @@ func loadObject(
 	var view *View
 	pathIdent := parser.Identifier{BaseExpr: tablePath.GetBaseExpr(), Literal: filePath}
 	if useInternalId {
-		if view, err = scope.Tx.cachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+		if view, err = scope.Tx.CachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
 			if err == errTableNotLoaded {
 				err = NewTableNotLoadedError(pathIdent)
 			}
 			return nil, err
 		}
 	} else {
-		if view, err = scope.Tx.cachedViews.Get(pathIdent); err != nil {
+		if view, err = scope.Tx.CachedViews.Get(pathIdent); err != nil {
 			return nil, NewTableNotLoadedError(pathIdent)
 		}
 	}
@@ -757,7 +757,7 @@ func cacheViewFromFile(
 		return filePath, err
 	}
 
-	view, ok := scope.Tx.cachedViews.Load(filePath)
+	view, ok := scope.Tx.CachedViews.Load(filePath)
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 		fileInfo, err := (func() (*FileInfo, error) {
 			if isInlineObject && (isInlineObjectData(tablePath) || isInlineObjectURL(tablePath)) {
@@ -777,7 +777,7 @@ func cacheViewFromFile(
 		}
 		filePath = fileInfo.Path
 
-		view, ok = scope.Tx.cachedViews.Load(filePath)
+		view, ok = scope.Tx.CachedViews.Load(filePath)
 		if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 			fileInfo.DelimiterPositions = options.DelimiterPositions
 			fileInfo.SingleLine = options.SingleLine
@@ -791,7 +791,7 @@ func cacheViewFromFile(
 				fileInfo = view.FileInfo
 			}
 
-			if err = scope.Tx.cachedViews.Dispose(scope.Tx.FileContainer, fileInfo.Path); err != nil {
+			if err = scope.Tx.CachedViews.Dispose(scope.Tx.FileContainer, fileInfo.Path); err != nil {
 				return filePath, err
 			}
 
@@ -851,7 +851,7 @@ func cacheViewFromFile(
 				return filePath, appendCompositeError(err, scope.Tx.FileContainer.Close(fileInfo.Handler))
 			}
 			loadView.FileInfo.ForUpdate = forUpdate
-			scope.Tx.cachedViews.Set(loadView)
+			scope.Tx.CachedViews.Set(loadView)
 		}
 	}
 	if 0 < len(filePathForCacheKey) {

@@ -2017,11 +2017,11 @@ var showObjectsTests = []struct {
 			{
 				scopeNameCursors: {
 					"CUR": &Cursor{
-						name:  "cur",
+						Name:  "cur",
 						query: selectQueryForCursorTest,
 					},
 					"CUR2": &Cursor{
-						name:  "cur2",
+						Name:  "cur2",
 						query: selectQueryForCursorTest,
 						view: &View{
 							RecordSet: RecordSet{
@@ -2039,7 +2039,7 @@ var showObjectsTests = []struct {
 						index:   -1,
 					},
 					"CUR3": &Cursor{
-						name:  "cur3",
+						Name:  "cur3",
 						query: selectQueryForCursorTest,
 						view: &View{
 							RecordSet: RecordSet{
@@ -2057,7 +2057,7 @@ var showObjectsTests = []struct {
 						index:   1,
 					},
 					"CUR4": &Cursor{
-						name:  "cur4",
+						Name:  "cur4",
 						query: selectQueryForCursorTest,
 						view: &View{
 							RecordSet: RecordSet{
@@ -2075,7 +2075,7 @@ var showObjectsTests = []struct {
 						index:   2,
 					},
 					"CUR5": &Cursor{
-						name:      "stmtcur",
+						Name:      "stmtcur",
 						statement: parser.Identifier{Literal: "stmt"},
 					},
 				},
@@ -2305,7 +2305,7 @@ var showObjectsTests = []struct {
 func TestShowObjects(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.uncommittedViews.Clean()
+		TestTx.UncommittedViews.Clean()
 		TestTx.PreparedStatements = NewPreparedStatementMap()
 		initFlag(TestTx.Flags)
 	}()
@@ -2330,14 +2330,14 @@ func TestShowObjects(t *testing.T) {
 		TestTx.Flags.ExportOptions.DelimiterPositions = v.WriteDelimiterPositions
 		TestTx.Flags.ExportOptions.SingleLine = v.WriteAsSingleLine
 		TestTx.Flags.ExportOptions.Format = v.Format
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		if v.ViewCache.SyncMap != nil {
-			TestTx.cachedViews = v.ViewCache
+			TestTx.CachedViews = v.ViewCache
 		}
 		if v.UncommittedViews.mtx == nil {
-			TestTx.uncommittedViews = NewUncommittedViews()
+			TestTx.UncommittedViews = NewUncommittedViews()
 		} else {
-			TestTx.uncommittedViews = v.UncommittedViews
+			TestTx.UncommittedViews = v.UncommittedViews
 		}
 		TestTx.PreparedStatements = NewPreparedStatementMap()
 		if v.PreparedStatements.SyncMap != nil {
@@ -2644,7 +2644,7 @@ func calcShowRuninfoWidth(wd string) int {
 func TestShowFields(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.uncommittedViews.Clean()
+		TestTx.UncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2653,14 +2653,14 @@ func TestShowFields(t *testing.T) {
 	ctx := context.Background()
 
 	for _, v := range showFieldsTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		if v.ViewCache.SyncMap != nil {
-			TestTx.cachedViews = v.ViewCache
+			TestTx.CachedViews = v.ViewCache
 		}
 		if v.UncommittedViews.mtx == nil {
-			TestTx.uncommittedViews = NewUncommittedViews()
+			TestTx.UncommittedViews = NewUncommittedViews()
 		} else {
-			TestTx.uncommittedViews = v.UncommittedViews
+			TestTx.UncommittedViews = v.UncommittedViews
 		}
 
 		if v.Scope == nil {

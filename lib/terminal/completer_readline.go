@@ -1,6 +1,6 @@
 //go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || windows
 
-package query
+package terminal
 
 import (
 	"io/ioutil"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/query"
 
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/readline-csvq"
@@ -139,7 +140,7 @@ func (l ReadlineListener) OnChange(line []rune, pos int, key rune) ([]rune, int,
 
 type Completer struct {
 	completer *readline.PrefixCompleter
-	scope     *ReferenceScope
+	scope     *query.ReferenceScope
 
 	flagList      []string
 	runinfoList   []string
@@ -169,7 +170,7 @@ type Completer struct {
 	isInAndAfterSelect bool
 }
 
-func NewCompleter(scope *ReferenceScope) *Completer {
+func NewCompleter(scope *query.ReferenceScope) *Completer {
 	completer := &Completer{
 		completer:    readline.NewPrefixCompleter(),
 		scope:        scope,
@@ -180,31 +181,31 @@ func NewCompleter(scope *ReferenceScope) *Completer {
 	for _, v := range cmd.FlagList {
 		completer.flagList = append(completer.flagList, cmd.FlagSymbol(v))
 	}
-	completer.runinfoList = make([]string, 0, len(RuntimeInformatinList))
-	for _, v := range RuntimeInformatinList {
+	completer.runinfoList = make([]string, 0, len(query.RuntimeInformatinList))
+	for _, v := range query.RuntimeInformatinList {
 		completer.runinfoList = append(completer.runinfoList, cmd.RuntimeInformationSymbol(v))
 	}
 
 	sort.Strings(completer.flagList)
 	sort.Strings(completer.runinfoList)
 
-	completer.funcs = make([]string, 0, len(Functions)+3)
-	for k := range Functions {
+	completer.funcs = make([]string, 0, len(query.Functions)+3)
+	for k := range query.Functions {
 		completer.funcs = append(completer.funcs, k)
 	}
 	completer.funcs = append(completer.funcs, "CALL")
 	completer.funcs = append(completer.funcs, "NOW")
 	completer.funcs = append(completer.funcs, "JSON_OBJECT")
 
-	completer.aggFuncs = make([]string, 0, len(AggregateFunctions)+2)
-	completer.analyticFuncs = make([]string, 0, len(AnalyticFunctions)+len(AggregateFunctions))
-	for k := range AggregateFunctions {
+	completer.aggFuncs = make([]string, 0, len(query.AggregateFunctions)+2)
+	completer.analyticFuncs = make([]string, 0, len(query.AnalyticFunctions)+len(query.AggregateFunctions))
+	for k := range query.AggregateFunctions {
 		completer.aggFuncs = append(completer.aggFuncs, k)
 		completer.analyticFuncs = append(completer.analyticFuncs, k)
 	}
 	completer.aggFuncs = append(completer.aggFuncs, "LISTAGG")
 	completer.aggFuncs = append(completer.aggFuncs, "JSON_AGG")
-	for k := range AnalyticFunctions {
+	for k := range query.AnalyticFunctions {
 		completer.analyticFuncs = append(completer.analyticFuncs, k)
 	}
 
@@ -236,7 +237,7 @@ func (c *Completer) Update() {
 func (c *Completer) updateStatements() {
 	c.statementList = make([]string, 0, 10)
 	c.scope.Tx.PreparedStatements.Range(func(key, value interface{}) bool {
-		c.statementList = append(c.statementList, value.(*PreparedStatement).Name)
+		c.statementList = append(c.statementList, value.(*query.PreparedStatement).Name)
 		return true
 	})
 	sort.Strings(c.statementList)
@@ -259,7 +260,7 @@ func (c *Completer) updateCursors() {
 	c.cursorList = make([]string, 0, len(cursorKeys))
 	for _, key := range cursorKeys {
 		if cur, ok := cursors.Load(key); ok {
-			c.cursorList = append(c.cursorList, cur.name)
+			c.cursorList = append(c.cursorList, cur.Name)
 		}
 	}
 }
@@ -274,7 +275,7 @@ func (c *Completer) updateFunctions() {
 		funcKeys = append(funcKeys, v+"()")
 	}
 	userfuncs.Range(func(key, value interface{}) bool {
-		f := value.(*UserDefinedFunction)
+		f := value.(*query.UserDefinedFunction)
 		funcKeys = append(funcKeys, f.Name.String()+"()")
 		c.userFuncs = append(c.userFuncs, f.Name.String())
 		return true
@@ -287,7 +288,7 @@ func (c *Completer) updateFunctions() {
 		aggFuncKeys = append(aggFuncKeys, v+"()")
 	}
 	userAggFuncs.Range(func(key, value interface{}) bool {
-		f := value.(*UserDefinedFunction)
+		f := value.(*query.UserDefinedFunction)
 		aggFuncKeys = append(aggFuncKeys, f.Name.String()+"()")
 		c.userAggFuncs = append(c.userAggFuncs, f.Name.String())
 		return true
@@ -303,7 +304,7 @@ func (c *Completer) updateFunctions() {
 		analyticFuncKeys = append(analyticFuncKeys, v+"() OVER ()")
 	}
 	userAggFuncs.Range(func(key, value interface{}) bool {
-		f := value.(*UserDefinedFunction)
+		f := value.(*query.UserDefinedFunction)
 		analyticFuncKeys = append(analyticFuncKeys, f.Name.String()+"() OVER ()")
 		return true
 	})
@@ -659,8 +660,8 @@ func (c *Completer) functionArgs(line string, origLine string, index int) readli
 							if funcName == "FIRST_VALUE" ||
 								funcName == "LAST_VALUE" ||
 								funcName == "NTH_VALUE" ||
-								(funcName != "LISTAGG" && funcName != "JSON_AGG" && InStrSliceWithCaseInsensitive(funcName, c.aggFuncs)) ||
-								InStrSliceWithCaseInsensitive(funcName, c.userAggFuncs) {
+								(funcName != "LISTAGG" && funcName != "JSON_AGG" && query.InStrSliceWithCaseInsensitive(funcName, c.aggFuncs)) ||
+								query.InStrSliceWithCaseInsensitive(funcName, c.userAggFuncs) {
 
 								customList = append(customList, c.candidate("ROWS", true))
 							}
@@ -692,8 +693,8 @@ func (c *Completer) functionArgs(line string, origLine string, index int) readli
 			default:
 				if i == 0 {
 					if 0 < len(line) && i == c.lastIdx-1 {
-						if InStrSliceWithCaseInsensitive(c.tokens[i].Literal, c.aggFuncs) ||
-							InStrSliceWithCaseInsensitive(c.tokens[i].Literal, c.userAggFuncs) {
+						if query.InStrSliceWithCaseInsensitive(c.tokens[i].Literal, c.aggFuncs) ||
+							query.InStrSliceWithCaseInsensitive(c.tokens[i].Literal, c.userAggFuncs) {
 							keywords = append(keywords, "DISTINCT")
 						}
 					}
@@ -1711,24 +1712,24 @@ func (c *Completer) AlterArgs(line string, origLine string, index int) readline.
 			case parser.SET:
 				switch i {
 				case c.lastIdx:
-					return FileAttributeList, nil, true
+					return query.FileAttributeList, nil, true
 				case c.lastIdx - 1:
 					return []string{"TO"}, nil, true
 				case c.lastIdx - 2:
 					switch strings.ToUpper(c.tokens[c.lastIdx-1].Literal) {
-					case TableFormat:
+					case query.TableFormat:
 						return nil, c.candidateList(c.tableFormatList(), false), true
-					case TableDelimiter:
+					case query.TableDelimiter:
 						return nil, c.candidateList(delimiterCandidates, false), true
-					case TableDelimiterPositions:
+					case query.TableDelimiterPositions:
 						return nil, c.candidateList(delimiterPositionsCandidates, false), true
-					case TableEncoding:
+					case query.TableEncoding:
 						return nil, c.candidateList(exportEncodingsCandidates, false), true
-					case TableLineBreak:
+					case query.TableLineBreak:
 						return nil, c.candidateList(c.lineBreakList(), false), true
-					case TableJsonEscape:
+					case query.TableJsonEscape:
 						return nil, c.candidateList(c.jsonEscapeTypeList(), false), true
-					case TableHeader, TableEncloseAll, TablePrettyPrint:
+					case query.TableHeader, query.TableEncloseAll, query.TablePrettyPrint:
 						return nil, c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false), true
 					}
 				}
@@ -2062,7 +2063,7 @@ func (c *Completer) DisposeArgs(line string, origLine string, index int) readlin
 
 func (c *Completer) ShowArgs(line string, origLine string, index int) readline.CandidateList {
 	var showChild = func() readline.CandidateList {
-		cands := c.candidateList(ShowObjectList, false)
+		cands := c.candidateList(query.ShowObjectList, false)
 		cands = append(cands, c.candidate("FIELDS", true))
 		cands.Sort()
 		cands = append(cands, c.candidateList(c.flagList, false)...)
@@ -2106,7 +2107,7 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 }
 
 func (c *Completer) SearchAllTables(line string, _ string, _ int) readline.CandidateList {
-	tableKeys := c.scope.Tx.cachedViews.SortedKeys()
+	tableKeys := c.scope.Tx.CachedViews.SortedKeys()
 	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.JsonlExt, cmd.LtsvExt, cmd.TextExt}, c.scope.Tx.Flags.Repository)
 
 	defaultDir := c.scope.Tx.Flags.Repository
@@ -2117,7 +2118,7 @@ func (c *Completer) SearchAllTables(line string, _ string, _ int) readline.Candi
 	items := make([]string, 0, len(tableKeys)+len(files)+len(c.viewList))
 	tablePath := make(map[string]bool)
 	for _, k := range tableKeys {
-		if view, ok := c.scope.Tx.cachedViews.Load(k); ok {
+		if view, ok := c.scope.Tx.CachedViews.Load(k); ok {
 			lpath := view.FileInfo.Path
 			tablePath[lpath] = true
 			if filepath.Dir(lpath) == defaultDir {
@@ -2407,7 +2408,7 @@ func (c *Completer) ListFiles(path string, includeExt []string, repository strin
 				continue
 			}
 
-			if !f.IsDir() && (len(includeExt) < 1 || !InStrSliceWithCaseInsensitive(filepath.Ext(f.Name()), includeExt)) {
+			if !f.IsDir() && (len(includeExt) < 1 || !query.InStrSliceWithCaseInsensitive(filepath.Ext(f.Name()), includeExt)) {
 				continue
 			}
 
@@ -2433,8 +2434,8 @@ func (c *Completer) ListFiles(path string, includeExt []string, repository strin
 
 func (c *Completer) AllColumnList() []string {
 	m := make(map[string]bool)
-	c.scope.blocks[0].temporaryTables.Range(func(key, value interface{}) bool {
-		col := c.columnList(value.(*View))
+	c.scope.Blocks[0].TemporaryTables.Range(func(key, value interface{}) bool {
+		col := c.columnList(value.(*query.View))
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
 				m[s] = true
@@ -2443,8 +2444,8 @@ func (c *Completer) AllColumnList() []string {
 		return true
 	})
 
-	c.scope.Tx.cachedViews.Range(func(key, value interface{}) bool {
-		col := c.columnList(value.(*View))
+	c.scope.Tx.CachedViews.Range(func(key, value interface{}) bool {
+		col := c.columnList(value.(*query.View))
 		for _, s := range col {
 			if _, ok := m[s]; !ok {
 				m[s] = true
@@ -2466,21 +2467,21 @@ func (c *Completer) ColumnList(tableName string, repository string) []string {
 		return list
 	}
 
-	if view, ok := c.scope.blocks[0].temporaryTables.Load(tableName); ok {
+	if view, ok := c.scope.Blocks[0].TemporaryTables.Load(tableName); ok {
 		list := c.columnList(view)
 		c.tableColumns[tableName] = list
 		return list
 	}
 
-	if fpath, err := CreateFilePath(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.scope.Tx.cachedViews.Load(fpath); ok {
+	if fpath, err := query.CreateFilePath(parser.Identifier{Literal: tableName}, repository); err == nil {
+		if view, ok := c.scope.Tx.CachedViews.Load(fpath); ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
 		}
 	}
-	if fpath, err := SearchFilePathFromAllTypes(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.scope.Tx.cachedViews.Load(fpath); ok {
+	if fpath, err := query.SearchFilePathFromAllTypes(parser.Identifier{Literal: tableName}, repository); err == nil {
+		if view, ok := c.scope.Tx.CachedViews.Load(fpath); ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
@@ -2490,7 +2491,7 @@ func (c *Completer) ColumnList(tableName string, repository string) []string {
 	return nil
 }
 
-func (*Completer) columnList(view *View) []string {
+func (*Completer) columnList(view *query.View) []string {
 	var list []string
 	for _, h := range view.Header {
 		list = append(list, h.Column)
@@ -2750,10 +2751,10 @@ func (c *Completer) isTableObject(token parser.Token) bool {
 
 func (c *Completer) isFunction(token parser.Token) bool {
 	if token.Token == parser.IDENTIFIER {
-		if _, ok := Functions[strings.ToUpper(token.Literal)]; ok {
+		if _, ok := query.Functions[strings.ToUpper(token.Literal)]; ok {
 			return true
 		}
-		return InStrSliceWithCaseInsensitive(token.Literal, c.userFuncList)
+		return query.InStrSliceWithCaseInsensitive(token.Literal, c.userFuncList)
 	}
 
 	return token.Token == parser.SUBSTRING ||
@@ -2826,7 +2827,7 @@ func (c *Completer) aggregateFunctionCandidateList(line string) readline.Candida
 func (c *Completer) analyticFunctionCandidateList(line string) readline.CandidateList {
 	var cands readline.CandidateList
 	if 0 <= c.lastIdx && c.tokens[c.lastIdx].Token == parser.FUNCTION {
-		if InStrSliceWithCaseInsensitive(c.tokens[c.lastIdx].Literal, []string{
+		if query.InStrSliceWithCaseInsensitive(c.tokens[c.lastIdx].Literal, []string{
 			"FIRST_VALUE",
 			"LAST_VALUE",
 			"NTH_VALUE",
@@ -2836,7 +2837,7 @@ func (c *Completer) analyticFunctionCandidateList(line string) readline.Candidat
 			cands = append(cands, c.candidate("IGNORE NULLS", true))
 		}
 
-		if InStrSliceWithCaseInsensitive(c.tokens[c.lastIdx].Literal, c.analyticFuncs) {
+		if query.InStrSliceWithCaseInsensitive(c.tokens[c.lastIdx].Literal, c.analyticFuncs) {
 			cands = append(cands, c.candidate("OVER", true))
 		}
 	}

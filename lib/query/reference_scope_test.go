@@ -246,8 +246,8 @@ func TestReferenceScope_SubstituteVariable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !BlockScopeListEqual(testVariablesReferenceScope.blocks, v.ResultScope.blocks) {
-			t.Errorf("%s: blocks = %v, want %v", v.Name, testVariablesReferenceScope.blocks, v.ResultScope.blocks)
+		if !BlockScopeListEqual(testVariablesReferenceScope.Blocks, v.ResultScope.Blocks) {
+			t.Errorf("%s: blocks = %v, want %v", v.Name, testVariablesReferenceScope.Blocks, v.ResultScope.Blocks)
 		}
 		if !reflect.DeepEqual(result, v.Result) {
 			t.Errorf("%s: result = %v, want %v", v.Name, result, v.Result)
@@ -295,8 +295,8 @@ func TestReferenceScope_DisposeVariable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !BlockScopeListEqual(testVariablesReferenceScope.blocks, v.ResultScope.blocks) {
-			t.Errorf("%s: blocks = %v, want %v", v.Name, testVariablesReferenceScope.blocks, v.ResultScope.blocks)
+		if !BlockScopeListEqual(testVariablesReferenceScope.Blocks, v.ResultScope.Blocks) {
+			t.Errorf("%s: blocks = %v, want %v", v.Name, testVariablesReferenceScope.Blocks, v.ResultScope.Blocks)
 		}
 	}
 }
@@ -535,8 +535,8 @@ var referenceScopeSetTemporaryTableTests = []struct {
 func TestReferenceScope_SetTemporaryTable(t *testing.T) {
 	for _, v := range referenceScopeSetTemporaryTableTests {
 		testTemporaryTablesReferenceScope.SetTemporaryTable(v.SetView)
-		if !BlockScopeListEqual(testTemporaryTablesReferenceScope.blocks, v.Result.blocks) {
-			t.Errorf("%s: blocks = %v, want %v", v.Name, testTemporaryTablesReferenceScope.blocks, v.Result.blocks)
+		if !BlockScopeListEqual(testTemporaryTablesReferenceScope.Blocks, v.Result.Blocks) {
+			t.Errorf("%s: blocks = %v, want %v", v.Name, testTemporaryTablesReferenceScope.Blocks, v.Result.Blocks)
 		}
 	}
 }
@@ -637,8 +637,8 @@ var referenceScopeReplaceTemporaryTableTests = []struct {
 func TestReferenceScope_ReplaceTemporaryTable(t *testing.T) {
 	for _, v := range referenceScopeReplaceTemporaryTableTests {
 		testTemporaryTablesReferenceScope.ReplaceTemporaryTable(v.SetView)
-		if !BlockScopeListEqual(testTemporaryTablesReferenceScope.blocks, v.Result.blocks) {
-			t.Errorf("%s: blocks = %v, want %v", v.Name, testTemporaryTablesReferenceScope.blocks, v.Result.blocks)
+		if !BlockScopeListEqual(testTemporaryTablesReferenceScope.Blocks, v.Result.Blocks) {
+			t.Errorf("%s: blocks = %v, want %v", v.Name, testTemporaryTablesReferenceScope.Blocks, v.Result.Blocks)
 		}
 	}
 }
@@ -721,8 +721,8 @@ func TestReferenceScope_DisposeTemporaryTable(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !BlockScopeListEqual(testTemporaryTablesReferenceScope.blocks, v.Result.blocks) {
-			t.Errorf("%s: blocks = %v, want %v", v.Name, testTemporaryTablesReferenceScope.blocks, v.Result.blocks)
+		if !BlockScopeListEqual(testTemporaryTablesReferenceScope.Blocks, v.Result.Blocks) {
+			t.Errorf("%s: blocks = %v, want %v", v.Name, testTemporaryTablesReferenceScope.Blocks, v.Result.Blocks)
 		}
 	}
 }
@@ -843,8 +843,8 @@ func TestReferenceScope_StoreTemporaryTable(t *testing.T) {
 
 	log := scope.StoreTemporaryTable(TestTx.Session, UncommittedViews)
 
-	if !BlockScopeListEqual(scope.blocks, expect.blocks) {
-		t.Errorf("Store: blocks = %v, want %v", scope.blocks, expect.blocks)
+	if !BlockScopeListEqual(scope.Blocks, expect.Blocks) {
+		t.Errorf("Store: blocks = %v, want %v", scope.Blocks, expect.Blocks)
 	}
 
 	if reflect.DeepEqual(log, expectOut) {
@@ -976,8 +976,8 @@ func TestReferenceScope_RestoreTemporaryTable(t *testing.T) {
 
 	log := scope.RestoreTemporaryTable(UncommittedViews)
 
-	if !BlockScopeListEqual(scope.blocks, expect.blocks) {
-		t.Errorf("Restore: blocks = %v, want %v", scope.blocks, expect.blocks)
+	if !BlockScopeListEqual(scope.Blocks, expect.Blocks) {
+		t.Errorf("Restore: blocks = %v, want %v", scope.Blocks, expect.Blocks)
 	}
 
 	if reflect.DeepEqual(log, expectOut) {
@@ -1063,8 +1063,8 @@ func TestReferenceScope_DisposeCursor(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !BlockScopeListEqual(scope.blocks, v.Result.blocks) {
-			t.Errorf("%s: blocks = %v, want %v", v.Name, scope.blocks, v.Result.blocks)
+		if !BlockScopeListEqual(scope.Blocks, v.Result.Blocks) {
+			t.Errorf("%s: blocks = %v, want %v", v.Name, scope.Blocks, v.Result.Blocks)
 		}
 	}
 }
@@ -1146,7 +1146,7 @@ var referenceScopeOpenCursorTests = []struct {
 
 func TestReferenceScope_OpenCursor(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1176,7 +1176,7 @@ func TestReferenceScope_OpenCursor(t *testing.T) {
 	}, nil, time.Time{}, nil)
 
 	for _, v := range referenceScopeOpenCursorTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 
 		err := scope.OpenCursor(context.Background(), v.CurName, v.CurValues)
 		if err != nil {
@@ -1191,8 +1191,8 @@ func TestReferenceScope_OpenCursor(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !BlockScopeListEqual(scope.blocks, v.Result.blocks) {
-			t.Errorf("%s: blocks = %v, want %v", v.Name, scope.blocks, v.Result.blocks)
+		if !BlockScopeListEqual(scope.Blocks, v.Result.Blocks) {
+			t.Errorf("%s: blocks = %v, want %v", v.Name, scope.Blocks, v.Result.Blocks)
 		}
 	}
 }
@@ -1243,7 +1243,7 @@ var referenceScopeCloseCursorTests = []struct {
 
 func TestReferenceScope_CloseCursor(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -1311,8 +1311,8 @@ func TestReferenceScope_CloseCursor(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !BlockScopeListEqual(scope.blocks, v.Result.blocks) {
-			t.Errorf("%s: blocks = %v, want %v", v.Name, scope.blocks, v.Result.blocks)
+		if !BlockScopeListEqual(scope.Blocks, v.Result.Blocks) {
+			t.Errorf("%s: blocks = %v, want %v", v.Name, scope.Blocks, v.Result.Blocks)
 		}
 	}
 }

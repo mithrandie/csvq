@@ -60,7 +60,7 @@ var cursorMapDeclareTests = []struct {
 		},
 		Result: GenerateCursorMap([]*Cursor{
 			{
-				name:  "cur",
+				Name:  "cur",
 				query: selectQueryForCursorTest,
 				mtx:   &sync.Mutex{},
 			},
@@ -74,12 +74,12 @@ var cursorMapDeclareTests = []struct {
 		},
 		Result: GenerateCursorMap([]*Cursor{
 			{
-				name:  "cur",
+				Name:  "cur",
 				query: selectQueryForCursorTest,
 				mtx:   &sync.Mutex{},
 			},
 			{
-				name:      "stmtcur",
+				Name:      "stmtcur",
 				statement: parser.Identifier{Literal: "stmt"},
 				mtx:       &sync.Mutex{},
 			},
@@ -134,7 +134,7 @@ var cursorMapAddPseudoCursorTests = []struct {
 		},
 		Result: GenerateCursorMap([]*Cursor{
 			{
-				name: "pcur",
+				Name: "pcur",
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					RecordSet: RecordSet{
@@ -189,7 +189,7 @@ var cursorMapDisposeTests = []struct {
 		CurName: parser.Identifier{Literal: "cur"},
 		Result: GenerateCursorMap([]*Cursor{
 			{
-				name: "pcur",
+				Name: "pcur",
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					RecordSet: RecordSet{
@@ -218,7 +218,7 @@ var cursorMapDisposeTests = []struct {
 func TestCursorMap_Dispose(t *testing.T) {
 	cursors := GenerateCursorMap([]*Cursor{
 		{
-			name:  "cur",
+			Name:  "cur",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
@@ -263,7 +263,7 @@ var cursorMapOpenTests = []struct {
 		CurName: parser.Identifier{Literal: "cur"},
 		Result: GenerateCursorMap([]*Cursor{
 			{
-				name:  "cur",
+				Name:  "cur",
 				query: selectQueryForCursorTest,
 				view: &View{
 					Header: NewHeader("table1", []string{"column1", "column2"}),
@@ -293,12 +293,12 @@ var cursorMapOpenTests = []struct {
 				mtx:   &sync.Mutex{},
 			},
 			{
-				name:  "cur2",
+				Name:  "cur2",
 				query: selectQueryForCursorQueryErrorTest,
 				mtx:   &sync.Mutex{},
 			},
 			{
-				name: "pcur",
+				Name: "pcur",
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					RecordSet: RecordSet{
@@ -311,22 +311,22 @@ var cursorMapOpenTests = []struct {
 				mtx:      &sync.Mutex{},
 			},
 			{
-				name:      "stmt",
+				Name:      "stmt",
 				statement: parser.Identifier{Literal: "stmt"},
 				mtx:       &sync.Mutex{},
 			},
 			{
-				name:      "not_exist_stmt",
+				Name:      "not_exist_stmt",
 				statement: parser.Identifier{Literal: "not_exist_stmt"},
 				mtx:       &sync.Mutex{},
 			},
 			{
-				name:      "invalid_stmt",
+				Name:      "invalid_stmt",
 				statement: parser.Identifier{Literal: "invalid_stmt"},
 				mtx:       &sync.Mutex{},
 			},
 			{
-				name:      "invalid_stmt2",
+				Name:      "invalid_stmt2",
 				statement: parser.Identifier{Literal: "invalid_stmt2"},
 				mtx:       &sync.Mutex{},
 			},
@@ -340,7 +340,7 @@ var cursorMapOpenTests = []struct {
 		},
 		Result: GenerateCursorMap([]*Cursor{
 			{
-				name:      "stmt",
+				Name:      "stmt",
 				statement: parser.Identifier{Literal: "stmt"},
 				view: &View{
 					Header: NewHeader("table1", []string{"column1", "column2"}),
@@ -362,7 +362,7 @@ var cursorMapOpenTests = []struct {
 				mtx:   &sync.Mutex{},
 			},
 			{
-				name:  "cur",
+				Name:  "cur",
 				query: selectQueryForCursorTest,
 				view: &View{
 					Header: NewHeader("table1", []string{"column1", "column2"}),
@@ -392,12 +392,12 @@ var cursorMapOpenTests = []struct {
 				mtx:   &sync.Mutex{},
 			},
 			{
-				name:  "cur2",
+				Name:  "cur2",
 				query: selectQueryForCursorQueryErrorTest,
 				mtx:   &sync.Mutex{},
 			},
 			{
-				name: "pcur",
+				Name: "pcur",
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					RecordSet: RecordSet{
@@ -410,17 +410,17 @@ var cursorMapOpenTests = []struct {
 				mtx:      &sync.Mutex{},
 			},
 			{
-				name:      "not_exist_stmt",
+				Name:      "not_exist_stmt",
 				statement: parser.Identifier{Literal: "not_exist_stmt"},
 				mtx:       &sync.Mutex{},
 			},
 			{
-				name:      "invalid_stmt",
+				Name:      "invalid_stmt",
 				statement: parser.Identifier{Literal: "invalid_stmt"},
 				mtx:       &sync.Mutex{},
 			},
 			{
-				name:      "invalid_stmt2",
+				Name:      "invalid_stmt2",
 				statement: parser.Identifier{Literal: "invalid_stmt2"},
 				mtx:       &sync.Mutex{},
 			},
@@ -466,7 +466,7 @@ var cursorMapOpenTests = []struct {
 func TestCursorMap_Open(t *testing.T) {
 	defer func() {
 		TestTx.PreparedStatements = NewPreparedStatementMap()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -485,39 +485,39 @@ func TestCursorMap_Open(t *testing.T) {
 		Statement: value.NewString("select 1; insert into table1 values (?, ?);"),
 	})
 
-	scope.blocks[0].cursors = GenerateCursorMap([]*Cursor{
+	scope.Blocks[0].Cursors = GenerateCursorMap([]*Cursor{
 		{
-			name:  "cur",
+			Name:  "cur",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 		{
-			name:  "cur2",
+			Name:  "cur2",
 			query: selectQueryForCursorQueryErrorTest,
 			mtx:   &sync.Mutex{},
 		},
 		{
-			name:      "stmt",
+			Name:      "stmt",
 			statement: parser.Identifier{Literal: "stmt"},
 			mtx:       &sync.Mutex{},
 		},
 		{
-			name:      "not_exist_stmt",
+			Name:      "not_exist_stmt",
 			statement: parser.Identifier{Literal: "not_exist_stmt"},
 			mtx:       &sync.Mutex{},
 		},
 		{
-			name:      "invalid_stmt",
+			Name:      "invalid_stmt",
 			statement: parser.Identifier{Literal: "invalid_stmt"},
 			mtx:       &sync.Mutex{},
 		},
 		{
-			name:      "invalid_stmt2",
+			Name:      "invalid_stmt2",
 			statement: parser.Identifier{Literal: "invalid_stmt2"},
 			mtx:       &sync.Mutex{},
 		},
 	})
-	_ = scope.blocks[0].cursors.AddPseudoCursor(
+	_ = scope.Blocks[0].Cursors.AddPseudoCursor(
 		parser.Identifier{Literal: "pcur"},
 		[]value.Primary{
 			value.NewInteger(1),
@@ -527,8 +527,8 @@ func TestCursorMap_Open(t *testing.T) {
 
 	ctx := context.Background()
 	for _, v := range cursorMapOpenTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
-		err := scope.blocks[0].cursors.Open(ctx, scope, v.CurName, v.CurValues)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
+		err := scope.Blocks[0].Cursors.Open(ctx, scope, v.CurName, v.CurValues)
 		if err != nil {
 			if len(v.Error) < 1 {
 				t.Errorf("%s: unexpected error %q", v.Name, err)
@@ -541,8 +541,8 @@ func TestCursorMap_Open(t *testing.T) {
 			t.Errorf("%s: no error, want error %q", v.Name, v.Error)
 			continue
 		}
-		if !SyncMapEqual(scope.blocks[0].cursors, v.Result) {
-			t.Errorf("%s: result = %v, want %v", v.Name, scope.blocks[0].cursors, v.Result)
+		if !SyncMapEqual(scope.Blocks[0].Cursors, v.Result) {
+			t.Errorf("%s: result = %v, want %v", v.Name, scope.Blocks[0].Cursors, v.Result)
 		}
 	}
 }
@@ -558,12 +558,12 @@ var cursorMapCloseTests = []struct {
 		CurName: parser.Identifier{Literal: "cur"},
 		Result: GenerateCursorMap([]*Cursor{
 			{
-				name:  "cur",
+				Name:  "cur",
 				query: selectQueryForCursorTest,
 				mtx:   &sync.Mutex{},
 			},
 			{
-				name: "pcur",
+				Name: "pcur",
 				view: &View{
 					Header: NewHeader("", []string{"c1"}),
 					RecordSet: RecordSet{
@@ -591,7 +591,7 @@ var cursorMapCloseTests = []struct {
 
 func TestCursorMap_Close(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -599,7 +599,7 @@ func TestCursorMap_Close(t *testing.T) {
 
 	cursors := GenerateCursorMap([]*Cursor{
 		{
-			name:  "cur",
+			Name:  "cur",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
@@ -753,7 +753,7 @@ var cursorMapFetchTests = []struct {
 
 func TestCursorMap_Fetch(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -761,12 +761,12 @@ func TestCursorMap_Fetch(t *testing.T) {
 
 	cursors := GenerateCursorMap([]*Cursor{
 		{
-			name:  "cur",
+			Name:  "cur",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 		{
-			name:  "cur2",
+			Name:  "cur2",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
@@ -820,7 +820,7 @@ var cursorMapIsOpenTests = []struct {
 
 func TestCursorMap_IsOpen(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -828,12 +828,12 @@ func TestCursorMap_IsOpen(t *testing.T) {
 
 	cursors := GenerateCursorMap([]*Cursor{
 		{
-			name:  "cur",
+			Name:  "cur",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 		{
-			name:  "cur2",
+			Name:  "cur2",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
@@ -900,7 +900,7 @@ var cursorMapIsInRangeTests = []struct {
 
 func TestCursorMap_IsInRange(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -908,26 +908,26 @@ func TestCursorMap_IsInRange(t *testing.T) {
 
 	cursors := GenerateCursorMap([]*Cursor{
 		{
-			name:  "cur",
+			Name:  "cur",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 		{
-			name:  "cur2",
+			Name:  "cur2",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 		{
-			name:  "cur3",
+			Name:  "cur3",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 	})
 	scope := NewReferenceScope(TestTx)
 	ctx := context.Background()
-	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur"}, nil)
-	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur2"}, nil)
 	_, _ = cursors.Fetch(parser.Identifier{Literal: "cur2"}, parser.NEXT, 0)
 
@@ -980,7 +980,7 @@ var cursorMapCountTests = []struct {
 
 func TestCursorMap_Count(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -988,17 +988,17 @@ func TestCursorMap_Count(t *testing.T) {
 
 	cursors := GenerateCursorMap([]*Cursor{
 		{
-			name:  "cur",
+			Name:  "cur",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 		{
-			name:  "cur2",
+			Name:  "cur2",
 			query: selectQueryForCursorTest,
 			mtx:   &sync.Mutex{},
 		},
 	})
-	_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+	_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 	scope := NewReferenceScope(TestTx)
 	ctx := context.Background()
 	_ = cursors.Open(ctx, scope, parser.Identifier{Literal: "cur"}, nil)
