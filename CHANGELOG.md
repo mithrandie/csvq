@@ -1,5 +1,11 @@
 # Change Log
 
+## Version 1.17.6
+
+Released on Jun 30, 2022
+
+- Fix a bug in REPLACE query. ([GitHub #79](https://github.com/mithrandie/csvq/issues/79))
+
 ## Version 1.17.5
 
 Released on Jun 26, 2022
