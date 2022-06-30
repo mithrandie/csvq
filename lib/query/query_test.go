@@ -2427,6 +2427,57 @@ var replaceTests = []struct {
 		}),
 	},
 	{
+		Name: "Replace Query to Empty Table",
+		Query: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table_empty"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+							parser.NewStringValue("str4"),
+						},
+					},
+				},
+			},
+		},
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table_empty.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+			ForUpdate: true,
+		},
+		UpdateCount: 1,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table_empty.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
+				},
+				Header: NewHeader("table_empty", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewInteger(4),
+						value.NewString("str4"),
+					}),
+				},
+			},
+		}),
+	},
+	{
 		Name: "Replace Query For Temporary View",
 		Query: parser.ReplaceQuery{
 			Table: parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t"}},
