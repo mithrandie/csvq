@@ -2222,7 +2222,7 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 		return 0, err
 	}
 
-	sortValuesInInsertRecords := make([]SortValues, view.RecordLen())
+	sortValuesInInsertRecords := make([]SortValues, len(records))
 	if err := NewGoroutineTaskManager(len(records), -1, flags.CPU).Run(ctx, func(index int) error {
 		sortValues := make(SortValues, len(keyIndices))
 		for j, idx := range keyIndices {
