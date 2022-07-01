@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"math"
 	"os"
 	"reflect"
 	"sync"
@@ -3989,6 +3990,22 @@ var evaluateTests = []struct {
 			Name: "version",
 		},
 		Result: value.NewString("v1.0.0"),
+	},
+	{
+		Name: "Constant",
+		Expr: parser.Constant{
+			Space: "math",
+			Name:  "pi",
+		},
+		Result: value.NewFloat(math.Pi),
+	},
+	{
+		Name: "Constant Undefined Error",
+		Expr: parser.Constant{
+			Space: "math",
+			Name:  "undefined",
+		},
+		Error: "constant MATH::UNDEFINED is not defined",
 	},
 	{
 		Name: "Flag",

@@ -185,6 +185,16 @@ func (i Identifier) String() string {
 	return i.Literal
 }
 
+type Constant struct {
+	*BaseExpr
+	Space string
+	Name  string
+}
+
+func (e Constant) String() string {
+	return strings.ToUpper(e.Space) + ConstantDelimiter + strings.ToUpper(e.Name)
+}
+
 type FieldReference struct {
 	*BaseExpr
 	View   Identifier

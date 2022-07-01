@@ -24,6 +24,7 @@ const (
 	ErrorNotAllowedAnalyticFunction           = 10202
 	ErrorUndeclaredVariable                   = 10301
 	ErrorVariableRedeclared                   = 10302
+	ErrorUndefinedConstant                    = 10321
 	ErrorFunctionNotExist                     = 10401
 	ErrorFunctionArgumentsLength              = 10402
 	ErrorFunctionInvalidArgument              = 10403

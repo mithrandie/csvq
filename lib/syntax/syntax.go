@@ -954,6 +954,13 @@ var CsvqSyntax = []Expression{
 				},
 			},
 			{
+				Name: "system_defined_constant",
+				Description: Description{
+					Template: "cf. %s",
+					Values:   []Element{Link("System Defined Constant")},
+				},
+			},
+			{
 				Name: "flag",
 				Description: Description{
 					Template: "cf. %s",
@@ -1186,6 +1193,33 @@ var CsvqSyntax = []Expression{
 				Variable("@#WORKING_DIRECTORY"), String("string"),
 				Variable("@#VERSION"), String("string"),
 			},
+		},
+	},
+	{
+		Label: "System Defined Constant",
+		Description: Description{
+			Template: "" +
+				"```\n" +
+				"  +----------+------------------+---------+\n" +
+				"  | Category | Name             | Type    |\n" +
+				"  +----------+------------------+---------+\n" +
+				"  | MATH     | E                | float   |\n" +
+				"  |          | PI               | float   |\n" +
+				"  |          | PHI              | float   |\n" +
+				"  |          | SQRT2            | float   |\n" +
+				"  |          | SQRTE            | float   |\n" +
+				"  |          | SQRTPI           | float   |\n" +
+				"  |          | SQRTPHI          | float   |\n" +
+				"  |          | LN2              | float   |\n" +
+				"  |          | LOG2E            | float   |\n" +
+				"  |          | LN10             | float   |\n" +
+				"  |          | LOG10E           | float   |\n" +
+				"  | FLOAT    | MAX              | float   |\n" +
+				"  |          | SMALLEST_NONZERO | float   |\n" +
+				"  | INTEGER  | MAX              | integer |\n" +
+				"  |          | MIN              | integer |\n" +
+				"  +----------+------------------+---------+\n" +
+				"```",
 		},
 	},
 	{
@@ -2885,26 +2919,30 @@ var CsvqSyntax = []Expression{
 						"  > A null is represented by a keyword NULL.\n" +
 						"\n" +
 						"%s\n" +
-						"  > A variable is a word starting with “@” and followed by a" +
+						"  > A variable is a word starting with \"@\" and followed by a" +
 						"    character string that contains any unicode letters, any digits or" +
 						"    Low Lines(U+005F _).\n" +
 						"\n" +
 						"%s\n" +
-						"  > A flag is a word starting with “@@” and followed by a character" +
+						"  > A flag is a word starting with \"@@\" and followed by a character" +
 						"    string that contains any unicode letters, any digits or" +
 						"    Low Lines(U+005F _). Character case is ignored.\n" +
 						"\n" +
 						"%s\n" +
-						"  > A environment variable is a word starting with “@%%” and followed" +
+						"  > A environment variable is a word starting with \"@%%\" and followed" +
 						"    by a character string that contains any unicode letters, any digits" +
 						"    or Low Lines(U+005F _). If a environment variable includes other" +
 						"    characters, you can use the variable by enclosing" +
 						"    in Back Quotes(U+0060 `).\n" +
 						"\n" +
 						"%s\n" +
-						"  > A runtime information is a word starting with “@#” and followed" +
+						"  > A runtime information is a word starting with \"@#\" and followed" +
 						"    by a character string that contains any unicode letters, any digits" +
-						"    or Low Lines(U+005F _). Character case is ignored.",
+						"    or Low Lines(U+005F _). Character case is ignored." +
+						"\n" +
+						"%s\n" +
+						"  > A system defined constant is a group of words represented by two" +
+						"    words separated by \"::\". Character case is ignored.",
 					Values: []Element{
 						Identifier("Identifier"),
 						Link("reserved words"),
@@ -2918,6 +2956,7 @@ var CsvqSyntax = []Expression{
 						Flag("Flag"),
 						Variable("Environment Variable"),
 						Variable("Runtime Information"),
+						Variable("System Defined Constant"),
 					},
 				},
 			},

@@ -3714,6 +3714,18 @@ var completerSearchValuesTests = []completerTest{
 		},
 	},
 	{
+		Name:     "SearchValues Constants",
+		Line:     "i",
+		OrigLine: "select i",
+		Index:    8,
+		Expect: readline.CandidateList{
+			{Name: []rune("INTEGER::MAX")},
+			{Name: []rune("INTEGER::MIN")},
+			{Name: []rune("IS"), AppendSpace: true},
+			{Name: []rune("IN"), AppendSpace: true},
+		},
+	},
+	{
 		Name:     "SearchValues Keyword",
 		Line:     "c",
 		OrigLine: "select c",

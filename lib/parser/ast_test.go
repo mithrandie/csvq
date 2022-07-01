@@ -144,6 +144,17 @@ func TestIdentifier_String(t *testing.T) {
 	}
 }
 
+func TestConstant_String(t *testing.T) {
+	e := Constant{
+		Space: "math",
+		Name:  "pi",
+	}
+	expect := "MATH::PI"
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestFieldReference_String(t *testing.T) {
 	e := FieldReference{
 		View:   Identifier{Literal: "table1"},

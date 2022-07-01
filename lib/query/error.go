@@ -38,6 +38,7 @@ const (
 	ErrMsgNotAllowedAnalyticFunction           = "analytic function %s is only available in select clause or order by clause"
 	ErrMsgUndeclaredVariable                   = "variable %s is undeclared"
 	ErrMsgVariableRedeclared                   = "variable %s is redeclared"
+	ErrMsgUndefinedConstant                    = "constant %s is not defined"
 	ErrMsgFunctionNotExist                     = "function %s does not exist"
 	ErrMsgFunctionArgumentsLength              = "function %s takes %s"
 	ErrMsgFunctionInvalidArgument              = "%s for function %s"
@@ -520,6 +521,16 @@ type VariableRedeclaredError struct {
 func NewVariableRedeclaredError(expr parser.Variable) error {
 	return &VariableRedeclaredError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgVariableRedeclared, expr), ReturnCodeApplicationError, ErrorVariableRedeclared),
+	}
+}
+
+type UndefinedConstantError struct {
+	*BaseError
+}
+
+func NewUndefinedConstantError(expr parser.Constant) error {
+	return &UndefinedConstantError{
+		NewBaseError(expr, fmt.Sprintf(ErrMsgUndefinedConstant, expr), ReturnCodeApplicationError, ErrorUndefinedConstant),
 	}
 }
 

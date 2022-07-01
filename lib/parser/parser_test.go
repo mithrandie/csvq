@@ -6413,6 +6413,25 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select math::pi",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Fields: []QueryExpression{
+						Field{
+							Object: Constant{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Space:    "math",
+								Name:     "pi",
+							},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
 		Input: "select @@flag",
 		Output: []Statement{
 			SelectQuery{SelectEntity: SelectEntity{

@@ -16,7 +16,7 @@ func HasAggregateFunction(expr parser.QueryExpression, scope *ReferenceScope) (b
 
 		return HasAggregateFunctionInList(e.Args, scope)
 	case parser.PrimitiveType, parser.FieldReference, parser.ColumnNumber, parser.Subquery, parser.Exists,
-		parser.Variable, parser.EnvironmentVariable, parser.RuntimeInformation, parser.Flag,
+		parser.Variable, parser.EnvironmentVariable, parser.RuntimeInformation, parser.Constant, parser.Flag,
 		parser.CursorStatus, parser.CursorAttrebute, parser.Placeholder,
 		parser.AllColumns:
 		return false, nil
@@ -171,7 +171,7 @@ func SearchAnalyticFunctions(expr parser.QueryExpression) ([]parser.AnalyticFunc
 
 		return appendAnalyticFunctionToListIfNotExist(childFuncs, []parser.AnalyticFunction{e}), nil
 	case parser.PrimitiveType, parser.FieldReference, parser.ColumnNumber, parser.Subquery, parser.Exists,
-		parser.Variable, parser.EnvironmentVariable, parser.RuntimeInformation, parser.Flag,
+		parser.Variable, parser.EnvironmentVariable, parser.RuntimeInformation, parser.Constant, parser.Flag,
 		parser.CursorStatus, parser.CursorAttrebute, parser.Placeholder,
 		parser.AllColumns:
 		return nil, nil

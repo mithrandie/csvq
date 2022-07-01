@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/constant"
 	"github.com/mithrandie/csvq/lib/excmd"
 	"github.com/mithrandie/csvq/lib/json"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -74,6 +75,11 @@ func Evaluate(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpre
 		val = value.NewString(os.Getenv(expr.(parser.EnvironmentVariable).Name))
 	case parser.RuntimeInformation:
 		val, err = GetRuntimeInformation(scope.Tx, expr.(parser.RuntimeInformation))
+	case parser.Constant:
+		val, err = constant.Get(expr.(parser.Constant))
+		if err != nil {
+			err = NewUndefinedConstantError(expr.(parser.Constant))
+		}
 	case parser.Flag:
 		if v, ok := scope.Tx.GetFlag(expr.(parser.Flag).Name); ok {
 			val = v

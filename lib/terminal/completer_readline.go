@@ -3,6 +3,7 @@
 package terminal
 
 import (
+	"github.com/mithrandie/csvq/lib/constant"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -148,6 +149,8 @@ type Completer struct {
 	aggFuncs      []string
 	analyticFuncs []string
 
+	constants []string
+
 	statementList    []string
 	userFuncs        []string
 	userAggFuncs     []string
@@ -208,6 +211,14 @@ func NewCompleter(scope *query.ReferenceScope) *Completer {
 	for k := range query.AnalyticFunctions {
 		completer.analyticFuncs = append(completer.analyticFuncs, k)
 	}
+
+	completer.constants = make([]string, 0, constant.Count())
+	for category, valueMap := range constant.Definition {
+		for name := range valueMap {
+			completer.constants = append(completer.constants, category+parser.ConstantDelimiter+name)
+		}
+	}
+	sort.Strings(completer.constants)
 
 	completer.tokens = make([]parser.Token, 0, 20)
 
@@ -2209,6 +2220,7 @@ func (c *Completer) SearchValues(line string, origLine string, index int) readli
 		"UNKNOWN",
 		"NULL",
 	)
+	list = append(list, c.constants...)
 
 	for _, s := range list {
 		if strings.HasPrefix(strings.ToUpper(s), searchWord) {

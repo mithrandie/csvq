@@ -126,6 +126,9 @@ Environment Variable
 Runtime Information
 : A [runtime information]({{ '/reference/runtime-information.html' | relative_url }}) is a word starting with "@#" and followed by a character string that contains any unicode letters, any digits or Low Lines(U+005F `_`). Character case is ignored.
 
+System Defined Constant
+: A [system defined constant]({{ '/reference/system-defined-constant.html' | relative_url }}) is a group of words represented by two words separated by "::". Character case is ignored.
+
 ```
 abcde                 -- identifier
 識別子                 -- identifier
@@ -142,6 +145,7 @@ null                  -- null
 @%ENV_VAR             -- environment variable
 @%`ENV_VAR`           -- environment variable
 @#INFO                -- runtime information
+CATEGORY::NAME        -- system defined constant
 
 /* if --ansi-quotes is specified */
 "abcd\"e"             -- identifier
