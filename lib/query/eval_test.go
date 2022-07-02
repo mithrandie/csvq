@@ -283,6 +283,15 @@ var evaluateTests = []struct {
 		Error: "field notexist does not exist",
 	},
 	{
+		Name: "Arithmetic Division by Zero Error",
+		Expr: parser.Arithmetic{
+			LHS:      parser.NewIntegerValue(1),
+			RHS:      parser.NewIntegerValue(0),
+			Operator: parser.Token{Token: '/', Literal: "/"},
+		},
+		Error: "integer divided by zero",
+	},
+	{
 		Name: "UnaryArithmetic Integer",
 		Expr: parser.UnaryArithmetic{
 			Operand:  parser.NewIntegerValue(1),

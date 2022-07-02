@@ -4089,31 +4089,31 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line lib/parser/parser.y:1733
 		{
-			yyVAL.queryexpr = Arithmetic{LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
+			yyVAL.queryexpr = Arithmetic{BaseExpr: NewBaseExpr(yyDollar[2].token), LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
 		}
 	case 300:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line lib/parser/parser.y:1737
 		{
-			yyVAL.queryexpr = Arithmetic{LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
+			yyVAL.queryexpr = Arithmetic{BaseExpr: NewBaseExpr(yyDollar[2].token), LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
 		}
 	case 301:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line lib/parser/parser.y:1741
 		{
-			yyVAL.queryexpr = Arithmetic{LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
+			yyVAL.queryexpr = Arithmetic{BaseExpr: NewBaseExpr(yyDollar[2].token), LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
 		}
 	case 302:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line lib/parser/parser.y:1745
 		{
-			yyVAL.queryexpr = Arithmetic{LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
+			yyVAL.queryexpr = Arithmetic{BaseExpr: NewBaseExpr(yyDollar[2].token), LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
 		}
 	case 303:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line lib/parser/parser.y:1749
 		{
-			yyVAL.queryexpr = Arithmetic{LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
+			yyVAL.queryexpr = Arithmetic{BaseExpr: NewBaseExpr(yyDollar[2].token), LHS: yyDollar[1].queryexpr, Operator: yyDollar[2].token, RHS: yyDollar[3].queryexpr}
 		}
 	case 304:
 		yyDollar = yyS[yypt-2 : yypt+1]

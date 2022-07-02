@@ -111,6 +111,7 @@ const (
 	ErrorReplaceKeyNotSet                     = 13901
 	ErrorSelectIntoQueryFieldLengthNotMatch   = 14001
 	ErrorSelectIntoQueryTooManyRecords        = 14002
+	ErrorIntegerDevidedByZero                 = 30000
 
 	//Incorrect Command Usage
 	ErrorIncorrectCommandUsage = 90020

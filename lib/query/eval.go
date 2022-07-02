@@ -202,7 +202,12 @@ func evalArithmetic(ctx context.Context, scope *ReferenceScope, expr parser.Arit
 		return nil, err
 	}
 
-	return Calculate(lhs, rhs, expr.Operator.Token), nil
+	ret, err := Calculate(lhs, rhs, expr.Operator.Token)
+	if err != nil {
+		return nil, NewIntegerDevidedByZeroError(expr)
+	}
+
+	return ret, nil
 }
 
 func evalUnaryArithmetic(ctx context.Context, scope *ReferenceScope, expr parser.UnaryArithmetic) (value.Primary, error) {

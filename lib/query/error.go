@@ -130,6 +130,7 @@ const (
 	ErrMsgStatementReplaceValueNotSpecified    = "replace value for %s is not specified"
 	ErrMsgSelectIntoQueryFieldLengthNotMatch   = "select into query should return exactly %s"
 	ErrMsgSelectIntoQueryTooManyRecords        = "select into query returns too many records, should return only one record"
+	ErrMsgIntegerDevidedByZero                 = "integer divided by zero"
 )
 
 type Error interface {
@@ -1481,6 +1482,16 @@ func NewSelectIntoQueryTooManyRecordsError(query parser.SelectQuery) error {
 
 	return &SelectIntoQueryTooManyRecordsError{
 		NewBaseError(selectClause, ErrMsgSelectIntoQueryTooManyRecords, ReturnCodeApplicationError, ErrorSelectIntoQueryTooManyRecords),
+	}
+}
+
+type IntegerDevidedByZeroError struct {
+	*BaseError
+}
+
+func NewIntegerDevidedByZeroError(expr parser.Arithmetic) error {
+	return &IntegerDevidedByZeroError{
+		NewBaseError(expr, ErrMsgIntegerDevidedByZero, ReturnCodeApplicationError, ErrorIntegerDevidedByZero),
 	}
 }
 

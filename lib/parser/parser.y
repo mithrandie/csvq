@@ -1731,23 +1731,23 @@ comparison
 arithmetic
     : value '+' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | value '-' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | value '*' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | value '/' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | value '%' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | '-' value %prec UMINUS
     {
