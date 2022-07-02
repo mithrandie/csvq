@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 	"time"
@@ -229,7 +230,10 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 		}
 	}()
 
-	s := e.Encode(data)
+	s, err := e.Encode(data)
+	if err != nil {
+		return NewDataEncodingError(fmt.Sprintf("%s in JSON encoding", err.Error()))
+	}
 
 	w := bufio.NewWriter(fp)
 	if _, err = w.WriteString(s); err != nil {
@@ -279,7 +283,10 @@ func encodeJsonLines(ctx context.Context, fp io.Writer, view *View, options cmd.
 		if err != nil {
 			return NewDataEncodingError(err.Error())
 		}
-		rowStr := e.Encode(rowStrct)
+		rowStr, err := e.Encode(rowStrct)
+		if err != nil {
+			return NewDataEncodingError(fmt.Sprintf("%s in JSON encoding", err.Error()))
+		}
 
 		if _, err = w.WriteString(rowStr); err != nil {
 			return NewSystemError(err.Error())

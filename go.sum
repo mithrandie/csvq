@@ -5,8 +5,8 @@ github.com/mitchellh/go-homedir v1.0.0 h1:vKb8ShqSby24Yrqr/yDYkuFz8d0WUjys40rvnG
 github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mithrandie/go-file/v2 v2.1.0 h1:XA5Tl+73GXMDvgwSE3Sg0uC5FkLr3hnXs8SpUas0hyg=
 github.com/mithrandie/go-file/v2 v2.1.0/go.mod h1:9YtTF3Xo59GqC1Pxw6KyGVcM/qubAMlxVsqI/u9r++c=
-github.com/mithrandie/go-text v1.5.3 h1:A+/mtgUsr1EsoVKGb4sm8Suho/Biku9Sh2appII4Mo0=
-github.com/mithrandie/go-text v1.5.3/go.mod h1:yaVYauF3TLf7LvjGrrQB/mffIkohXTXJpW9zQ206UL8=
+github.com/mithrandie/go-text v1.5.4 h1:2LIASku5RuCqxa6O6eOvQwQ0k5FYWP1ID2hk9egYYGc=
+github.com/mithrandie/go-text v1.5.4/go.mod h1:yaVYauF3TLf7LvjGrrQB/mffIkohXTXJpW9zQ206UL8=
 github.com/mithrandie/readline-csvq v1.2.0 h1:5GFbdWFP+2m57Yz+XLtKVIfyH0SjN9du51VT0x9WI40=
 github.com/mithrandie/readline-csvq v1.2.0/go.mod h1:6Grnfrl8PHC448fV7f8RJNlHeoM+Z3w2QlYW+J9mA2I=
 github.com/mithrandie/ternary v1.1.1 h1:k/joD6UGVYxHixYmSR8EGgDFNONBMqyD373xT4QRdC4=
