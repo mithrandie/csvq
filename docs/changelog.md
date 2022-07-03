@@ -10,7 +10,7 @@ title: Change Log - csvq
 Released on Jul 3, 2022
 
 - Add [system defined constants](https://mithrandie.github.io/csvq/reference/system-defined-constant.html).
-- Add the command option –scientific-notation.
+- Add the command option --scientific-notation.
 - Handle NaN and Infinity.
 - Add several numeric and datetime functions.
 - Fix some bugs.
