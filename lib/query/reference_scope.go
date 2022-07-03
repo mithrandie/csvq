@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -260,7 +260,7 @@ func (rs *ReferenceScope) CreateNode() *ReferenceScope {
 		node.cachedFilePath = make(map[string]string)
 	}
 	if node.now.IsZero() {
-		node.now = cmd.Now(rs.Tx.Flags.GetTimeLocation())
+		node.now = option.Now(rs.Tx.Flags.GetTimeLocation())
 	}
 
 	return node
@@ -312,7 +312,7 @@ func (rs *ReferenceScope) LoadFilePath(identifier string) (string, bool) {
 
 func (rs *ReferenceScope) Now() time.Time {
 	if rs.now.IsZero() {
-		return cmd.Now(rs.Tx.Flags.GetTimeLocation())
+		return option.Now(rs.Tx.Flags.GetTimeLocation())
 	}
 	return rs.now
 }
@@ -398,7 +398,7 @@ func (rs *ReferenceScope) GetTemporaryTable(name parser.Identifier) (*View, erro
 	return nil, NewUndeclaredTemporaryTableError(name)
 }
 
-func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *cmd.Flags) (view *View, err error) {
+func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *option.Flags) (view *View, err error) {
 	for i := range rs.Blocks {
 		if view, err = rs.Blocks[i].TemporaryTables.GetWithInternalId(ctx, name, flags); err == nil {
 			return

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/go-text"
 
@@ -38,7 +38,7 @@ func TestTransaction_Commit(t *testing.T) {
 				Path:      GetTestFilePath("created_file.csv"),
 				Handler:   ch,
 				Encoding:  text.UTF8,
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				LineBreak: text.LF,
 			},
@@ -63,7 +63,7 @@ func TestTransaction_Commit(t *testing.T) {
 				Path:      GetTestFilePath("updated_file_1.csv"),
 				Handler:   uh,
 				Encoding:  text.UTF8,
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				LineBreak: text.LF,
 			},
@@ -77,7 +77,7 @@ func TestTransaction_Commit(t *testing.T) {
 				Path:      GetTestFilePath("created_file.csv"),
 				Handler:   ch,
 				Encoding:  text.UTF8,
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				LineBreak: text.LF,
 			},
@@ -87,7 +87,7 @@ func TestTransaction_Commit(t *testing.T) {
 				Path:      GetTestFilePath("updated_file_1.csv"),
 				Handler:   uh,
 				Encoding:  text.UTF8,
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				LineBreak: text.LF,
 			},
@@ -144,7 +144,7 @@ func TestTransaction_Commit(t *testing.T) {
 				Path:      GetTestFilePath("created_file_1.csv"),
 				Handler:   ch,
 				Encoding:  text.UTF8,
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				LineBreak: text.LF,
 			},
@@ -169,7 +169,7 @@ func TestTransaction_Commit(t *testing.T) {
 				Path:      GetTestFilePath("updated_file_1.csv"),
 				Handler:   uh,
 				Encoding:  text.UTF8,
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				LineBreak: text.LF,
 			},
@@ -183,7 +183,7 @@ func TestTransaction_Commit(t *testing.T) {
 				Path:      GetTestFilePath("created_file_1.csv"),
 				Handler:   ch,
 				Encoding:  text.UTF8,
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				LineBreak: text.LF,
 			},
@@ -193,7 +193,7 @@ func TestTransaction_Commit(t *testing.T) {
 				Path:      GetTestFilePath("updated_file_1.csv"),
 				Handler:   uh,
 				Encoding:  text.UTF8,
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				LineBreak: text.LF,
 			},

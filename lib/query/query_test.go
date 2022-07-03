@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -4239,7 +4239,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: '\t',
-			Format:    cmd.TSV,
+			Format:    option.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4259,7 +4259,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: '\t',
-			Format:    cmd.TSV,
+			Format:    option.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4275,7 +4275,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ';',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4310,7 +4310,7 @@ var setTableAttributeTests = []struct {
 			Path:               GetTestFilePath("table1.csv"),
 			Delimiter:          ',',
 			DelimiterPositions: []int{2, 5, 10},
-			Format:             cmd.FIXED,
+			Format:             option.FIXED,
 			Encoding:           text.UTF8,
 			SingleLine:         true,
 			LineBreak:          text.LF,
@@ -4336,7 +4336,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.TEXT,
+			Format:    option.TEXT,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4352,7 +4352,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.JSON,
+			Format:    option.JSON,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4368,7 +4368,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: '\t',
-			Format:    cmd.TSV,
+			Format:    option.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4393,7 +4393,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.SJIS,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4409,7 +4409,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.SJIS,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4443,7 +4443,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.CRLF,
 			ForUpdate: true,
@@ -4468,7 +4468,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			NoHeader:  true,
@@ -4494,7 +4494,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:       GetTestFilePath("table1.csv"),
 			Delimiter:  ',',
-			Format:     cmd.CSV,
+			Format:     option.CSV,
 			Encoding:   text.UTF8,
 			LineBreak:  text.LF,
 			EncloseAll: true,
@@ -4511,7 +4511,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:        GetTestFilePath("table.json"),
 			Delimiter:   ',',
-			Format:      cmd.JSON,
+			Format:      option.JSON,
 			Encoding:    text.UTF8,
 			LineBreak:   text.LF,
 			JsonEscape:  json.HexDigits,
@@ -4538,7 +4538,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:        GetTestFilePath("table.json"),
 			Delimiter:   ',',
-			Format:      cmd.JSON,
+			Format:      option.JSON,
 			Encoding:    text.UTF8,
 			LineBreak:   text.LF,
 			PrettyPrint: true,

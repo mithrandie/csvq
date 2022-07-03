@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/constant"
 	"github.com/mithrandie/csvq/lib/excmd"
 	"github.com/mithrandie/csvq/lib/json"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -592,7 +592,7 @@ func evalFunction(ctx context.Context, scope *ReferenceScope, expr parser.Functi
 }
 
 func evalAggregateFunction(ctx context.Context, scope *ReferenceScope, expr parser.AggregateFunction) (value.Primary, error) {
-	var aggfn func([]value.Primary, *cmd.Flags) value.Primary
+	var aggfn func([]value.Primary, *option.Flags) value.Primary
 	var udfn *UserDefinedFunction
 	var err error
 
@@ -1181,7 +1181,7 @@ func EvaluateEmbeddedString(ctx context.Context, scope *ReferenceScope, embedded
 	for scanner.Scan() {
 		switch scanner.ElementType() {
 		case excmd.FixedString:
-			buf.WriteString(cmd.UnescapeString(scanner.Text(), enclosure))
+			buf.WriteString(option.UnescapeString(scanner.Text(), enclosure))
 		case excmd.Variable:
 			if err = writeEmbeddedExpression(ctx, scope, buf, parser.Variable{Name: scanner.Text()}); err != nil {
 				return buf.String(), err

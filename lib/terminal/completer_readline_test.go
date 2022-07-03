@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 	"github.com/mithrandie/csvq/lib/value"
@@ -130,10 +130,10 @@ func TestCompleter_Update(t *testing.T) {
 	})
 
 	c := NewCompleter(scope)
-	if len(c.flagList) != len(cmd.FlagList) || !strings.HasPrefix(c.flagList[0], cmd.FlagSign) {
+	if len(c.flagList) != len(option.FlagList) || !strings.HasPrefix(c.flagList[0], option.FlagSign) {
 		t.Error("flags are not set correctly")
 	}
-	if len(c.runinfoList) != len(query.RuntimeInformatinList) || !strings.HasPrefix(c.runinfoList[0], cmd.RuntimeInformationSign) {
+	if len(c.runinfoList) != len(query.RuntimeInformatinList) || !strings.HasPrefix(c.runinfoList[0], option.RuntimeInformationSign) {
 		t.Error("runtime information are not set correctly")
 	}
 	if len(c.funcs) != len(query.Functions)+3 {
@@ -171,7 +171,7 @@ func TestCompleter_Update(t *testing.T) {
 	if !reflect.DeepEqual(c.varList, []string{"@var"}) {
 		t.Error("variables are not set correctly")
 	}
-	if !strings.HasPrefix(c.envList[0], cmd.EnvironmentVariableSign) || !strings.HasPrefix(c.enclosedEnvList[0], cmd.EnvironmentVariableSign+"`") {
+	if !strings.HasPrefix(c.envList[0], option.EnvironmentVariableSign) || !strings.HasPrefix(c.enclosedEnvList[0], option.EnvironmentVariableSign+"`") {
 		t.Error("environment variables are not set correctly")
 	}
 
@@ -4162,7 +4162,7 @@ func TestCompleter_ColumnList(t *testing.T) {
 		},
 	)
 
-	TestTx.Flags.ExportOptions.Format = cmd.CSV
+	TestTx.Flags.ExportOptions.Format = option.CSV
 
 	_ = os.Chdir(CompletionTestDir)
 	completer := NewCompleter(scope)

@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/go-text/color"
 )
 
-var syntaxTestEnv, _ = cmd.NewEnvironment(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay)
-var syntaxTestPalette, _ = cmd.NewPalette(syntaxTestEnv)
+var syntaxTestEnv, _ = option.NewEnvironment(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay)
+var syntaxTestPalette, _ = option.NewPalette(syntaxTestEnv)
 
 func TestName_Format(t *testing.T) {
 	var e Name = "str"
@@ -52,7 +52,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Option{String("str1"), String("str2")}},
 		UsePalette: true,
-		Expect:     "[" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str2")) + "]",
+		Expect:     "[" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str2")) + "]",
 	},
 	{
 		Grammar:    []Element{FollowingContinuousOption{String("str1"), String("str2")}},
@@ -67,7 +67,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{ContinuousOption{String("str1"), String("str2")}},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str2")) + " [, " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str2")) + " ...]",
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str2")) + " [, " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str2")) + " ...]",
 	},
 	{
 		Grammar:    []Element{AnyOne{String("str1"), String("str2")}},
@@ -77,7 +77,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{AnyOne{String("str1"), String("str2")}},
 		UsePalette: true,
-		Expect:     "{" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str1")) + "|" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str2")) + "}",
+		Expect:     "{" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str1")) + "|" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str2")) + "}",
 	},
 	{
 		Grammar:    []Element{Parentheses{String("str1"), String("str2")}},
@@ -87,7 +87,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Parentheses{String("str1"), String("str2")}},
 		UsePalette: true,
-		Expect:     "(" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str2")) + ")",
+		Expect:     "(" + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str2")) + ")",
 	},
 	{
 		Grammar:    []Element{PlainGroup{String("str1"), String("str2")}},
@@ -97,7 +97,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{PlainGroup{String("str1"), String("str2")}},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str2")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str1")) + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str2")),
 	},
 	{
 		Grammar:    []Element{ConnectedGroup{String("str1"), String("str2")}},
@@ -107,7 +107,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{ConnectedGroup{String("str1"), String("str2")}},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str1")) + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str2")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str1")) + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str2")),
 	},
 	{
 		Grammar:    []Element{Function{Name: "fn", Args: []Element{Option{Keyword("DISTINCT")}, String("str"), Option{String("arg1"), String("arg2")}}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Link("partition_clause")}}, Return: Return(String("string"))}},
@@ -119,9 +119,9 @@ var grammarFormatTests = []struct {
 		UsePalette: true,
 		Expect: syntaxTestPalette.Render(KeywordEffect, "fn") +
 			"([" + syntaxTestPalette.Render(KeywordEffect, "DISTINCT") + "] " +
-			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str")) + syntaxTestPalette.Render(TypeEffect, "::string") + " [, " +
-			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "arg1")) + syntaxTestPalette.Render(TypeEffect, "::string") + " [, " +
-			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "arg2")) + syntaxTestPalette.Render(TypeEffect, "::string") + "]]) " +
+			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str")) + syntaxTestPalette.Render(TypeEffect, "::string") + " [, " +
+			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "arg1")) + syntaxTestPalette.Render(TypeEffect, "::string") + " [, " +
+			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "arg2")) + syntaxTestPalette.Render(TypeEffect, "::string") + "]]) " +
 			syntaxTestPalette.Render(KeywordEffect, "OVER") + " (" +
 			syntaxTestPalette.Render(LinkEffect, "<partition_clause>") + ")  " +
 			syntaxTestPalette.Render(TypeEffect, "return::string"),
@@ -144,7 +144,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{ArgWithDefValue{Arg: String("str"), Default: String("1")}},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str")) + syntaxTestPalette.Render(TypeEffect, "::string") + " " + syntaxTestPalette.Render(KeywordEffect, "DEFAULT") + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "1")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str")) + syntaxTestPalette.Render(TypeEffect, "::string") + " " + syntaxTestPalette.Render(KeywordEffect, "DEFAULT") + " " + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "1")),
 	},
 	{
 		Grammar:    []Element{String("str")},
@@ -154,7 +154,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{String("str")},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str")),
 	},
 	{
 		Grammar:    []Element{Integer("int")},
@@ -164,7 +164,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Integer("int")},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.NumberEffect, "int")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.NumberEffect, "int")),
 	},
 	{
 		Grammar:    []Element{Float("float")},
@@ -174,7 +174,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Float("float")},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.NumberEffect, "float")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.NumberEffect, "float")),
 	},
 	{
 		Grammar:    []Element{Identifier("ident")},
@@ -184,7 +184,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Identifier("ident")},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(cmd.IdentifierEffect, "ident"),
+		Expect:     syntaxTestPalette.Render(option.IdentifierEffect, "ident"),
 	},
 	{
 		Grammar:    []Element{Datetime("dt")},
@@ -194,7 +194,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Datetime("dt")},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.DatetimeEffect, "dt")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.DatetimeEffect, "dt")),
 	},
 	{
 		Grammar:    []Element{Boolean("bool")},
@@ -204,7 +204,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Boolean("bool")},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.BooleanEffect, "bool")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.BooleanEffect, "bool")),
 	},
 	{
 		Grammar:    []Element{Ternary("ternary")},
@@ -214,7 +214,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Ternary("ternary")},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.TernaryEffect, "ternary")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.TernaryEffect, "ternary")),
 	},
 	{
 		Grammar:    []Element{Null("null")},
@@ -224,7 +224,7 @@ var grammarFormatTests = []struct {
 	{
 		Grammar:    []Element{Null("null")},
 		UsePalette: true,
-		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.NullEffect, "null")),
+		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.NullEffect, "null")),
 	},
 	{
 		Grammar:    []Element{Variable("@var")},
@@ -291,11 +291,11 @@ var grammarFormatTests = []struct {
 		}},
 		UsePalette: true,
 		Expect: "abc " +
-			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.StringEffect, "str")) + " " +
-			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.TernaryEffect, "TRUE")) + " " +
-			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.TernaryEffect, "ternary")) + " " +
-			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.NullEffect, "NULL")) + " " +
-			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(cmd.NullEffect, "null")) + " " +
+			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str")) + " " +
+			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.TernaryEffect, "TRUE")) + " " +
+			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.TernaryEffect, "ternary")) + " " +
+			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.NullEffect, "NULL")) + " " +
+			syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.NullEffect, "null")) + " " +
 			syntaxTestPalette.Render(LinkEffect, "<link>"),
 	},
 }

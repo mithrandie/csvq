@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/ternary"
 )
@@ -57,7 +57,7 @@ func (dfmap DatetimeFormatMap) Get(s string) string {
 }
 
 func StrToTime(s string, formats []string, location *time.Location) (time.Time, bool) {
-	s = cmd.TrimSpace(s)
+	s = option.TrimSpace(s)
 
 	for _, format := range formats {
 		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, location); e == nil {
@@ -263,7 +263,7 @@ func ToInteger(p Primary) Primary {
 		}
 		return NewInteger(int64(val.Raw()))
 	case *String:
-		s := cmd.TrimSpace(val.Raw())
+		s := option.TrimSpace(val.Raw())
 		if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 			return NewInteger(i)
 		}
@@ -280,7 +280,7 @@ func ToIntegerStrictly(p Primary) Primary {
 	case *Integer:
 		return NewInteger(p.(*Integer).Raw())
 	case *String:
-		s := cmd.TrimSpace(p.(*String).Raw())
+		s := option.TrimSpace(p.(*String).Raw())
 		if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 			return NewInteger(i)
 		}
@@ -296,7 +296,7 @@ func ToFloat(p Primary) Primary {
 	case *Float:
 		return NewFloat(p.(*Float).Raw())
 	case *String:
-		s := cmd.TrimSpace(p.(*String).Raw())
+		s := option.TrimSpace(p.(*String).Raw())
 		if f, e := strconv.ParseFloat(s, 64); e == nil {
 			return NewFloat(f)
 		}

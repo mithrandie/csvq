@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -104,7 +104,7 @@ type SortValue struct {
 	String   string
 }
 
-func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
+func NewSortValue(val value.Primary, flags *option.Flags) *SortValue {
 	sortValue := &SortValue{}
 
 	if value.IsNull(val) {
@@ -114,14 +114,14 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		sortValue.Type = IntegerType
 		sortValue.Integer = i.(*value.Integer).Raw()
 		sortValue.Float = float64(sortValue.Integer)
-		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.(*value.String).Raw()))
+		sortValue.String = strings.ToUpper(option.TrimSpace(s.(*value.String).Raw()))
 		value.Discard(i)
 		value.Discard(s)
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
 		s := value.ToString(val)
 		sortValue.Type = FloatType
 		sortValue.Float = f.(*value.Float).Raw()
-		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.(*value.String).Raw()))
+		sortValue.String = strings.ToUpper(option.TrimSpace(s.(*value.String).Raw()))
 		value.Discard(f)
 		value.Discard(s)
 	} else if dt := value.ToDatetime(val, flags.DatetimeFormat, flags.GetTimeLocation()); !value.IsNull(dt) {
@@ -138,7 +138,7 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		}
 	} else if s, ok := val.(*value.String); ok {
 		sortValue.Type = StringType
-		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.Raw()))
+		sortValue.String = strings.ToUpper(option.TrimSpace(s.Raw()))
 	} else {
 		sortValue.Type = NullType
 	}

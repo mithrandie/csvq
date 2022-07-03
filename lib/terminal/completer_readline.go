@@ -11,7 +11,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
@@ -180,13 +180,13 @@ func NewCompleter(scope *query.ReferenceScope) *Completer {
 		tableColumns: make(map[string][]string),
 	}
 
-	completer.flagList = make([]string, 0, len(cmd.FlagList))
-	for _, v := range cmd.FlagList {
-		completer.flagList = append(completer.flagList, cmd.FlagSymbol(v))
+	completer.flagList = make([]string, 0, len(option.FlagList))
+	for _, v := range option.FlagList {
+		completer.flagList = append(completer.flagList, option.FlagSymbol(v))
 	}
 	completer.runinfoList = make([]string, 0, len(query.RuntimeInformatinList))
 	for _, v := range query.RuntimeInformatinList {
-		completer.runinfoList = append(completer.runinfoList, cmd.RuntimeInformationSymbol(v))
+		completer.runinfoList = append(completer.runinfoList, option.RuntimeInformationSymbol(v))
 	}
 
 	sort.Strings(completer.flagList)
@@ -329,7 +329,7 @@ func (c *Completer) updateVariables() {
 
 	c.varList = make([]string, 0, len(varKeys))
 	for _, k := range varKeys {
-		c.varList = append(c.varList, cmd.VariableSymbol(k))
+		c.varList = append(c.varList, option.VariableSymbol(k))
 	}
 }
 
@@ -339,8 +339,8 @@ func (c *Completer) updateEnvironmentVariables() {
 	c.enclosedEnvList = make([]string, 0, len(env))
 	for _, e := range env {
 		words := strings.Split(e, "=")
-		c.envList = append(c.envList, cmd.EnvironmentVariableSymbol(words[0]))
-		c.enclosedEnvList = append(c.enclosedEnvList, cmd.EnclosedEnvironmentVariableSymbol(words[0]))
+		c.envList = append(c.envList, option.EnvironmentVariableSymbol(words[0]))
+		c.enclosedEnvList = append(c.enclosedEnvList, option.EnclosedEnvironmentVariableSymbol(words[0]))
 	}
 	sort.Strings(c.envList)
 	sort.Strings(c.enclosedEnvList)
@@ -501,9 +501,9 @@ func (c *Completer) TableObjectArgs(line string, origLine string, index int) rea
 		case 0:
 			if c.tokens[c.lastIdx].Token == '(' {
 				switch strings.ToUpper(c.tokens[0].Literal) {
-				case cmd.CSV.String():
+				case option.CSV.String():
 					cands = c.candidateList(delimiterCandidates, false)
-				case cmd.FIXED.String():
+				case option.FIXED.String():
 					cands = c.candidateList(delimiterPositionsCandidates, false)
 				}
 			}
@@ -514,14 +514,14 @@ func (c *Completer) TableObjectArgs(line string, origLine string, index int) rea
 		case 2:
 			if c.tokens[c.lastIdx].Token == ',' {
 				switch strings.ToUpper(c.tokens[0].Literal) {
-				case cmd.CSV.String(), cmd.FIXED.String():
+				case option.CSV.String(), option.FIXED.String():
 					cands = c.candidateList(c.encodingList(), false)
 				}
 			}
 		case 3, 4:
 			if c.tokens[c.lastIdx].Token == ',' {
 				switch strings.ToUpper(c.tokens[0].Literal) {
-				case cmd.CSV.String(), cmd.FIXED.String():
+				case option.CSV.String(), option.FIXED.String():
 					cands = c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false)
 				}
 			}
@@ -1902,32 +1902,32 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 			case parser.TO:
 				if i == c.lastIdx && c.tokens[c.lastIdx-1].Token == parser.FLAG {
 					switch strings.ToUpper(c.tokens[c.lastIdx-1].Literal) {
-					case cmd.RepositoryFlag:
+					case option.RepositoryFlag:
 						return nil, c.SearchDirs(line, origLine, index), true
-					case cmd.TimezoneFlag:
+					case option.TimezoneFlag:
 						return nil, c.candidateList([]string{"Local", "UTC"}, false), true
-					case cmd.ImportFormatFlag:
+					case option.ImportFormatFlag:
 						return nil, c.candidateList(c.importFormatList(), false), true
-					case cmd.DelimiterFlag, cmd.ExportDelimiterFlag:
+					case option.DelimiterFlag, option.ExportDelimiterFlag:
 						return nil, c.candidateList(delimiterCandidates, false), true
-					case cmd.DelimiterPositionsFlag, cmd.ExportDelimiterPositionsFlag:
+					case option.DelimiterPositionsFlag, option.ExportDelimiterPositionsFlag:
 						return nil, c.candidateList(delimiterPositionsCandidates, false), true
-					case cmd.EncodingFlag:
+					case option.EncodingFlag:
 						return nil, c.candidateList(c.encodingList(), false), true
-					case cmd.ExportEncodingFlag:
+					case option.ExportEncodingFlag:
 						return nil, c.candidateList(exportEncodingsCandidates, false), true
-					case cmd.AnsiQuotesFlag, cmd.StrictEqualFlag, cmd.AllowUnevenFieldsFlag,
-						cmd.NoHeaderFlag, cmd.WithoutNullFlag,
-						cmd.WithoutHeaderFlag, cmd.EncloseAllFlag, cmd.PrettyPrintFlag,
-						cmd.StripEndingLineBreakFlag, cmd.EastAsianEncodingFlag,
-						cmd.CountDiacriticalSignFlag, cmd.CountFormatCodeFlag,
-						cmd.ColorFlag, cmd.QuietFlag, cmd.StatsFlag:
+					case option.AnsiQuotesFlag, option.StrictEqualFlag, option.AllowUnevenFieldsFlag,
+						option.NoHeaderFlag, option.WithoutNullFlag,
+						option.WithoutHeaderFlag, option.EncloseAllFlag, option.PrettyPrintFlag,
+						option.StripEndingLineBreakFlag, option.EastAsianEncodingFlag,
+						option.CountDiacriticalSignFlag, option.CountFormatCodeFlag,
+						option.ColorFlag, option.QuietFlag, option.StatsFlag:
 						return nil, c.candidateList([]string{ternary.TRUE.String(), ternary.FALSE.String()}, false), true
-					case cmd.FormatFlag:
+					case option.FormatFlag:
 						return nil, c.candidateList(c.tableFormatList(), false), true
-					case cmd.LineBreakFlag:
+					case option.LineBreakFlag:
 						return nil, c.candidateList(c.lineBreakList(), false), true
-					case cmd.JsonEscapeFlag:
+					case option.JsonEscapeFlag:
 						return nil, c.candidateList(c.jsonEscapeTypeList(), false), true
 					}
 				}
@@ -1984,7 +1984,7 @@ func (c *Completer) AddFlagArgs(line string, origLine string, index int) readlin
 		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
 			switch c.tokens[i].Token {
 			case parser.TO:
-				return nil, c.candidateList([]string{cmd.FlagSymbol(cmd.DatetimeFormatFlag)}, false), true
+				return nil, c.candidateList([]string{option.FlagSymbol(option.DatetimeFormatFlag)}, false), true
 			case parser.ADD:
 				if i < c.lastIdx {
 					keywords = append(keywords, "TO")
@@ -2004,7 +2004,7 @@ func (c *Completer) RemoveFlagArgs(line string, origLine string, index int) read
 		func(i int) (keywords []string, customList readline.CandidateList, breakLoop bool) {
 			switch c.tokens[i].Token {
 			case parser.FROM:
-				return nil, c.candidateList([]string{cmd.FlagSymbol(cmd.DatetimeFormatFlag)}, false), true
+				return nil, c.candidateList([]string{option.FlagSymbol(option.DatetimeFormatFlag)}, false), true
 			case parser.REMOVE:
 				if i < c.lastIdx {
 					keywords = append(keywords, "FROM")
@@ -2119,7 +2119,7 @@ func (c *Completer) SearchAllTablesWithSpace(line string, origLine string, index
 
 func (c *Completer) SearchAllTables(line string, _ string, _ int) readline.CandidateList {
 	tableKeys := c.scope.Tx.CachedViews.SortedKeys()
-	files := c.ListFiles(line, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.JsonlExt, cmd.LtsvExt, cmd.TextExt}, c.scope.Tx.Flags.Repository)
+	files := c.ListFiles(line, []string{option.CsvExt, option.TsvExt, option.JsonExt, option.JsonlExt, option.LtsvExt, option.TextExt}, c.scope.Tx.Flags.Repository)
 
 	defaultDir := c.scope.Tx.Flags.Repository
 	if len(defaultDir) < 1 {
@@ -2165,7 +2165,7 @@ func (c *Completer) SearchAllTables(line string, _ string, _ int) readline.Candi
 
 func (c *Completer) SearchExecutableFiles(line string, origLine string, index int) readline.CandidateList {
 	cands := c.SearchValues(line, origLine, index)
-	files := c.ListFiles(line, []string{cmd.SqlExt, cmd.CsvqProcExt}, "")
+	files := c.ListFiles(line, []string{option.SqlExt, option.CsvqProcExt}, "")
 	return append(cands, c.identifierList(files, false)...)
 }
 
@@ -2861,15 +2861,15 @@ func (c *Completer) analyticFunctionCandidateList(line string) readline.Candidat
 }
 
 func (c *Completer) environmentVariableList(line string) []string {
-	if 2 < len(line) && strings.HasPrefix(line, cmd.EnvironmentVariableSign+"`") {
+	if 2 < len(line) && strings.HasPrefix(line, option.EnvironmentVariableSign+"`") {
 		return c.enclosedEnvList
 	}
 	return c.envList
 }
 
 func (c *Completer) tableFormatList() []string {
-	list := make([]string, 0, len(cmd.FormatLiteral))
-	for _, v := range cmd.FormatLiteral {
+	list := make([]string, 0, len(option.FormatLiteral))
+	for _, v := range option.FormatLiteral {
 		list = append(list, v)
 	}
 	sort.Strings(list)
@@ -2877,9 +2877,9 @@ func (c *Completer) tableFormatList() []string {
 }
 
 func (c *Completer) importFormatList() []string {
-	list := make([]string, 0, len(cmd.ImportFormats))
-	for _, v := range cmd.ImportFormats {
-		list = append(list, cmd.FormatLiteral[v])
+	list := make([]string, 0, len(option.ImportFormats))
+	for _, v := range option.ImportFormats {
+		list = append(list, option.FormatLiteral[v])
 	}
 	sort.Strings(list)
 	return list
@@ -2904,8 +2904,8 @@ func (c *Completer) lineBreakList() []string {
 }
 
 func (c *Completer) jsonEscapeTypeList() []string {
-	list := make([]string, 0, len(cmd.JsonEscapeTypeLiteral))
-	for _, v := range cmd.JsonEscapeTypeLiteral {
+	list := make([]string, 0, len(option.JsonEscapeTypeLiteral))
+	for _, v := range option.JsonEscapeTypeLiteral {
 		list = append(list, v)
 	}
 	sort.Strings(list)

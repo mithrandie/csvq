@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -1017,8 +1017,8 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 	}
 
 	w := NewObjectWriter(scope.Tx)
-	w.WriteColorWithoutLineBreak("Path: ", cmd.LableEffect)
-	w.WriteColorWithoutLineBreak(fileInfo.Path, cmd.ObjectEffect)
+	w.WriteColorWithoutLineBreak("Path: ", option.LableEffect)
+	w.WriteColorWithoutLineBreak(fileInfo.Path, option.ObjectEffect)
 	w.NewLine()
 	writeTableAttribute(w, scope.Tx.Flags, fileInfo)
 	w.NewLine()
@@ -1031,7 +1031,7 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 			w.Title2 = pi.Literal
 		}
 	}
-	w.Title2Effect = cmd.IdentifierEffect
+	w.Title2Effect = option.IdentifierEffect
 	log = "\n" + w.String() + "\n"
 
 	scope.Tx.CachedViews.Set(view)

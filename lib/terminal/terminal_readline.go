@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/query"
 
 	"github.com/mitchellh/go-homedir"
@@ -19,7 +19,7 @@ type ReadLineTerminal struct {
 	terminal  *readline.Instance
 	fd        int
 	prompt    *Prompt
-	env       *cmd.Environment
+	env       *option.Environment
 	completer *Completer
 	tx        *query.Transaction
 }

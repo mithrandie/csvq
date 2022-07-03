@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -116,7 +116,7 @@ func setup() {
 		_ = os.Mkdir(TestDir, 0755)
 	}
 
-	cmd.TestTime = NowForTest
+	option.TestTime = NowForTest
 
 	TestDataDir = filepath.Join(GetWD(), "..", "..", "testdata", "csv")
 
@@ -189,7 +189,7 @@ func teardown() {
 	}
 }
 
-func initFlag(flags *cmd.Flags) {
+func initFlag(flags *option.Flags) {
 	cpu := runtime.NumCPU() / 2
 	if cpu < 1 {
 		cpu = 1
@@ -200,8 +200,8 @@ func initFlag(flags *cmd.Flags) {
 	flags.AnsiQuotes = false
 	flags.StrictEqual = false
 	flags.WaitTimeout = 15
-	flags.ImportOptions = cmd.NewImportOptions()
-	flags.ExportOptions = cmd.NewExportOptions()
+	flags.ImportOptions = option.NewImportOptions()
+	flags.ExportOptions = option.NewExportOptions()
 	flags.Quiet = false
 	flags.LimitRecursion = 5
 	flags.CPU = cpu
@@ -331,7 +331,7 @@ var (
 func randomStr(length int) string {
 	s := make([]rune, length)
 	for i := 0; i < length; i++ {
-		s[i] = testLetterRunes[cmd.GetRand().Intn(len(testLetterRunes))]
+		s[i] = testLetterRunes[option.GetRand().Intn(len(testLetterRunes))]
 	}
 	return string(s)
 }

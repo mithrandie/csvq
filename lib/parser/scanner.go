@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/ternary"
 )
@@ -286,7 +286,7 @@ func (s *Scanner) Scan() (Token, error) {
 
 		if token == ENVIRONMENT_VARIABLE && s.peek() == '`' {
 			err = s.scanString(s.next())
-			literal = cmd.UnescapeIdentifier(s.literal.String(), '`')
+			literal = option.UnescapeIdentifier(s.literal.String(), '`')
 			quoted = true
 		} else {
 			if s.isIdentRune(s.peek()) {
@@ -313,11 +313,11 @@ func (s *Scanner) Scan() (Token, error) {
 	default:
 		if ch == '\'' || (!s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
-			literal = cmd.UnescapeString(s.literal.String(), ch)
+			literal = option.UnescapeString(s.literal.String(), ch)
 			token = STRING
 		} else if ch == '`' || (s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
-			literal = cmd.UnescapeIdentifier(s.literal.String(), ch)
+			literal = option.UnescapeIdentifier(s.literal.String(), ch)
 			token = IDENTIFIER
 			quoted = true
 		}

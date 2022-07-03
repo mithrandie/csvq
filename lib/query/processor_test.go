@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -946,7 +946,7 @@ var processorExecuteStatementTests = []struct {
 					NoHeader:  false,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
-					Format:    cmd.TSV,
+					Format:    option.TSV,
 					ForUpdate: true,
 				},
 			},
@@ -1094,7 +1094,7 @@ func TestProcessor_ExecuteStatement(t *testing.T) {
 	}()
 
 	TestTx.Flags.Repository = TestDir
-	TestTx.Flags.ExportOptions.Format = cmd.CSV
+	TestTx.Flags.ExportOptions.Format = option.CSV
 
 	tx := TestTx
 	proc := NewProcessor(tx)

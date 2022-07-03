@@ -3,7 +3,7 @@ package query
 import (
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 )
 
 func TestObjectWriter_String(t *testing.T) {
@@ -136,12 +136,12 @@ func TestObjectWriter_String(t *testing.T) {
 
 	w.Title1 = "title1"
 	w.Title2 = "title2"
-	w.Title2Effect = cmd.IdentifierEffect
+	w.Title2Effect = option.IdentifierEffect
 
 	w.Write("aaa")
 	w.BeginBlock()
 	w.NewLine()
-	w.WriteColor("bbbbbbbbbb", cmd.StringEffect)
+	w.WriteColor("bbbbbbbbbb", option.StringEffect)
 	w.Write(", ")
 	w.Write("bbbbbbbbbb")
 

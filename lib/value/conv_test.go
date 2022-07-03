@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/ternary"
 )
@@ -562,7 +562,7 @@ func TestToString(t *testing.T) {
 	var p Primary
 	var s Primary
 
-	location, _ := cmd.GetLocation("UTC")
+	location, _ := option.GetLocation("UTC")
 
 	p = NewString("str")
 	s = ToString(p)
@@ -641,7 +641,7 @@ func BenchmarkStrToTime5(b *testing.B) {
 
 func BenchmarkStrToTime6(b *testing.B) {
 	formats := []string{"01/02/2006"}
-	location, _ := cmd.GetLocation("UTC")
+	location, _ := option.GetLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "02 Jan 06 15:04 PDT"
@@ -651,7 +651,7 @@ func BenchmarkStrToTime6(b *testing.B) {
 
 func BenchmarkStrToTime7(b *testing.B) {
 	formats := []string{"01/02/2006"}
-	location, _ := cmd.GetLocation("UTC")
+	location, _ := option.GetLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "abcdefghijklmnopq"

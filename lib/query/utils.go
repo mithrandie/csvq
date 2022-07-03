@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"
@@ -71,7 +71,7 @@ func InStrSliceWithCaseInsensitive(s string, list []string) bool {
 	return false
 }
 
-func Distinguish(list []value.Primary, flags *cmd.Flags) []value.Primary {
+func Distinguish(list []value.Primary, flags *option.Flags) []value.Primary {
 	values := make(map[string]int, 40)
 	valueKeys := make([]string, 0, 40)
 
@@ -125,7 +125,7 @@ func PutComparisonkeysBuf(buf *bytes.Buffer) {
 	comparisonKeysBufPool.Put(buf)
 }
 
-func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary, flags *cmd.Flags) {
+func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary, flags *option.Flags) {
 	for i, val := range values {
 		if 0 < i {
 			buf.WriteByte(58)
@@ -139,7 +139,7 @@ func SerializeComparisonKeys(buf *bytes.Buffer, values []value.Primary, flags *c
 	}
 }
 
-func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *cmd.Flags) {
+func SerializeKey(buf *bytes.Buffer, val value.Primary, flags *option.Flags) {
 	if value.IsNull(val) {
 		serializeNull(buf)
 	} else if in := value.ToIntegerStrictly(val); !value.IsNull(in) {
@@ -208,12 +208,12 @@ func serializeDatetimeFromUnixNano(buf *bytes.Buffer, t int64) {
 
 func serializeString(buf *bytes.Buffer, s string) {
 	buf.Write([]byte{91, 83, 93})
-	buf.WriteString(strings.ToUpper(cmd.TrimSpace(s)))
+	buf.WriteString(strings.ToUpper(option.TrimSpace(s)))
 }
 
 func serializeCaseSensitiveString(buf *bytes.Buffer, s string) {
 	buf.Write([]byte{91, 83, 93})
-	buf.WriteString(cmd.TrimSpace(s))
+	buf.WriteString(option.TrimSpace(s))
 }
 
 func serializeBoolean(buf *bytes.Buffer, b bool) {

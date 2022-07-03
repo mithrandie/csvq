@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/json"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
@@ -27,27 +27,27 @@ import (
 var EmptyResultSetError = errors.New("empty result set")
 var DataEmpty = errors.New("data empty")
 
-func EncodeView(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions, palette *color.Palette) (string, error) {
+func EncodeView(ctx context.Context, fp io.Writer, view *View, options option.ExportOptions, palette *color.Palette) (string, error) {
 	switch options.Format {
-	case cmd.FIXED:
+	case option.FIXED:
 		return "", encodeFixedLengthFormat(ctx, fp, view, options)
-	case cmd.JSON:
+	case option.JSON:
 		return "", encodeJson(ctx, fp, view, options, palette)
-	case cmd.JSONL:
+	case option.JSONL:
 		return "", encodeJsonLines(ctx, fp, view, options, palette)
-	case cmd.LTSV:
+	case option.LTSV:
 		return "", encodeLTSV(ctx, fp, view, options)
-	case cmd.GFM, cmd.ORG, cmd.BOX, cmd.TEXT:
+	case option.GFM, option.ORG, option.BOX, option.TEXT:
 		return encodeText(ctx, fp, view, options, palette)
-	case cmd.TSV:
+	case option.TSV:
 		options.Delimiter = '\t'
 		fallthrough
-	default: // cmd.CSV
+	default: // option.CSV
 		return "", encodeCSV(ctx, fp, view, options)
 	}
 }
 
-func encodeCSV(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions) error {
+func encodeCSV(ctx context.Context, fp io.Writer, view *View, options option.ExportOptions) error {
 	w, err := csv.NewWriter(fp, options.LineBreak, options.Encoding)
 	if err != nil {
 		return NewDataEncodingError(err.Error())
@@ -76,7 +76,7 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, options cmd.Export
 		for j := range view.RecordSet[i] {
 			str, effect, _ := ConvertFieldContents(view.RecordSet[i][j][0], false)
 			quote := false
-			if options.EncloseAll && (effect == cmd.StringEffect || effect == cmd.DatetimeEffect) {
+			if options.EncloseAll && (effect == option.StringEffect || effect == option.DatetimeEffect) {
 				quote = true
 			}
 			fields[j] = csv.NewField(str, quote)
@@ -91,7 +91,7 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, options cmd.Export
 	return nil
 }
 
-func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions) error {
+func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, options option.ExportOptions) error {
 	if options.DelimiterPositions == nil {
 		m := fixedlen.NewMeasure()
 		m.Encoding = options.Encoding
@@ -192,7 +192,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, opti
 	return nil
 }
 
-func encodeJson(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions, palette *color.Palette) error {
+func encodeJson(ctx context.Context, fp io.Writer, view *View, options option.ExportOptions, palette *color.Palette) error {
 	header := view.Header.TableColumnNames()
 	records := make([][]value.Primary, view.RecordLen())
 	for i := range view.RecordSet {
@@ -245,7 +245,7 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 	return nil
 }
 
-func encodeJsonLines(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions, palette *color.Palette) error {
+func encodeJsonLines(ctx context.Context, fp io.Writer, view *View, options option.ExportOptions, palette *color.Palette) error {
 	fields := view.Header.TableColumnNames()
 	pathes, err := json.ParsePathes(fields)
 	if err != nil {
@@ -302,17 +302,17 @@ func encodeJsonLines(ctx context.Context, fp io.Writer, view *View, options cmd.
 	return nil
 }
 
-func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions, palette *color.Palette) (string, error) {
+func encodeText(ctx context.Context, fp io.Writer, view *View, options option.ExportOptions, palette *color.Palette) (string, error) {
 	isPlainTable := false
 
 	var tableFormat = table.PlainTable
 	switch options.Format {
-	case cmd.GFM:
+	case option.GFM:
 		tableFormat = table.GFMTable
-	case cmd.ORG:
+	case option.ORG:
 		tableFormat = table.OrgTable
 	default:
-		if options.Format == cmd.BOX {
+		if options.Format == option.BOX {
 			tableFormat = table.BoxTable
 		}
 		if view.FieldLen() < 1 {
@@ -334,7 +334,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 
 	fieldLen := view.FieldLen()
 
-	if !options.WithoutHeader || (options.Format != cmd.GFM && options.Format != cmd.ORG) {
+	if !options.WithoutHeader || (options.Format != option.GFM && options.Format != option.ORG) {
 		hfields := make([]table.Field, fieldLen)
 		for i := range view.Header {
 			hfields[i] = table.NewField(view.Header[i].Column, text.Centering)
@@ -356,7 +356,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 		rfields := make([]table.Field, fieldLen)
 		for j := range view.RecordSet[i] {
 			str, effect, align := ConvertFieldContents(view.RecordSet[i][j][0], isPlainTable)
-			if options.Format == cmd.TEXT || options.Format == cmd.BOX {
+			if options.Format == option.TEXT || options.Format == option.BOX {
 				textStrBuf.Reset()
 				textLineBuf.Reset()
 
@@ -400,7 +400,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 		e.AppendRecord(rfields)
 	}
 
-	if options.Format == cmd.GFM {
+	if options.Format == option.GFM {
 		e.SetFieldAlignments(aligns)
 	}
 
@@ -418,7 +418,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 	return "", nil
 }
 
-func encodeLTSV(ctx context.Context, fp io.Writer, view *View, options cmd.ExportOptions) error {
+func encodeLTSV(ctx context.Context, fp io.Writer, view *View, options option.ExportOptions) error {
 	if view.RecordLen() < 1 {
 		return DataEmpty
 	}
@@ -454,43 +454,43 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, options cmd.Expor
 
 func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string, text.FieldAlignment) {
 	var s string
-	var effect = cmd.NoEffect
+	var effect = option.NoEffect
 	var align = text.NotAligned
 
 	switch val.(type) {
 	case *value.String:
 		s = val.(*value.String).Raw()
-		effect = cmd.StringEffect
+		effect = option.StringEffect
 	case *value.Integer:
 		s = val.(*value.Integer).String()
-		effect = cmd.NumberEffect
+		effect = option.NumberEffect
 		align = text.RightAligned
 	case *value.Float:
 		s = val.(*value.Float).String()
-		effect = cmd.NumberEffect
+		effect = option.NumberEffect
 		align = text.RightAligned
 	case *value.Boolean:
 		s = val.(*value.Boolean).String()
-		effect = cmd.BooleanEffect
+		effect = option.BooleanEffect
 		align = text.Centering
 	case *value.Ternary:
 		t := val.(*value.Ternary)
 		if forTextTable {
 			s = t.Ternary().String()
-			effect = cmd.TernaryEffect
+			effect = option.TernaryEffect
 			align = text.Centering
 		} else if t.Ternary() != ternary.UNKNOWN {
 			s = strconv.FormatBool(t.Ternary().ParseBool())
-			effect = cmd.BooleanEffect
+			effect = option.BooleanEffect
 			align = text.Centering
 		}
 	case *value.Datetime:
 		s = val.(*value.Datetime).Format(time.RFC3339Nano)
-		effect = cmd.DatetimeEffect
+		effect = option.DatetimeEffect
 	case *value.Null:
 		if forTextTable {
 			s = "NULL"
-			effect = cmd.NullEffect
+			effect = option.NullEffect
 			align = text.Centering
 		}
 	}

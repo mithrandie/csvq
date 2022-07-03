@@ -7,7 +7,7 @@ import (
 
 	"github.com/mithrandie/ternary"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -139,8 +139,8 @@ func TestIdentifier_String(t *testing.T) {
 
 	s = "abcde"
 	e = Identifier{Literal: s, Quoted: true}
-	if e.String() != cmd.QuoteIdentifier(s) {
-		t.Errorf("string = %q, want %q for %#v", e.String(), cmd.QuoteIdentifier(s), e)
+	if e.String() != option.QuoteIdentifier(s) {
+		t.Errorf("string = %q, want %q for %#v", e.String(), option.QuoteIdentifier(s), e)
 	}
 }
 

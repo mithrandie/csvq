@@ -1,4 +1,4 @@
-package cmd
+package option
 
 const DefaultEnvJson = `
 {

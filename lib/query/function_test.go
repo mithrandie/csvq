@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -23,7 +23,7 @@ type functionTest struct {
 	Error    string
 }
 
-func testFunction(t *testing.T, f func(parser.Function, []value.Primary, *cmd.Flags) (value.Primary, error), tests []functionTest) {
+func testFunction(t *testing.T, f func(parser.Function, []value.Primary, *option.Flags) (value.Primary, error), tests []functionTest) {
 	for _, v := range tests {
 		result, err := f(v.Function, v.Args, TestTx.Flags)
 		if err != nil {

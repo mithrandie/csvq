@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/excmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 	"github.com/mithrandie/csvq/lib/value"
@@ -93,7 +93,7 @@ func (p *Prompt) RenderPrompt(ctx context.Context) (string, error) {
 	}
 	if p.scope.Tx.Flags.ExportOptions.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
-			s = p.scope.Tx.Palette.Render(cmd.PromptEffect, s)
+			s = p.scope.Tx.Palette.Render(option.PromptEffect, s)
 		}
 	} else {
 		s = p.StripEscapeSequence(s)
@@ -108,7 +108,7 @@ func (p *Prompt) RenderContinuousPrompt(ctx context.Context) (string, error) {
 	}
 	if p.scope.Tx.Flags.ExportOptions.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
-			s = p.scope.Tx.Palette.Render(cmd.PromptEffect, s)
+			s = p.scope.Tx.Palette.Render(option.PromptEffect, s)
 		}
 	} else {
 		s = p.StripEscapeSequence(s)

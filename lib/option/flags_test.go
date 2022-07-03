@@ -1,4 +1,4 @@
-package cmd
+package option
 
 import (
 	"path/filepath"
@@ -62,7 +62,7 @@ func TestFlags_SetRepository(t *testing.T) {
 		t.Errorf("repository = %s, expect to set %q for %q", flags.Repository, "", "")
 	}
 
-	dir := filepath.Join("..", "..", "lib", "cmd")
+	dir := filepath.Join("..", "..", "lib", "option")
 	absdir, _ := filepath.Abs(dir)
 	_ = flags.SetRepository(dir)
 	if flags.Repository != absdir {

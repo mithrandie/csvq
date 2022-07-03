@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/csvq/lib/file"
 
@@ -59,7 +59,7 @@ func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
 	return nil, errTableNotLoaded
 }
 
-func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier, flags *cmd.Flags) (*View, error) {
+func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier, flags *option.Flags) (*View, error) {
 	if view, ok := m.Load(fpath.Literal); ok {
 		ret := view.Copy()
 
