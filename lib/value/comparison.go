@@ -2,6 +2,7 @@ package value
 
 import (
 	"errors"
+	"math"
 	"strings"
 	"time"
 
@@ -45,6 +46,10 @@ func compareInteger(v1 int64, v2 int64) ComparisonResult {
 }
 
 func compareFloat(v1 float64, v2 float64) ComparisonResult {
+	if math.IsNaN(v1) || math.IsNaN(v2) {
+		return IsNotEqual
+	}
+
 	if v1 == v2 {
 		return IsEqual
 	}

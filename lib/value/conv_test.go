@@ -1,6 +1,7 @@
 package value
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -315,6 +316,24 @@ func TestToInteger(t *testing.T) {
 	p = NewFloat(1.6)
 	i = ToInteger(p)
 	if _, ok := i.(*Integer); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewFloat(math.NaN())
+	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewFloat(math.Inf(1))
+	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewFloat(math.Inf(-1))
+	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 

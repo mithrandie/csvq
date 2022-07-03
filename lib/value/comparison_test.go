@@ -1,6 +1,7 @@
 package value
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -149,6 +150,26 @@ var compareCombinedlyTests = []struct {
 		LHS:    NewString("1"),
 		RHS:    NewString("A"),
 		Result: IsLess,
+	},
+	{
+		LHS:    NewFloat(math.Inf(1)),
+		RHS:    NewFloat(math.Inf(1)),
+		Result: IsEqual,
+	},
+	{
+		LHS:    NewFloat(math.Inf(1)),
+		RHS:    NewFloat(math.Inf(-1)),
+		Result: IsGreater,
+	},
+	{
+		LHS:    NewFloat(math.NaN()),
+		RHS:    NewFloat(math.NaN()),
+		Result: IsNotEqual,
+	},
+	{
+		LHS:    NewFloat(math.Inf(1)),
+		RHS:    NewFloat(math.NaN()),
+		Result: IsNotEqual,
 	},
 }
 
@@ -362,6 +383,48 @@ var compareTests = []struct {
 		RHS:    NewNull(),
 		Op:     "<>",
 		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS:    NewFloat(math.Inf(1)),
+		RHS:    NewFloat(math.Inf(1)),
+		Op:     "=",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewFloat(math.Inf(1)),
+		RHS:    NewFloat(math.Inf(-1)),
+		Op:     ">",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewFloat(math.Inf(1)),
+		RHS:    NewFloat(math.NaN()),
+		Op:     "<",
+		Result: ternary.UNKNOWN,
+	},
+	{
+		LHS:    NewFloat(math.NaN()),
+		RHS:    NewFloat(math.NaN()),
+		Op:     "=",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS:    NewFloat(math.NaN()),
+		RHS:    NewFloat(math.NaN()),
+		Op:     "==",
+		Result: ternary.FALSE,
+	},
+	{
+		LHS:    NewFloat(math.NaN()),
+		RHS:    NewFloat(math.NaN()),
+		Op:     "<>",
+		Result: ternary.TRUE,
+	},
+	{
+		LHS:    NewFloat(math.NaN()),
+		RHS:    NewFloat(math.Inf(1)),
+		Op:     "<>",
+		Result: ternary.TRUE,
 	},
 }
 

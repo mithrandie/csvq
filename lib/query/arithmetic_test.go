@@ -1,6 +1,7 @@
 package query
 
 import (
+	"math"
 	"reflect"
 	"testing"
 
@@ -92,6 +93,24 @@ var calculateTests = []struct {
 		Operator: '%',
 		Error:    "integer devided by zero",
 	},
+	{
+		LHS:      value.NewFloat(math.Inf(1)),
+		RHS:      value.NewFloat(100),
+		Operator: '+',
+		Result:   value.NewFloat(math.Inf(1)),
+	},
+	{
+		LHS:      value.NewFloat(math.Inf(1)),
+		RHS:      value.NewFloat(math.Inf(-1)),
+		Operator: '-',
+		Result:   value.NewFloat(math.Inf(1)),
+	},
+	{
+		LHS:      value.NewFloat(math.Inf(1)),
+		RHS:      value.NewFloat(math.NaN()),
+		Operator: '+',
+		Result:   value.NewFloat(math.NaN()),
+	},
 }
 
 func TestCalculate(t *testing.T) {
@@ -112,6 +131,12 @@ func TestCalculate(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(r, v.Result) {
+			if expectF, ok := r.(*value.Float); ok && math.IsNaN(expectF.Raw()) {
+				if retF, ok := r.(*value.Float); ok && math.IsNaN(retF.Raw()) {
+					continue
+				}
+			}
+
 			t.Errorf("result = %s, want %s for (%s %s %s)", r, v.Result, v.LHS, string(rune(v.Operator)), v.RHS)
 		}
 	}

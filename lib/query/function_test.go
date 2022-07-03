@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"math"
 	"reflect"
 	"testing"
 	"time"
@@ -38,6 +39,12 @@ func testFunction(t *testing.T, f func(parser.Function, []value.Primary, *cmd.Fl
 			continue
 		}
 		if !reflect.DeepEqual(result, v.Result) {
+			if f1, ok := v.Result.(*value.Float); ok && math.IsNaN(f1.Raw()) {
+				if f2, ok := result.(*value.Float); ok && math.IsNaN(f2.Raw()) {
+					continue
+				}
+			}
+
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
@@ -614,14 +621,14 @@ var sqrtTests = []functionTest{
 		Result: value.NewFloat(2),
 	},
 	{
-		Name: "Sqrt Cannot Calculate",
+		Name: "Sqrt returns NaN",
 		Function: parser.Function{
 			Name: "sqrt",
 		},
 		Args: []value.Primary{
 			value.NewFloat(-4),
 		},
-		Result: value.NewNull(),
+		Result: value.NewFloat(math.NaN()),
 	},
 }
 
@@ -664,7 +671,7 @@ var powTests = []functionTest{
 		Result: value.NewNull(),
 	},
 	{
-		Name: "Pow Cannot Calculate",
+		Name: "Pow returns NaN",
 		Function: parser.Function{
 			Name: "pow",
 		},
@@ -672,7 +679,7 @@ var powTests = []functionTest{
 			value.NewFloat(-2),
 			value.NewFloat(2.4),
 		},
-		Result: value.NewNull(),
+		Result: value.NewFloat(math.NaN()),
 	},
 	{
 		Name: "Pow Arguments Error",
@@ -3647,7 +3654,17 @@ var integerTests = []functionTest{
 		Args: []value.Primary{
 			value.NewFloat(1.7),
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewInteger(1),
+	},
+	{
+		Name: "Integer from Special Float Value",
+		Function: parser.Function{
+			Name: "integer",
+		},
+		Args: []value.Primary{
+			value.NewFloat(math.NaN()),
+		},
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Float Null",
@@ -3798,6 +3815,16 @@ var datetimeTests = []functionTest{
 			value.NewFloat(1136181845.123),
 		},
 		Result: value.NewDatetime(time.Date(2006, 1, 2, 6, 4, 5, 123000000, GetTestLocation())),
+	},
+	{
+		Name: "Datetime Invalid Float Value",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewFloat(math.NaN()),
+		},
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Datetime from String",

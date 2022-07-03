@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"math"
 	"strings"
 
 	"github.com/mithrandie/csvq/lib/cmd"
@@ -177,9 +178,23 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 	case FloatType:
 		switch compareValue.Type {
 		case IntegerType, FloatType:
+			if math.IsNaN(v.Float) || math.IsNaN(compareValue.Float) {
+				if math.IsNaN(v.Float) && math.IsNaN(compareValue.Float) {
+					return ternary.UNKNOWN
+				}
+
+				if math.IsNaN(v.Float) {
+					return ternary.FALSE
+				}
+
+				// math.IsNaN(compareValue.Float)
+				return ternary.TRUE
+			}
+
 			if v.Float == compareValue.Float {
 				return ternary.UNKNOWN
 			}
+
 			return ternary.ConvertFromBool(v.Float < compareValue.Float)
 		case StringType:
 			return ternary.ConvertFromBool(v.String < compareValue.String)
@@ -219,6 +234,9 @@ func (v *SortValue) EquivalentTo(compareValue *SortValue) bool {
 	case FloatType:
 		switch compareValue.Type {
 		case FloatType:
+			if math.IsNaN(v.Float) && math.IsNaN(compareValue.Float) {
+				return true
+			}
 			return v.Float == compareValue.Float
 		}
 	case DatetimeType:

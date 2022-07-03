@@ -6,14 +6,14 @@ category: reference
 
 # Cast Functions
 
-| name | description |
-| :- | :- |
-| [STRING](#string) | Convert a value to a string |
-| [INTEGER](#integer) | Convert a value to an integer |
-| [FLOAT](#float) | Convert a value to a float |
+| name                  | description                   |
+|:----------------------|:------------------------------|
+| [STRING](#string)     | Convert a value to a string   |
+| [INTEGER](#integer)   | Convert a value to an integer |
+| [FLOAT](#float)       | Convert a value to a float    |
 | [DATETIME](#datetime) | Convert a value to a datetime |
-| [BOOLEAN](#boolean) | Convert a value to a boolean |
-| [TERNARY](#ternary) | Convert a value to a ternary |
+| [BOOLEAN](#boolean)   | Convert a value to a boolean  |
+| [TERNARY](#ternary)   | Convert a value to a ternary  |
 
 ## Definitions
 
@@ -32,14 +32,14 @@ _return_
 
 Convert _value_ to a string.
 
-| value type | description |
-| :- | :- |
-| Integer  | An integer value is converted to a string representing a decimal integer. |
-| Float    | A float value is converted to a string representing a floating-point decimal. |
-| Datetime | A datetime value is converted to a string formatted with RFC3339 with Nano Seconds. |
-| Boolean  | A boolean value is converted to either 'true' or 'false'. |
-| Ternary  | A ternaly value is converted to any one string of 'TRUE', 'FALSE' and 'UNKNOWN'. |
-| Null     | A null value is kept as it is. |
+| Type     | Value after conversion                          |
+|:---------|:------------------------------------------------|
+| Integer  | String representing a decimal integer           |
+| Float    | String representing a floating-point decimal    |
+| Datetime | String formatted with RFC3339 with Nano Seconds |
+| Boolean  | 'true' or 'false'                               |
+| Ternary  | 'TRUE', 'FALSE' and 'UNKNOWN'                   |
+| Null     | Null                                            |
 
 
 ### INTEGER
@@ -57,14 +57,17 @@ _return_
 
 Convert _value_ to an integer.
 
-| value type | description |
-| :- | :- |
-| String   | If a string is a representation of a decimal integer or its exponential notation, then it is converted to an integer. If a string is a representation of a floating-point decimal or its exponential notation, then it is converted and rounded to an integer. Otherwise it is converted to a null. |
-| Float    | A float value is rounded to an integer. |
-| Datetime | A datetime value is converted to an integer representing its unix time. |
-| Boolean  | A boolean value is converted to a null. |
-| Ternary  | A ternaly value is converted to a null. |
-| Null     | A null value is kept as it is. |
+| Type     | Value                                                                  | Value after conversion                   |
+|:---------|:-----------------------------------------------------------------------|:-----------------------------------------|
+| String   | Representation of a decimal integer                                    | Integer represented by the string        |
+|          | Representation of a floating-point decimal or its exponential notation | Integer with decimal places rounded down |
+|          | Other values                                                           | Null                                     |
+| Float    | +Inf, -Inf, NaN                                                        | Null                                     |
+|          | Other values                                                           | Integer with decimal places rounded down |
+| Datetime |                                                                        | Integer representing its unix time       |
+| Boolean  |                                                                        | Null                                     |
+| Ternary  |                                                                        | Null                                     |
+| Null     |                                                                        | Null                                     |
 
 ### FLOAT
 {: #float}
@@ -81,14 +84,18 @@ _return_
 
 Convert _value_ to a float.
 
-| value type | description |
-| :- | :- |
-| String   | If a string is a representation of a floating-point decimal or its exponential notation, then it is converted to a float. Otherwise it is converted to a null. |
-| Integer  | An integer value is converted to a float. |
-| Datetime | A datetime value is converted to a float representing its unix time. |
-| Boolean  | A boolean value is converted to a null. |
-| Ternary  | A ternary value is converted to a null. |
-| Null     | A null value is kept as it is. |
+| Type     | Value                                                                  | Value after conversion           |
+|:---------|:-----------------------------------------------------------------------|:---------------------------------|
+| String   | Representation of a floating-point decimal or its exponential notation | Float represented by the string  |
+|          | 'Inf', '+Inf'                                                          | +Inf                             |
+|          | '-Inf'                                                                 | -Inf                             |
+|          | 'NaN'                                                                  | NaN                              |
+|          | Other values                                                           | Null                             |
+| Integer  |                                                                        | Float equivalent to the integer  |
+| Datetime |                                                                        | Float representing its unix time |
+| Boolean  |                                                                        | Null                             |
+| Ternary  |                                                                        | Null                             |
+| Null     |                                                                        | Null                             |
 
 ### DATETIME
 {: #datetime}
@@ -113,41 +120,45 @@ _return_
 
 Convert _value_ to a datetime.
 
-| value type | description |
-| :- | :- |
-| String   | If a string value is a representation of an integer, or a float value, then it is converted to a datetime represented by the number as a unix time. If a string value is formatted as a datetime, then it is convered to a datetime. Otherwise, it is converted to a null. |
-| Integer  | An integer value is converted to a datetime represented by the integer value as a unix time. |
-| Float    | A float value is converted to a datetime represented by the float value as a unix time. |
-| Boolean  | A boolean value is converted to a null. |
-| Ternary  | A ternaly value is converted to a null. |
-| Null     | A null value is kept as it is. |
+| Type    | Value                                                                  | Value after conversion                                   |
+|:--------|:-----------------------------------------------------------------------|:---------------------------------------------------------|
+| String  | Datetime Formats                                                       | Datetime represented by the string                       |
+|         | Representation of a decimal integer                                    | Datetime represented by the integer value as a unix time |
+|         | Representation of a floating-point decimal or its exponential notation | Datetime represented by the float value as a unix time   |
+|         | Other values                                                           | Null                                                     |
+| Integer |                                                                        | Datetime represented by the integer value as a unix time |
+| Float   | +Inf, -Inf, NaN                                                        | Null                                                     |
+|         | Other values                                                           | Datetime represented by the float value as a unix time   |
+| Boolean |                                                                        | Null                                                     |
+| Ternary |                                                                        | Null                                                     |
+| Null    |                                                                        | Null                                                     |
 
 #### Format of string to be interpreted as datetime
 {: #format-of-string-as-datetime}
 
 Strings of the form passed by the [--datetime-format option]({{ '/reference/command.html#options' | relative_url }}) and defined in the [configuration files]({{ '/reference/command.html#configurations' | relative_url }}),  or the following forms can be converted to datetime values.
 
-| DateFormat | Example |
-| :- | :- |
+| DateFormat | Example    |
+|:-----------|:-----------|
 | YYYY-MM-DD | 2012-03-15 |
 | YYYY/MM/DD | 2012/03/15 |
-| YYYY-M-D   | 2012-3-15 |
-| YYYY/M/D   | 2012/3/15 |
+| YYYY-M-D   | 2012-3-15  |
+| YYYY/M/D   | 2012/3/15  |
 
 &nbsp;
 
-| DatetimeFormat | Example |
-| :- | :- |
-| DateFormat | 2012-03-15 |
-| DateFormat hh:mm:ss(.NanoSecods) | 2012-03-15 12:03:01<br />2012-03-15 12:03:01.123456789 |
-| DateFormat hh:mm:ss(.NanoSecods) ±hh:mm | 2012-03-15 12:03:01 -07:00 |
-| DateFormat hh:mm:ss(.NanoSecods) ±hhmm | 2012-03-15 12:03:01 -0700 |
-| DateFormat hh:mm:ss(.NanoSecods) TimeZone | 2012-03-15 12:03:01 PST |
-| YYYY-MM-DDThh:mm:ss(.NanoSeconds) | 2012-03-15T12:03:01 |
-| RFC3339 | 2012-03-15T12:03:01-07:00 |
-| RFC3339 with Nano Seconds | 2012-03-15T12:03:01.123456789-07:00 |
-| RFC822 | 03 Mar 12 12:03 PST |
-| RFC822 with Numeric Zone | 03 Mar 12 12:03 -0700 |
+| DatetimeFormat                            | Example                                                |
+|:------------------------------------------|:-------------------------------------------------------|
+| DateFormat                                | 2012-03-15                                             |
+| DateFormat hh:mm:ss(.NanoSecods)          | 2012-03-15 12:03:01<br />2012-03-15 12:03:01.123456789 |
+| DateFormat hh:mm:ss(.NanoSecods) ±hh:mm   | 2012-03-15 12:03:01 -07:00                             |
+| DateFormat hh:mm:ss(.NanoSecods) ±hhmm    | 2012-03-15 12:03:01 -0700                              |
+| DateFormat hh:mm:ss(.NanoSecods) TimeZone | 2012-03-15 12:03:01 PST                                |
+| YYYY-MM-DDThh:mm:ss(.NanoSeconds)         | 2012-03-15T12:03:01                                    |
+| RFC3339                                   | 2012-03-15T12:03:01-07:00                              |
+| RFC3339 with Nano Seconds                 | 2012-03-15T12:03:01.123456789-07:00                    |
+| RFC822                                    | 03 Mar 12 12:03 PST                                    |
+| RFC822 with Numeric Zone                  | 03 Mar 12 12:03 -0700                                  |
 
 > Timezone abbreviations such as "PST" may not work properly depending on your environment,
 > so you should use timezone offset such as "-07:00" as possible.
@@ -167,14 +178,22 @@ _boolean_
 
 Convert _value_ to a boolean.
 
-| value type | description |
-| :- | :- |
-| String   | If a string value is any of '1', 't', 'T', 'TRUE', 'true' and 'True', then it is converted to true. If a string value is any of '0', 'f', 'F', 'FALSE' and 'false', then it is converted to false. Otherwise it is converted to a null. |
-| Integer  | If an integer value is 1, then it is converted to true. If an integer value is 0, then it is converted to false. Otherwise it is converted to a null. |
-| Float    | If a float value is 1, then it is converted to true. If a float value is 0, then it is converted to false. Otherwise it is converted to a null. |
-| Datetime | A datetime value is converted to a null. |
-| Ternary  | If a ternary value is TRUE, then it is converted to true. If a ternary value is FALSE, then it is converted to false. Otherwise it is converted to a null. |
-| Null     | A null value is kept as it is. |
+| Type     | Value             | Value after conversion |
+|:---------|:------------------|:-----------------------|
+| String   | '1', 't', 'true'  | true                   |
+| String   | '0', 'f', 'false' | false                  |
+| String   | Other values      | Null                   |
+| Integer  | 1                 | true                   |
+| Integer  | 0                 | false                  |
+| Integer  | Other values      | Null                   |
+| Float    | 1                 | true                   |
+| Float    | 0                 | false                  |
+| Float    | Other values      | Null                   |
+| Datetime |                   | Null                   |
+| Ternary  | TRUE              | true                   |
+|          | FALSE             | false                  |
+|          | UNKNOWN           | Null                   |
+| Null     |                   | Null                   |
 
 ### TERNARY
 {: #ternary}
@@ -191,11 +210,18 @@ _return_
 
 Convert _value_ to a ternary.
 
-| value type | description |
-| :- | :- |
-| String   | If a string value is any of '1', 't', 'T', 'TRUE', 'true' and 'True', then it is converted to TRUE. If a string value is any of '0', 'f', 'F', 'FALSE' and 'false', then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
-| Integer  | If an integer value is 1, then it is converted to TRUE. If an integer value is 0, then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
-| Float    | If a float value is 1, then it is converted to TRUE. If a float value is 0, then it is converted to FALSE. Otherwise it is converted to UNKNOWN. |
-| Datetime | A datetime value is converted to UNKNOWN. |
-| Boolean  | If a boolean value is true, then it is converted to TRUE. If a boolean value is false, then it is converted to FALSE. |
-| Null     | A null value is converted to UNKNOWN. |
+| Type     | Value             | Value after conversion |
+|:---------|:------------------|:-----------------------|
+| String   | '1', 't', 'true'  | TRUE                   |
+| String   | '0', 'f', 'false' | FALSE                  |
+| String   | Other values      | UNKNOWN                |
+| Integer  | 1                 | TRUE                   |
+| Integer  | 0                 | FALSE                  |
+| Integer  | Other values      | UNKNOWN                |
+| Float    | 1                 | TRUE                   |
+| Float    | 0                 | FALSE                  |
+| Float    | Other values      | UNKNOWN                |
+| Datetime |                   | UNKNOWN                |
+| Boolean  | true              | TRUE                   |
+|          | false             | FALSE                  |
+| Null     |                   | UNKNOWN                |

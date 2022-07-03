@@ -2,6 +2,7 @@ package value
 
 import (
 	"bytes"
+	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -253,13 +254,16 @@ func Float64ToStr(f float64) string {
 }
 
 func ToInteger(p Primary) Primary {
-	switch p.(type) {
+	switch val := p.(type) {
 	case *Integer:
-		return NewInteger(p.(*Integer).Raw())
+		return NewInteger(val.Raw())
 	case *Float:
-		return NewInteger(int64(p.(*Float).Raw()))
+		if math.IsNaN(val.Raw()) || math.IsInf(val.Raw(), 0) {
+			return NewNull()
+		}
+		return NewInteger(int64(val.Raw()))
 	case *String:
-		s := cmd.TrimSpace(p.(*String).Raw())
+		s := cmd.TrimSpace(val.Raw())
 		if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 			return NewInteger(i)
 		}

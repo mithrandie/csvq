@@ -301,9 +301,6 @@ func execMath1Arg(fn parser.Function, args []value.Primary, mathf func(float64) 
 	result := mathf(f.(*value.Float).Raw())
 	value.Discard(f)
 
-	if math.IsInf(result, 0) || math.IsNaN(result) {
-		return value.NewNull(), nil
-	}
 	return value.NewFloat(result), nil
 }
 
@@ -326,9 +323,6 @@ func execMath2Args(fn parser.Function, args []value.Primary, mathf func(float64,
 	value.Discard(f1)
 	value.Discard(f2)
 
-	if math.IsInf(result, 0) || math.IsNaN(result) {
-		return value.NewNull(), nil
-	}
 	return value.NewFloat(result), nil
 }
 
@@ -1756,13 +1750,13 @@ func String(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prima
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	switch args[0].(type) {
+	switch p := args[0].(type) {
 	case *value.Boolean:
-		return value.NewString(strconv.FormatBool(args[0].(*value.Boolean).Raw())), nil
+		return value.NewString(strconv.FormatBool(p.Raw())), nil
 	case *value.Ternary:
-		return value.NewString(args[0].(*value.Ternary).Ternary().String()), nil
+		return value.NewString(p.Ternary().String()), nil
 	case *value.Datetime:
-		return value.NewString(args[0].(*value.Datetime).Format(time.RFC3339Nano)), nil
+		return value.NewString(p.Format(time.RFC3339Nano)), nil
 	default:
 		return value.ToString(args[0]), nil
 	}
@@ -1773,11 +1767,9 @@ func Integer(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Prim
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	switch args[0].(type) {
-	case *value.Float:
-		return value.NewInteger(int64(round(args[0].(*value.Float).Raw(), 0))), nil
+	switch p := args[0].(type) {
 	case *value.Datetime:
-		return value.NewInteger(args[0].(*value.Datetime).Raw().Unix()), nil
+		return value.NewInteger(p.Raw().Unix()), nil
 	default:
 		return value.ToInteger(args[0]), nil
 	}
@@ -1788,9 +1780,9 @@ func Float(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primar
 		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
 	}
 
-	switch args[0].(type) {
+	switch p := args[0].(type) {
 	case *value.Datetime:
-		t := args[0].(*value.Datetime).Raw()
+		t := p.Raw()
 		f := float64(t.Unix())
 		if t.Nanosecond() > 0 {
 			f = f + float64(t.Nanosecond())/1e9
@@ -1832,6 +1824,10 @@ func Datetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value
 		if f := value.ToFloat(p); !value.IsNull(f) {
 			val := f.(*value.Float).Raw()
 			value.Discard(f)
+
+			if math.IsNaN(val) || math.IsInf(val, 0) {
+				return value.NewNull()
+			}
 			return value.NewDatetime(value.Float64ToTime(val, location))
 		}
 
