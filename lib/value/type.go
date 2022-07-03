@@ -115,7 +115,7 @@ func NewFloat(f float64) *Float {
 }
 
 func (f Float) String() string {
-	return Float64ToStr(f.value)
+	return Float64ToStr(f.value, false)
 }
 
 func (f Float) Raw() float64 {

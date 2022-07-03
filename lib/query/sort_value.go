@@ -84,7 +84,7 @@ func (values SortValues) Serialize(buf *bytes.Buffer) {
 		case IntegerType, BooleanType:
 			serializeInteger(buf, value.Int64ToStr(val.Integer))
 		case FloatType:
-			serializeFloat(buf, value.Float64ToStr(val.Float))
+			serializeFloat(buf, value.Float64ToStr(val.Float, false))
 		case DatetimeType:
 			serializeDatetimeFromUnixNano(buf, val.Datetime)
 		case StringType:

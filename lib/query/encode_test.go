@@ -10,7 +10,6 @@ import (
 
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/json"
-
 	"github.com/mithrandie/ternary"
 )
 
@@ -27,6 +26,7 @@ var encodeViewTests = []struct {
 	EncloseAll              bool
 	JsonEscape              json.EscapeType
 	PrettyPrint             bool
+	ScientificNotation      bool
 	UseColor                bool
 	Result                  string
 	Error                   string
@@ -115,6 +115,22 @@ var encodeViewTests = []struct {
 			"| \033[35m2.0123\033[0m | \033[32mabcdef\033[0m |\n" +
 			"|        | \033[32mghijkl\033[0m |\n" +
 			"+--------+--------+",
+	},
+	{
+		Name: "Text using Scientific Notation",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewFloat(0.00000123)}),
+			},
+		},
+		Format:             option.TEXT,
+		ScientificNotation: true,
+		Result: "+----------+\n" +
+			"|    c1    |\n" +
+			"+----------+\n" +
+			"| 1.23e-06 |\n" +
+			"+----------+",
 	},
 	{
 		Name: "Box",
@@ -478,6 +494,22 @@ var encodeViewTests = []struct {
 			"]",
 	},
 	{
+		Name: "JSON using Scientific Notation",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewFloat(0.00000123)}),
+			},
+		},
+		Format:             option.JSON,
+		ScientificNotation: true,
+		Result: "[" +
+			"{" +
+			"\"c1\":1.23e-06" +
+			"}" +
+			"]",
+	},
+	{
 		Name: "JSONL",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
@@ -508,6 +540,20 @@ var encodeViewTests = []struct {
 			"\"c1\":34567890," +
 			"\"c2\\nsecond line\":\" abc\\\\defghi\\/jk\\rlmn\\topqrstuvwxyzabcdefg\\nhi\\\"jk\\n\"," +
 			"\"c3\":null" +
+			"}\n",
+	},
+	{
+		Name: "JSONL using Scientific Notation",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewFloat(0.00000123)}),
+			},
+		},
+		Format:             option.JSONL,
+		ScientificNotation: true,
+		Result: "{" +
+			"\"c1\":1.23e-06" +
 			"}\n",
 	},
 	{
@@ -633,6 +679,7 @@ func TestEncodeView(t *testing.T) {
 		options.EncloseAll = v.EncloseAll
 		options.JsonEscape = v.JsonEscape
 		options.PrettyPrint = v.PrettyPrint
+		options.ScientificNotation = v.ScientificNotation
 		options.SingleLine = v.WriteAsSingleLine
 
 		buf.Reset()

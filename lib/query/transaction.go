@@ -489,6 +489,12 @@ func (tx *Transaction) setFlag(key string, value interface{}, outFile string) er
 		} else {
 			err = errNotAllowdFlagFormat
 		}
+	case option.ScientificNotationFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetScientificNotation(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
 	case option.StripEndingLineBreakFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetStripEndingLineBreak(b)
@@ -620,6 +626,8 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 		val = value.NewString(option.JsonEscapeTypeToString(tx.Flags.ExportOptions.JsonEscape))
 	case option.PrettyPrintFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.PrettyPrint)
+	case option.ScientificNotationFlag:
+		val = value.NewBoolean(tx.Flags.ExportOptions.ScientificNotation)
 	case option.StripEndingLineBreakFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.StripEndingLineBreak)
 	case option.EastAsianEncodingFlag:

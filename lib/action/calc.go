@@ -49,7 +49,7 @@ func Calc(ctx context.Context, proc *query.Processor, expr string) error {
 			}
 			return err
 		}
-		values[i], _, _ = query.ConvertFieldContents(p, true)
+		values[i], _, _ = query.ConvertFieldContents(p, true, proc.Tx.Flags.ExportOptions.ScientificNotation)
 	}
 
 	return proc.Tx.Session.WriteToStdout(strings.Join(values, string(proc.Tx.Flags.ExportOptions.Delimiter)))

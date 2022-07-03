@@ -522,6 +522,13 @@ var setFlagTests = []struct {
 		},
 	},
 	{
+		Name: "Set Scientific Notation",
+		Expr: parser.SetFlag{
+			Flag:  parser.Flag{Name: "scientific_notation"},
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
 		Name: "Set Strip Ending Line Break",
 		Expr: parser.SetFlag{
 			Flag:  parser.Flag{Name: "strip_ending_line_break"},
@@ -1390,6 +1397,19 @@ var showFlagTests = []struct {
 			},
 		},
 		Result: "\033[34;1m@@PRETTY_PRINT:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
+		Name: "Show Scientific Notation",
+		Expr: parser.ShowFlag{
+			Flag: parser.Flag{Name: "scientific_notation"},
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Flag:  parser.Flag{Name: "scientific_notation"},
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+		},
+		Result: "\033[34;1m@@SCIENTIFIC_NOTATION:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
 		Name: "Show StripEndingLineBreak",
@@ -2269,6 +2289,7 @@ var showObjectsTests = []struct {
 			"               @@ENCLOSE_ALL: false\n" +
 			"               @@JSON_ESCAPE: (ignored) BACKSLASH\n" +
 			"              @@PRETTY_PRINT: (ignored) false\n" +
+			"       @@SCIENTIFIC_NOTATION: false\n" +
 			"       @@EAST_ASIAN_ENCODING: (ignored) false\n" +
 			"    @@COUNT_DIACRITICAL_SIGN: (ignored) false\n" +
 			"         @@COUNT_FORMAT_CODE: (ignored) false\n" +

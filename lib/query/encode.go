@@ -74,7 +74,7 @@ func encodeCSV(ctx context.Context, fp io.Writer, view *View, options option.Exp
 		}
 
 		for j := range view.RecordSet[i] {
-			str, effect, _ := ConvertFieldContents(view.RecordSet[i][j][0], false)
+			str, effect, _ := ConvertFieldContents(view.RecordSet[i][j][0], false, options.ScientificNotation)
 			quote := false
 			if options.EncloseAll && (effect == option.StringEffect || effect == option.DatetimeEffect) {
 				quote = true
@@ -124,7 +124,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, opti
 
 			fields := make([]fixedlen.Field, fieldLen)
 			for j := range view.RecordSet[i] {
-				str, _, a := ConvertFieldContents(view.RecordSet[i][j][0], false)
+				str, _, a := ConvertFieldContents(view.RecordSet[i][j][0], false, options.ScientificNotation)
 				fields[j] = fixedlen.NewField(str, a)
 			}
 			fieldList[i+recordStartPos] = fields
@@ -178,7 +178,7 @@ func encodeFixedLengthFormat(ctx context.Context, fp io.Writer, view *View, opti
 			}
 
 			for j := range view.RecordSet[i] {
-				str, _, a := ConvertFieldContents(view.RecordSet[i][j][0], false)
+				str, _, a := ConvertFieldContents(view.RecordSet[i][j][0], false, options.ScientificNotation)
 				fields[j] = fixedlen.NewField(str, a)
 			}
 			if err := w.Write(fields); err != nil {
@@ -219,6 +219,7 @@ func encodeJson(ctx context.Context, fp io.Writer, view *View, options option.Ex
 	e.EscapeType = options.JsonEscape
 	e.LineBreak = options.LineBreak
 	e.PrettyPrint = options.PrettyPrint
+	e.FloatFormat = jsonFloatFormat(options.ScientificNotation)
 	if options.PrettyPrint && options.Color {
 		e.Palette = palette
 	}
@@ -256,6 +257,7 @@ func encodeJsonLines(ctx context.Context, fp io.Writer, view *View, options opti
 	e.EscapeType = options.JsonEscape
 	e.LineBreak = options.LineBreak
 	e.PrettyPrint = options.PrettyPrint
+	e.FloatFormat = jsonFloatFormat(options.ScientificNotation)
 	if options.PrettyPrint && options.Color {
 		e.Palette = palette
 	}
@@ -355,7 +357,7 @@ func encodeText(ctx context.Context, fp io.Writer, view *View, options option.Ex
 
 		rfields := make([]table.Field, fieldLen)
 		for j := range view.RecordSet[i] {
-			str, effect, align := ConvertFieldContents(view.RecordSet[i][j][0], isPlainTable)
+			str, effect, align := ConvertFieldContents(view.RecordSet[i][j][0], isPlainTable, options.ScientificNotation)
 			if options.Format == option.TEXT || options.Format == option.BOX {
 				textStrBuf.Reset()
 				textLineBuf.Reset()
@@ -440,7 +442,7 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, options option.Ex
 		}
 
 		for j := range view.RecordSet[i] {
-			fields[j], _, _ = ConvertFieldContents(view.RecordSet[i][j][0], false)
+			fields[j], _, _ = ConvertFieldContents(view.RecordSet[i][j][0], false, options.ScientificNotation)
 		}
 		if err := w.Write(fields); err != nil {
 			return NewDataEncodingError(err.Error())
@@ -452,40 +454,46 @@ func encodeLTSV(ctx context.Context, fp io.Writer, view *View, options option.Ex
 	return nil
 }
 
-func ConvertFieldContents(val value.Primary, forTextTable bool) (string, string, text.FieldAlignment) {
+func jsonFloatFormat(useScientificNotation bool) txjson.FloatFormat {
+	if useScientificNotation {
+		return txjson.ENotationForLargeExponents
+	}
+	return txjson.NoExponent
+}
+
+func ConvertFieldContents(val value.Primary, forTextTable bool, useScientificNotation bool) (string, string, text.FieldAlignment) {
 	var s string
 	var effect = option.NoEffect
 	var align = text.NotAligned
 
-	switch val.(type) {
+	switch v := val.(type) {
 	case *value.String:
-		s = val.(*value.String).Raw()
+		s = v.Raw()
 		effect = option.StringEffect
 	case *value.Integer:
-		s = val.(*value.Integer).String()
+		s = v.String()
 		effect = option.NumberEffect
 		align = text.RightAligned
 	case *value.Float:
-		s = val.(*value.Float).String()
+		s = value.Float64ToStr(v.Raw(), useScientificNotation)
 		effect = option.NumberEffect
 		align = text.RightAligned
 	case *value.Boolean:
-		s = val.(*value.Boolean).String()
+		s = v.String()
 		effect = option.BooleanEffect
 		align = text.Centering
 	case *value.Ternary:
-		t := val.(*value.Ternary)
 		if forTextTable {
-			s = t.Ternary().String()
+			s = v.Ternary().String()
 			effect = option.TernaryEffect
 			align = text.Centering
-		} else if t.Ternary() != ternary.UNKNOWN {
-			s = strconv.FormatBool(t.Ternary().ParseBool())
+		} else if v.Ternary() != ternary.UNKNOWN {
+			s = strconv.FormatBool(v.Ternary().ParseBool())
 			effect = option.BooleanEffect
 			align = text.Centering
 		}
 	case *value.Datetime:
-		s = val.(*value.Datetime).Format(time.RFC3339Nano)
+		s = v.Format(time.RFC3339Nano)
 		effect = option.DatetimeEffect
 	case *value.Null:
 		if forTextTable {

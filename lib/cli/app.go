@@ -172,6 +172,11 @@ func Run() {
 			Usage:   "make JSON output easier to read in query results",
 		},
 		&cli.BoolFlag{
+			Name:    "scientific-notation",
+			Aliases: []string{"SN"},
+			Usage:   "use scientific notation for large exponents in output",
+		},
+		&cli.BoolFlag{
 			Name:    "east-asian-encoding",
 			Aliases: []string{"W"},
 			Usage:   "count ambiguous characters as fullwidth",
@@ -471,6 +476,9 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	}
 	if c.IsSet("pretty-print") {
 		_ = tx.SetFlag(option.PrettyPrintFlag, c.Bool("pretty-print"))
+	}
+	if c.IsSet("scientific-notation") {
+		_ = tx.SetFlag(option.ScientificNotationFlag, c.Bool("scientific-notation"))
 	}
 
 	if c.IsSet("east-asian-encoding") {

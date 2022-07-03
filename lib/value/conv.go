@@ -225,7 +225,7 @@ func ConvertDatetimeFormat(format string) string {
 }
 
 func Float64ToTime(f float64, location *time.Location) time.Time {
-	s := Float64ToStr(f)
+	s := Float64ToStr(f, false)
 	ar := strings.Split(s, ".")
 
 	sec, _ := strconv.ParseInt(ar[0], 10, 64)
@@ -249,7 +249,10 @@ func Int64ToStr(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
 
-func Float64ToStr(f float64) string {
+func Float64ToStr(f float64, useScientificNotation bool) string {
+	if useScientificNotation {
+		return strconv.FormatFloat(f, 'g', -1, 64)
+	}
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
@@ -341,7 +344,7 @@ func ToString(p Primary) Primary {
 	case *Integer:
 		return NewString(Int64ToStr(p.(*Integer).Raw()))
 	case *Float:
-		return NewString(Float64ToStr(p.(*Float).Raw()))
+		return NewString(Float64ToStr(p.(*Float).Raw(), false))
 	}
 	return NewNull()
 }

@@ -1919,6 +1919,7 @@ func (c *Completer) SetArgs(line string, origLine string, index int) readline.Ca
 					case option.AnsiQuotesFlag, option.StrictEqualFlag, option.AllowUnevenFieldsFlag,
 						option.NoHeaderFlag, option.WithoutNullFlag,
 						option.WithoutHeaderFlag, option.EncloseAllFlag, option.PrettyPrintFlag,
+						option.ScientificNotationFlag,
 						option.StripEndingLineBreakFlag, option.EastAsianEncodingFlag,
 						option.CountDiacriticalSignFlag, option.CountFormatCodeFlag,
 						option.ColorFlag, option.QuietFlag, option.StatsFlag:

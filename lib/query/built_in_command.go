@@ -225,7 +225,7 @@ func SetFlag(ctx context.Context, scope *ReferenceScope, expr parser.SetFlag) er
 		val = p.(*value.String).Raw()
 	case option.AnsiQuotesFlag, option.StrictEqualFlag, option.AllowUnevenFieldsFlag,
 		option.NoHeaderFlag, option.WithoutNullFlag, option.WithoutHeaderFlag, option.EncloseAllFlag,
-		option.PrettyPrintFlag, option.StripEndingLineBreakFlag,
+		option.PrettyPrintFlag, option.ScientificNotationFlag, option.StripEndingLineBreakFlag,
 		option.EastAsianEncodingFlag, option.CountDiacriticalSignFlag, option.CountFormatCodeFlag, option.ColorFlag,
 		option.QuietFlag, option.StatsFlag:
 		p = value.ToBoolean(v)
@@ -271,7 +271,7 @@ func AddFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.AddF
 		option.JsonQueryFlag, option.EncodingFlag,
 		option.ExportEncodingFlag, option.FormatFlag, option.ExportDelimiterFlag, option.ExportDelimiterPositionsFlag,
 		option.LineBreakFlag, option.JsonEscapeFlag, option.NoHeaderFlag, option.WithoutNullFlag, option.WithoutHeaderFlag,
-		option.EncloseAllFlag, option.PrettyPrintFlag, option.StripEndingLineBreakFlag,
+		option.EncloseAllFlag, option.PrettyPrintFlag, option.ScientificNotationFlag, option.StripEndingLineBreakFlag,
 		option.EastAsianEncodingFlag, option.CountDiacriticalSignFlag, option.CountFormatCodeFlag, option.ColorFlag,
 		option.QuietFlag, option.StatsFlag,
 		option.WaitTimeoutFlag,
@@ -320,7 +320,7 @@ func RemoveFlagElement(ctx context.Context, scope *ReferenceScope, expr parser.R
 		option.JsonQueryFlag, option.EncodingFlag,
 		option.ExportEncodingFlag, option.FormatFlag, option.ExportDelimiterFlag, option.ExportDelimiterPositionsFlag,
 		option.LineBreakFlag, option.JsonEscapeFlag, option.NoHeaderFlag, option.WithoutNullFlag, option.WithoutHeaderFlag,
-		option.EncloseAllFlag, option.PrettyPrintFlag, option.StripEndingLineBreakFlag,
+		option.EncloseAllFlag, option.PrettyPrintFlag, option.ScientificNotationFlag, option.StripEndingLineBreakFlag,
 		option.EastAsianEncodingFlag, option.CountDiacriticalSignFlag, option.CountFormatCodeFlag, option.ColorFlag,
 		option.QuietFlag, option.StatsFlag,
 		option.WaitTimeoutFlag,
@@ -456,7 +456,7 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 	case option.WaitTimeoutFlag:
 		s = tx.Palette.Render(option.NumberEffect, val.(*value.Float).String())
 	case option.AnsiQuotesFlag, option.StrictEqualFlag, option.AllowUnevenFieldsFlag,
-		option.NoHeaderFlag, option.WithoutNullFlag, option.StripEndingLineBreakFlag,
+		option.NoHeaderFlag, option.WithoutNullFlag, option.StripEndingLineBreakFlag, option.ScientificNotationFlag,
 		option.ColorFlag, option.QuietFlag, option.StatsFlag:
 		s = tx.Palette.Render(option.BooleanEffect, val.(*value.Boolean).String())
 	}

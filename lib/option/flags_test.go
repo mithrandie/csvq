@@ -619,6 +619,15 @@ func TestFlags_SetPrettyPrint(t *testing.T) {
 	}
 }
 
+func TestFlags_SetScientificNotation(t *testing.T) {
+	flags, _ := NewFlags(nil)
+
+	flags.SetScientificNotation(true)
+	if !flags.ExportOptions.ScientificNotation {
+		t.Errorf("scientific-notation = %t, expect to set %t", flags.ExportOptions.ScientificNotation, true)
+	}
+}
+
 func TestFlags_SetStripEndingLineBreak(t *testing.T) {
 	flags, _ := NewFlags(nil)
 

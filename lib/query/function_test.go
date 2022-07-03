@@ -4288,11 +4288,12 @@ func TestNow(t *testing.T) {
 }
 
 var jsonObjectTests = []struct {
-	Name     string
-	Function parser.Function
-	Scope    *ReferenceScope
-	Result   value.Primary
-	Error    string
+	Name               string
+	Function           parser.Function
+	ScientificNotation bool
+	Scope              *ReferenceScope
+	Result             value.Primary
+	Error              string
 }{
 	{
 		Name: "Json Object",
@@ -4316,6 +4317,30 @@ var jsonObjectTests = []struct {
 			},
 		}),
 		Result: value.NewString("{\"column1\":11}"),
+	},
+	{
+		Name: "Json Object using Scientific Notation",
+		Function: parser.Function{
+			Name: "json_object",
+			Args: []parser.QueryExpression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+			},
+		},
+		ScientificNotation: true,
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+						NewRecordWithId(1, []value.Primary{value.NewFloat(0.00000123), value.NewInteger(12)}),
+					},
+				},
+				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
+			},
+		}),
+		Result: value.NewString("{\"column1\":1.23e-06}"),
 	},
 	{
 		Name: "Json Object with All Columns",
@@ -4371,10 +4396,16 @@ var jsonObjectTests = []struct {
 }
 
 func TestJsonObject(t *testing.T) {
+	defer func() {
+		TestTx.Flags.ExportOptions.ScientificNotation = false
+	}()
+
 	for _, v := range jsonObjectTests {
 		if v.Scope == nil {
 			v.Scope = NewReferenceScope(TestTx)
 		}
+
+		TestTx.Flags.ExportOptions.ScientificNotation = v.ScientificNotation
 
 		result, err := JsonObject(context.Background(), v.Scope, v.Function)
 		if err != nil {

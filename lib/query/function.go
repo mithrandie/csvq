@@ -30,6 +30,7 @@ import (
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
+	txjson "github.com/mithrandie/go-text/json"
 	"github.com/mithrandie/ternary"
 )
 
@@ -2018,5 +2019,16 @@ func JsonObject(ctx context.Context, scope *ReferenceScope, fn parser.Function) 
 		record[i] = view.RecordSet[0][i][0]
 	}
 	structure, _ := json.ConvertRecordValueToJsonStructure(pathes, record)
-	return value.NewString(structure.Encode()), nil
+
+	encoder := txjson.NewEncoder()
+	encoder.EscapeType = scope.Tx.Flags.ExportOptions.JsonEscape
+	encoder.LineBreak = scope.Tx.Flags.ExportOptions.LineBreak
+	encoder.FloatFormat = jsonFloatFormat(scope.Tx.Flags.ExportOptions.ScientificNotation)
+
+	val, err := encoder.Encode(structure)
+	if err != nil {
+		return nil, NewDataEncodingError(fmt.Sprintf("%s in JSON encoding", err.Error()))
+	}
+
+	return value.NewString(val), nil
 }
