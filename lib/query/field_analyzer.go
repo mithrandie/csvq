@@ -1,6 +1,8 @@
 package query
 
 import (
+	"strings"
+
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -10,6 +12,10 @@ func HasAggregateFunction(expr parser.QueryExpression, scope *ReferenceScope) (b
 		return true, nil
 	case parser.Function:
 		e := expr.(parser.Function)
+		if strings.ToUpper(e.Name) == "JSON_OBJECT" {
+			return false, nil
+		}
+
 		if udfn, err := scope.GetFunction(expr, expr.(parser.Function).Name); err == nil && udfn.IsAggregate {
 			return true, nil
 		}
@@ -206,6 +212,9 @@ func SearchAnalyticFunctions(expr parser.QueryExpression) ([]parser.AnalyticFunc
 		e := expr.(parser.All)
 		return searchAnalyticFunctionsInRowValueComparison(e.LHS, e.Values)
 	case parser.Function:
+		if strings.ToUpper(expr.(parser.Function).Name) == "JSON_OBJECT" {
+			return nil, nil
+		}
 		return SearchAnalyticFunctionsInList(expr.(parser.Function).Args)
 	case parser.AggregateFunction:
 		return SearchAnalyticFunctionsInList(expr.(parser.AggregateFunction).Args)
