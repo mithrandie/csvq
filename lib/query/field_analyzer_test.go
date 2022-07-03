@@ -1,10 +1,11 @@
 package query
 
 import (
-	"github.com/mithrandie/csvq/lib/parser"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/mithrandie/csvq/lib/parser"
 )
 
 var hasAggregateFunctionTests = []struct {
@@ -48,6 +49,20 @@ var hasAggregateFunctionTests = []struct {
 			Args: []parser.QueryExpression{
 				parser.NewNullValue(),
 				parser.NewStringValue("str"),
+			},
+		},
+		Result: false,
+	},
+	{
+		Name: "JSON_OBJECT Function",
+		Expr: parser.Function{
+			Name: "json_object",
+			Args: []parser.QueryExpression{
+				parser.Field{
+					Object: parser.FieldReference{
+						Column: parser.Identifier{Literal: "column1"},
+					},
+				},
 			},
 		},
 		Result: false,
@@ -491,6 +506,20 @@ var searchAnalyticFunctionsTests = []struct {
 				AnalyticClause: parser.AnalyticClause{},
 			},
 		},
+	},
+	{
+		Name: "JSON_OBJECT Function",
+		Expr: parser.Function{
+			Name: "json_object",
+			Args: []parser.QueryExpression{
+				parser.Field{
+					Object: parser.FieldReference{
+						Column: parser.Identifier{Literal: "column1"},
+					},
+				},
+			},
+		},
+		Result: []parser.AnalyticFunction(nil),
 	},
 }
 

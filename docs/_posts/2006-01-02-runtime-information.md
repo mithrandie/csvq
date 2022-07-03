@@ -6,7 +6,7 @@ category: reference
 
 # Runtime Information
 
-Following values can be referred as a runtime information.
+Following values can be referred as runtime information.
 
 | name | type | description |
 | :- | :- | :- |

@@ -1,6 +1,8 @@
 package query
 
 import (
+	"strings"
+
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -10,13 +12,17 @@ func HasAggregateFunction(expr parser.QueryExpression, scope *ReferenceScope) (b
 		return true, nil
 	case parser.Function:
 		e := expr.(parser.Function)
+		if strings.ToUpper(e.Name) == "JSON_OBJECT" {
+			return false, nil
+		}
+
 		if udfn, err := scope.GetFunction(expr, expr.(parser.Function).Name); err == nil && udfn.IsAggregate {
 			return true, nil
 		}
 
 		return HasAggregateFunctionInList(e.Args, scope)
 	case parser.PrimitiveType, parser.FieldReference, parser.ColumnNumber, parser.Subquery, parser.Exists,
-		parser.Variable, parser.EnvironmentVariable, parser.RuntimeInformation, parser.Flag,
+		parser.Variable, parser.EnvironmentVariable, parser.RuntimeInformation, parser.Constant, parser.Flag,
 		parser.CursorStatus, parser.CursorAttrebute, parser.Placeholder,
 		parser.AllColumns:
 		return false, nil
@@ -171,7 +177,7 @@ func SearchAnalyticFunctions(expr parser.QueryExpression) ([]parser.AnalyticFunc
 
 		return appendAnalyticFunctionToListIfNotExist(childFuncs, []parser.AnalyticFunction{e}), nil
 	case parser.PrimitiveType, parser.FieldReference, parser.ColumnNumber, parser.Subquery, parser.Exists,
-		parser.Variable, parser.EnvironmentVariable, parser.RuntimeInformation, parser.Flag,
+		parser.Variable, parser.EnvironmentVariable, parser.RuntimeInformation, parser.Constant, parser.Flag,
 		parser.CursorStatus, parser.CursorAttrebute, parser.Placeholder,
 		parser.AllColumns:
 		return nil, nil
@@ -206,6 +212,9 @@ func SearchAnalyticFunctions(expr parser.QueryExpression) ([]parser.AnalyticFunc
 		e := expr.(parser.All)
 		return searchAnalyticFunctionsInRowValueComparison(e.LHS, e.Values)
 	case parser.Function:
+		if strings.ToUpper(expr.(parser.Function).Name) == "JSON_OBJECT" {
+			return nil, nil
+		}
 		return SearchAnalyticFunctionsInList(expr.(parser.Function).Args)
 	case parser.AggregateFunction:
 		return SearchAnalyticFunctionsInList(expr.(parser.AggregateFunction).Args)

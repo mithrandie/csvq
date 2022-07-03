@@ -2,10 +2,11 @@ package value
 
 import (
 	"errors"
+	"math"
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/ternary"
 )
@@ -45,6 +46,10 @@ func compareInteger(v1 int64, v2 int64) ComparisonResult {
 }
 
 func compareFloat(v1 float64, v2 float64) ComparisonResult {
+	if math.IsNaN(v1) || math.IsNaN(v2) {
+		return IsNotEqual
+	}
+
 	if v1 == v2 {
 		return IsEqual
 	}
@@ -111,8 +116,8 @@ func CompareCombinedly(p1 Primary, p2 Primary, datetimeFormats []string, locatio
 
 	if s1, ok := p1.(*String); ok {
 		if s2, ok := p2.(*String); ok {
-			v1 := strings.ToUpper(cmd.TrimSpace(s1.Raw()))
-			v2 := strings.ToUpper(cmd.TrimSpace(s2.Raw()))
+			v1 := strings.ToUpper(option.TrimSpace(s1.Raw()))
+			v2 := strings.ToUpper(option.TrimSpace(s2.Raw()))
 
 			if v1 == v2 {
 				return IsEqual

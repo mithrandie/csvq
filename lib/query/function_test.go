@@ -2,11 +2,12 @@ package query
 
 import (
 	"context"
+	"math"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -22,7 +23,7 @@ type functionTest struct {
 	Error    string
 }
 
-func testFunction(t *testing.T, f func(parser.Function, []value.Primary, *cmd.Flags) (value.Primary, error), tests []functionTest) {
+func testFunction(t *testing.T, f func(parser.Function, []value.Primary, *option.Flags) (value.Primary, error), tests []functionTest) {
 	for _, v := range tests {
 		result, err := f(v.Function, v.Args, TestTx.Flags)
 		if err != nil {
@@ -38,6 +39,12 @@ func testFunction(t *testing.T, f func(parser.Function, []value.Primary, *cmd.Fl
 			continue
 		}
 		if !reflect.DeepEqual(result, v.Result) {
+			if f1, ok := v.Result.(*value.Float); ok && math.IsNaN(f1.Raw()) {
+				if f2, ok := result.(*value.Float); ok && math.IsNaN(f2.Raw()) {
+					continue
+				}
+			}
+
 			t.Errorf("%s: result = %s, want %s", v.Name, result, v.Result)
 		}
 	}
@@ -380,6 +387,23 @@ func TestAcos(t *testing.T) {
 	testFunction(t, Acos, acosTests)
 }
 
+var acoshTests = []functionTest{
+	{
+		Name: "Acosh",
+		Function: parser.Function{
+			Name: "acosh",
+		},
+		Args: []value.Primary{
+			value.NewInteger(1),
+		},
+		Result: value.NewFloat(0),
+	},
+}
+
+func TestAcosh(t *testing.T) {
+	testFunction(t, Acosh, acoshTests)
+}
+
 var asinTests = []functionTest{
 	{
 		Name: "Asin",
@@ -395,6 +419,23 @@ var asinTests = []functionTest{
 
 func TestAsin(t *testing.T) {
 	testFunction(t, Asin, asinTests)
+}
+
+var asinhTests = []functionTest{
+	{
+		Name: "Asinh",
+		Function: parser.Function{
+			Name: "asinh",
+		},
+		Args: []value.Primary{
+			value.NewFloat(0),
+		},
+		Result: value.NewFloat(0),
+	},
+}
+
+func TestAsinh(t *testing.T) {
+	testFunction(t, Asinh, asinhTests)
 }
 
 var atanTests = []functionTest{
@@ -432,6 +473,40 @@ func TestAtan2(t *testing.T) {
 	testFunction(t, Atan2, atan2Tests)
 }
 
+var atanhTests = []functionTest{
+	{
+		Name: "Atanh",
+		Function: parser.Function{
+			Name: "atanh",
+		},
+		Args: []value.Primary{
+			value.NewInteger(0),
+		},
+		Result: value.NewFloat(0),
+	},
+}
+
+func TestAtanh(t *testing.T) {
+	testFunction(t, Atanh, atanhTests)
+}
+
+var cbrtTests = []functionTest{
+	{
+		Name: "Cbrt",
+		Function: parser.Function{
+			Name: "cbrt",
+		},
+		Args: []value.Primary{
+			value.NewInteger(8),
+		},
+		Result: value.NewFloat(2),
+	},
+}
+
+func TestCbrt(t *testing.T) {
+	testFunction(t, Cbrt, cbrtTests)
+}
+
 var cosTests = []functionTest{
 	{
 		Name: "Cos",
@@ -449,38 +524,21 @@ func TestCos(t *testing.T) {
 	testFunction(t, Cos, cosTests)
 }
 
-var sinTests = []functionTest{
+var coshTests = []functionTest{
 	{
-		Name: "Sin",
+		Name: "Cosh",
 		Function: parser.Function{
-			Name: "sin",
+			Name: "cosh",
 		},
 		Args: []value.Primary{
-			value.NewInteger(1),
+			value.NewInteger(0),
 		},
-		Result: value.NewFloat(0.8414709848078965),
+		Result: value.NewFloat(1),
 	},
 }
 
-func TestSin(t *testing.T) {
-	testFunction(t, Sin, sinTests)
-}
-
-var tanTests = []functionTest{
-	{
-		Name: "Tan",
-		Function: parser.Function{
-			Name: "tan",
-		},
-		Args: []value.Primary{
-			value.NewInteger(2),
-		},
-		Result: value.NewFloat(-2.185039863261519),
-	},
-}
-
-func TestTan(t *testing.T) {
-	testFunction(t, Tan, tanTests)
+func TestCosh(t *testing.T) {
+	testFunction(t, Cosh, coshTests)
 }
 
 var expTests = []functionTest{
@@ -534,6 +592,107 @@ func TestExpm1(t *testing.T) {
 	testFunction(t, Expm1, expm1Tests)
 }
 
+var isInfTests = []functionTest{
+	{
+		Name: "IsInf",
+		Function: parser.Function{
+			Name: "is_inf",
+		},
+		Args: []value.Primary{
+			value.NewFloat(math.Inf(1)),
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "IsInf Not Inf",
+		Function: parser.Function{
+			Name: "is_inf",
+		},
+		Args: []value.Primary{
+			value.NewFloat(-2.456),
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "IsInf Not Float",
+		Function: parser.Function{
+			Name: "is_inf",
+		},
+		Args: []value.Primary{
+			value.NewString("foo"),
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "IsInf with Sign",
+		Function: parser.Function{
+			Name: "is_inf",
+		},
+		Args: []value.Primary{
+			value.NewFloat(math.Inf(1)),
+			value.NewInteger(-1),
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "IsInf Arguments Error",
+		Function: parser.Function{
+			Name: "is_inf",
+		},
+		Args:  []value.Primary{},
+		Error: "function is_inf takes 1 or 2 arguments",
+	},
+}
+
+func TestIsInf(t *testing.T) {
+	testFunction(t, IsInf, isInfTests)
+}
+
+var isNanTests = []functionTest{
+	{
+		Name: "IsNaN",
+		Function: parser.Function{
+			Name: "is_nan",
+		},
+		Args: []value.Primary{
+			value.NewFloat(math.NaN()),
+		},
+		Result: value.NewTernary(ternary.TRUE),
+	},
+	{
+		Name: "IsNaN Not NaN",
+		Function: parser.Function{
+			Name: "is_nan",
+		},
+		Args: []value.Primary{
+			value.NewFloat(-2.456),
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "IsNaN Not Float",
+		Function: parser.Function{
+			Name: "is_nan",
+		},
+		Args: []value.Primary{
+			value.NewString("foo"),
+		},
+		Result: value.NewTernary(ternary.FALSE),
+	},
+	{
+		Name: "IsNaN Arguments Error",
+		Function: parser.Function{
+			Name: "is_nan",
+		},
+		Args:  []value.Primary{},
+		Error: "function is_nan takes exactly 1 argument",
+	},
+}
+
+func TestIsNaN(t *testing.T) {
+	testFunction(t, IsNaN, isNanTests)
+}
+
 var mathLogTests = []functionTest{
 	{
 		Name: "MathLog",
@@ -568,23 +727,6 @@ func TestLog10(t *testing.T) {
 	testFunction(t, Log10, log10Tests)
 }
 
-var log2Tests = []functionTest{
-	{
-		Name: "Log2",
-		Function: parser.Function{
-			Name: "log2",
-		},
-		Args: []value.Primary{
-			value.NewFloat(16),
-		},
-		Result: value.NewFloat(4),
-	},
-}
-
-func TestLog2(t *testing.T) {
-	testFunction(t, Log2, log2Tests)
-}
-
 var log1pTests = []functionTest{
 	{
 		Name: "Log1p",
@@ -602,31 +744,38 @@ func TestLog1p(t *testing.T) {
 	testFunction(t, Log1p, log1pTests)
 }
 
-var sqrtTests = []functionTest{
+var log2Tests = []functionTest{
 	{
-		Name: "Sqrt",
+		Name: "Log2",
 		Function: parser.Function{
-			Name: "sqrt",
+			Name: "log2",
 		},
 		Args: []value.Primary{
-			value.NewFloat(4),
+			value.NewFloat(16),
 		},
-		Result: value.NewFloat(2),
-	},
-	{
-		Name: "Sqrt Cannot Calculate",
-		Function: parser.Function{
-			Name: "sqrt",
-		},
-		Args: []value.Primary{
-			value.NewFloat(-4),
-		},
-		Result: value.NewNull(),
+		Result: value.NewFloat(4),
 	},
 }
 
-func TestSqrt(t *testing.T) {
-	testFunction(t, Sqrt, sqrtTests)
+func TestLog2(t *testing.T) {
+	testFunction(t, Log2, log2Tests)
+}
+
+var logbTests = []functionTest{
+	{
+		Name: "Logb",
+		Function: parser.Function{
+			Name: "logb",
+		},
+		Args: []value.Primary{
+			value.NewInteger(2),
+		},
+		Result: value.NewFloat(1),
+	},
+}
+
+func TestLogb(t *testing.T) {
+	testFunction(t, Logb, logbTests)
 }
 
 var powTests = []functionTest{
@@ -664,7 +813,7 @@ var powTests = []functionTest{
 		Result: value.NewNull(),
 	},
 	{
-		Name: "Pow Cannot Calculate",
+		Name: "Pow returns NaN",
 		Function: parser.Function{
 			Name: "pow",
 		},
@@ -672,7 +821,7 @@ var powTests = []functionTest{
 			value.NewFloat(-2),
 			value.NewFloat(2.4),
 		},
-		Result: value.NewNull(),
+		Result: value.NewFloat(math.NaN()),
 	},
 	{
 		Name: "Pow Arguments Error",
@@ -686,6 +835,101 @@ var powTests = []functionTest{
 
 func TestPow(t *testing.T) {
 	testFunction(t, Pow, powTests)
+}
+
+var sinTests = []functionTest{
+	{
+		Name: "Sin",
+		Function: parser.Function{
+			Name: "sin",
+		},
+		Args: []value.Primary{
+			value.NewInteger(1),
+		},
+		Result: value.NewFloat(0.8414709848078965),
+	},
+}
+
+func TestSin(t *testing.T) {
+	testFunction(t, Sin, sinTests)
+}
+
+var sinhTests = []functionTest{
+	{
+		Name: "Sinh",
+		Function: parser.Function{
+			Name: "sinh",
+		},
+		Args: []value.Primary{
+			value.NewInteger(0),
+		},
+		Result: value.NewFloat(0),
+	},
+}
+
+func TestSinh(t *testing.T) {
+	testFunction(t, Sinh, sinhTests)
+}
+
+var sqrtTests = []functionTest{
+	{
+		Name: "Sqrt",
+		Function: parser.Function{
+			Name: "sqrt",
+		},
+		Args: []value.Primary{
+			value.NewFloat(4),
+		},
+		Result: value.NewFloat(2),
+	},
+	{
+		Name: "Sqrt returns NaN",
+		Function: parser.Function{
+			Name: "sqrt",
+		},
+		Args: []value.Primary{
+			value.NewFloat(-4),
+		},
+		Result: value.NewFloat(math.NaN()),
+	},
+}
+
+func TestSqrt(t *testing.T) {
+	testFunction(t, Sqrt, sqrtTests)
+}
+
+var tanTests = []functionTest{
+	{
+		Name: "Tan",
+		Function: parser.Function{
+			Name: "tan",
+		},
+		Args: []value.Primary{
+			value.NewInteger(2),
+		},
+		Result: value.NewFloat(-2.185039863261519),
+	},
+}
+
+func TestTan(t *testing.T) {
+	testFunction(t, Tan, tanTests)
+}
+
+var tanhTests = []functionTest{
+	{
+		Name: "Tanh",
+		Function: parser.Function{
+			Name: "tanh",
+		},
+		Args: []value.Primary{
+			value.NewInteger(0),
+		},
+		Result: value.NewFloat(0),
+	},
+}
+
+func TestTanh(t *testing.T) {
+	testFunction(t, Tanh, tanhTests)
 }
 
 var binToDecTests = []functionTest{
@@ -3518,6 +3762,41 @@ func TestUTC(t *testing.T) {
 	testFunction(t, UTC, utcTests)
 }
 
+var milliToDatetimeTests = []functionTest{
+	{
+		Name: "MilliToDatetime",
+		Function: parser.Function{
+			Name: "milli_to_datetime",
+		},
+		Args: []value.Primary{
+			value.NewInteger(1328260695001),
+		},
+		Result: value.NewDatetime(time.Date(2012, 2, 3, 9, 18, 15, 1000000, GetTestLocation())),
+	},
+	{
+		Name: "MilliToDatetime Invalid Argument",
+		Function: parser.Function{
+			Name: "milli_to_datetime",
+		},
+		Args: []value.Primary{
+			value.NewString("abc"),
+		},
+		Result: value.NewNull(),
+	},
+	{
+		Name: "MilliToDatetime Arguments Error",
+		Function: parser.Function{
+			Name: "milli_to_datetime",
+		},
+		Args:  []value.Primary{},
+		Error: "function milli_to_datetime takes exactly 1 argument",
+	},
+}
+
+func TestMilliToDatetime(t *testing.T) {
+	testFunction(t, MilliToDatetime, milliToDatetimeTests)
+}
+
 var nanoToDatetimeTests = []functionTest{
 	{
 		Name: "NanoToDatetime",
@@ -3647,7 +3926,17 @@ var integerTests = []functionTest{
 		Args: []value.Primary{
 			value.NewFloat(1.7),
 		},
-		Result: value.NewInteger(2),
+		Result: value.NewInteger(1),
+	},
+	{
+		Name: "Integer from Special Float Value",
+		Function: parser.Function{
+			Name: "integer",
+		},
+		Args: []value.Primary{
+			value.NewFloat(math.NaN()),
+		},
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Float Null",
@@ -3798,6 +4087,16 @@ var datetimeTests = []functionTest{
 			value.NewFloat(1136181845.123),
 		},
 		Result: value.NewDatetime(time.Date(2006, 1, 2, 6, 4, 5, 123000000, GetTestLocation())),
+	},
+	{
+		Name: "Datetime Invalid Float Value",
+		Function: parser.Function{
+			Name: "datetime",
+		},
+		Args: []value.Primary{
+			value.NewFloat(math.NaN()),
+		},
+		Result: value.NewNull(),
 	},
 	{
 		Name: "Datetime from String",
@@ -3989,11 +4288,12 @@ func TestNow(t *testing.T) {
 }
 
 var jsonObjectTests = []struct {
-	Name     string
-	Function parser.Function
-	Scope    *ReferenceScope
-	Result   value.Primary
-	Error    string
+	Name               string
+	Function           parser.Function
+	ScientificNotation bool
+	Scope              *ReferenceScope
+	Result             value.Primary
+	Error              string
 }{
 	{
 		Name: "Json Object",
@@ -4017,6 +4317,30 @@ var jsonObjectTests = []struct {
 			},
 		}),
 		Result: value.NewString("{\"column1\":11}"),
+	},
+	{
+		Name: "Json Object using Scientific Notation",
+		Function: parser.Function{
+			Name: "json_object",
+			Args: []parser.QueryExpression{
+				parser.Field{Object: parser.FieldReference{Column: parser.Identifier{Literal: "column1"}}},
+			},
+		},
+		ScientificNotation: true,
+		Scope: GenerateReferenceScope(nil, nil, time.Time{}, []ReferenceRecord{
+			{
+				view: &View{
+					Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
+					RecordSet: []Record{
+						NewRecordWithId(0, []value.Primary{value.NewInteger(1), value.NewInteger(2)}),
+						NewRecordWithId(1, []value.Primary{value.NewFloat(0.00000123), value.NewInteger(12)}),
+					},
+				},
+				recordIndex: 1,
+				cache:       NewFieldIndexCache(10, LimitToUseFieldIndexSliceChache),
+			},
+		}),
+		Result: value.NewString("{\"column1\":1.23e-06}"),
 	},
 	{
 		Name: "Json Object with All Columns",
@@ -4072,10 +4396,16 @@ var jsonObjectTests = []struct {
 }
 
 func TestJsonObject(t *testing.T) {
+	defer func() {
+		TestTx.Flags.ExportOptions.ScientificNotation = false
+	}()
+
 	for _, v := range jsonObjectTests {
 		if v.Scope == nil {
 			v.Scope = NewReferenceScope(TestTx)
 		}
+
+		TestTx.Flags.ExportOptions.ScientificNotation = v.ScientificNotation
 
 		result, err := JsonObject(context.Background(), v.Scope, v.Function)
 		if err != nil {

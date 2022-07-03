@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"
@@ -145,7 +145,7 @@ func (e PrimitiveType) String() string {
 	if 0 < len(e.Literal) {
 		switch e.Value.(type) {
 		case *value.String, *value.Datetime:
-			return cmd.QuoteString(e.Literal)
+			return option.QuoteString(e.Literal)
 		default:
 			return e.Literal
 		}
@@ -180,9 +180,19 @@ type Identifier struct {
 
 func (i Identifier) String() string {
 	if i.Quoted {
-		return cmd.QuoteIdentifier(i.Literal)
+		return option.QuoteIdentifier(i.Literal)
 	}
 	return i.Literal
+}
+
+type Constant struct {
+	*BaseExpr
+	Space string
+	Name  string
+}
+
+func (e Constant) String() string {
+	return strings.ToUpper(e.Space) + ConstantDelimiter + strings.ToUpper(e.Name)
 }
 
 type FieldReference struct {
@@ -1185,7 +1195,7 @@ type EnvironmentVariable struct {
 func (e EnvironmentVariable) String() string {
 	name := e.Name
 	if e.Quoted {
-		name = cmd.QuoteIdentifier(name)
+		name = option.QuoteIdentifier(name)
 	}
 
 	return string(VariableSign) + string(EnvironmentVariableSign) + name

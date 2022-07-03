@@ -3,7 +3,7 @@ package query
 import (
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -40,7 +40,7 @@ func (m PreparedStatementMap) Exists(name string) bool {
 	return m.exists(strings.ToUpper(name))
 }
 
-func (m PreparedStatementMap) Prepare(flags *cmd.Flags, expr parser.StatementPreparation) error {
+func (m PreparedStatementMap) Prepare(flags *option.Flags, expr parser.StatementPreparation) error {
 	stmt, err := NewPreparedStatement(flags, expr)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ type PreparedStatement struct {
 	HolderNumber    int
 }
 
-func NewPreparedStatement(flags *cmd.Flags, expr parser.StatementPreparation) (*PreparedStatement, error) {
+func NewPreparedStatement(flags *option.Flags, expr parser.StatementPreparation) (*PreparedStatement, error) {
 	statements, holderNum, err := parser.Parse(expr.Statement.Raw(), expr.Name.Literal, true, flags.AnsiQuotes)
 	if err != nil {
 		return nil, NewPreparedStatementSyntaxError(err.(*parser.SyntaxError))

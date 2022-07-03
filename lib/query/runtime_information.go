@@ -33,15 +33,15 @@ func GetRuntimeInformation(tx *Transaction, expr parser.RuntimeInformation) (val
 
 	switch strings.ToUpper(expr.Name) {
 	case UncommittedInformation:
-		p = value.NewBoolean(!tx.uncommittedViews.IsEmpty())
+		p = value.NewBoolean(!tx.UncommittedViews.IsEmpty())
 	case CreatedInformation:
-		p = value.NewInteger(int64(tx.uncommittedViews.CountCreatedTables()))
+		p = value.NewInteger(int64(tx.UncommittedViews.CountCreatedTables()))
 	case UpdatedInformation:
-		p = value.NewInteger(int64(tx.uncommittedViews.CountUpdatedTables()))
+		p = value.NewInteger(int64(tx.UncommittedViews.CountUpdatedTables()))
 	case UpdatedViewsInformation:
-		p = value.NewInteger(int64(tx.uncommittedViews.CountUpdatedViews()))
+		p = value.NewInteger(int64(tx.UncommittedViews.CountUpdatedViews()))
 	case LoadedTablesInformation:
-		p = value.NewInteger(int64(tx.cachedViews.Len()))
+		p = value.NewInteger(int64(tx.CachedViews.Len()))
 	case WorkingDirectory:
 		wd, err := os.Getwd()
 		if err != nil {

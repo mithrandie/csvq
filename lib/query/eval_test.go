@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"math"
 	"os"
 	"reflect"
 	"sync"
@@ -280,6 +281,15 @@ var evaluateTests = []struct {
 			Operator: parser.Token{Token: '+', Literal: "+"},
 		},
 		Error: "field notexist does not exist",
+	},
+	{
+		Name: "Arithmetic Division by Zero Error",
+		Expr: parser.Arithmetic{
+			LHS:      parser.NewIntegerValue(1),
+			RHS:      parser.NewIntegerValue(0),
+			Operator: parser.Token{Token: '/', Literal: "/"},
+		},
+		Error: "integer divided by zero",
 	},
 	{
 		Name: "UnaryArithmetic Integer",
@@ -3991,6 +4001,22 @@ var evaluateTests = []struct {
 		Result: value.NewString("v1.0.0"),
 	},
 	{
+		Name: "Constant",
+		Expr: parser.Constant{
+			Space: "math",
+			Name:  "pi",
+		},
+		Result: value.NewFloat(math.Pi),
+	},
+	{
+		Name: "Constant Undefined Error",
+		Expr: parser.Constant{
+			Space: "math",
+			Name:  "undefined",
+		},
+		Error: "constant MATH::UNDEFINED is not defined",
+	},
+	{
 		Name: "Flag",
 		Expr: parser.Flag{
 			Name: "json_escape",
@@ -4144,7 +4170,7 @@ var evaluateTests = []struct {
 
 func TestEvaluate(t *testing.T) {
 	defer func() {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		initFlag(TestTx.Flags)
 	}()
 
@@ -4165,7 +4191,7 @@ func TestEvaluate(t *testing.T) {
 	_, _ = scope.FetchCursor(parser.Identifier{Literal: "cur"}, parser.NEXT, 0)
 
 	for _, v := range evaluateTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 
 		if v.Scope == nil {
 			v.Scope = scope

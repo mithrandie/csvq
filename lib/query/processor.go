@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/excmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -216,7 +216,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 							err = e
 						}
 					} else if !proc.Tx.Flags.ExportOptions.StripEndingLineBreak &&
-						!(proc.Tx.Session.OutFile() != nil && exportOptions.Format == cmd.FIXED && exportOptions.SingleLine) {
+						!(proc.Tx.Session.OutFile() != nil && exportOptions.Format == option.FIXED && exportOptions.SingleLine) {
 						_, err = writer.Write([]byte(proc.Tx.Flags.ExportOptions.LineBreak.Value()))
 					}
 				}
@@ -242,7 +242,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		fileInfo, cnt, e := Insert(ctx, proc.ReferenceScope, stmt.(parser.InsertQuery))
 		if e == nil {
 			if 0 < cnt {
-				proc.Tx.uncommittedViews.SetForUpdatedView(fileInfo)
+				proc.Tx.UncommittedViews.SetForUpdatedView(fileInfo)
 			}
 			proc.Log(fmt.Sprintf("%s inserted on %q.", FormatCount(cnt, "record"), fileInfo.Path), proc.Tx.Flags.Quiet)
 			if proc.storeResults {
@@ -265,7 +265,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			cntTotal := 0
 			for i, info := range infos {
 				if 0 < cnts[i] {
-					proc.Tx.uncommittedViews.SetForUpdatedView(info)
+					proc.Tx.UncommittedViews.SetForUpdatedView(info)
 					cntTotal += cnts[i]
 				}
 				proc.Log(fmt.Sprintf("%s updated on %q.", FormatCount(cnts[i], "record"), info.Path), proc.Tx.Flags.Quiet)
@@ -288,7 +288,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		fileInfo, cnt, e := Replace(ctx, proc.ReferenceScope, stmt.(parser.ReplaceQuery))
 		if e == nil {
 			if 0 < cnt {
-				proc.Tx.uncommittedViews.SetForUpdatedView(fileInfo)
+				proc.Tx.UncommittedViews.SetForUpdatedView(fileInfo)
 			}
 			proc.Log(fmt.Sprintf("%s replaced on %q.", FormatCount(cnt, "record"), fileInfo.Path), proc.Tx.Flags.Quiet)
 			if proc.storeResults {
@@ -311,7 +311,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 			cntTotal := 0
 			for i, info := range infos {
 				if 0 < cnts[i] {
-					proc.Tx.uncommittedViews.SetForUpdatedView(info)
+					proc.Tx.UncommittedViews.SetForUpdatedView(info)
 					cntTotal += cnts[i]
 				}
 				proc.Log(fmt.Sprintf("%s deleted on %q.", FormatCount(cnts[i], "record"), info.Path), proc.Tx.Flags.Quiet)
@@ -330,7 +330,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		createTableStatement := stmt.(parser.CreateTable)
 		info, e := CreateTable(ctx, proc.ReferenceScope, createTableStatement)
 		if e == nil {
-			proc.Tx.uncommittedViews.SetForCreatedView(info)
+			proc.Tx.UncommittedViews.SetForCreatedView(info)
 			proc.Log(fmt.Sprintf("file %q is created.", info.Path), proc.Tx.Flags.Quiet)
 		} else if _, ok := e.(*FileAlreadyExistError); ok && createTableStatement.IfNotExists {
 			e := func() error {
@@ -380,7 +380,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.AddColumns:
 		info, cnt, e := AddColumns(ctx, proc.ReferenceScope, stmt.(parser.AddColumns))
 		if e == nil {
-			proc.Tx.uncommittedViews.SetForUpdatedView(info)
+			proc.Tx.UncommittedViews.SetForUpdatedView(info)
 			proc.Log(fmt.Sprintf("%s added on %q.", FormatCount(cnt, "field"), info.Path), proc.Tx.Flags.Quiet)
 		} else {
 			err = e
@@ -388,7 +388,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.DropColumns:
 		info, cnt, e := DropColumns(ctx, proc.ReferenceScope, stmt.(parser.DropColumns))
 		if e == nil {
-			proc.Tx.uncommittedViews.SetForUpdatedView(info)
+			proc.Tx.UncommittedViews.SetForUpdatedView(info)
 			proc.Log(fmt.Sprintf("%s dropped on %q.", FormatCount(cnt, "field"), info.Path), proc.Tx.Flags.Quiet)
 		} else {
 			err = e
@@ -396,7 +396,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 	case parser.RenameColumn:
 		info, e := RenameColumn(ctx, proc.ReferenceScope, stmt.(parser.RenameColumn))
 		if e == nil {
-			proc.Tx.uncommittedViews.SetForUpdatedView(info)
+			proc.Tx.UncommittedViews.SetForUpdatedView(info)
 			proc.Log(fmt.Sprintf("%s renamed on %q.", FormatCount(1, "field"), info.Path), proc.Tx.Flags.Quiet)
 		} else {
 			err = e
@@ -405,7 +405,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 		expr := stmt.(parser.SetTableAttribute)
 		info, log, e := SetTableAttribute(ctx, proc.ReferenceScope, expr)
 		if e == nil {
-			proc.Tx.uncommittedViews.SetForUpdatedView(info)
+			proc.Tx.UncommittedViews.SetForUpdatedView(info)
 			proc.Log(log, proc.Tx.Flags.Quiet)
 		} else {
 			if unchanged, ok := e.(*TableAttributeUnchangedError); ok {
@@ -722,8 +722,8 @@ func (proc *Processor) showExecutionTime(ctx context.Context) {
 		return
 	}
 
-	exectime := cmd.FormatNumber(time.Since(proc.measurementStart).Seconds(), 6, ".", ",", "")
-	stats := fmt.Sprintf(proc.Tx.Palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
+	exectime := option.FormatNumber(time.Since(proc.measurementStart).Seconds(), 6, ".", ",", "")
+	stats := fmt.Sprintf(proc.Tx.Palette.Render(option.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
 	proc.Log(stats, false)
 }
 

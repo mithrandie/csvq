@@ -211,6 +211,26 @@ var scanTests = []struct {
 		},
 	},
 	{
+		Name:  "Constant",
+		Input: "SPACE::NAME",
+		Output: []scanResult{
+			{
+				Token:   CONSTANT,
+				Literal: "SPACE::NAME",
+			},
+		},
+	},
+	{
+		Name:  "Constant Syntax Error",
+		Input: "SPACE:Name",
+		Error: "invalid constant syntax",
+	},
+	{
+		Name:  "Constant Syntax Error",
+		Input: "SPACE::+",
+		Error: "invalid constant syntax",
+	},
+	{
 		Name:  "EqualSign",
 		Input: "=",
 		Output: []scanResult{

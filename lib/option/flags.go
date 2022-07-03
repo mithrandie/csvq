@@ -1,4 +1,4 @@
-package cmd
+package option
 
 import (
 	"encoding/json"
@@ -47,6 +47,7 @@ const (
 	EncloseAllFlag               = "ENCLOSE_ALL"
 	JsonEscapeFlag               = "JSON_ESCAPE"
 	PrettyPrintFlag              = "PRETTY_PRINT"
+	ScientificNotationFlag       = "SCIENTIFIC_NOTATION"
 	EastAsianEncodingFlag        = "EAST_ASIAN_ENCODING"
 	CountDiacriticalSignFlag     = "COUNT_DIACRITICAL_SIGN"
 	CountFormatCodeFlag          = "COUNT_FORMAT_CODE"
@@ -82,6 +83,7 @@ var FlagList = []string{
 	EncloseAllFlag,
 	JsonEscapeFlag,
 	PrettyPrintFlag,
+	ScientificNotationFlag,
 	EastAsianEncodingFlag,
 	CountDiacriticalSignFlag,
 	CountFormatCodeFlag,
@@ -207,6 +209,7 @@ type ExportOptions struct {
 	EncloseAll           bool
 	JsonEscape           txjson.EscapeType
 	PrettyPrint          bool
+	ScientificNotation   bool
 
 	// For Calculation of String Width
 	EastAsianEncoding    bool
@@ -241,6 +244,7 @@ func NewExportOptions() ExportOptions {
 		EncloseAll:           false,
 		JsonEscape:           txjson.Backslash,
 		PrettyPrint:          false,
+		ScientificNotation:   false,
 		EastAsianEncoding:    false,
 		CountDiacriticalSign: false,
 		CountFormatCode:      false,
@@ -590,6 +594,10 @@ func (f *Flags) SetJsonEscape(s string) error {
 
 func (f *Flags) SetPrettyPrint(b bool) {
 	f.ExportOptions.PrettyPrint = b
+}
+
+func (f *Flags) SetScientificNotation(b bool) {
+	f.ExportOptions.ScientificNotation = b
 }
 
 func (f *Flags) SetStripEndingLineBreak(b bool) {

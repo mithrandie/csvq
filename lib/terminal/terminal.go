@@ -1,4 +1,4 @@
-package query
+package terminal
 
 import (
 	"bytes"
@@ -7,29 +7,17 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/excmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
+	"github.com/mithrandie/csvq/lib/query"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
 const (
-	TerminalPrompt           string = "csvq > "
-	TerminalContinuousPrompt string = "     > "
+	DefaultPrompt           string = "csvq > "
+	DefaultContinuousPrompt string = "     > "
 )
-
-type VirtualTerminal interface {
-	ReadLine() (string, error)
-	Write(string) error
-	WriteError(string) error
-	SetPrompt(ctx context.Context)
-	SetContinuousPrompt(ctx context.Context)
-	SaveHistory(string) error
-	Teardown() error
-	GetSize() (int, int, error)
-	ReloadConfig() error
-	UpdateCompleter()
-}
 
 type PromptEvaluationError struct {
 	Message string
@@ -51,14 +39,14 @@ type PromptElement struct {
 }
 
 type Prompt struct {
-	scope              *ReferenceScope
+	scope              *query.ReferenceScope
 	sequence           []PromptElement
 	continuousSequence []PromptElement
 
 	buf bytes.Buffer
 }
 
-func NewPrompt(scope *ReferenceScope) *Prompt {
+func NewPrompt(scope *query.ReferenceScope) *Prompt {
 	return &Prompt{
 		scope: scope,
 	}
@@ -101,11 +89,11 @@ func (p *Prompt) LoadConfig() error {
 func (p *Prompt) RenderPrompt(ctx context.Context) (string, error) {
 	s, err := p.Render(ctx, p.sequence)
 	if err != nil || len(s) < 1 {
-		s = TerminalPrompt
+		s = DefaultPrompt
 	}
 	if p.scope.Tx.Flags.ExportOptions.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
-			s = p.scope.Tx.Palette.Render(cmd.PromptEffect, s)
+			s = p.scope.Tx.Palette.Render(option.PromptEffect, s)
 		}
 	} else {
 		s = p.StripEscapeSequence(s)
@@ -116,11 +104,11 @@ func (p *Prompt) RenderPrompt(ctx context.Context) (string, error) {
 func (p *Prompt) RenderContinuousPrompt(ctx context.Context) (string, error) {
 	s, err := p.Render(ctx, p.continuousSequence)
 	if err != nil || len(s) < 1 {
-		s = TerminalContinuousPrompt
+		s = DefaultContinuousPrompt
 	}
 	if p.scope.Tx.Flags.ExportOptions.Color {
 		if strings.IndexByte(s, 0x1b) < 0 {
-			s = p.scope.Tx.Palette.Render(cmd.PromptEffect, s)
+			s = p.scope.Tx.Palette.Render(option.PromptEffect, s)
 		}
 	} else {
 		s = p.StripEscapeSequence(s)
@@ -161,13 +149,13 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 				case 1:
 					expr, ok := statements[0].(parser.QueryExpression)
 					if !ok {
-						return "", NewPromptEvaluationError(fmt.Sprintf(ErrMsgInvalidValueExpression, command))
+						return "", NewPromptEvaluationError(fmt.Sprintf(query.ErrMsgInvalidValueExpression, command))
 					}
 					if err = p.evaluate(ctx, expr); err != nil {
 						return "", err
 					}
 				default:
-					return "", NewPromptEvaluationError(fmt.Sprintf(ErrMsgInvalidValueExpression, command))
+					return "", NewPromptEvaluationError(fmt.Sprintf(query.ErrMsgInvalidValueExpression, command))
 				}
 			}
 		}
@@ -177,14 +165,14 @@ func (p *Prompt) Render(ctx context.Context, sequence []PromptElement) (string, 
 }
 
 func (p *Prompt) evaluate(ctx context.Context, expr parser.QueryExpression) error {
-	val, err := Evaluate(ctx, p.scope, expr)
+	val, err := query.Evaluate(ctx, p.scope, expr)
 	if err != nil {
-		if ae, ok := err.(Error); ok {
+		if ae, ok := err.(query.Error); ok {
 			err = NewPromptEvaluationError(ae.Message())
 		}
 		return err
 	}
-	s, _ := NewStringFormatter().Format("%s", []value.Primary{val})
+	s, _ := query.NewStringFormatter().Format("%s", []value.Primary{val})
 	_, err = p.buf.WriteString(s)
 	if err != nil {
 		err = NewPromptEvaluationError(err.Error())

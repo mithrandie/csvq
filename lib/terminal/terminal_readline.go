@@ -1,6 +1,6 @@
 //go:build darwin || dragonfly || freebsd || linux || netbsd || openbsd || solaris || windows
 
-package query
+package terminal
 
 import (
 	"context"
@@ -8,7 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
+	"github.com/mithrandie/csvq/lib/query"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/mithrandie/readline-csvq"
@@ -18,12 +19,12 @@ type ReadLineTerminal struct {
 	terminal  *readline.Instance
 	fd        int
 	prompt    *Prompt
-	env       *cmd.Environment
+	env       *option.Environment
 	completer *Completer
-	tx        *Transaction
+	tx        *query.Transaction
 }
 
-func NewTerminal(ctx context.Context, scope *ReferenceScope) (VirtualTerminal, error) {
+func NewTerminal(ctx context.Context, scope *query.ReferenceScope) (query.VirtualTerminal, error) {
 	fd := int(scope.Tx.Session.ScreenFd())
 
 	limit := *scope.Tx.Environment.InteractiveShell.HistoryLimit

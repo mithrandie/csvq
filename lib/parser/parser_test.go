@@ -2075,6 +2075,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -2094,6 +2095,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '-', Literal: "-", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -2113,6 +2115,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '*', Literal: "*", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -2132,6 +2135,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '/', Literal: "/", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -2151,6 +2155,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '%', Literal: "%", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -6356,6 +6361,7 @@ var parseTests = []struct {
 							Object: VariableSubstitution{
 								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var1"},
 								Value: Arithmetic{
+									BaseExpr: &BaseExpr{line: 1, char: 23},
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 17}, Name: "var2"},
 									Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 23},
 									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "var3"},
@@ -6406,6 +6412,25 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: RuntimeInformation{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select math::pi",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Fields: []QueryExpression{
+						Field{
+							Object: Constant{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Space:    "math",
+								Name:     "pi",
+							},
 						},
 					},
 				},

@@ -38,6 +38,7 @@ const (
 	ErrMsgNotAllowedAnalyticFunction           = "analytic function %s is only available in select clause or order by clause"
 	ErrMsgUndeclaredVariable                   = "variable %s is undeclared"
 	ErrMsgVariableRedeclared                   = "variable %s is redeclared"
+	ErrMsgUndefinedConstant                    = "constant %s is not defined"
 	ErrMsgFunctionNotExist                     = "function %s does not exist"
 	ErrMsgFunctionArgumentsLength              = "function %s takes %s"
 	ErrMsgFunctionInvalidArgument              = "%s for function %s"
@@ -129,6 +130,7 @@ const (
 	ErrMsgStatementReplaceValueNotSpecified    = "replace value for %s is not specified"
 	ErrMsgSelectIntoQueryFieldLengthNotMatch   = "select into query should return exactly %s"
 	ErrMsgSelectIntoQueryTooManyRecords        = "select into query returns too many records, should return only one record"
+	ErrMsgIntegerDevidedByZero                 = "integer divided by zero"
 )
 
 type Error interface {
@@ -520,6 +522,16 @@ type VariableRedeclaredError struct {
 func NewVariableRedeclaredError(expr parser.Variable) error {
 	return &VariableRedeclaredError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgVariableRedeclared, expr), ReturnCodeApplicationError, ErrorVariableRedeclared),
+	}
+}
+
+type UndefinedConstantError struct {
+	*BaseError
+}
+
+func NewUndefinedConstantError(expr parser.Constant) error {
+	return &UndefinedConstantError{
+		NewBaseError(expr, fmt.Sprintf(ErrMsgUndefinedConstant, expr), ReturnCodeApplicationError, ErrorUndefinedConstant),
 	}
 }
 
@@ -1470,6 +1482,16 @@ func NewSelectIntoQueryTooManyRecordsError(query parser.SelectQuery) error {
 
 	return &SelectIntoQueryTooManyRecordsError{
 		NewBaseError(selectClause, ErrMsgSelectIntoQueryTooManyRecords, ReturnCodeApplicationError, ErrorSelectIntoQueryTooManyRecords),
+	}
+}
+
+type IntegerDevidedByZeroError struct {
+	*BaseError
+}
+
+func NewIntegerDevidedByZeroError(expr parser.Arithmetic) error {
+	return &IntegerDevidedByZeroError{
+		NewBaseError(expr, ErrMsgIntegerDevidedByZero, ReturnCodeApplicationError, ErrorIntegerDevidedByZero),
 	}
 }
 

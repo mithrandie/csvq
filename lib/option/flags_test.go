@@ -1,4 +1,4 @@
-package cmd
+package option
 
 import (
 	"path/filepath"
@@ -62,7 +62,7 @@ func TestFlags_SetRepository(t *testing.T) {
 		t.Errorf("repository = %s, expect to set %q for %q", flags.Repository, "", "")
 	}
 
-	dir := filepath.Join("..", "..", "lib", "cmd")
+	dir := filepath.Join("..", "..", "lib", "option")
 	absdir, _ := filepath.Abs(dir)
 	_ = flags.SetRepository(dir)
 	if flags.Repository != absdir {
@@ -616,6 +616,15 @@ func TestFlags_SetPrettyPrint(t *testing.T) {
 	flags.SetPrettyPrint(true)
 	if !flags.ExportOptions.PrettyPrint {
 		t.Errorf("pretty-print = %t, expect to set %t", flags.ExportOptions.PrettyPrint, true)
+	}
+}
+
+func TestFlags_SetScientificNotation(t *testing.T) {
+	flags, _ := NewFlags(nil)
+
+	flags.SetScientificNotation(true)
+	if !flags.ExportOptions.ScientificNotation {
+		t.Errorf("scientific-notation = %t, expect to set %t", flags.ExportOptions.ScientificNotation, true)
 	}
 }
 

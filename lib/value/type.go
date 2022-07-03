@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/ternary"
 )
@@ -44,7 +44,7 @@ type String struct {
 }
 
 func (s String) String() string {
-	return cmd.QuoteString(s.literal)
+	return option.QuoteString(s.literal)
 }
 
 func NewString(s string) *String {
@@ -58,7 +58,7 @@ func (s String) Raw() string {
 }
 
 func (s String) Ternary() ternary.Value {
-	lit := cmd.TrimSpace(s.Raw())
+	lit := option.TrimSpace(s.Raw())
 	if b, err := strconv.ParseBool(lit); err == nil {
 		return ternary.ConvertFromBool(b)
 	}
@@ -115,7 +115,7 @@ func NewFloat(f float64) *Float {
 }
 
 func (f Float) String() string {
-	return Float64ToStr(f.value)
+	return Float64ToStr(f.value, false)
 }
 
 func (f Float) Raw() float64 {
@@ -202,7 +202,7 @@ func NewDatetime(t time.Time) *Datetime {
 }
 
 func (dt Datetime) String() string {
-	return cmd.QuoteString(dt.value.Format(time.RFC3339Nano))
+	return option.QuoteString(dt.value.Format(time.RFC3339Nano))
 }
 
 func (dt Datetime) Raw() time.Time {

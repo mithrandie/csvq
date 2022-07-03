@@ -31,6 +31,7 @@ title: Reference Manual - csvq
   * [Flag]({{ '/reference/flag.html' | relative_url }})
   * [Environment Variable]({{ '/reference/environment-variable.html' | relative_url }})
   * [Runtime Information]({{ '/reference/runtime-information.html' | relative_url }})
+  * [System Defined Constant]({{ '/reference/system-defined-constant.html' | relative_url }})
   * [JSON]({{ '/reference/json.html' | relative_url }})
 * Operators
   * [Operator Precedence]({{ '/reference/operator-precedence.html' | relative_url }})

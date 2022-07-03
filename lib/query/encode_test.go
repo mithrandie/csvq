@@ -5,19 +5,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/go-text"
 	"github.com/mithrandie/go-text/json"
-
 	"github.com/mithrandie/ternary"
 )
 
 var encodeViewTests = []struct {
 	Name                    string
 	View                    *View
-	Format                  cmd.Format
+	Format                  option.Format
 	LineBreak               text.LineBreak
 	WriteEncoding           text.Encoding
 	WriteDelimiter          rune
@@ -27,6 +26,7 @@ var encodeViewTests = []struct {
 	EncloseAll              bool
 	JsonEscape              json.EscapeType
 	PrettyPrint             bool
+	ScientificNotation      bool
 	UseColor                bool
 	Result                  string
 	Error                   string
@@ -37,7 +37,7 @@ var encodeViewTests = []struct {
 			Header:    NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{},
 		},
-		Format: cmd.TEXT,
+		Format: option.TEXT,
 		Error:  "empty result set",
 	},
 	{
@@ -48,7 +48,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{}),
 			},
 		},
-		Format: cmd.TEXT,
+		Format: option.TEXT,
 		Error:  "empty result set",
 	},
 	{
@@ -61,7 +61,30 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
 			},
 		},
-		Format: cmd.TEXT,
+		Format: option.TEXT,
+		Result: "+----------+-------------------------------------+--------+\n" +
+			"|    c1    |                 c2                  |   c3   |\n" +
+			"|          |             second line             |        |\n" +
+			"+----------+-------------------------------------+--------+\n" +
+			"|       -1 |               UNKNOWN               |  true  |\n" +
+			"|   2.0123 | 2016-02-01T16:00:00.123456-07:00    | abcdef |\n" +
+			"| 34567890 |  abcdefghijklmnopqrstuvwxyzabcdefg  |  NULL  |\n" +
+			"|          | hi\"jk日本語あアｱＡ（                |        |\n" +
+			"|          |                                     |        |\n" +
+			"+----------+-------------------------------------+--------+",
+	},
+	{
+		Name: "Text, --without--header option is ignored",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
+			},
+		},
+		Format:        option.TEXT,
+		WithoutHeader: true,
 		Result: "+----------+-------------------------------------+--------+\n" +
 			"|    c1    |                 c2                  |   c3   |\n" +
 			"|          |             second line             |        |\n" +
@@ -82,7 +105,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewString("abcdef\r\nghijkl")}),
 			},
 		},
-		Format:   cmd.TEXT,
+		Format:   option.TEXT,
 		UseColor: true,
 		Result: "" +
 			"+--------+--------+\n" +
@@ -94,6 +117,22 @@ var encodeViewTests = []struct {
 			"+--------+--------+",
 	},
 	{
+		Name: "Text using Scientific Notation",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewFloat(0.00000123)}),
+			},
+		},
+		Format:             option.TEXT,
+		ScientificNotation: true,
+		Result: "+----------+\n" +
+			"|    c1    |\n" +
+			"+----------+\n" +
+			"| 1.23e-06 |\n" +
+			"+----------+",
+	},
+	{
 		Name: "Box",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
@@ -103,7 +142,30 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
 			},
 		},
-		Format: cmd.BOX,
+		Format: option.BOX,
+		Result: "┌──────────┬─────────────────────────────────────┬────────┐\n" +
+			"│    c1    │                 c2                  │   c3   │\n" +
+			"│          │             second line             │        │\n" +
+			"├──────────┼─────────────────────────────────────┼────────┤\n" +
+			"│       -1 │               UNKNOWN               │  true  │\n" +
+			"│   2.0123 │ 2016-02-01T16:00:00.123456-07:00    │ abcdef │\n" +
+			"│ 34567890 │  abcdefghijklmnopqrstuvwxyzabcdefg  │  NULL  │\n" +
+			"│          │ hi\"jk日本語あアｱＡ（                │        │\n" +
+			"│          │                                     │        │\n" +
+			"└──────────┴─────────────────────────────────────┴────────┘",
+	},
+	{
+		Name: "Box, --without-header option is ignored",
+		View: &View{
+			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewInteger(-1), value.NewTernary(ternary.UNKNOWN), value.NewBoolean(true)}),
+				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
+				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
+			},
+		},
+		Format:        option.BOX,
+		WithoutHeader: true,
 		Result: "┌──────────┬─────────────────────────────────────┬────────┐\n" +
 			"│    c1    │                 c2                  │   c3   │\n" +
 			"│          │             second line             │        │\n" +
@@ -124,7 +186,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewString("abcdef\r\nghijkl")}),
 			},
 		},
-		Format:   cmd.BOX,
+		Format:   option.BOX,
 		UseColor: true,
 		Result: "" +
 			"┌────────┬────────┐\n" +
@@ -144,7 +206,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
 			},
 		},
-		Format:                  cmd.FIXED,
+		Format:                  option.FIXED,
 		WriteDelimiterPositions: []int{10, 42, 50},
 		Result: "" +
 			"c1        c2                              c3      \n" +
@@ -160,7 +222,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
 			},
 		},
-		Format:                  cmd.FIXED,
+		Format:                  option.FIXED,
 		WriteDelimiterPositions: []int{10, 42, 50},
 		WriteAsSingleLine:       true,
 		Result: "" +
@@ -176,7 +238,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
 			},
 		},
-		Format:                  cmd.FIXED,
+		Format:                  option.FIXED,
 		WriteDelimiterPositions: nil,
 		Result: "" +
 			"c1     c2                               c3    \n" +
@@ -189,7 +251,7 @@ var encodeViewTests = []struct {
 			Header:    NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{},
 		},
-		Format:                  cmd.FIXED,
+		Format:                  option.FIXED,
 		WriteDelimiterPositions: []int{10, 42, 50},
 		WithoutHeader:           true,
 		Error:                   "data empty",
@@ -200,7 +262,7 @@ var encodeViewTests = []struct {
 			Header:    NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{},
 		},
-		Format:                  cmd.FIXED,
+		Format:                  option.FIXED,
 		WriteDelimiterPositions: nil,
 		WithoutHeader:           true,
 		Error:                   "data empty",
@@ -214,7 +276,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" ab|cdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
 			},
 		},
-		Format:    cmd.GFM,
+		Format:    option.GFM,
 		LineBreak: text.CRLF,
 		Result: "" +
 			"|    c1    |                          c2<br />second line                          |   c3   |\r\n" +
@@ -228,7 +290,7 @@ var encodeViewTests = []struct {
 			Header:    NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{},
 		},
-		Format:        cmd.GFM,
+		Format:        option.GFM,
 		WithoutHeader: true,
 		Error:         "data empty",
 	},
@@ -241,7 +303,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" ab|cdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk日本語あアｱＡ（\n"), value.NewNull()}),
 			},
 		},
-		Format:    cmd.ORG,
+		Format:    option.ORG,
 		LineBreak: text.LF,
 		Result: "" +
 			"|    c1    |                          c2<br />second line                          |   c3   |\n" +
@@ -255,7 +317,7 @@ var encodeViewTests = []struct {
 			Header:    NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{},
 		},
-		Format:        cmd.ORG,
+		Format:        option.ORG,
 		WithoutHeader: true,
 		Error:         "data empty",
 	},
@@ -269,7 +331,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format:         cmd.TSV,
+		Format:         option.TSV,
 		WriteDelimiter: '\t',
 		EncloseAll:     true,
 		Result: "\"c1\"\t\"c2\nsecond line\"\t\"c3\"\n" +
@@ -283,7 +345,7 @@ var encodeViewTests = []struct {
 			Header:    NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
 			RecordSet: []Record{},
 		},
-		Format:         cmd.TSV,
+		Format:         option.TSV,
 		WriteDelimiter: '\t',
 		WithoutHeader:  true,
 		Error:          "data empty",
@@ -298,7 +360,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format:        cmd.CSV,
+		Format:        option.CSV,
 		WithoutHeader: true,
 		EncloseAll:    true,
 		Result: "-1,,true\n" +
@@ -315,7 +377,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abcdefghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format:     cmd.CSV,
+		Format:     option.CSV,
 		LineBreak:  text.CRLF,
 		EncloseAll: true,
 		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\r\n" +
@@ -334,7 +396,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abc\\defghi/jk\rlmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format: cmd.JSON,
+		Format: option.JSON,
 		Result: "[" +
 			"{" +
 			"\"c1\":-1," +
@@ -368,7 +430,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewString("abc\\def")}),
 			},
 		},
-		Format:     cmd.JSON,
+		Format:     option.JSON,
 		JsonEscape: json.HexDigits,
 		Result: "[" +
 			"{" +
@@ -392,7 +454,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewString("abc\\def")}),
 			},
 		},
-		Format:     cmd.JSON,
+		Format:     option.JSON,
 		JsonEscape: json.AllWithHexDigits,
 		Result: "[" +
 			"{" +
@@ -416,7 +478,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewString("abc\\def")}),
 			},
 		},
-		Format:      cmd.JSON,
+		Format:      option.JSON,
 		JsonEscape:  json.HexDigits,
 		PrettyPrint: true,
 		Result: "[\n" +
@@ -432,6 +494,22 @@ var encodeViewTests = []struct {
 			"]",
 	},
 	{
+		Name: "JSON using Scientific Notation",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewFloat(0.00000123)}),
+			},
+		},
+		Format:             option.JSON,
+		ScientificNotation: true,
+		Result: "[" +
+			"{" +
+			"\"c1\":1.23e-06" +
+			"}" +
+			"]",
+	},
+	{
 		Name: "JSONL",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2\nsecond line", "c3"}),
@@ -442,7 +520,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" abc\\defghi/jk\rlmn\topqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format: cmd.JSONL,
+		Format: option.JSONL,
 		Result: "{" +
 			"\"c1\":-1," +
 			"\"c2\\nsecond line\":null," +
@@ -465,6 +543,20 @@ var encodeViewTests = []struct {
 			"}\n",
 	},
 	{
+		Name: "JSONL using Scientific Notation",
+		View: &View{
+			Header: NewHeader("test", []string{"c1"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{value.NewFloat(0.00000123)}),
+			},
+		},
+		Format:             option.JSONL,
+		ScientificNotation: true,
+		Result: "{" +
+			"\"c1\":1.23e-06" +
+			"}\n",
+	},
+	{
 		Name: "LTSV",
 		View: &View{
 			Header: NewHeader("test", []string{"c1", "c2", "c3"}),
@@ -473,7 +565,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
 			},
 		},
-		Format: cmd.LTSV,
+		Format: option.LTSV,
 		Result: "c1:-1\tc2:false\tc3:true\n" +
 			"c1:2.0123\tc2:2016-02-01T16:00:00.123456-07:00\tc3:abcdef",
 	},
@@ -483,7 +575,7 @@ var encodeViewTests = []struct {
 			Header:    NewHeader("test", []string{"c1", "c2", "c3"}),
 			RecordSet: []Record{},
 		},
-		Format: cmd.LTSV,
+		Format: option.LTSV,
 		Error:  "data empty",
 	},
 	{
@@ -495,7 +587,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
 			},
 		},
-		Format:                  cmd.FIXED,
+		Format:                  option.FIXED,
 		WriteDelimiterPositions: []int{10, 42, -1},
 		Error:                   "data encode error: invalid delimiter position: [10, 42, -1]",
 	},
@@ -509,7 +601,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewString("abc\\def")}),
 			},
 		},
-		Format:     cmd.JSON,
+		Format:     option.JSON,
 		JsonEscape: json.HexDigits,
 		Error:      "data encode error: unexpected token \".\" at column 4 in \"c1..\"",
 	},
@@ -522,7 +614,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abcdef")}),
 			},
 		},
-		Format: cmd.LTSV,
+		Format: option.LTSV,
 		Error:  "data encode error: unpermitted character in label: U+003A",
 	},
 	{
@@ -534,7 +626,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewFloat(2.0123), value.NewDatetimeFromString("2016-02-01T16:00:00.123456-07:00", nil, GetTestLocation()), value.NewString("abc\tdef")}),
 			},
 		},
-		Format: cmd.LTSV,
+		Format: option.LTSV,
 		Error:  "data encode error: unpermitted character in field-value: U+0009",
 	},
 	{
@@ -548,7 +640,7 @@ var encodeViewTests = []struct {
 				NewRecord([]value.Primary{value.NewInteger(34567890), value.NewString(" 日本語ghijklmnopqrstuvwxyzabcdefg\nhi\"jk\n"), value.NewNull()}),
 			},
 		},
-		Format:        cmd.CSV,
+		Format:        option.CSV,
 		WriteEncoding: text.SJIS,
 		EncloseAll:    true,
 		Result: "\"c1\",\"c2\nsecond line\",\"c3\"\n" +
@@ -587,6 +679,7 @@ func TestEncodeView(t *testing.T) {
 		options.EncloseAll = v.EncloseAll
 		options.JsonEscape = v.JsonEscape
 		options.PrettyPrint = v.PrettyPrint
+		options.ScientificNotation = v.ScientificNotation
 		options.SingleLine = v.WriteAsSingleLine
 
 		buf.Reset()

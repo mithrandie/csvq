@@ -3,6 +3,7 @@ package parser
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -187,6 +188,7 @@ import (
 %type<varassigns>  variable_assignments
 %type<envvar>      environment_variable
 %type<queryexpr>   runtime_information
+%type<queryexpr>   constant
 %type<flag>        flag
 %type<token>       distinct
 %type<token>       negation
@@ -200,7 +202,7 @@ import (
 %type<bool>        if_not_exists
 
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME
-%token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND PLACEHOLDER
+%token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND PLACEHOLDER CONSTANT
 %token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES REPLACE AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
@@ -1506,6 +1508,10 @@ substantial_value
     {
         $$ = $1
     }
+    | constant
+    {
+        $$ = $1
+    }
     | flag
     {
         $$ = $1
@@ -1725,23 +1731,23 @@ comparison
 arithmetic
     : value '+' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | value '-' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | value '*' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | value '/' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | value '%' value
     {
-        $$ = Arithmetic{LHS: $1, Operator: $2, RHS: $3}
+        $$ = Arithmetic{BaseExpr: NewBaseExpr($2), LHS: $1, Operator: $2, RHS: $3}
     }
     | '-' value %prec UMINUS
     {
@@ -2686,6 +2692,22 @@ runtime_information
     : RUNTIME_INFORMATION
     {
         $$ = RuntimeInformation{BaseExpr: NewBaseExpr($1), Name: $1.Literal}
+    }
+
+constant
+    : CONSTANT
+    {
+        items := strings.Split($1.Literal, ConstantDelimiter)
+        space := ""
+        if 0 < len(items) {
+            space = items[0]
+        }
+        name := ""
+        if 1 < len(items) {
+            name = items[1]
+        }
+
+        $$ = Constant{BaseExpr: NewBaseExpr($1), Space: space, Name: name}
     }
 
 flag

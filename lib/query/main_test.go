@@ -10,11 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
-
-	"github.com/mitchellh/go-homedir"
 )
 
 type syncMapStruct interface {
@@ -44,16 +42,16 @@ func BlockScopeListEqual(s1 []BlockScope, s2 []BlockScope) bool {
 		return false
 	}
 	for i := range s1 {
-		if !SyncMapEqual(s1[i].variables, s2[i].variables) {
+		if !SyncMapEqual(s1[i].Variables, s2[i].Variables) {
 			return false
 		}
-		if !SyncMapEqual(s1[i].temporaryTables, s2[i].temporaryTables) {
+		if !SyncMapEqual(s1[i].TemporaryTables, s2[i].TemporaryTables) {
 			return false
 		}
-		if !SyncMapEqual(s1[i].cursors, s2[i].cursors) {
+		if !SyncMapEqual(s1[i].Cursors, s2[i].Cursors) {
 			return false
 		}
-		if !reflect.DeepEqual(s1[i].functions, s2[i].functions) {
+		if !reflect.DeepEqual(s1[i].Functions, s2[i].Functions) {
 			return false
 		}
 	}
@@ -86,7 +84,6 @@ var CompletionTestDir = filepath.Join(TestDir, "completion")
 var CompletionTestSubDir = filepath.Join(TestDir, "completion", "sub")
 var TestLocation = "UTC"
 var NowForTest = time.Date(2012, 2, 3, 9, 18, 15, 0, GetTestLocation())
-var HomeDir string
 
 var TestTx, _ = NewTransaction(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay, NewSession())
 
@@ -115,17 +112,16 @@ func setup() {
 	if _, err := os.Stat(TestDir); err == nil {
 		_ = os.RemoveAll(TestDir)
 	}
+	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
+		_ = os.Mkdir(TestDir, 0755)
+	}
 
-	cmd.TestTime = NowForTest
+	option.TestTime = NowForTest
 
 	TestDataDir = filepath.Join(GetWD(), "..", "..", "testdata", "csv")
 
 	r, _ := os.Open(filepath.Join(TestDataDir, "empty.txt"))
 	os.Stdin = r
-
-	if _, err := os.Stat(TestDir); os.IsNotExist(err) {
-		_ = os.Mkdir(TestDir, 0755)
-	}
 
 	_ = copyfile(filepath.Join(TestDir, "table_sjis.csv"), filepath.Join(TestDataDir, "table_sjis.csv"))
 	_ = copyfile(filepath.Join(TestDir, "table_noheader.csv"), filepath.Join(TestDataDir, "table_noheader.csv"))
@@ -182,7 +178,6 @@ func setup() {
 	_ = copyfile(filepath.Join(CompletionTestSubDir, "table2.csv"), filepath.Join(TestDataDir, "table2.csv"))
 
 	Version = "v1.0.0"
-	HomeDir, _ = homedir.Dir()
 	TestTx.Session.SetStdout(NewDiscard())
 	TestTx.Session.SetStderr(NewDiscard())
 	initFlag(TestTx.Flags)
@@ -194,7 +189,7 @@ func teardown() {
 	}
 }
 
-func initFlag(flags *cmd.Flags) {
+func initFlag(flags *option.Flags) {
 	cpu := runtime.NumCPU() / 2
 	if cpu < 1 {
 		cpu = 1
@@ -205,8 +200,8 @@ func initFlag(flags *cmd.Flags) {
 	flags.AnsiQuotes = false
 	flags.StrictEqual = false
 	flags.WaitTimeout = 15
-	flags.ImportOptions = cmd.NewImportOptions()
-	flags.ExportOptions = cmd.NewExportOptions()
+	flags.ImportOptions = option.NewImportOptions()
+	flags.ExportOptions = option.NewExportOptions()
 	flags.Quiet = false
 	flags.LimitRecursion = 5
 	flags.CPU = cpu
@@ -256,13 +251,13 @@ func GenerateReferenceScope(blocks []map[string]map[string]interface{}, nodes []
 			for k, v := range blocks[i][n] {
 				switch n {
 				case scopeNameVariables:
-					rs.blocks[i].variables.Store(k, v.(value.Primary))
+					rs.Blocks[i].Variables.Store(k, v.(value.Primary))
 				case scopeNameTempTables:
-					rs.blocks[i].temporaryTables.Store(k, v.(*View))
+					rs.Blocks[i].TemporaryTables.Store(k, v.(*View))
 				case scopeNameCursors:
-					rs.blocks[i].cursors.Store(k, v.(*Cursor))
+					rs.Blocks[i].Cursors.Store(k, v.(*Cursor))
 				case scopeNameFunctions:
-					rs.blocks[i].functions.Store(k, v.(*UserDefinedFunction))
+					rs.Blocks[i].Functions.Store(k, v.(*UserDefinedFunction))
 				}
 			}
 		}
@@ -308,7 +303,7 @@ func GenerateViewMap(values []*View) ViewMap {
 func GenerateCursorMap(values []*Cursor) CursorMap {
 	m := NewCursorMap()
 	for _, v := range values {
-		m.Store(v.name, v)
+		m.Store(v.Name, v)
 	}
 	return m
 }
@@ -336,7 +331,7 @@ var (
 func randomStr(length int) string {
 	s := make([]rune, length)
 	for i := 0; i < length; i++ {
-		s[i] = testLetterRunes[cmd.GetRand().Intn(len(testLetterRunes))]
+		s[i] = testLetterRunes[option.GetRand().Intn(len(testLetterRunes))]
 	}
 	return string(s)
 }

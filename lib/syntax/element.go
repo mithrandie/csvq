@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/go-text/color"
 )
@@ -277,7 +277,7 @@ type String string
 func (e String) Format(p *color.Palette) string {
 	s := string(e)
 	if p != nil {
-		s = p.Render(ItalicEffect, p.Render(cmd.StringEffect, s))
+		s = p.Render(ItalicEffect, p.Render(option.StringEffect, s))
 	}
 	return s
 }
@@ -287,7 +287,7 @@ type Integer string
 func (e Integer) Format(p *color.Palette) string {
 	s := string(e)
 	if p != nil {
-		s = p.Render(ItalicEffect, p.Render(cmd.NumberEffect, s))
+		s = p.Render(ItalicEffect, p.Render(option.NumberEffect, s))
 	}
 	return s
 }
@@ -297,7 +297,7 @@ type Float string
 func (e Float) Format(p *color.Palette) string {
 	s := string(e)
 	if p != nil {
-		s = p.Render(ItalicEffect, p.Render(cmd.NumberEffect, s))
+		s = p.Render(ItalicEffect, p.Render(option.NumberEffect, s))
 	}
 	return s
 }
@@ -307,7 +307,7 @@ type Identifier string
 func (e Identifier) Format(p *color.Palette) string {
 	s := string(e)
 	if p != nil {
-		s = p.Render(cmd.IdentifierEffect, s)
+		s = p.Render(option.IdentifierEffect, s)
 	}
 	return s
 }
@@ -317,7 +317,7 @@ type Datetime string
 func (e Datetime) Format(p *color.Palette) string {
 	s := string(e)
 	if p != nil {
-		s = p.Render(ItalicEffect, p.Render(cmd.DatetimeEffect, s))
+		s = p.Render(ItalicEffect, p.Render(option.DatetimeEffect, s))
 	}
 	return s
 }
@@ -327,7 +327,7 @@ type Boolean string
 func (e Boolean) Format(p *color.Palette) string {
 	s := string(e)
 	if p != nil {
-		s = p.Render(ItalicEffect, p.Render(cmd.BooleanEffect, s))
+		s = p.Render(ItalicEffect, p.Render(option.BooleanEffect, s))
 	}
 	return s
 }
@@ -337,7 +337,7 @@ type Ternary string
 func (e Ternary) Format(p *color.Palette) string {
 	s := string(e)
 	if p != nil {
-		s = p.Render(ItalicEffect, p.Render(cmd.TernaryEffect, s))
+		s = p.Render(ItalicEffect, p.Render(option.TernaryEffect, s))
 	}
 	return s
 }
@@ -347,7 +347,7 @@ type Null string
 func (e Null) Format(p *color.Palette) string {
 	s := string(e)
 	if p != nil {
-		s = p.Render(ItalicEffect, p.Render(cmd.NullEffect, s))
+		s = p.Render(ItalicEffect, p.Render(option.NullEffect, s))
 	}
 	return s
 }

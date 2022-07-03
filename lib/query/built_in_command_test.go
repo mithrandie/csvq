@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/syntax"
 	"github.com/mithrandie/csvq/lib/value"
@@ -522,6 +522,13 @@ var setFlagTests = []struct {
 		},
 	},
 	{
+		Name: "Set Scientific Notation",
+		Expr: parser.SetFlag{
+			Flag:  parser.Flag{Name: "scientific_notation"},
+			Value: parser.NewTernaryValueFromString("true"),
+		},
+	},
+	{
 		Name: "Set Strip Ending Line Break",
 		Expr: parser.SetFlag{
 			Flag:  parser.Flag{Name: "strip_ending_line_break"},
@@ -676,8 +683,8 @@ func TestSetFlag(t *testing.T) {
 var addFlagElementTests = []struct {
 	Name   string
 	Expr   parser.AddFlagElement
-	Init   func(*cmd.Flags)
-	Expect func() *cmd.Flags
+	Init   func(*option.Flags)
+	Expect func() *option.Flags
 	Error  string
 }{
 	{
@@ -686,11 +693,11 @@ var addFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
-		Init: func(flags *cmd.Flags) {
+		Init: func(flags *option.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
-		Expect: func() *cmd.Flags {
-			expect := new(cmd.Flags)
+		Expect: func() *option.Flags {
+			expect := new(option.Flags)
 			initFlag(expect)
 			expect.DatetimeFormat = []string{"%Y:%m:%d", "%Y%m%d"}
 			return expect
@@ -702,7 +709,7 @@ var addFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "format"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
-		Init: func(flags *cmd.Flags) {
+		Init: func(flags *option.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
 		Error: "add flag element syntax does not support @@FORMAT",
@@ -713,7 +720,7 @@ var addFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "invalid"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
-		Init: func(flags *cmd.Flags) {
+		Init: func(flags *option.Flags) {
 			flags.DatetimeFormat = []string{"%Y:%m:%d"}
 		},
 		Error: "@@INVALID is an unknown flag",
@@ -754,8 +761,8 @@ func TestAddFlagElement(t *testing.T) {
 var removeFlagElementTests = []struct {
 	Name   string
 	Expr   parser.RemoveFlagElement
-	Init   func(*cmd.Flags)
-	Expect func() *cmd.Flags
+	Init   func(*option.Flags)
+	Expect func() *option.Flags
 	Error  string
 }{
 	{
@@ -764,11 +771,11 @@ var removeFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewStringValue("%Y%m%d"),
 		},
-		Init: func(flags *cmd.Flags) {
+		Init: func(flags *option.Flags) {
 			flags.DatetimeFormat = []string{"%Y%m%d", "%Y:%m:%d"}
 		},
-		Expect: func() *cmd.Flags {
-			expect := new(cmd.Flags)
+		Expect: func() *option.Flags {
+			expect := new(option.Flags)
 			initFlag(expect)
 			expect.DatetimeFormat = []string{"%Y:%m:%d"}
 			return expect
@@ -780,11 +787,11 @@ var removeFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewIntegerValue(1),
 		},
-		Init: func(flags *cmd.Flags) {
+		Init: func(flags *option.Flags) {
 			flags.DatetimeFormat = []string{"%Y%m%d", "%Y:%m:%d"}
 		},
-		Expect: func() *cmd.Flags {
-			expect := new(cmd.Flags)
+		Expect: func() *option.Flags {
+			expect := new(option.Flags)
 			initFlag(expect)
 			expect.DatetimeFormat = []string{"%Y%m%d"}
 			return expect
@@ -796,7 +803,7 @@ var removeFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "datetime_format"},
 			Value: parser.NewNullValue(),
 		},
-		Init:  func(flags *cmd.Flags) {},
+		Init:  func(flags *option.Flags) {},
 		Error: "NULL is an invalid value for @@DATETIME_FORMAT to specify the element",
 	},
 	{
@@ -805,7 +812,7 @@ var removeFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "format"},
 			Value: parser.FieldReference{Column: parser.Identifier{Literal: "err"}},
 		},
-		Init:  func(flags *cmd.Flags) {},
+		Init:  func(flags *option.Flags) {},
 		Error: "field err does not exist",
 	},
 	{
@@ -814,7 +821,7 @@ var removeFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "format"},
 			Value: parser.NewIntegerValue(1),
 		},
-		Init:  func(flags *cmd.Flags) {},
+		Init:  func(flags *option.Flags) {},
 		Error: "remove flag element syntax does not support @@FORMAT",
 	},
 	{
@@ -823,7 +830,7 @@ var removeFlagElementTests = []struct {
 			Flag:  parser.Flag{Name: "invalid"},
 			Value: parser.NewIntegerValue(1),
 		},
-		Init:  func(flags *cmd.Flags) {},
+		Init:  func(flags *option.Flags) {},
 		Error: "@@INVALID is an unknown flag",
 	},
 }
@@ -1392,6 +1399,19 @@ var showFlagTests = []struct {
 		Result: "\033[34;1m@@PRETTY_PRINT:\033[0m \033[33;1mtrue\033[0m",
 	},
 	{
+		Name: "Show Scientific Notation",
+		Expr: parser.ShowFlag{
+			Flag: parser.Flag{Name: "scientific_notation"},
+		},
+		SetExprs: []parser.SetFlag{
+			{
+				Flag:  parser.Flag{Name: "scientific_notation"},
+				Value: parser.NewTernaryValueFromString("true"),
+			},
+		},
+		Result: "\033[34;1m@@SCIENTIFIC_NOTATION:\033[0m \033[33;1mtrue\033[0m",
+	},
+	{
 		Name: "Show StripEndingLineBreak",
 		Expr: parser.ShowFlag{
 			Flag: parser.Flag{Name: "strip_ending_line_break"},
@@ -1646,14 +1666,14 @@ var showObjectsTests = []struct {
 	Expr                    parser.ShowObjects
 	Scope                   *ReferenceScope
 	PreparedStatements      PreparedStatementMap
-	ImportFormat            cmd.Format
+	ImportFormat            option.Format
 	Delimiter               rune
 	AllowUnevenFields       bool
 	DelimiterPositions      fixedlen.DelimiterPositions
 	SingleLine              bool
 	JsonQuery               string
 	Repository              string
-	Format                  cmd.Format
+	Format                  option.Format
 	WriteDelimiter          rune
 	WriteDelimiterPositions fixedlen.DelimiterPositions
 	WriteAsSingleLine       bool
@@ -1671,7 +1691,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      "table1.csv",
 					Delimiter: '\t',
-					Format:    cmd.CSV,
+					Format:    option.CSV,
 					Encoding:  text.SJIS,
 					LineBreak: text.CRLF,
 					NoHeader:  true,
@@ -1682,7 +1702,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      "table1.tsv",
 					Delimiter: '\t',
-					Format:    cmd.TSV,
+					Format:    option.TSV,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 					NoHeader:  false,
@@ -1693,7 +1713,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:        "table1.json",
 					JsonQuery:   "{}",
-					Format:      cmd.JSON,
+					Format:      option.JSON,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
 					PrettyPrint: false,
@@ -1704,7 +1724,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:        "table2.json",
 					JsonQuery:   "",
-					Format:      cmd.JSON,
+					Format:      option.JSON,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
 					JsonEscape:  json.HexDigits,
@@ -1716,7 +1736,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:        "table1.jsonl",
 					JsonQuery:   "{}",
-					Format:      cmd.JSONL,
+					Format:      option.JSONL,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
 					PrettyPrint: false,
@@ -1727,7 +1747,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:        "table2.jsonl",
 					JsonQuery:   "",
-					Format:      cmd.JSONL,
+					Format:      option.JSONL,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
 					JsonEscape:  json.HexDigits,
@@ -1739,7 +1759,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:               "table1.txt",
 					DelimiterPositions: []int{3, 12},
-					Format:             cmd.FIXED,
+					Format:             option.FIXED,
 					Encoding:           text.UTF8,
 					LineBreak:          text.LF,
 					NoHeader:           false,
@@ -1751,7 +1771,7 @@ var showObjectsTests = []struct {
 					Path:               "table2.txt",
 					DelimiterPositions: []int{3, 12},
 					SingleLine:         true,
-					Format:             cmd.FIXED,
+					Format:             option.FIXED,
 					Encoding:           text.UTF8,
 					LineBreak:          text.LF,
 					NoHeader:           false,
@@ -1804,7 +1824,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      "table1.csv",
 					Delimiter: '\t',
-					Format:    cmd.CSV,
+					Format:    option.CSV,
 					Encoding:  text.SJIS,
 					LineBreak: text.CRLF,
 					NoHeader:  true,
@@ -1815,7 +1835,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      "table1.tsv",
 					Delimiter: '\t',
-					Format:    cmd.TSV,
+					Format:    option.TSV,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 					NoHeader:  false,
@@ -1826,7 +1846,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:        "table1.json",
 					JsonQuery:   "{}",
-					Format:      cmd.JSON,
+					Format:      option.JSON,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
 					PrettyPrint: false,
@@ -1837,7 +1857,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:        "table1.jsonl",
 					JsonQuery:   "{}",
-					Format:      cmd.JSONL,
+					Format:      option.JSONL,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
 					PrettyPrint: false,
@@ -1848,7 +1868,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:        "table2.json",
 					JsonQuery:   "",
-					Format:      cmd.JSON,
+					Format:      option.JSON,
 					Encoding:    text.UTF8,
 					LineBreak:   text.LF,
 					PrettyPrint: false,
@@ -1859,7 +1879,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:               "table1.txt",
 					DelimiterPositions: []int{3, 12},
-					Format:             cmd.FIXED,
+					Format:             option.FIXED,
 					Encoding:           text.UTF8,
 					LineBreak:          text.LF,
 					NoHeader:           false,
@@ -1870,7 +1890,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:               "table2.txt",
 					DelimiterPositions: []int{3, 12},
-					Format:             cmd.FIXED,
+					Format:             option.FIXED,
 					Encoding:           text.UTF8,
 					LineBreak:          text.LF,
 					NoHeader:           false,
@@ -1929,7 +1949,7 @@ var showObjectsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      "table1.csv",
 					Delimiter: '\t',
-					Format:    cmd.CSV,
+					Format:    option.CSV,
 					Encoding:  text.SJIS,
 					LineBreak: text.CRLF,
 					NoHeader:  true,
@@ -2017,11 +2037,11 @@ var showObjectsTests = []struct {
 			{
 				scopeNameCursors: {
 					"CUR": &Cursor{
-						name:  "cur",
+						Name:  "cur",
 						query: selectQueryForCursorTest,
 					},
 					"CUR2": &Cursor{
-						name:  "cur2",
+						Name:  "cur2",
 						query: selectQueryForCursorTest,
 						view: &View{
 							RecordSet: RecordSet{
@@ -2039,7 +2059,7 @@ var showObjectsTests = []struct {
 						index:   -1,
 					},
 					"CUR3": &Cursor{
-						name:  "cur3",
+						Name:  "cur3",
 						query: selectQueryForCursorTest,
 						view: &View{
 							RecordSet: RecordSet{
@@ -2057,7 +2077,7 @@ var showObjectsTests = []struct {
 						index:   1,
 					},
 					"CUR4": &Cursor{
-						name:  "cur4",
+						Name:  "cur4",
 						query: selectQueryForCursorTest,
 						view: &View{
 							RecordSet: RecordSet{
@@ -2075,7 +2095,7 @@ var showObjectsTests = []struct {
 						index:   2,
 					},
 					"CUR5": &Cursor{
-						name:      "stmtcur",
+						Name:      "stmtcur",
 						statement: parser.Identifier{Literal: "stmt"},
 					},
 				},
@@ -2269,6 +2289,7 @@ var showObjectsTests = []struct {
 			"               @@ENCLOSE_ALL: false\n" +
 			"               @@JSON_ESCAPE: (ignored) BACKSLASH\n" +
 			"              @@PRETTY_PRINT: (ignored) false\n" +
+			"       @@SCIENTIFIC_NOTATION: false\n" +
 			"       @@EAST_ASIAN_ENCODING: (ignored) false\n" +
 			"    @@COUNT_DIACRITICAL_SIGN: (ignored) false\n" +
 			"         @@COUNT_FORMAT_CODE: (ignored) false\n" +
@@ -2305,7 +2326,7 @@ var showObjectsTests = []struct {
 func TestShowObjects(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.uncommittedViews.Clean()
+		TestTx.UncommittedViews.Clean()
 		TestTx.PreparedStatements = NewPreparedStatementMap()
 		initFlag(TestTx.Flags)
 	}()
@@ -2330,14 +2351,14 @@ func TestShowObjects(t *testing.T) {
 		TestTx.Flags.ExportOptions.DelimiterPositions = v.WriteDelimiterPositions
 		TestTx.Flags.ExportOptions.SingleLine = v.WriteAsSingleLine
 		TestTx.Flags.ExportOptions.Format = v.Format
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		if v.ViewCache.SyncMap != nil {
-			TestTx.cachedViews = v.ViewCache
+			TestTx.CachedViews = v.ViewCache
 		}
 		if v.UncommittedViews.mtx == nil {
-			TestTx.uncommittedViews = NewUncommittedViews()
+			TestTx.UncommittedViews = NewUncommittedViews()
 		} else {
-			TestTx.uncommittedViews = v.UncommittedViews
+			TestTx.UncommittedViews = v.UncommittedViews
 		}
 		TestTx.PreparedStatements = NewPreparedStatementMap()
 		if v.PreparedStatements.SyncMap != nil {
@@ -2488,7 +2509,7 @@ var showFieldsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("show_fields_create.csv"),
 					Delimiter: ',',
-					Format:    cmd.CSV,
+					Format:    option.CSV,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 					NoHeader:  false,
@@ -2527,7 +2548,7 @@ var showFieldsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("show_fields_create.csv"),
 					Delimiter: ',',
-					Format:    cmd.CSV,
+					Format:    option.CSV,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 					NoHeader:  false,
@@ -2566,7 +2587,7 @@ var showFieldsTests = []struct {
 				FileInfo: &FileInfo{
 					Path:      GetTestFilePath("show_fields_update.csv"),
 					Delimiter: ',',
-					Format:    cmd.CSV,
+					Format:    option.CSV,
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 					NoHeader:  false,
@@ -2644,7 +2665,7 @@ func calcShowRuninfoWidth(wd string) int {
 func TestShowFields(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		TestTx.uncommittedViews.Clean()
+		TestTx.UncommittedViews.Clean()
 		initFlag(TestTx.Flags)
 	}()
 
@@ -2653,14 +2674,14 @@ func TestShowFields(t *testing.T) {
 	ctx := context.Background()
 
 	for _, v := range showFieldsTests {
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		if v.ViewCache.SyncMap != nil {
-			TestTx.cachedViews = v.ViewCache
+			TestTx.CachedViews = v.ViewCache
 		}
 		if v.UncommittedViews.mtx == nil {
-			TestTx.uncommittedViews = NewUncommittedViews()
+			TestTx.UncommittedViews = NewUncommittedViews()
 		} else {
-			TestTx.uncommittedViews = v.UncommittedViews
+			TestTx.UncommittedViews = v.UncommittedViews
 		}
 
 		if v.Scope == nil {

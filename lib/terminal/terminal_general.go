@@ -1,12 +1,13 @@
 //go:build !darwin && !dragonfly && !freebsd && !linux && !netbsd && !openbsd && !solaris && !windows
 
-package query
+package terminal
 
 import (
 	"context"
 	"io"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
+	"github.com/mithrandie/csvq/lib/query"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -17,10 +18,10 @@ type SSHTerminal struct {
 	origState *terminal.State
 	rawState  *terminal.State
 	prompt    *Prompt
-	tx        *Transaction
+	tx        *query.Transaction
 }
 
-func NewTerminal(ctx context.Context, scope *ReferenceScope) (VirtualTerminal, error) {
+func NewTerminal(ctx context.Context, scope *query.ReferenceScope) (query.VirtualTerminal, error) {
 	stdin := int(scope.Tx.Session.ScreenFd())
 	origState, err := terminal.MakeRaw(stdin)
 	if err != nil {
@@ -38,7 +39,7 @@ func NewTerminal(ctx context.Context, scope *ReferenceScope) (VirtualTerminal, e
 	}
 
 	t := SSHTerminal{
-		terminal:  terminal.NewTerminal(NewStdIO(scope.Tx.Session), scope.Tx.Palette.Render(cmd.PromptEffect, TerminalPrompt)),
+		terminal:  terminal.NewTerminal(NewStdIO(scope.Tx.Session), scope.Tx.Palette.Render(option.PromptEffect, DefaultPrompt)),
 		stdin:     stdin,
 		origState: origState,
 		rawState:  rawState,
@@ -83,7 +84,7 @@ func (t SSHTerminal) Write(s string) error {
 }
 
 func (t SSHTerminal) WriteError(s string) error {
-	_, err := t.tx.Session.stderr.Write([]byte(s))
+	_, err := t.tx.Session.Stderr().Write([]byte(s))
 	return err
 }
 
@@ -132,9 +133,9 @@ func (sh *StdIO) Write(p []byte) (n int, err error) {
 	return sh.writer.Write(p)
 }
 
-func NewStdIO(sess *Session) *StdIO {
+func NewStdIO(sess *query.Session) *StdIO {
 	return &StdIO{
-		reader: sess.stdin,
-		writer: sess.stdout,
+		reader: sess.Stdin(),
+		writer: sess.Stdout(),
 	}
 }

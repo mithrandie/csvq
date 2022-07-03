@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/csvq/lib/json"
 	"github.com/mithrandie/csvq/lib/value"
@@ -14,7 +14,7 @@ import (
 	"github.com/mithrandie/ternary"
 )
 
-type AggregateFunction func([]value.Primary, *cmd.Flags) value.Primary
+type AggregateFunction func([]value.Primary, *option.Flags) value.Primary
 
 var AggregateFunctions = map[string]AggregateFunction{
 	"COUNT":  Count,
@@ -29,7 +29,7 @@ var AggregateFunctions = map[string]AggregateFunction{
 	"MEDIAN": Median,
 }
 
-func Count(list []value.Primary, _ *cmd.Flags) value.Primary {
+func Count(list []value.Primary, _ *option.Flags) value.Primary {
 	var count int64
 	for _, v := range list {
 		if !value.IsNull(v) {
@@ -40,7 +40,7 @@ func Count(list []value.Primary, _ *cmd.Flags) value.Primary {
 	return value.NewInteger(count)
 }
 
-func Max(list []value.Primary, flags *cmd.Flags) value.Primary {
+func Max(list []value.Primary, flags *option.Flags) value.Primary {
 	var result value.Primary
 	result = value.NewNull()
 
@@ -62,7 +62,7 @@ func Max(list []value.Primary, flags *cmd.Flags) value.Primary {
 	return result
 }
 
-func Min(list []value.Primary, flags *cmd.Flags) value.Primary {
+func Min(list []value.Primary, flags *option.Flags) value.Primary {
 	var result value.Primary
 	result = value.NewNull()
 
@@ -84,7 +84,7 @@ func Min(list []value.Primary, flags *cmd.Flags) value.Primary {
 	return result
 }
 
-func Sum(list []value.Primary, _ *cmd.Flags) value.Primary {
+func Sum(list []value.Primary, _ *option.Flags) value.Primary {
 	values := floatList(list)
 	if len(values) < 1 {
 		return value.NewNull()
@@ -92,7 +92,7 @@ func Sum(list []value.Primary, _ *cmd.Flags) value.Primary {
 	return value.NewFloat(sum(values))
 }
 
-func Avg(list []value.Primary, _ *cmd.Flags) value.Primary {
+func Avg(list []value.Primary, _ *option.Flags) value.Primary {
 	values := floatList(list)
 	if len(values) < 1 {
 		return value.NewNull()
@@ -100,7 +100,7 @@ func Avg(list []value.Primary, _ *cmd.Flags) value.Primary {
 	return value.NewFloat(average(values))
 }
 
-func StdEV(list []value.Primary, _ *cmd.Flags) value.Primary {
+func StdEV(list []value.Primary, _ *option.Flags) value.Primary {
 	values := floatList(list)
 	if len(values) < 2 {
 		return value.NewNull()
@@ -108,7 +108,7 @@ func StdEV(list []value.Primary, _ *cmd.Flags) value.Primary {
 	return value.NewFloat(standardDeviation(values, false))
 }
 
-func StdEVP(list []value.Primary, _ *cmd.Flags) value.Primary {
+func StdEVP(list []value.Primary, _ *option.Flags) value.Primary {
 	values := floatList(list)
 	if len(values) < 1 {
 		return value.NewNull()
@@ -116,7 +116,7 @@ func StdEVP(list []value.Primary, _ *cmd.Flags) value.Primary {
 	return value.NewFloat(standardDeviation(values, true))
 }
 
-func Var(list []value.Primary, _ *cmd.Flags) value.Primary {
+func Var(list []value.Primary, _ *option.Flags) value.Primary {
 	values := floatList(list)
 	if len(values) < 2 {
 		return value.NewNull()
@@ -124,7 +124,7 @@ func Var(list []value.Primary, _ *cmd.Flags) value.Primary {
 	return value.NewFloat(variance(values, false))
 }
 
-func VarP(list []value.Primary, _ *cmd.Flags) value.Primary {
+func VarP(list []value.Primary, _ *option.Flags) value.Primary {
 	values := floatList(list)
 	if len(values) < 1 {
 		return value.NewNull()
@@ -184,7 +184,7 @@ func standardDeviation(list []float64, isP bool) float64 {
 	return math.Sqrt(variance(list, isP))
 }
 
-func Median(list []value.Primary, flags *cmd.Flags) value.Primary {
+func Median(list []value.Primary, flags *option.Flags) value.Primary {
 	var values []float64
 
 	for _, v := range list {

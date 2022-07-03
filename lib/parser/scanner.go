@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/ternary"
 )
@@ -35,9 +35,12 @@ const (
 
 	BeginExpression = '{'
 	EndExpression   = '}'
+
+	ConstantSign = ':'
 )
 
 var errTokenIsNotKeyword = errors.New("token is not keyword")
+var errInvalidConstantSyntax = errors.New("invalid constant syntax")
 
 var comparisonOperators = []string{
 	">",
@@ -88,6 +91,8 @@ var functionsWithIgnoreNulls = []string{
 	"LAG",
 	"LEAD",
 }
+
+var ConstantDelimiter = string(ConstantSign) + string(ConstantSign)
 
 func TokenLiteral(token int) string {
 	if TokenFrom <= token && token <= TokenTo {
@@ -239,7 +244,17 @@ func (s *Scanner) Scan() (Token, error) {
 		} else if s.isFunctionsWithIgnoreNulls(literal) {
 			token = FUNCTION_WITH_INS
 		} else {
-			token = IDENTIFIER
+			if s.peek() == ':' {
+				err = s.scanConstant()
+				literal = s.literal.String()
+				if err != nil {
+					token = Uncategorized
+				} else {
+					token = CONSTANT
+				}
+			} else {
+				token = IDENTIFIER
+			}
 		}
 	case s.isOperatorRune(ch):
 		s.scanOperator(ch)
@@ -271,7 +286,7 @@ func (s *Scanner) Scan() (Token, error) {
 
 		if token == ENVIRONMENT_VARIABLE && s.peek() == '`' {
 			err = s.scanString(s.next())
-			literal = cmd.UnescapeIdentifier(s.literal.String(), '`')
+			literal = option.UnescapeIdentifier(s.literal.String(), '`')
 			quoted = true
 		} else {
 			if s.isIdentRune(s.peek()) {
@@ -298,11 +313,11 @@ func (s *Scanner) Scan() (Token, error) {
 	default:
 		if ch == '\'' || (!s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
-			literal = cmd.UnescapeString(s.literal.String(), ch)
+			literal = option.UnescapeString(s.literal.String(), ch)
 			token = STRING
 		} else if ch == '`' || (s.ansiQuotes && ch == '"') {
 			err = s.scanString(ch)
-			literal = cmd.UnescapeIdentifier(s.literal.String(), ch)
+			literal = option.UnescapeIdentifier(s.literal.String(), ch)
 			token = IDENTIFIER
 			quoted = true
 		}
@@ -349,6 +364,22 @@ func (s *Scanner) scanIdentifier(head rune) {
 	for s.isIdentRune(s.peek()) {
 		s.literal.WriteRune(s.next())
 	}
+}
+
+func (s *Scanner) scanConstant() error {
+	s.literal.WriteRune(s.next())
+	if s.peek() != ':' {
+		return errInvalidConstantSyntax
+	}
+	s.literal.WriteRune(s.next())
+	if !s.isIdentRune(s.peek()) {
+		return errInvalidConstantSyntax
+	}
+	s.literal.WriteRune(s.next())
+	for s.isIdentRune(s.peek()) {
+		s.literal.WriteRune(s.next())
+	}
+	return nil
 }
 
 func (s *Scanner) isIdentRune(ch rune) bool {

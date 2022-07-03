@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -48,26 +48,26 @@ func PutNodeScope(scope NodeScope) {
 }
 
 type BlockScope struct {
-	variables       VariableMap
-	temporaryTables ViewMap
-	cursors         CursorMap
-	functions       UserDefinedFunctionMap
+	Variables       VariableMap
+	TemporaryTables ViewMap
+	Cursors         CursorMap
+	Functions       UserDefinedFunctionMap
 }
 
 func NewBlockScope() BlockScope {
 	return BlockScope{
-		variables:       NewVariableMap(),
-		temporaryTables: NewViewMap(),
-		cursors:         NewCursorMap(),
-		functions:       NewUserDefinedFunctionMap(),
+		Variables:       NewVariableMap(),
+		TemporaryTables: NewViewMap(),
+		Cursors:         NewCursorMap(),
+		Functions:       NewUserDefinedFunctionMap(),
 	}
 }
 
 func (scope BlockScope) Clear() {
-	scope.variables.Clear()
-	scope.temporaryTables.Clear()
-	scope.cursors.Clear()
-	scope.functions.Clear()
+	scope.Variables.Clear()
+	scope.TemporaryTables.Clear()
+	scope.Cursors.Clear()
+	scope.Functions.Clear()
 }
 
 type NodeScope struct {
@@ -157,7 +157,7 @@ func (c *FieldIndexCache) Add(expr parser.QueryExpression, idx int) {
 type ReferenceScope struct {
 	Tx *Transaction
 
-	blocks []BlockScope
+	Blocks []BlockScope
 	nodes  []NodeScope
 
 	cachedFilePath map[string]string
@@ -177,7 +177,7 @@ func NewReferenceScope(tx *Transaction) *ReferenceScope {
 func NewReferenceScopeWithBlock(tx *Transaction, scope BlockScope) *ReferenceScope {
 	return &ReferenceScope{
 		Tx:     tx,
-		blocks: []BlockScope{scope},
+		Blocks: []BlockScope{scope},
 		nodes:  nil,
 	}
 }
@@ -207,7 +207,7 @@ func (rs *ReferenceScope) CreateScopeForAnalytics() *ReferenceScope {
 func (rs *ReferenceScope) createScope(referenceRecords []ReferenceRecord) *ReferenceScope {
 	return &ReferenceScope{
 		Tx:               rs.Tx,
-		blocks:           rs.blocks,
+		Blocks:           rs.Blocks,
 		nodes:            rs.nodes,
 		cachedFilePath:   rs.cachedFilePath,
 		now:              rs.now,
@@ -219,15 +219,15 @@ func (rs *ReferenceScope) createScope(referenceRecords []ReferenceRecord) *Refer
 }
 
 func (rs *ReferenceScope) CreateChild() *ReferenceScope {
-	blocks := make([]BlockScope, len(rs.blocks)+1)
+	blocks := make([]BlockScope, len(rs.Blocks)+1)
 	blocks[0] = GetBlockScope()
-	for i := range rs.blocks {
-		blocks[i+1] = rs.blocks[i]
+	for i := range rs.Blocks {
+		blocks[i+1] = rs.Blocks[i]
 	}
 
 	return &ReferenceScope{
 		Tx:               rs.Tx,
-		blocks:           blocks,
+		Blocks:           blocks,
 		nodes:            nil,
 		cachedFilePath:   rs.cachedFilePath,
 		now:              rs.now,
@@ -246,7 +246,7 @@ func (rs *ReferenceScope) CreateNode() *ReferenceScope {
 
 	node := &ReferenceScope{
 		Tx:               rs.Tx,
-		blocks:           rs.blocks,
+		Blocks:           rs.Blocks,
 		nodes:            nodes,
 		cachedFilePath:   rs.cachedFilePath,
 		now:              rs.now,
@@ -260,18 +260,18 @@ func (rs *ReferenceScope) CreateNode() *ReferenceScope {
 		node.cachedFilePath = make(map[string]string)
 	}
 	if node.now.IsZero() {
-		node.now = cmd.Now(rs.Tx.Flags.GetTimeLocation())
+		node.now = option.Now(rs.Tx.Flags.GetTimeLocation())
 	}
 
 	return node
 }
 
 func (rs *ReferenceScope) Global() BlockScope {
-	return rs.blocks[len(rs.blocks)-1]
+	return rs.Blocks[len(rs.Blocks)-1]
 }
 
 func (rs *ReferenceScope) CurrentBlock() BlockScope {
-	return rs.blocks[0]
+	return rs.Blocks[0]
 }
 
 func (rs *ReferenceScope) ClearCurrentBlock() {
@@ -312,22 +312,22 @@ func (rs *ReferenceScope) LoadFilePath(identifier string) (string, bool) {
 
 func (rs *ReferenceScope) Now() time.Time {
 	if rs.now.IsZero() {
-		return cmd.Now(rs.Tx.Flags.GetTimeLocation())
+		return option.Now(rs.Tx.Flags.GetTimeLocation())
 	}
 	return rs.now
 }
 
 func (rs *ReferenceScope) DeclareVariable(ctx context.Context, expr parser.VariableDeclaration) error {
-	return rs.blocks[0].variables.Declare(ctx, rs, expr)
+	return rs.Blocks[0].Variables.Declare(ctx, rs, expr)
 }
 
 func (rs *ReferenceScope) DeclareVariableDirectly(variable parser.Variable, val value.Primary) error {
-	return rs.blocks[0].variables.Add(variable, val)
+	return rs.Blocks[0].Variables.Add(variable, val)
 }
 
 func (rs *ReferenceScope) GetVariable(expr parser.Variable) (val value.Primary, err error) {
-	for i := range rs.blocks {
-		if v, ok := rs.blocks[i].variables.Get(expr); ok {
+	for i := range rs.Blocks {
+		if v, ok := rs.Blocks[i].Variables.Get(expr); ok {
 			return v, nil
 		}
 	}
@@ -340,8 +340,8 @@ func (rs *ReferenceScope) SubstituteVariable(ctx context.Context, expr parser.Va
 		return
 	}
 
-	for i := range rs.blocks {
-		if rs.blocks[i].variables.Set(expr.Variable, val) {
+	for i := range rs.Blocks {
+		if rs.Blocks[i].Variables.Set(expr.Variable, val) {
 			return
 		}
 	}
@@ -350,8 +350,8 @@ func (rs *ReferenceScope) SubstituteVariable(ctx context.Context, expr parser.Va
 }
 
 func (rs *ReferenceScope) SubstituteVariableDirectly(variable parser.Variable, val value.Primary) (value.Primary, error) {
-	for i := range rs.blocks {
-		if rs.blocks[i].variables.Set(variable, val) {
+	for i := range rs.Blocks {
+		if rs.Blocks[i].Variables.Set(variable, val) {
 			return val, nil
 		}
 	}
@@ -359,8 +359,8 @@ func (rs *ReferenceScope) SubstituteVariableDirectly(variable parser.Variable, v
 }
 
 func (rs *ReferenceScope) DisposeVariable(expr parser.Variable) error {
-	for i := range rs.blocks {
-		if rs.blocks[i].variables.Dispose(expr) {
+	for i := range rs.Blocks {
+		if rs.Blocks[i].Variables.Dispose(expr) {
 			return nil
 		}
 	}
@@ -369,8 +369,8 @@ func (rs *ReferenceScope) DisposeVariable(expr parser.Variable) error {
 
 func (rs *ReferenceScope) AllVariables() VariableMap {
 	all := NewVariableMap()
-	for i := range rs.blocks {
-		rs.blocks[i].variables.Range(func(key, val interface{}) bool {
+	for i := range rs.Blocks {
+		rs.Blocks[i].Variables.Range(func(key, val interface{}) bool {
 			if !all.Exists(key.(string)) {
 				all.Store(key.(string), val.(value.Primary))
 			}
@@ -381,8 +381,8 @@ func (rs *ReferenceScope) AllVariables() VariableMap {
 }
 
 func (rs *ReferenceScope) TemporaryTableExists(name string) bool {
-	for i := range rs.blocks {
-		if rs.blocks[i].temporaryTables.Exists(name) {
+	for i := range rs.Blocks {
+		if rs.Blocks[i].TemporaryTables.Exists(name) {
 			return true
 		}
 	}
@@ -390,17 +390,17 @@ func (rs *ReferenceScope) TemporaryTableExists(name string) bool {
 }
 
 func (rs *ReferenceScope) GetTemporaryTable(name parser.Identifier) (*View, error) {
-	for i := range rs.blocks {
-		if view, err := rs.blocks[i].temporaryTables.Get(name); err == nil {
+	for i := range rs.Blocks {
+		if view, err := rs.Blocks[i].TemporaryTables.Get(name); err == nil {
 			return view, nil
 		}
 	}
 	return nil, NewUndeclaredTemporaryTableError(name)
 }
 
-func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *cmd.Flags) (view *View, err error) {
-	for i := range rs.blocks {
-		if view, err = rs.blocks[i].temporaryTables.GetWithInternalId(ctx, name, flags); err == nil {
+func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *option.Flags) (view *View, err error) {
+	for i := range rs.Blocks {
+		if view, err = rs.Blocks[i].TemporaryTables.GetWithInternalId(ctx, name, flags); err == nil {
 			return
 		} else if err != errTableNotLoaded {
 			return nil, err
@@ -410,21 +410,21 @@ func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, n
 }
 
 func (rs *ReferenceScope) SetTemporaryTable(view *View) {
-	rs.blocks[0].temporaryTables.Set(view)
+	rs.Blocks[0].TemporaryTables.Set(view)
 }
 
 func (rs *ReferenceScope) ReplaceTemporaryTable(view *View) {
-	for i := range rs.blocks {
-		if rs.blocks[i].temporaryTables.Exists(view.FileInfo.Path) {
-			rs.blocks[i].temporaryTables.Set(view)
+	for i := range rs.Blocks {
+		if rs.Blocks[i].TemporaryTables.Exists(view.FileInfo.Path) {
+			rs.Blocks[i].TemporaryTables.Set(view)
 			return
 		}
 	}
 }
 
 func (rs *ReferenceScope) DisposeTemporaryTable(name parser.QueryExpression) error {
-	for i := range rs.blocks {
-		if rs.blocks[i].temporaryTables.DisposeTemporaryTable(name) {
+	for i := range rs.Blocks {
+		if rs.Blocks[i].TemporaryTables.DisposeTemporaryTable(name) {
 			return nil
 		}
 	}
@@ -433,8 +433,8 @@ func (rs *ReferenceScope) DisposeTemporaryTable(name parser.QueryExpression) err
 
 func (rs *ReferenceScope) StoreTemporaryTable(session *Session, uncomittedViews map[string]*FileInfo) []string {
 	msglist := make([]string, 0, len(uncomittedViews))
-	for i := range rs.blocks {
-		rs.blocks[i].temporaryTables.Range(func(key, value interface{}) bool {
+	for i := range rs.Blocks {
+		rs.Blocks[i].TemporaryTables.Range(func(key, value interface{}) bool {
 			if _, ok := uncomittedViews[key.(string)]; ok {
 				view := value.(*View)
 
@@ -453,13 +453,13 @@ func (rs *ReferenceScope) StoreTemporaryTable(session *Session, uncomittedViews 
 
 func (rs *ReferenceScope) RestoreTemporaryTable(uncomittedViews map[string]*FileInfo) []string {
 	msglist := make([]string, 0, len(uncomittedViews))
-	for i := range rs.blocks {
-		rs.blocks[i].temporaryTables.Range(func(key, value interface{}) bool {
+	for i := range rs.Blocks {
+		rs.Blocks[i].TemporaryTables.Range(func(key, value interface{}) bool {
 			if _, ok := uncomittedViews[key.(string)]; ok {
 				view := value.(*View)
 
 				if view.FileInfo.IsStdin() {
-					rs.blocks[i].temporaryTables.Delete(view.FileInfo.Path)
+					rs.Blocks[i].TemporaryTables.Delete(view.FileInfo.Path)
 				} else {
 					view.Restore()
 				}
@@ -474,8 +474,8 @@ func (rs *ReferenceScope) RestoreTemporaryTable(uncomittedViews map[string]*File
 func (rs *ReferenceScope) AllTemporaryTables() ViewMap {
 	all := NewViewMap()
 
-	for i := range rs.blocks {
-		rs.blocks[i].temporaryTables.Range(func(key, value interface{}) bool {
+	for i := range rs.Blocks {
+		rs.Blocks[i].TemporaryTables.Range(func(key, value interface{}) bool {
 			if !value.(*View).FileInfo.IsFile() {
 				k := key.(string)
 				if !all.Exists(k) {
@@ -489,16 +489,16 @@ func (rs *ReferenceScope) AllTemporaryTables() ViewMap {
 }
 
 func (rs *ReferenceScope) DeclareCursor(expr parser.CursorDeclaration) error {
-	return rs.blocks[0].cursors.Declare(expr)
+	return rs.Blocks[0].Cursors.Declare(expr)
 }
 
 func (rs *ReferenceScope) AddPseudoCursor(name parser.Identifier, values []value.Primary) error {
-	return rs.blocks[0].cursors.AddPseudoCursor(name, values)
+	return rs.Blocks[0].Cursors.AddPseudoCursor(name, values)
 }
 
 func (rs *ReferenceScope) DisposeCursor(name parser.Identifier) error {
-	for i := range rs.blocks {
-		err := rs.blocks[i].cursors.Dispose(name)
+	for i := range rs.Blocks {
+		err := rs.Blocks[i].Cursors.Dispose(name)
 		if err == nil {
 			return nil
 		}
@@ -511,8 +511,8 @@ func (rs *ReferenceScope) DisposeCursor(name parser.Identifier) error {
 
 func (rs *ReferenceScope) OpenCursor(ctx context.Context, name parser.Identifier, values []parser.ReplaceValue) error {
 	var err error
-	for i := range rs.blocks {
-		err = rs.blocks[i].cursors.Open(ctx, rs, name, values)
+	for i := range rs.Blocks {
+		err = rs.Blocks[i].Cursors.Open(ctx, rs, name, values)
 		if err == nil {
 			return nil
 		}
@@ -524,8 +524,8 @@ func (rs *ReferenceScope) OpenCursor(ctx context.Context, name parser.Identifier
 }
 
 func (rs *ReferenceScope) CloseCursor(name parser.Identifier) error {
-	for i := range rs.blocks {
-		err := rs.blocks[i].cursors.Close(name)
+	for i := range rs.Blocks {
+		err := rs.Blocks[i].Cursors.Close(name)
 		if err == nil {
 			return nil
 		}
@@ -540,8 +540,8 @@ func (rs *ReferenceScope) FetchCursor(name parser.Identifier, position int, numb
 	var values []value.Primary
 	var err error
 
-	for i := range rs.blocks {
-		values, err = rs.blocks[i].cursors.Fetch(name, position, number)
+	for i := range rs.Blocks {
+		values, err = rs.Blocks[i].Cursors.Fetch(name, position, number)
 		if err == nil {
 			return values, nil
 		}
@@ -553,8 +553,8 @@ func (rs *ReferenceScope) FetchCursor(name parser.Identifier, position int, numb
 }
 
 func (rs *ReferenceScope) CursorIsOpen(name parser.Identifier) (ternary.Value, error) {
-	for i := range rs.blocks {
-		if ok, err := rs.blocks[i].cursors.IsOpen(name); err == nil {
+	for i := range rs.Blocks {
+		if ok, err := rs.Blocks[i].Cursors.IsOpen(name); err == nil {
 			return ok, nil
 		}
 	}
@@ -565,8 +565,8 @@ func (rs *ReferenceScope) CursorIsInRange(name parser.Identifier) (ternary.Value
 	var result ternary.Value
 	var err error
 
-	for i := range rs.blocks {
-		result, err = rs.blocks[i].cursors.IsInRange(name)
+	for i := range rs.Blocks {
+		result, err = rs.Blocks[i].Cursors.IsInRange(name)
 		if err == nil {
 			return result, nil
 		}
@@ -581,8 +581,8 @@ func (rs *ReferenceScope) CursorCount(name parser.Identifier) (int, error) {
 	var count int
 	var err error
 
-	for i := range rs.blocks {
-		count, err = rs.blocks[i].cursors.Count(name)
+	for i := range rs.Blocks {
+		count, err = rs.Blocks[i].Cursors.Count(name)
 		if err == nil {
 			return count, nil
 		}
@@ -595,8 +595,8 @@ func (rs *ReferenceScope) CursorCount(name parser.Identifier) (int, error) {
 
 func (rs *ReferenceScope) AllCursors() CursorMap {
 	all := NewCursorMap()
-	for i := range rs.blocks {
-		rs.blocks[i].cursors.Range(func(key, val interface{}) bool {
+	for i := range rs.Blocks {
+		rs.Blocks[i].Cursors.Range(func(key, val interface{}) bool {
 			cur := val.(*Cursor)
 			if !cur.isPseudo {
 				if !all.Exists(key.(string)) {
@@ -610,16 +610,16 @@ func (rs *ReferenceScope) AllCursors() CursorMap {
 }
 
 func (rs *ReferenceScope) DeclareFunction(expr parser.FunctionDeclaration) error {
-	return rs.blocks[0].functions.Declare(expr)
+	return rs.Blocks[0].Functions.Declare(expr)
 }
 
 func (rs *ReferenceScope) DeclareAggregateFunction(expr parser.AggregateDeclaration) error {
-	return rs.blocks[0].functions.DeclareAggregate(expr)
+	return rs.Blocks[0].Functions.DeclareAggregate(expr)
 }
 
 func (rs *ReferenceScope) GetFunction(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
-	for i := range rs.blocks {
-		if fn, ok := rs.blocks[i].functions.Get(expr, name); ok {
+	for i := range rs.Blocks {
+		if fn, ok := rs.Blocks[i].Functions.Get(expr, name); ok {
 			return fn, nil
 		}
 	}
@@ -627,8 +627,8 @@ func (rs *ReferenceScope) GetFunction(expr parser.QueryExpression, name string) 
 }
 
 func (rs *ReferenceScope) DisposeFunction(name parser.Identifier) error {
-	for i := range rs.blocks {
-		if rs.blocks[i].functions.Dispose(name) {
+	for i := range rs.Blocks {
+		if rs.Blocks[i].Functions.Dispose(name) {
 			return nil
 		}
 	}
@@ -639,8 +639,8 @@ func (rs *ReferenceScope) AllFunctions() (UserDefinedFunctionMap, UserDefinedFun
 	scalarAll := NewUserDefinedFunctionMap()
 	aggregateAll := NewUserDefinedFunctionMap()
 
-	for i := range rs.blocks {
-		rs.blocks[i].functions.Range(func(key, val interface{}) bool {
+	for i := range rs.Blocks {
+		rs.Blocks[i].Functions.Range(func(key, val interface{}) bool {
 			fn := val.(*UserDefinedFunction)
 			if fn.IsAggregate {
 				if !aggregateAll.Exists(key.(string)) {

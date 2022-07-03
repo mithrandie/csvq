@@ -17,9 +17,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/json"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -200,9 +200,9 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 			options.Delimiter = d[0]
 			if options.Delimiter == '\t' {
-				options.Format = cmd.TSV
+				options.Format = option.TSV
 			} else {
-				options.Format = cmd.CSV
+				options.Format = option.CSV
 			}
 		case parser.FIXED:
 			if felem == nil {
@@ -228,7 +228,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				return nil, NewTableObjectArgumentsLengthError(tableObject, 5)
 			}
 			options.DelimiterPositions = positions
-			options.Format = cmd.FIXED
+			options.Format = option.FIXED
 		case parser.JSON, parser.JSONL:
 			if felem == nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, "json query is not specified")
@@ -243,15 +243,15 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			options.JsonQuery = felem.(*value.String).Raw()
 			options.Encoding = text.UTF8
 			if tableObject.Type.Token == parser.JSONL {
-				options.Format = cmd.JSONL
+				options.Format = option.JSONL
 			} else {
-				options.Format = cmd.JSON
+				options.Format = option.JSON
 			}
 		case parser.LTSV:
 			if 2 < len(tableObject.Args) {
 				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 3)
 			}
-			options.Format = cmd.LTSV
+			options.Format = option.LTSV
 			withoutNullIdx, noHeaderIdx = noHeaderIdx, withoutNullIdx
 		default:
 			return nil, NewInvalidTableObjectError(tableObject, tableObject.Type.Literal)
@@ -309,7 +309,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 		if args[encodingIdx] != nil {
-			if options.Encoding, err = cmd.ParseEncoding(args[0].(*value.String).Raw()); err != nil {
+			if options.Encoding, err = option.ParseEncoding(args[0].(*value.String).Raw()); err != nil {
 				return nil, NewTableObjectInvalidArgumentError(tableObject, err.Error())
 			}
 		}
@@ -341,7 +341,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 	case parser.Identifier, parser.Stdin:
 		options := scope.Tx.Flags.ImportOptions.Copy()
-		options.Format = cmd.AutoSelect
+		options.Format = option.AutoSelect
 
 		view, err = loadObject(
 			ctx,
@@ -532,7 +532,7 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 	defer scope.Tx.viewLoadingMutex.Unlock()
 
 	var err error
-	view, ok := scope.Global().temporaryTables.Load(stdin.String())
+	view, ok := scope.Global().TemporaryTables.Load(stdin.String())
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 		if forUpdate {
 			if err = scope.Tx.LockStdinContext(ctx); err != nil {
@@ -548,19 +548,19 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 		if err != nil {
 			return nil, err
 		}
-		scope.Global().temporaryTables.Set(view)
+		scope.Global().TemporaryTables.Set(view)
 	}
 
 	pathIdent := parser.Identifier{Literal: stdin.String()}
 	if useInternalId {
-		if view, err = scope.Global().temporaryTables.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+		if view, err = scope.Global().TemporaryTables.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
 			if err == errTableNotLoaded {
 				err = NewUndeclaredTemporaryTableError(pathIdent)
 			}
 			return nil, err
 		}
 	} else {
-		if view, err = scope.Global().temporaryTables.Get(pathIdent); err != nil {
+		if view, err = scope.Global().TemporaryTables.Get(pathIdent); err != nil {
 			if err == errTableNotLoaded {
 				err = NewUndeclaredTemporaryTableError(pathIdent)
 			}
@@ -589,17 +589,17 @@ func loadObject(
 	forUpdate bool,
 	useInternalId bool,
 	isInlineObject bool,
-	options cmd.ImportOptions,
+	options option.ImportOptions,
 ) (*View, error) {
 	if stdin, ok := tablePath.(parser.Stdin); ok {
-		if options.Format == cmd.AutoSelect {
+		if options.Format == option.AutoSelect {
 			options.Format = scope.Tx.Flags.ImportOptions.Format
 		}
 
 		switch options.Format {
-		case cmd.TSV:
+		case option.TSV:
 			options.Delimiter = '\t'
-		case cmd.JSON, cmd.JSONL:
+		case option.JSON, option.JSONL:
 			options.Encoding = text.UTF8
 		}
 
@@ -689,14 +689,14 @@ func loadObject(
 	var view *View
 	pathIdent := parser.Identifier{BaseExpr: tablePath.GetBaseExpr(), Literal: filePath}
 	if useInternalId {
-		if view, err = scope.Tx.cachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+		if view, err = scope.Tx.CachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
 			if err == errTableNotLoaded {
 				err = NewTableNotLoadedError(pathIdent)
 			}
 			return nil, err
 		}
 	} else {
-		if view, err = scope.Tx.cachedViews.Get(pathIdent); err != nil {
+		if view, err = scope.Tx.CachedViews.Get(pathIdent); err != nil {
 			return nil, NewTableNotLoadedError(pathIdent)
 		}
 	}
@@ -725,7 +725,7 @@ func cacheViewFromFile(
 	tablePath parser.QueryExpression,
 	forUpdate bool,
 	isInlineObject bool,
-	options cmd.ImportOptions,
+	options option.ImportOptions,
 ) (string, error) {
 	scope.Tx.viewLoadingMutex.Lock()
 	defer scope.Tx.viewLoadingMutex.Unlock()
@@ -757,7 +757,7 @@ func cacheViewFromFile(
 		return filePath, err
 	}
 
-	view, ok := scope.Tx.cachedViews.Load(filePath)
+	view, ok := scope.Tx.CachedViews.Load(filePath)
 	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 		fileInfo, err := (func() (*FileInfo, error) {
 			if isInlineObject && (isInlineObjectData(tablePath) || isInlineObjectURL(tablePath)) {
@@ -777,11 +777,11 @@ func cacheViewFromFile(
 		}
 		filePath = fileInfo.Path
 
-		view, ok = scope.Tx.cachedViews.Load(filePath)
+		view, ok = scope.Tx.CachedViews.Load(filePath)
 		if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
 			fileInfo.DelimiterPositions = options.DelimiterPositions
 			fileInfo.SingleLine = options.SingleLine
-			fileInfo.JsonQuery = cmd.TrimSpace(options.JsonQuery)
+			fileInfo.JsonQuery = option.TrimSpace(options.JsonQuery)
 			fileInfo.LineBreak = scope.Tx.Flags.ExportOptions.LineBreak
 			fileInfo.NoHeader = options.NoHeader
 			fileInfo.EncloseAll = scope.Tx.Flags.ExportOptions.EncloseAll
@@ -791,7 +791,7 @@ func cacheViewFromFile(
 				fileInfo = view.FileInfo
 			}
 
-			if err = scope.Tx.cachedViews.Dispose(scope.Tx.FileContainer, fileInfo.Path); err != nil {
+			if err = scope.Tx.CachedViews.Dispose(scope.Tx.FileContainer, fileInfo.Path); err != nil {
 				return filePath, err
 			}
 
@@ -851,7 +851,7 @@ func cacheViewFromFile(
 				return filePath, appendCompositeError(err, scope.Tx.FileContainer.Close(fileInfo.Handler))
 			}
 			loadView.FileInfo.ForUpdate = forUpdate
-			scope.Tx.cachedViews.Set(loadView)
+			scope.Tx.CachedViews.Set(loadView)
 		}
 	}
 	if 0 < len(filePathForCacheKey) {
@@ -860,15 +860,15 @@ func cacheViewFromFile(
 	return filePath, nil
 }
 
-func loadViewFromFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, options cmd.ImportOptions, expr parser.QueryExpression) (*View, error) {
+func loadViewFromFile(ctx context.Context, flags *option.Flags, fp io.ReadSeeker, fileInfo *FileInfo, options option.ImportOptions, expr parser.QueryExpression) (*View, error) {
 	switch fileInfo.Format {
-	case cmd.FIXED:
+	case option.FIXED:
 		return loadViewFromFixedLengthTextFile(ctx, fp, fileInfo, options.WithoutNull, expr)
-	case cmd.LTSV:
+	case option.LTSV:
 		return loadViewFromLTSVFile(ctx, flags, fp, fileInfo, options.WithoutNull, expr)
-	case cmd.JSON:
+	case option.JSON:
 		return loadViewFromJsonFile(fp, fileInfo, expr)
-	case cmd.JSONL:
+	case option.JSONL:
 		return loadViewFromJsonLinesFile(ctx, flags, fp, fileInfo, expr)
 	}
 	return loadViewFromCSVFile(ctx, fp, fileInfo, options.AllowUnevenFields, options.WithoutNull, expr)
@@ -1021,7 +1021,7 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 	return view, nil
 }
 
-func loadViewFromLTSVFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromLTSVFile(ctx context.Context, flags *option.Flags, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
 	if err != nil {
 		return nil, NewCannotDetectFileEncodingError(expr)
@@ -1171,7 +1171,7 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 	return view, nil
 }
 
-func loadViewFromJsonLinesFile(ctx context.Context, flags *cmd.Flags, fp io.ReadSeeker, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
+func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp io.ReadSeeker, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
 	var err error
 	headerList := make([]string, 0, 32)
 	headerMap := make(map[string]bool, 32)
@@ -1318,7 +1318,7 @@ func NewDualView() *View {
 	}
 }
 
-func NewViewFromGroupedRecord(ctx context.Context, flags *cmd.Flags, referenceRecord ReferenceRecord) (*View, error) {
+func NewViewFromGroupedRecord(ctx context.Context, flags *option.Flags, referenceRecord ReferenceRecord) (*View, error) {
 	view := NewView()
 	view.Header = referenceRecord.view.Header
 	record := referenceRecord.view.RecordSet[referenceRecord.recordIndex]
@@ -1506,7 +1506,7 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 	return nil
 }
 
-func (view *View) groupAll(ctx context.Context, flags *cmd.Flags) error {
+func (view *View) groupAll(ctx context.Context, flags *option.Flags) error {
 	if 0 < view.RecordLen() {
 		record := make(Record, view.FieldLen())
 
@@ -1695,7 +1695,7 @@ func (view *View) Select(ctx context.Context, scope *ReferenceScope, clause pars
 	return nil
 }
 
-func (view *View) GenerateComparisonKeys(ctx context.Context, flags *cmd.Flags) error {
+func (view *View) GenerateComparisonKeys(ctx context.Context, flags *option.Flags) error {
 	view.comparisonKeysInEachRecord = make([]string, view.RecordLen())
 
 	return NewGoroutineTaskManager(view.RecordLen(), -1, flags.CPU).Run(ctx, func(index int) error {
@@ -2174,7 +2174,7 @@ func (view *View) insert(ctx context.Context, fields []parser.QueryExpression, r
 	return len(recordValues), nil
 }
 
-func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser.QueryExpression, recordValues [][]value.Primary, keys []parser.QueryExpression) (int, error) {
+func (view *View) replace(ctx context.Context, flags *option.Flags, fields []parser.QueryExpression, recordValues [][]value.Primary, keys []parser.QueryExpression) (int, error) {
 	fieldIndices, err := view.FieldIndices(fields)
 	if err != nil {
 		return 0, err
@@ -2271,7 +2271,7 @@ func (view *View) replace(ctx context.Context, flags *cmd.Flags, fields []parser
 	return len(insertRecords) + replacedCount, nil
 }
 
-func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
+func (view *View) Fix(ctx context.Context, flags *option.Flags) error {
 	fieldLen := len(view.selectFields)
 	resize := false
 	if fieldLen != view.FieldLen() {
@@ -2338,7 +2338,7 @@ func (view *View) Fix(ctx context.Context, flags *cmd.Flags) error {
 	return nil
 }
 
-func (view *View) Union(ctx context.Context, flags *cmd.Flags, calcView *View, all bool) (err error) {
+func (view *View) Union(ctx context.Context, flags *option.Flags, calcView *View, all bool) (err error) {
 	view.RecordSet = view.RecordSet.Merge(calcView.RecordSet)
 	view.FileInfo = nil
 
@@ -2363,7 +2363,7 @@ func (view *View) Union(ctx context.Context, flags *cmd.Flags, calcView *View, a
 	return
 }
 
-func (view *View) Except(ctx context.Context, flags *cmd.Flags, calcView *View, all bool) (err error) {
+func (view *View) Except(ctx context.Context, flags *option.Flags, calcView *View, all bool) (err error) {
 	if err = view.GenerateComparisonKeys(ctx, flags); err != nil {
 		return err
 	}
@@ -2397,7 +2397,7 @@ func (view *View) Except(ctx context.Context, flags *cmd.Flags, calcView *View, 
 	return
 }
 
-func (view *View) Intersect(ctx context.Context, flags *cmd.Flags, calcView *View, all bool) (err error) {
+func (view *View) Intersect(ctx context.Context, flags *option.Flags, calcView *View, all bool) (err error) {
 	if err = view.GenerateComparisonKeys(ctx, flags); err != nil {
 		return err
 	}

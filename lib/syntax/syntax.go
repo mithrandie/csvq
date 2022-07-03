@@ -954,6 +954,13 @@ var CsvqSyntax = []Expression{
 				},
 			},
 			{
+				Name: "system_defined_constant",
+				Description: Description{
+					Template: "cf. %s",
+					Values:   []Element{Link("System Defined Constant")},
+				},
+			},
+			{
 				Name: "flag",
 				Description: Description{
 					Template: "cf. %s",
@@ -1186,6 +1193,33 @@ var CsvqSyntax = []Expression{
 				Variable("@#WORKING_DIRECTORY"), String("string"),
 				Variable("@#VERSION"), String("string"),
 			},
+		},
+	},
+	{
+		Label: "System Defined Constant",
+		Description: Description{
+			Template: "" +
+				"```\n" +
+				"  +----------+------------------+---------+\n" +
+				"  | Category | Name             | Type    |\n" +
+				"  +----------+------------------+---------+\n" +
+				"  | MATH     | E                | float   |\n" +
+				"  |          | PI               | float   |\n" +
+				"  |          | PHI              | float   |\n" +
+				"  |          | SQRT2            | float   |\n" +
+				"  |          | SQRTE            | float   |\n" +
+				"  |          | SQRTPI           | float   |\n" +
+				"  |          | SQRTPHI          | float   |\n" +
+				"  |          | LN2              | float   |\n" +
+				"  |          | LOG2E            | float   |\n" +
+				"  |          | LN10             | float   |\n" +
+				"  |          | LOG10E           | float   |\n" +
+				"  | FLOAT    | MAX              | float   |\n" +
+				"  |          | SMALLEST_NONZERO | float   |\n" +
+				"  | INTEGER  | MAX              | integer |\n" +
+				"  |          | MIN              | integer |\n" +
+				"  +----------+------------------+---------+\n" +
+				"```",
 		},
 	},
 	{
@@ -1544,27 +1578,6 @@ var CsvqSyntax = []Expression{
 				Label: "Numeric Functions",
 				Grammar: []Definition{
 					{
-						Name: "ceil",
-						Group: []Grammar{
-							{Function{Name: "CEIL", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
-						},
-						Description: Description{Template: "Rounds %s up to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
-					},
-					{
-						Name: "floor",
-						Group: []Grammar{
-							{Function{Name: "FLOOR", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
-						},
-						Description: Description{Template: "Rounds %s down to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
-					},
-					{
-						Name: "round",
-						Group: []Grammar{
-							{Function{Name: "ROUND", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
-						},
-						Description: Description{Template: "Rounds %s to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
-					},
-					{
 						Name: "abs",
 						Group: []Grammar{
 							{Function{Name: "ABS", Args: []Element{Float("number")}, Return: Return("float")}},
@@ -1579,11 +1592,25 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the arc cosine of %s.", Values: []Element{Float("number")}},
 					},
 					{
+						Name: "acosh",
+						Group: []Grammar{
+							{Function{Name: "ACOSH", Args: []Element{Float("number")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the inverse hyperbolic cosine of %s.", Values: []Element{Float("number")}},
+					},
+					{
 						Name: "asin",
 						Group: []Grammar{
 							{Function{Name: "ASIN", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
 						Description: Description{Template: "Returns the arc sine of %s.", Values: []Element{Float("number")}},
+					},
+					{
+						Name: "asinh",
+						Group: []Grammar{
+							{Function{Name: "ASINH", Args: []Element{Float("number")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the inverse hyperbolic sine of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "atan",
@@ -1600,6 +1627,27 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the arc tangent of %s / %s, using the signs of the two to determine the quadrant of the return value.", Values: []Element{Float("number2"), Float("number1")}},
 					},
 					{
+						Name: "atanh",
+						Group: []Grammar{
+							{Function{Name: "ATANH", Args: []Element{Float("number")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the inverse hyperbolic tangent of %s.", Values: []Element{Float("number")}},
+					},
+					{
+						Name: "cbrt",
+						Group: []Grammar{
+							{Function{Name: "CBRT", Args: []Element{Float("number")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the cube root of %s.", Values: []Element{Float("number")}},
+					},
+					{
+						Name: "ceil",
+						Group: []Grammar{
+							{Function{Name: "CEIL", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Rounds %s up to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
+					},
+					{
 						Name: "cos",
 						Group: []Grammar{
 							{Function{Name: "COS", Args: []Element{Float("number")}, Return: Return("float")}},
@@ -1607,18 +1655,11 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the cosine of %s.", Values: []Element{Float("number")}},
 					},
 					{
-						Name: "sin",
+						Name: "cosh",
 						Group: []Grammar{
-							{Function{Name: "SIN", Args: []Element{Float("number")}, Return: Return("float")}},
+							{Function{Name: "COSH", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
-						Description: Description{Template: "Returns the sine of %s.", Values: []Element{Float("number")}},
-					},
-					{
-						Name: "tan",
-						Group: []Grammar{
-							{Function{Name: "TAN", Args: []Element{Float("number")}, Return: Return("float")}},
-						},
-						Description: Description{Template: "Returns the tangent of %s.", Values: []Element{Float("number")}},
+						Description: Description{Template: "Returns the hyperbolic cosine of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "exp",
@@ -1642,6 +1683,27 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the value of base %s raised to the power of %s nimus %s.", Values: []Element{Italic("e"), Float("number"), Italic("1")}},
 					},
 					{
+						Name: "floor",
+						Group: []Grammar{
+							{Function{Name: "FLOOR", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Rounds %s down to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
+					},
+					{
+						Name: "is_inf",
+						Group: []Grammar{
+							{Function{Name: "IS_INF", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("sign"), Default: Integer("0")}}, Return: Return("ternary")}},
+						},
+						Description: Description{Template: "Returns %s is +INF or not when %s > 0, -INF or not when %s < 0, or either INF when %s = 0.", Values: []Element{Float("number"), Integer("sign"), Integer("sign"), Integer("sign")}},
+					},
+					{
+						Name: "is_nan",
+						Group: []Grammar{
+							{Function{Name: "IS_NAN", Args: []Element{Float("number")}, Return: Return("ternary")}},
+						},
+						Description: Description{Template: "Returns whether %s is a NaN.", Values: []Element{Float("number")}},
+					},
+					{
 						Name: "log",
 						Group: []Grammar{
 							{Function{Name: "LOG", Args: []Element{Float("number")}, Return: Return("float")}},
@@ -1656,6 +1718,13 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the decimal logarithm of %s.", Values: []Element{Float("number")}},
 					},
 					{
+						Name: "log1p",
+						Group: []Grammar{
+							{Function{Name: "LOG1P", Args: []Element{Float("number")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the natural logarithm of 1 plus %s.", Values: []Element{Float("number")}},
+					},
+					{
 						Name: "log2",
 						Group: []Grammar{
 							{Function{Name: "LOG2", Args: []Element{Float("number")}, Return: Return("float")}},
@@ -1663,11 +1732,39 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the binary logarithm of %s.", Values: []Element{Float("number")}},
 					},
 					{
-						Name: "log1p",
+						Name: "logb",
 						Group: []Grammar{
-							{Function{Name: "LOG1P", Args: []Element{Float("number")}, Return: Return("float")}},
+							{Function{Name: "LOGB", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
-						Description: Description{Template: "Returns the natural logarithm of 1 plus %s.", Values: []Element{Float("number")}},
+						Description: Description{Template: "Returns the binary exponent of %s.", Values: []Element{Float("number")}},
+					},
+					{
+						Name: "pow",
+						Group: []Grammar{
+							{Function{Name: "POW", Args: []Element{Float("base"), Float("exponent")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the value of %s raised to the power of %s.", Values: []Element{Float("base"), Float("exponent")}},
+					},
+					{
+						Name: "round",
+						Group: []Grammar{
+							{Function{Name: "ROUND", Args: []Element{Float("number"), ArgWithDefValue{Arg: Integer("place"), Default: Integer("0")}}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Rounds %s to %s decimal place. If %s is a negative number, then %s represents the place in the integer part.", Values: []Element{Float("number"), Integer("place"), Integer("place"), Integer("place")}},
+					},
+					{
+						Name: "sin",
+						Group: []Grammar{
+							{Function{Name: "SIN", Args: []Element{Float("number")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the sine of %s.", Values: []Element{Float("number")}},
+					},
+					{
+						Name: "sinh",
+						Group: []Grammar{
+							{Function{Name: "SINH", Args: []Element{Float("number")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the hyperbolic sine of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "sqrt",
@@ -1677,11 +1774,18 @@ var CsvqSyntax = []Expression{
 						Description: Description{Template: "Returns the square root of %s.", Values: []Element{Float("number")}},
 					},
 					{
-						Name: "pow",
+						Name: "tan",
 						Group: []Grammar{
-							{Function{Name: "POW", Args: []Element{Float("base"), Float("exponent")}, Return: Return("float")}},
+							{Function{Name: "TAN", Args: []Element{Float("number")}, Return: Return("float")}},
 						},
-						Description: Description{Template: "Returns the value of %s raised to the power of %s.", Values: []Element{Float("base"), Float("exponent")}},
+						Description: Description{Template: "Returns the tangent of %s.", Values: []Element{Float("number")}},
+					},
+					{
+						Name: "tanh",
+						Group: []Grammar{
+							{Function{Name: "TANH", Args: []Element{Float("number")}, Return: Return("float")}},
+						},
+						Description: Description{Template: "Returns the hyperbolic tangent of %s.", Values: []Element{Float("number")}},
 					},
 					{
 						Name: "bin_to_dec",
@@ -2017,6 +2121,20 @@ var CsvqSyntax = []Expression{
 							{Function{Name: "UTC", Args: []Element{Datetime("datetime")}, Return: Return("datetime")}},
 						},
 						Description: Description{Template: "Returns the datetime value of %s in UTC.", Values: []Element{Datetime("datetime")}},
+					},
+					{
+						Name: "milli_to_datetime",
+						Group: []Grammar{
+							{Function{Name: "MILLI_TO_DATETIME", Args: []Element{Integer("unix_milli_time")}, Return: Return("datetime")}},
+						},
+						Description: Description{Template: "Returns the datetime value represented by %s.", Values: []Element{Integer("unix_milli_time")}},
+					},
+					{
+						Name: "nano_to_datetime",
+						Group: []Grammar{
+							{Function{Name: "NANO_TO_DATETIME", Args: []Element{Integer("unix_nano_time")}, Return: Return("datetime")}},
+						},
+						Description: Description{Template: "Returns the datetime value represented by %s.", Values: []Element{Integer("unix_nano_time")}},
 					},
 				},
 			},
@@ -2885,26 +3003,30 @@ var CsvqSyntax = []Expression{
 						"  > A null is represented by a keyword NULL.\n" +
 						"\n" +
 						"%s\n" +
-						"  > A variable is a word starting with “@” and followed by a" +
+						"  > A variable is a word starting with \"@\" and followed by a" +
 						"    character string that contains any unicode letters, any digits or" +
 						"    Low Lines(U+005F _).\n" +
 						"\n" +
 						"%s\n" +
-						"  > A flag is a word starting with “@@” and followed by a character" +
+						"  > A flag is a word starting with \"@@\" and followed by a character" +
 						"    string that contains any unicode letters, any digits or" +
 						"    Low Lines(U+005F _). Character case is ignored.\n" +
 						"\n" +
 						"%s\n" +
-						"  > A environment variable is a word starting with “@%%” and followed" +
+						"  > A environment variable is a word starting with \"@%%\" and followed" +
 						"    by a character string that contains any unicode letters, any digits" +
 						"    or Low Lines(U+005F _). If a environment variable includes other" +
 						"    characters, you can use the variable by enclosing" +
 						"    in Back Quotes(U+0060 `).\n" +
 						"\n" +
 						"%s\n" +
-						"  > A runtime information is a word starting with “@#” and followed" +
+						"  > A runtime information is a word starting with \"@#\" and followed" +
 						"    by a character string that contains any unicode letters, any digits" +
-						"    or Low Lines(U+005F _). Character case is ignored.",
+						"    or Low Lines(U+005F _). Character case is ignored." +
+						"\n" +
+						"%s\n" +
+						"  > A system defined constant is a group of words represented by two" +
+						"    words separated by \"::\". Character case is ignored.",
 					Values: []Element{
 						Identifier("Identifier"),
 						Link("reserved words"),
@@ -2918,6 +3040,7 @@ var CsvqSyntax = []Expression{
 						Flag("Flag"),
 						Variable("Environment Variable"),
 						Variable("Runtime Information"),
+						Variable("System Defined Constant"),
 					},
 				},
 			},

@@ -206,7 +206,7 @@ func (fn *UserDefinedFunction) execute(ctx context.Context, scope *ReferenceScop
 
 	for i, v := range fn.Parameters {
 		if i < len(args) {
-			if err := scope.blocks[0].variables.Add(v, args[i]); err != nil {
+			if err := scope.Blocks[0].Variables.Add(v, args[i]); err != nil {
 				return nil, err
 			}
 		} else {

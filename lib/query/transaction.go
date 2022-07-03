@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -22,16 +22,16 @@ import (
 type Transaction struct {
 	Session *Session
 
-	Environment *cmd.Environment
+	Environment *option.Environment
 	Palette     *color.Palette
-	Flags       *cmd.Flags
+	Flags       *option.Flags
 
 	WaitTimeout   time.Duration
 	RetryDelay    time.Duration
 	FileContainer *file.Container
 
-	cachedViews      ViewMap
-	uncommittedViews UncommittedViews
+	CachedViews      ViewMap
+	UncommittedViews UncommittedViews
 
 	operationMutex   *sync.Mutex
 	viewLoadingMutex *sync.Mutex
@@ -48,17 +48,17 @@ type Transaction struct {
 }
 
 func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retryDelay time.Duration, session *Session) (*Transaction, error) {
-	environment, err := cmd.NewEnvironment(ctx, defaultWaitTimeout, retryDelay)
+	environment, err := option.NewEnvironment(ctx, defaultWaitTimeout, retryDelay)
 	if err != nil {
 		return nil, ConvertLoadConfigurationError(err)
 	}
 
-	flags, err := cmd.NewFlags(environment)
+	flags, err := option.NewFlags(environment)
 	if err != nil {
 		return nil, ConvertLoadConfigurationError(err)
 	}
 
-	palette, err := cmd.NewPalette(environment)
+	palette, err := option.NewPalette(environment)
 	if err != nil {
 		return nil, ConvertLoadConfigurationError(err)
 	}
@@ -73,8 +73,8 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		WaitTimeout:        file.DefaultWaitTimeout,
 		RetryDelay:         file.DefaultRetryDelay,
 		FileContainer:      file.NewContainer(),
-		cachedViews:        NewViewMap(),
-		uncommittedViews:   NewUncommittedViews(),
+		CachedViews:        NewViewMap(),
+		UncommittedViews:   NewUncommittedViews(),
 		operationMutex:     &sync.Mutex{},
 		viewLoadingMutex:   &sync.Mutex{},
 		stdinIsLocked:      false,
@@ -110,14 +110,14 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 	tx.operationMutex.Lock()
 	defer tx.operationMutex.Unlock()
 
-	createdFiles, updatedFiles := tx.uncommittedViews.UncommittedFiles()
+	createdFiles, updatedFiles := tx.UncommittedViews.UncommittedFiles()
 
 	createFileInfo := make([]*FileInfo, 0, len(createdFiles))
 	updateFileInfo := make([]*FileInfo, 0, len(updatedFiles))
 
 	if 0 < len(createdFiles) {
 		for _, fileinfo := range createdFiles {
-			view, _ := tx.cachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
+			view, _ := tx.CachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
 
 			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
@@ -131,7 +131,7 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 				return NewCommitError(expr, err.Error())
 			}
 
-			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileinfo.Format == cmd.FIXED && fileinfo.SingleLine) {
+			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileinfo.Format == option.FIXED && fileinfo.SingleLine) {
 				if _, err := fp.Write([]byte(tx.Flags.ExportOptions.LineBreak.Value())); err != nil {
 					return NewCommitError(expr, err.Error())
 				}
@@ -143,7 +143,7 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 
 	if 0 < len(updatedFiles) {
 		for _, fileinfo := range updatedFiles {
-			view, _ := tx.cachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
+			view, _ := tx.CachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
 
 			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
@@ -157,7 +157,7 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 				return NewCommitError(expr, err.Error())
 			}
 
-			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileinfo.Format == cmd.FIXED && fileinfo.SingleLine) {
+			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileinfo.Format == option.FIXED && fileinfo.SingleLine) {
 				if _, err := fp.Write([]byte(tx.Flags.ExportOptions.LineBreak.Value())); err != nil {
 					return NewCommitError(expr, err.Error())
 				}
@@ -171,22 +171,22 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 		if err := tx.FileContainer.Commit(f.Handler); err != nil {
 			return NewCommitError(expr, err.Error())
 		}
-		tx.uncommittedViews.Unset(f)
+		tx.UncommittedViews.Unset(f)
 		tx.LogNotice(fmt.Sprintf("Commit: file %q is created.", f.Path), tx.Flags.Quiet)
 	}
 	for _, f := range updateFileInfo {
 		if err := tx.FileContainer.Commit(f.Handler); err != nil {
 			return NewCommitError(expr, err.Error())
 		}
-		tx.uncommittedViews.Unset(f)
+		tx.UncommittedViews.Unset(f)
 		tx.LogNotice(fmt.Sprintf("Commit: file %q is updated.", f.Path), tx.Flags.Quiet)
 	}
 
-	msglist := scope.StoreTemporaryTable(tx.Session, tx.uncommittedViews.UncommittedTempViews())
+	msglist := scope.StoreTemporaryTable(tx.Session, tx.UncommittedViews.UncommittedTempViews())
 	if 0 < len(msglist) {
 		tx.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 	}
-	tx.uncommittedViews.Clean()
+	tx.UncommittedViews.Clean()
 	tx.UnlockStdin()
 	if err := tx.ReleaseResources(); err != nil {
 		return NewCommitError(expr, err.Error())
@@ -198,7 +198,7 @@ func (tx *Transaction) Rollback(scope *ReferenceScope, expr parser.Expression) e
 	tx.operationMutex.Lock()
 	defer tx.operationMutex.Unlock()
 
-	createdFiles, updatedFiles := tx.uncommittedViews.UncommittedFiles()
+	createdFiles, updatedFiles := tx.UncommittedViews.UncommittedFiles()
 
 	if 0 < len(createdFiles) {
 		for _, fileinfo := range createdFiles {
@@ -213,12 +213,12 @@ func (tx *Transaction) Rollback(scope *ReferenceScope, expr parser.Expression) e
 	}
 
 	if scope != nil {
-		msglist := scope.RestoreTemporaryTable(tx.uncommittedViews.UncommittedTempViews())
+		msglist := scope.RestoreTemporaryTable(tx.UncommittedViews.UncommittedTempViews())
 		if 0 < len(msglist) {
 			tx.LogNotice(strings.Join(msglist, "\n"), tx.quietForTemporaryViews(expr))
 		}
 	}
-	tx.uncommittedViews.Clean()
+	tx.UncommittedViews.Clean()
 	tx.UnlockStdin()
 	if err := tx.ReleaseResources(); err != nil {
 		return NewRollbackError(expr, err.Error())
@@ -231,7 +231,7 @@ func (tx *Transaction) quietForTemporaryViews(expr parser.Expression) bool {
 }
 
 func (tx *Transaction) ReleaseResources() error {
-	if err := tx.cachedViews.Clean(tx.FileContainer); err != nil {
+	if err := tx.CachedViews.Clean(tx.FileContainer); err != nil {
 		return err
 	}
 	if err := tx.FileContainer.CloseAll(); err != nil {
@@ -243,7 +243,7 @@ func (tx *Transaction) ReleaseResources() error {
 
 func (tx *Transaction) ReleaseResourcesWithErrors() error {
 	var errs []error
-	if err := tx.cachedViews.CleanWithErrors(tx.FileContainer); err != nil {
+	if err := tx.CachedViews.CleanWithErrors(tx.FileContainer); err != nil {
 		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
 	if err := tx.FileContainer.CloseAllWithErrors(); err != nil {
@@ -284,21 +284,21 @@ func (tx *Transaction) RUnlockStdin() {
 
 func (tx *Transaction) Error(s string) string {
 	if tx.Palette != nil {
-		return tx.Palette.Render(cmd.ErrorEffect, s)
+		return tx.Palette.Render(option.ErrorEffect, s)
 	}
 	return s
 }
 
 func (tx *Transaction) Warn(s string) string {
 	if tx.Palette != nil {
-		return tx.Palette.Render(cmd.WarnEffect, s)
+		return tx.Palette.Render(option.WarnEffect, s)
 	}
 	return s
 }
 
 func (tx *Transaction) Notice(s string) string {
 	if tx.Palette != nil {
-		return tx.Palette.Render(cmd.NoticeEffect, s)
+		return tx.Palette.Render(option.NoticeEffect, s)
 	}
 	return s
 }
@@ -337,7 +337,7 @@ var errNotAllowdFlagFormat = errors.New("not allowed flag format")
 var errInvalidFlagName = errors.New("invalid flag name")
 
 func (tx *Transaction) SetFormatFlag(value interface{}, outFile string) error {
-	return tx.setFlag(cmd.FormatFlag, value, outFile)
+	return tx.setFlag(option.FormatFlag, value, outFile)
 }
 
 func (tx *Transaction) SetFlag(key string, value interface{}) error {
@@ -351,193 +351,199 @@ func (tx *Transaction) setFlag(key string, value interface{}, outFile string) er
 	var err error
 
 	switch strings.ToUpper(key) {
-	case cmd.RepositoryFlag:
+	case option.RepositoryFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetRepository(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.TimezoneFlag:
+	case option.TimezoneFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetLocation(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.DatetimeFormatFlag:
+	case option.DatetimeFormatFlag:
 		if s, ok := value.(string); ok {
 			tx.Flags.SetDatetimeFormat(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.AnsiQuotesFlag:
+	case option.AnsiQuotesFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetAnsiQuotes(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.StrictEqualFlag:
+	case option.StrictEqualFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetStrictEqual(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.WaitTimeoutFlag:
+	case option.WaitTimeoutFlag:
 		if f, ok := value.(float64); ok {
 			tx.UpdateWaitTimeout(f, file.DefaultRetryDelay)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.ImportFormatFlag:
+	case option.ImportFormatFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetImportFormat(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.DelimiterFlag:
+	case option.DelimiterFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetDelimiter(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.AllowUnevenFieldsFlag:
+	case option.AllowUnevenFieldsFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetAllowUnevenFields(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.DelimiterPositionsFlag:
+	case option.DelimiterPositionsFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetDelimiterPositions(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.JsonQueryFlag:
+	case option.JsonQueryFlag:
 		if s, ok := value.(string); ok {
 			tx.Flags.SetJsonQuery(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.EncodingFlag:
+	case option.EncodingFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetEncoding(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.NoHeaderFlag:
+	case option.NoHeaderFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetNoHeader(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.WithoutNullFlag:
+	case option.WithoutNullFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetWithoutNull(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.FormatFlag:
+	case option.FormatFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetFormat(s, outFile, tx.Session.CanOutputToPipe)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.ExportEncodingFlag:
+	case option.ExportEncodingFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetWriteEncoding(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.ExportDelimiterFlag:
+	case option.ExportDelimiterFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetWriteDelimiter(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.ExportDelimiterPositionsFlag:
+	case option.ExportDelimiterPositionsFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetWriteDelimiterPositions(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.WithoutHeaderFlag:
+	case option.WithoutHeaderFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetWithoutHeader(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.LineBreakFlag:
+	case option.LineBreakFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetLineBreak(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.EncloseAllFlag:
+	case option.EncloseAllFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetEncloseAll(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.JsonEscapeFlag:
+	case option.JsonEscapeFlag:
 		if s, ok := value.(string); ok {
 			err = tx.Flags.SetJsonEscape(s)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.PrettyPrintFlag:
+	case option.PrettyPrintFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetPrettyPrint(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.StripEndingLineBreakFlag:
+	case option.ScientificNotationFlag:
+		if b, ok := value.(bool); ok {
+			tx.Flags.SetScientificNotation(b)
+		} else {
+			err = errNotAllowdFlagFormat
+		}
+	case option.StripEndingLineBreakFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetStripEndingLineBreak(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.EastAsianEncodingFlag:
+	case option.EastAsianEncodingFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetEastAsianEncoding(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.CountDiacriticalSignFlag:
+	case option.CountDiacriticalSignFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetCountDiacriticalSign(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.CountFormatCodeFlag:
+	case option.CountFormatCodeFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetCountFormatCode(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.ColorFlag:
+	case option.ColorFlag:
 		if b, ok := value.(bool); ok {
 			tx.UseColor(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.QuietFlag:
+	case option.QuietFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetQuiet(b)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.LimitRecursion:
+	case option.LimitRecursion:
 		if i, ok := value.(int64); ok {
 			tx.Flags.SetLimitRecursion(i)
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.CPUFlag:
+	case option.CPUFlag:
 		if i, ok := value.(int64); ok {
 			tx.Flags.SetCPU(int(i))
 		} else {
 			err = errNotAllowdFlagFormat
 		}
-	case cmd.StatsFlag:
+	case option.StatsFlag:
 		if b, ok := value.(bool); ok {
 			tx.Flags.SetStats(b)
 		} else {
@@ -558,11 +564,11 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 	var ok = true
 
 	switch strings.ToUpper(key) {
-	case cmd.RepositoryFlag:
+	case option.RepositoryFlag:
 		val = value.NewString(tx.Flags.Repository)
-	case cmd.TimezoneFlag:
+	case option.TimezoneFlag:
 		val = value.NewString(tx.Flags.Location)
-	case cmd.DatetimeFormatFlag:
+	case option.DatetimeFormatFlag:
 		s := ""
 		if 0 < len(tx.Flags.DatetimeFormat) {
 			list := make([]string, 0, len(tx.Flags.DatetimeFormat))
@@ -572,71 +578,73 @@ func (tx *Transaction) GetFlag(key string) (value.Primary, bool) {
 			s = "[" + strings.Join(list, ", ") + "]"
 		}
 		val = value.NewString(s)
-	case cmd.AnsiQuotesFlag:
+	case option.AnsiQuotesFlag:
 		val = value.NewBoolean(tx.Flags.AnsiQuotes)
-	case cmd.StrictEqualFlag:
+	case option.StrictEqualFlag:
 		val = value.NewBoolean(tx.Flags.StrictEqual)
-	case cmd.WaitTimeoutFlag:
+	case option.WaitTimeoutFlag:
 		val = value.NewFloat(tx.Flags.WaitTimeout)
-	case cmd.ImportFormatFlag:
+	case option.ImportFormatFlag:
 		val = value.NewString(tx.Flags.ImportOptions.Format.String())
-	case cmd.DelimiterFlag:
+	case option.DelimiterFlag:
 		val = value.NewString(string(tx.Flags.ImportOptions.Delimiter))
-	case cmd.AllowUnevenFieldsFlag:
+	case option.AllowUnevenFieldsFlag:
 		val = value.NewBoolean(tx.Flags.ImportOptions.AllowUnevenFields)
-	case cmd.DelimiterPositionsFlag:
+	case option.DelimiterPositionsFlag:
 		s := fixedlen.DelimiterPositions(tx.Flags.ImportOptions.DelimiterPositions).String()
 		if tx.Flags.ImportOptions.SingleLine {
 			s = "S" + s
 		}
 		val = value.NewString(s)
-	case cmd.JsonQueryFlag:
+	case option.JsonQueryFlag:
 		val = value.NewString(tx.Flags.ImportOptions.JsonQuery)
-	case cmd.EncodingFlag:
+	case option.EncodingFlag:
 		val = value.NewString(tx.Flags.ImportOptions.Encoding.String())
-	case cmd.NoHeaderFlag:
+	case option.NoHeaderFlag:
 		val = value.NewBoolean(tx.Flags.ImportOptions.NoHeader)
-	case cmd.WithoutNullFlag:
+	case option.WithoutNullFlag:
 		val = value.NewBoolean(tx.Flags.ImportOptions.WithoutNull)
-	case cmd.FormatFlag:
+	case option.FormatFlag:
 		val = value.NewString(tx.Flags.ExportOptions.Format.String())
-	case cmd.ExportEncodingFlag:
+	case option.ExportEncodingFlag:
 		val = value.NewString(tx.Flags.ExportOptions.Encoding.String())
-	case cmd.ExportDelimiterFlag:
+	case option.ExportDelimiterFlag:
 		val = value.NewString(string(tx.Flags.ExportOptions.Delimiter))
-	case cmd.ExportDelimiterPositionsFlag:
+	case option.ExportDelimiterPositionsFlag:
 		s := fixedlen.DelimiterPositions(tx.Flags.ExportOptions.DelimiterPositions).String()
 		if tx.Flags.ExportOptions.SingleLine {
 			s = "S" + s
 		}
 		val = value.NewString(s)
-	case cmd.WithoutHeaderFlag:
+	case option.WithoutHeaderFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.WithoutHeader)
-	case cmd.LineBreakFlag:
+	case option.LineBreakFlag:
 		val = value.NewString(tx.Flags.ExportOptions.LineBreak.String())
-	case cmd.EncloseAllFlag:
+	case option.EncloseAllFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.EncloseAll)
-	case cmd.JsonEscapeFlag:
-		val = value.NewString(cmd.JsonEscapeTypeToString(tx.Flags.ExportOptions.JsonEscape))
-	case cmd.PrettyPrintFlag:
+	case option.JsonEscapeFlag:
+		val = value.NewString(option.JsonEscapeTypeToString(tx.Flags.ExportOptions.JsonEscape))
+	case option.PrettyPrintFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.PrettyPrint)
-	case cmd.StripEndingLineBreakFlag:
+	case option.ScientificNotationFlag:
+		val = value.NewBoolean(tx.Flags.ExportOptions.ScientificNotation)
+	case option.StripEndingLineBreakFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.StripEndingLineBreak)
-	case cmd.EastAsianEncodingFlag:
+	case option.EastAsianEncodingFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.EastAsianEncoding)
-	case cmd.CountDiacriticalSignFlag:
+	case option.CountDiacriticalSignFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.CountDiacriticalSign)
-	case cmd.CountFormatCodeFlag:
+	case option.CountFormatCodeFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.CountFormatCode)
-	case cmd.ColorFlag:
+	case option.ColorFlag:
 		val = value.NewBoolean(tx.Flags.ExportOptions.Color)
-	case cmd.QuietFlag:
+	case option.QuietFlag:
 		val = value.NewBoolean(tx.Flags.Quiet)
-	case cmd.LimitRecursion:
+	case option.LimitRecursion:
 		val = value.NewInteger(tx.Flags.LimitRecursion)
-	case cmd.CPUFlag:
+	case option.CPUFlag:
 		val = value.NewInteger(int64(tx.Flags.CPU))
-	case cmd.StatsFlag:
+	case option.StatsFlag:
 		val = value.NewBoolean(tx.Flags.Stats)
 	default:
 		ok = false

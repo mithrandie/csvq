@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -26,7 +26,7 @@ var viewLoadTests = []struct {
 	ForUpdate          bool
 	UseInternalId      bool
 	Stdin              string
-	ImportFormat       cmd.Format
+	ImportFormat       option.Format
 	Delimiter          rune
 	AllowUnevenFields  bool
 	DelimiterPositions []int
@@ -309,7 +309,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin:        "column1\tcolumn2\n1\t\"str1\"",
-		ImportFormat: cmd.TSV,
+		ImportFormat: option.TSV,
 		Result: &View{
 			Header: NewHeader("t", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -320,7 +320,7 @@ var viewLoadTests = []struct {
 			},
 			FileInfo: &FileInfo{
 				Path:      "STDIN",
-				Format:    cmd.TSV,
+				Format:    option.TSV,
 				Delimiter: '\t',
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
@@ -390,7 +390,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin:        "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
-		ImportFormat: cmd.JSON,
+		ImportFormat: option.JSON,
 		JsonQuery:    "key{}",
 		Result: &View{
 			Header: NewHeader("t", []string{"column1", "column2"}),
@@ -404,7 +404,7 @@ var viewLoadTests = []struct {
 				Path:      "STDIN",
 				Delimiter: ',',
 				JsonQuery: "key{}",
-				Format:    cmd.JSON,
+				Format:    option.JSON,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 				ViewType:  ViewTypeStdin,
@@ -432,7 +432,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin:        "{\"column1\": 1, \"column2\": \"str1\"}\n{\"column1\": 2, \"column2\": \"str2\"}",
-		ImportFormat: cmd.JSONL,
+		ImportFormat: option.JSONL,
 		JsonQuery:    "",
 		Result: &View{
 			Header: NewHeader("t", []string{"column1", "column2"}),
@@ -450,7 +450,7 @@ var viewLoadTests = []struct {
 				Path:      "STDIN",
 				Delimiter: ',',
 				JsonQuery: "",
-				Format:    cmd.JSONL,
+				Format:    option.JSONL,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 				ViewType:  ViewTypeStdin,
@@ -478,7 +478,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin:        "{\"column1\": 1, \"column2\": \"str1\"}\n\"str\"",
-		ImportFormat: cmd.JSONL,
+		ImportFormat: option.JSONL,
 		JsonQuery:    "",
 		Error:        "json lines must be an array of objects",
 	},
@@ -490,7 +490,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin:        "[{\"item1\": \"value\\u00221\",\"item2\": 1},{\"item1\": \"value2\",\"item2\": 2}]",
-		ImportFormat: cmd.JSON,
+		ImportFormat: option.JSON,
 		JsonQuery:    "{}",
 		Result: &View{
 			Header: NewHeader("t", []string{"item1", "item2"}),
@@ -508,7 +508,7 @@ var viewLoadTests = []struct {
 				Path:       "STDIN",
 				Delimiter:  ',',
 				JsonQuery:  "{}",
-				Format:     cmd.JSON,
+				Format:     option.JSON,
 				Encoding:   text.UTF8,
 				LineBreak:  text.LF,
 				JsonEscape: json.HexDigits,
@@ -539,7 +539,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin:        "[{\"item1\": \"\\u0076\\u0061\\u006c\\u0075\\u0065\\u0031\",\"item2\": 1},{\"item1\": \"\\u0076\\u0061\\u006c\\u0075\\u0065\\u0032\",\"item2\": 2}]",
-		ImportFormat: cmd.JSON,
+		ImportFormat: option.JSON,
 		JsonQuery:    "{}",
 		Result: &View{
 			Header: NewHeader("t", []string{"item1", "item2"}),
@@ -557,7 +557,7 @@ var viewLoadTests = []struct {
 				Path:       "STDIN",
 				Delimiter:  ',',
 				JsonQuery:  "{}",
-				Format:     cmd.JSON,
+				Format:     option.JSON,
 				Encoding:   text.UTF8,
 				LineBreak:  text.LF,
 				JsonEscape: json.AllWithHexDigits,
@@ -588,13 +588,13 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin:        "{\"key\":[{\"column1\": 1, \"column2\": \"str1\"}]}",
-		ImportFormat: cmd.JSON,
+		ImportFormat: option.JSON,
 		JsonQuery:    "key{",
 		Error:        "json loading error: column 4: unexpected termination",
 	},
 	{
 		Name:         "LoadView Fixed-Length Text File",
-		ImportFormat: cmd.FIXED,
+		ImportFormat: option.FIXED,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -622,7 +622,7 @@ var viewLoadTests = []struct {
 				Path:               "fixed_length.txt",
 				Delimiter:          ',',
 				DelimiterPositions: []int{7, 12},
-				Format:             cmd.FIXED,
+				Format:             option.FIXED,
 				NoHeader:           false,
 				Encoding:           text.UTF8,
 				LineBreak:          text.LF,
@@ -637,7 +637,7 @@ var viewLoadTests = []struct {
 	{
 		Name:         "LoadView Fixed-Length Text File NoHeader",
 		NoHeader:     true,
-		ImportFormat: cmd.FIXED,
+		ImportFormat: option.FIXED,
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
@@ -669,7 +669,7 @@ var viewLoadTests = []struct {
 				Path:               "fixed_length.txt",
 				Delimiter:          ',',
 				DelimiterPositions: []int{7, 12},
-				Format:             cmd.FIXED,
+				Format:             option.FIXED,
 				NoHeader:           true,
 				Encoding:           text.UTF8,
 				LineBreak:          text.LF,
@@ -683,7 +683,7 @@ var viewLoadTests = []struct {
 	},
 	{
 		Name:               "LoadView Fixed-Length Text File Position Error",
-		ImportFormat:       cmd.FIXED,
+		ImportFormat:       option.FIXED,
 		DelimiterPositions: []int{6, 2},
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -812,7 +812,7 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table5.csv",
 				Delimiter: ',',
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Encoding:  text.SJIS,
 				LineBreak: text.LF,
 				NoHeader:  true,
@@ -856,7 +856,7 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table3.tsv",
 				Delimiter: '\t',
-				Format:    cmd.TSV,
+				Format:    option.TSV,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 			},
@@ -1065,7 +1065,7 @@ var viewLoadTests = []struct {
 				Path:               "fixed_length.txt",
 				Delimiter:          ',',
 				DelimiterPositions: []int{7, 12},
-				Format:             cmd.FIXED,
+				Format:             option.FIXED,
 				Encoding:           text.UTF8,
 				LineBreak:          text.LF,
 			},
@@ -1110,7 +1110,7 @@ var viewLoadTests = []struct {
 				Path:               "fixed_length_bom.txt",
 				Delimiter:          ',',
 				DelimiterPositions: []int{7, 12},
-				Format:             cmd.FIXED,
+				Format:             option.FIXED,
 				Encoding:           text.UTF8M,
 				LineBreak:          text.LF,
 			},
@@ -1155,7 +1155,7 @@ var viewLoadTests = []struct {
 				Path:               "fixed_length_sl.txt",
 				Delimiter:          ',',
 				DelimiterPositions: []int{1, 5},
-				Format:             cmd.FIXED,
+				Format:             option.FIXED,
 				Encoding:           text.UTF8,
 				LineBreak:          text.LF,
 				SingleLine:         true,
@@ -1266,7 +1266,7 @@ var viewLoadTests = []struct {
 				Path:      "table.json",
 				Delimiter: ',',
 				JsonQuery: "{}",
-				Format:    cmd.JSON,
+				Format:    option.JSON,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 			},
@@ -1307,7 +1307,7 @@ var viewLoadTests = []struct {
 				Path:       "table_h.json",
 				Delimiter:  ',',
 				JsonQuery:  "{}",
-				Format:     cmd.JSON,
+				Format:     option.JSON,
 				Encoding:   text.UTF8,
 				LineBreak:  text.LF,
 				JsonEscape: json.HexDigits,
@@ -1349,7 +1349,7 @@ var viewLoadTests = []struct {
 				Path:       "table_a.json",
 				Delimiter:  ',',
 				JsonQuery:  "{}",
-				Format:     cmd.JSON,
+				Format:     option.JSON,
 				Encoding:   text.UTF8,
 				LineBreak:  text.LF,
 				JsonEscape: json.AllWithHexDigits,
@@ -1438,7 +1438,7 @@ var viewLoadTests = []struct {
 				Path:      "table7.jsonl",
 				Delimiter: ',',
 				JsonQuery: "{}",
-				Format:    cmd.JSONL,
+				Format:    option.JSONL,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 			},
@@ -1481,7 +1481,7 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table6.ltsv",
 				Delimiter: ',',
-				Format:    cmd.LTSV,
+				Format:    option.LTSV,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 			},
@@ -1528,7 +1528,7 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table6.ltsv",
 				Delimiter: ',',
-				Format:    cmd.LTSV,
+				Format:    option.LTSV,
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
 			},
@@ -1571,7 +1571,7 @@ var viewLoadTests = []struct {
 			FileInfo: &FileInfo{
 				Path:      "table6_bom.ltsv",
 				Delimiter: ',',
-				Format:    cmd.LTSV,
+				Format:    option.LTSV,
 				Encoding:  text.UTF8M,
 				LineBreak: text.LF,
 			},
@@ -2462,7 +2462,7 @@ var viewLoadTests = []struct {
 			},
 			FileInfo: &FileInfo{
 				Path:      "",
-				Format:    cmd.JSON,
+				Format:    option.JSON,
 				Delimiter: ',',
 				JsonQuery: "{column1, column2}",
 				Encoding:  text.UTF8,
@@ -2586,7 +2586,7 @@ var viewLoadTests = []struct {
 			},
 			FileInfo: &FileInfo{
 				Path:      "",
-				Format:    cmd.JSON,
+				Format:    option.JSON,
 				Delimiter: ',',
 				JsonQuery: "{}",
 				Encoding:  text.UTF8,
@@ -2629,7 +2629,7 @@ var viewLoadTests = []struct {
 			},
 			FileInfo: &FileInfo{
 				Path:      "",
-				Format:    cmd.JSON,
+				Format:    option.JSON,
 				Delimiter: ',',
 				JsonQuery: "{}",
 				Encoding:  text.UTF8,
@@ -2689,7 +2689,7 @@ var viewLoadTests = []struct {
 			},
 			FileInfo: &FileInfo{
 				Path:      "",
-				Format:    cmd.CSV,
+				Format:    option.CSV,
 				Delimiter: ',',
 				JsonQuery: "",
 				Encoding:  text.UTF8,
@@ -3004,7 +3004,7 @@ var viewLoadTests = []struct {
 func TestView_Load(t *testing.T) {
 	defer func() {
 		_ = TestTx.ReleaseResources()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 		_ = TestTx.Session.SetStdin(os.Stdin)
 		initFlag(TestTx.Flags)
 	}()
@@ -3014,7 +3014,7 @@ func TestView_Load(t *testing.T) {
 
 	for _, v := range viewLoadTests {
 		TestTx.UnlockStdin()
-		_ = TestTx.cachedViews.Clean(TestTx.FileContainer)
+		_ = TestTx.CachedViews.Clean(TestTx.FileContainer)
 
 		_ = TestTx.Session.SetStdin(os.Stdin)
 		TestTx.Flags.ImportOptions.Format = v.ImportFormat
@@ -3108,9 +3108,9 @@ func TestView_Load(t *testing.T) {
 		if !NodeScopeListEqual(queryScope.nodes, v.ResultScope.nodes) {
 			t.Errorf("%s: node list = %v, want %v", v.Name, queryScope.nodes, v.ResultScope.nodes)
 		}
-		for i := range queryScope.blocks {
-			if !reflect.DeepEqual(queryScope.blocks[i].temporaryTables.Keys(), v.ResultScope.blocks[i].temporaryTables.Keys()) {
-				t.Errorf("%s: temp view list = %v, want %v", v.Name, queryScope.blocks[i].temporaryTables.Keys(), v.ResultScope.blocks[i].temporaryTables.Keys())
+		for i := range queryScope.Blocks {
+			if !reflect.DeepEqual(queryScope.Blocks[i].TemporaryTables.Keys(), v.ResultScope.Blocks[i].TemporaryTables.Keys()) {
+				t.Errorf("%s: temp view list = %v, want %v", v.Name, queryScope.Blocks[i].TemporaryTables.Keys(), v.ResultScope.Blocks[i].TemporaryTables.Keys())
 			}
 		}
 

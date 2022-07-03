@@ -6,7 +6,7 @@
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
         <loc>https://mithrandie.github.io/csvq/</loc>
-        <lastmod>2022-06-30T13:40:41+00:00</lastmod>
+        <lastmod>2022-07-03T20:31:51+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference.html</loc>
@@ -18,7 +18,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/command.html</loc>
-        <lastmod>2022-06-18T12:43:41+00:00</lastmod>
+        <lastmod>2022-07-03T19:08:14+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/statement.html</loc>
@@ -26,7 +26,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/value.html</loc>
-        <lastmod>2021-03-09T09:53:17+00:00</lastmod>
+        <lastmod>2022-07-03T00:42:03+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/select-query.html</loc>
@@ -113,6 +113,10 @@
         <lastmod>2018-11-24T06:47:39+00:00</lastmod>
     </url>
     <url>
+        <loc>https://mithrandie.github.io/csvq/reference/system-defined-constant.html</loc>
+        <lastmod>2022-07-01T04:44:12+00:00</lastmod>
+    </url>
+    <url>
         <loc>https://mithrandie.github.io/csvq/reference/json.html</loc>
         <lastmod>2018-11-17T22:33:20+00:00</lastmod>
     </url>
@@ -154,11 +158,11 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/numeric-functions.html</loc>
-        <lastmod>2022-03-22T23:49:26+00:00</lastmod>
+        <lastmod>2022-07-03T09:54:15+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/datetime-functions.html</loc>
-        <lastmod>2019-04-29T18:46:39+00:00</lastmod>
+        <lastmod>2022-07-03T09:54:15+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/cryptographic-hash-functions.html</loc>
@@ -166,7 +170,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/cast-functions.html</loc>
-        <lastmod>2021-03-09T09:53:17+00:00</lastmod>
+        <lastmod>2022-07-03T00:42:03+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/reference/system-functions.html</loc>
@@ -178,7 +182,7 @@
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/changelog.html</loc>
-        <lastmod>2022-06-30T13:40:41+00:00</lastmod>
+        <lastmod>2022-07-03T20:31:51+00:00</lastmod>
     </url>
     <url>
         <loc>https://mithrandie.github.io/csvq/license.html</loc>
