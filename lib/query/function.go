@@ -45,21 +45,31 @@ var Functions = map[string]BuiltInFunction{
 	"ROUND":                  Round,
 	"ABS":                    Abs,
 	"ACOS":                   Acos,
+	"ACOSH":                  Acosh,
 	"ASIN":                   Asin,
+	"ASINH":                  Asinh,
 	"ATAN":                   Atan,
 	"ATAN2":                  Atan2,
+	"ATANH":                  Atanh,
+	"CBRT":                   Cbrt,
 	"COS":                    Cos,
-	"SIN":                    Sin,
-	"TAN":                    Tan,
+	"COSH":                   Cosh,
 	"EXP":                    Exp,
 	"EXP2":                   Exp2,
 	"EXPM1":                  Expm1,
+	"IS_INF":                 IsInf,
+	"IS_NAN":                 IsNaN,
 	"LOG":                    MathLog,
 	"LOG10":                  Log10,
-	"LOG2":                   Log2,
 	"LOG1P":                  Log1p,
-	"SQRT":                   Sqrt,
+	"LOG2":                   Log2,
+	"LOGB":                   Logb,
 	"POW":                    Pow,
+	"SIN":                    Sin,
+	"SINH":                   Sinh,
+	"SQRT":                   Sqrt,
+	"TAN":                    Tan,
+	"TANH":                   Tanh,
 	"BIN_TO_DEC":             BinToDec,
 	"OCT_TO_DEC":             OctToDec,
 	"HEX_TO_DEC":             HexToDec,
@@ -142,6 +152,7 @@ var Functions = map[string]BuiltInFunction{
 	"TIME_DIFF":              TimeDiff,
 	"TIME_NANO_DIFF":         TimeNanoDiff,
 	"UTC":                    UTC,
+	"MILLI_TO_DATETIME":      MilliToDatetime,
 	"NANO_TO_DATETIME":       NanoToDatetime,
 	"STRING":                 String,
 	"INTEGER":                Integer,
@@ -334,8 +345,16 @@ func Acos(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary
 	return execMath1Arg(fn, args, math.Acos)
 }
 
+func Acosh(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Acosh)
+}
+
 func Asin(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Asin)
+}
+
+func Asinh(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Asinh)
 }
 
 func Atan(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -346,16 +365,20 @@ func Atan2(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primar
 	return execMath2Args(fn, args, math.Atan2)
 }
 
+func Atanh(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Atanh)
+}
+
+func Cbrt(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Cbrt)
+}
+
 func Cos(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Cos)
 }
 
-func Sin(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
-	return execMath1Arg(fn, args, math.Sin)
-}
-
-func Tan(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
-	return execMath1Arg(fn, args, math.Tan)
+func Cosh(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Cosh)
 }
 
 func Exp(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
@@ -370,6 +393,40 @@ func Expm1(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primar
 	return execMath1Arg(fn, args, math.Expm1)
 }
 
+func IsInf(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	if len(args) < 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1, 2})
+	}
+
+	f1 := value.ToFloat(args[0])
+	if value.IsNull(f1) {
+		return value.NewTernary(ternary.FALSE), nil
+	}
+
+	sign := 0
+	if len(args) == 2 {
+		f2 := value.ToIntegerStrictly(args[1])
+		if !value.IsNull(f2) {
+			sign = int(f2.(*value.Integer).Raw())
+		}
+	}
+
+	return value.NewTernary(ternary.ConvertFromBool(math.IsInf(f1.(*value.Float).Raw(), sign))), nil
+}
+
+func IsNaN(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	f := value.ToFloat(args[0])
+	if value.IsNull(f) {
+		return value.NewTernary(ternary.FALSE), nil
+	}
+
+	return value.NewTernary(ternary.ConvertFromBool(math.IsNaN(f.(*value.Float).Raw()))), nil
+}
+
 func MathLog(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Log)
 }
@@ -378,20 +435,40 @@ func Log10(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primar
 	return execMath1Arg(fn, args, math.Log10)
 }
 
+func Log1p(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Log1p)
+}
+
 func Log2(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Log2)
 }
 
-func Log1p(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
-	return execMath1Arg(fn, args, math.Log1p)
+func Logb(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Logb)
+}
+
+func Pow(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath2Args(fn, args, math.Pow)
+}
+
+func Sin(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Sin)
+}
+
+func Sinh(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Sinh)
 }
 
 func Sqrt(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
 	return execMath1Arg(fn, args, math.Sqrt)
 }
 
-func Pow(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
-	return execMath2Args(fn, args, math.Pow)
+func Tan(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Tan)
+}
+
+func Tanh(fn parser.Function, args []value.Primary, _ *cmd.Flags) (value.Primary, error) {
+	return execMath1Arg(fn, args, math.Tanh)
 }
 
 func execParseInt(fn parser.Function, args []value.Primary, base int) (value.Primary, error) {
@@ -1728,6 +1805,21 @@ func UTC(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Prim
 	value.Discard(dt)
 
 	return value.NewDatetime(t), nil
+}
+
+func MilliToDatetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
+	if len(args) != 1 {
+		return nil, NewFunctionArgumentLengthError(fn, fn.Name, []int{1})
+	}
+
+	p := value.ToInteger(args[0])
+	if value.IsNull(p) {
+		return value.NewNull(), nil
+	}
+	i := p.(*value.Integer).Raw()
+	value.Discard(p)
+
+	return value.NewDatetime(time.Unix(i/1000, (i%1000)*1000000).In(flags.GetTimeLocation())), nil
 }
 
 func NanoToDatetime(fn parser.Function, args []value.Primary, flags *cmd.Flags) (value.Primary, error) {
