@@ -1387,14 +1387,15 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 
 	gm := NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU)
 	groupsList := make([]map[string][]int, gm.Number)
-	groupKeyCnt := make(map[string]int, 20)
-	groupKeys := make([]string, 0, 20)
+	groupKeyCnt := make(map[string]int, 40)
+	groupKeys := make([]string, 0, 40)
 	mtx := &sync.Mutex{}
 
 	var grpFn = func(thIdx int) {
 		start, end := gm.RecordRange(thIdx)
 		seqScope := scope.CreateScopeForSequentialEvaluation(view)
 		groups := make(map[string][]int, 20)
+		values := make([]value.Primary, len(items))
 
 	GroupKeyLoop:
 		for i := start; i < end; i++ {
@@ -1407,7 +1408,6 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 
 			seqScope.Records[0].recordIndex = i
 
-			values := make([]value.Primary, len(items))
 			for i, item := range items {
 				p, e := Evaluate(ctx, seqScope, item)
 				if e != nil {
@@ -1424,7 +1424,7 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 			if _, ok := groups[key]; ok {
 				groups[key] = append(groups[key], i)
 			} else {
-				groups[key] = make([]int, 0, view.RecordLen()/18)
+				groups[key] = make([]int, 0, int(math.Min(float64(view.RecordLen()/18), 1000)))
 				groups[key] = append(groups[key], i)
 				mtx.Lock()
 				if _, ok := groupKeyCnt[key]; !ok {
