@@ -2416,9 +2416,9 @@ var showFieldsTests = []struct {
 			},
 		}, nil, time.Time{}, nil),
 		Expect: "\n" +
-			" Fields in view1\n" +
-			"-----------------\n" +
-			" Type: View\n" +
+			"    Fields in view1\n" +
+			"-----------------------\n" +
+			" Type: Temporary Table\n" +
 			" Status: Fixed\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
@@ -2445,9 +2445,9 @@ var showFieldsTests = []struct {
 			},
 		}, nil, time.Time{}, nil),
 		Expect: "\n" +
-			" Fields in STDIN\n" +
-			"-----------------\n" +
-			" Type: View\n" +
+			"    Fields in STDIN\n" +
+			"-----------------------\n" +
+			" Type: Temporary Table\n" +
 			" Status: Fixed\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
@@ -2484,9 +2484,9 @@ var showFieldsTests = []struct {
 			},
 		},
 		Expect: "\n" +
-			" Fields in view1\n" +
-			"-----------------\n" +
-			" Type: View\n" +
+			"    Fields in view1\n" +
+			"-----------------------\n" +
+			" Type: Temporary Table\n" +
 			" Status: Updated\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
@@ -2513,20 +2513,21 @@ var showFieldsTests = []struct {
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 					NoHeader:  false,
+					ViewType:  ViewTypeFile,
 				},
 			},
 		}),
 		UncommittedViews: UncommittedViews{
 			mtx: &sync.RWMutex{},
 			Created: map[string]*FileInfo{
-				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
+				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv", ViewType: ViewTypeFile},
 			},
 			Updated: map[string]*FileInfo{},
 		},
 		Expect: "\n" +
 			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
-			" Type: Table\n" +
+			" Type: File\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
 			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
@@ -2552,20 +2553,21 @@ var showFieldsTests = []struct {
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 					NoHeader:  false,
+					ViewType:  ViewTypeFile,
 				},
 			},
 		}),
 		UncommittedViews: UncommittedViews{
 			mtx: &sync.RWMutex{},
 			Created: map[string]*FileInfo{
-				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv"},
+				strings.ToUpper(GetTestFilePath("show_fields_create.csv")): {Path: "show_fields_create.csv", ViewType: ViewTypeFile},
 			},
 			Updated: map[string]*FileInfo{},
 		},
 		Expect: "\n" +
 			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)-(10+len("show_fields_create.csv")))/2) + "Fields in show_fields_create.csv\n" +
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_create.csv", 10)) + "\n" +
-			" Type: Table\n" +
+			" Type: File\n" +
 			" Path: " + GetTestFilePath("show_fields_create.csv") + "\n" +
 			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
@@ -2591,6 +2593,7 @@ var showFieldsTests = []struct {
 					Encoding:  text.UTF8,
 					LineBreak: text.LF,
 					NoHeader:  false,
+					ViewType:  ViewTypeFile,
 				},
 			},
 		}),
@@ -2598,13 +2601,13 @@ var showFieldsTests = []struct {
 			mtx:     &sync.RWMutex{},
 			Created: map[string]*FileInfo{},
 			Updated: map[string]*FileInfo{
-				strings.ToUpper(GetTestFilePath("show_fields_update.csv")): {Path: "show_fields_updated.csv"},
+				strings.ToUpper(GetTestFilePath("show_fields_update.csv")): {Path: "show_fields_updated.csv", ViewType: ViewTypeFile},
 			},
 		},
 		Expect: "\n" +
 			strings.Repeat(" ", (calcShowFieldsWidth("show_fields_update.csv", "show_fields_update.csv", 10)-(10+len("show_fields_update.csv")))/2) + "Fields in show_fields_update.csv\n" +
 			strings.Repeat("-", calcShowFieldsWidth("show_fields_create.csv", "show_fields_update.csv", 10)) + "\n" +
-			" Type: Table\n" +
+			" Type: File\n" +
 			" Path: " + GetTestFilePath("show_fields_update.csv") + "\n" +
 			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +

@@ -35,6 +35,7 @@ const (
 	ViewTypeFile ViewType = iota
 	ViewTypeTemporaryTable
 	ViewTypeStdin
+	ViewTypeInlineTable
 )
 
 var FileAttributeList = []string{
@@ -115,7 +116,62 @@ func NewFileInfo(
 		Format:    format,
 		Delimiter: delimiter,
 		Encoding:  encoding,
+		ViewType:  ViewTypeFile,
 	}, nil
+}
+
+func NewTemporaryTableFileInfo(name string) *FileInfo {
+	return &FileInfo{
+		Path:     name,
+		ViewType: ViewTypeTemporaryTable,
+	}
+}
+
+func NewStdinFileInfo(filePath string, importOptions option.ImportOptions, exportOptions option.ExportOptions) *FileInfo {
+	f := &FileInfo{
+		Path:     filePath,
+		ViewType: ViewTypeStdin,
+	}
+	f.SetAllDefaultFileInfoAttributes(importOptions, exportOptions)
+	return f
+}
+
+func NewInlineFileInfo(filePath string, importOptions option.ImportOptions, exportOptions option.ExportOptions) *FileInfo {
+	f := &FileInfo{
+		Path:     filePath,
+		ViewType: ViewTypeInlineTable,
+	}
+	f.SetAllDefaultFileInfoAttributes(importOptions, exportOptions)
+	return f
+}
+
+func (f *FileInfo) SetAllDefaultFileInfoAttributes(importOptions option.ImportOptions, exportOptions option.ExportOptions) {
+	f.Format = importOptions.Format
+	f.Delimiter = importOptions.Delimiter
+	f.Encoding = importOptions.Encoding
+
+	switch f.Format {
+	case option.TSV:
+		f.Delimiter = '\t'
+	case option.JSON, option.JSONL:
+		f.Encoding = text.UTF8
+	}
+
+	f.SetDefaultFileInfoAttributes(importOptions, exportOptions)
+}
+
+func (f *FileInfo) SetDefaultFileInfoAttributes(importOptions option.ImportOptions, exportOptions option.ExportOptions) {
+	f.DelimiterPositions = importOptions.DelimiterPositions
+	f.SingleLine = importOptions.SingleLine
+	f.JsonQuery = option.TrimSpace(importOptions.JsonQuery)
+	f.LineBreak = exportOptions.LineBreak
+	f.NoHeader = importOptions.NoHeader
+	f.EncloseAll = exportOptions.EncloseAll
+	f.JsonEscape = exportOptions.JsonEscape
+}
+
+func (f *FileInfo) IsUpdatable() bool {
+	return f.IsFile() || f.IsInMemoryTable()
 }
 
 func (f *FileInfo) SetDelimiter(s string) error {
@@ -274,6 +330,10 @@ func (f *FileInfo) IsStdin() bool {
 	return f.ViewType == ViewTypeStdin
 }
 
+func (f *FileInfo) IsInMemoryTable() bool {
+	return f.ViewType == ViewTypeStdin || f.ViewType == ViewTypeTemporaryTable
+}
+
 func (f *FileInfo) ExportOptions(tx *Transaction) option.ExportOptions {
 	ops := tx.Flags.ExportOptions.Copy()
 	ops.Format = f.Format
@@ -427,6 +487,7 @@ func NewFileInfoForCreate(filename parser.Identifier, repository string, delimit
 		Delimiter: delimiter,
 		Format:    format,
 		Encoding:  encoding,
+		ViewType:  ViewTypeFile,
 	}, nil
 }
 

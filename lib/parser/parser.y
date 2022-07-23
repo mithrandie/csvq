@@ -202,7 +202,8 @@ import (
 %type<bool>        if_not_exists
 
 %token<token> IDENTIFIER STRING INTEGER FLOAT BOOLEAN TERNARY DATETIME
-%token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND PLACEHOLDER CONSTANT
+%token<token> VARIABLE FLAG ENVIRONMENT_VARIABLE RUNTIME_INFORMATION EXTERNAL_COMMAND PLACEHOLDER
+%token<token> CONSTANT TABLE_FUNCTION URL
 %token<token> SELECT FROM UPDATE SET UNSET DELETE WHERE INSERT INTO VALUES REPLACE AS DUAL STDIN
 %token<token> RECURSIVE
 %token<token> CREATE ADD DROP ALTER TABLE FIRST LAST AFTER BEFORE DEFAULT RENAME TO VIEW
@@ -766,9 +767,13 @@ temporary_table_statement
     {
         $$ = ViewDeclaration{View: $2, Query: $5}
     }
-    | DISPOSE VIEW table_identifier
+    | DISPOSE VIEW identifier
     {
         $$ = DisposeView{View: $3}
+    }
+    | DISPOSE VIEW STDIN
+    {
+        $$ = DisposeView{View: Stdin{BaseExpr: NewBaseExpr($3)}}
     }
 
 replace_value
@@ -1998,6 +2003,14 @@ table_identifier
     : identifier
     {
         $$ = $1
+    }
+    | URL
+    {
+        $$ = Url{BaseExpr: NewBaseExpr($1), Raw: $1.Literal}
+    }
+    | TABLE_FUNCTION '(' arguments ')'
+    {
+        $$ = TableFunction{BaseExpr: NewBaseExpr($1), Name: $1.Literal, Args: $3}
     }
     | STDIN
     {

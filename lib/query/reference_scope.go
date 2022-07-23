@@ -295,6 +295,14 @@ func (rs *ReferenceScope) NextRecord() bool {
 	return true
 }
 
+func (rs *ReferenceScope) FilePathExists(identifier string) bool {
+	if rs.cachedFilePath == nil {
+		return false
+	}
+	_, ok := rs.cachedFilePath[identifier]
+	return ok
+}
+
 func (rs *ReferenceScope) StoreFilePath(identifier string, fpath string) {
 	if rs.cachedFilePath != nil {
 		rs.cachedFilePath[identifier] = fpath
@@ -440,10 +448,11 @@ func (rs *ReferenceScope) StoreTemporaryTable(session *Session, uncomittedViews 
 
 				if view.FileInfo.IsStdin() {
 					session.updateStdinView(view.Copy())
-				} else {
+					msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
+				} else if view.FileInfo.IsTemporaryTable() {
 					view.CreateRestorePoint()
+					msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
 				}
-				msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
 			}
 			return true
 		})
@@ -460,10 +469,11 @@ func (rs *ReferenceScope) RestoreTemporaryTable(uncomittedViews map[string]*File
 
 				if view.FileInfo.IsStdin() {
 					rs.Blocks[i].TemporaryTables.Delete(view.FileInfo.Path)
-				} else {
+					msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
+				} else if view.FileInfo.IsTemporaryTable() {
 					view.Restore()
+					msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
 				}
-				msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
 			}
 			return true
 		})
@@ -476,7 +486,7 @@ func (rs *ReferenceScope) AllTemporaryTables() ViewMap {
 
 	for i := range rs.Blocks {
 		rs.Blocks[i].TemporaryTables.Range(func(key, value interface{}) bool {
-			if !value.(*View).FileInfo.IsFile() {
+			if value.(*View).FileInfo.IsInMemoryTable() {
 				k := key.(string)
 				if !all.Exists(k) {
 					all.Store(k, value.(*View))

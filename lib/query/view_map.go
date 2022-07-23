@@ -96,7 +96,7 @@ func (m ViewMap) DisposeTemporaryTable(table parser.QueryExpression) bool {
 		tableName = table.(parser.Identifier).Literal
 	}
 
-	if v, ok := m.Load(tableName); ok && !v.FileInfo.IsFile() {
+	if v, ok := m.Load(tableName); ok && v.FileInfo.IsInMemoryTable() {
 		m.Delete(tableName)
 		return true
 	}

@@ -222,13 +222,73 @@ var scanTests = []struct {
 	},
 	{
 		Name:  "Constant Syntax Error",
-		Input: "SPACE:Name",
+		Input: "SPACE:: ",
 		Error: "invalid constant syntax",
 	},
 	{
 		Name:  "Constant Syntax Error",
 		Input: "SPACE::+",
 		Error: "invalid constant syntax",
+	},
+	{
+		Name:  "File Path",
+		Input: "file:./path",
+		Output: []scanResult{
+			{
+				Token:   URL,
+				Literal: "file:./path",
+			},
+		},
+	},
+	{
+		Name:  "Url",
+		Input: "file:///home/my%20dir/path|",
+		Output: []scanResult{
+			{
+				Token:   URL,
+				Literal: "file:///home/my%20dir/path",
+			},
+			{
+				Token:   '|',
+				Literal: "|",
+			},
+		},
+	},
+	{
+		Name:  "Table Function",
+		Input: "file::('/home/my dir/path')",
+		Output: []scanResult{
+			{
+				Token:   TABLE_FUNCTION,
+				Literal: "file",
+			},
+			{
+				Token:   '(',
+				Literal: "(",
+			},
+			{
+				Token:   STRING,
+				Literal: "/home/my dir/path",
+			},
+			{
+				Token:   ')',
+				Literal: ")",
+			},
+		},
+	},
+	{
+		Name:  "Identifier starting with \"_\"",
+		Input: "_foo:",
+		Output: []scanResult{
+			{
+				Token:   IDENTIFIER,
+				Literal: "_foo",
+			},
+			{
+				Token:   ':',
+				Literal: ":",
+			},
+		},
 	},
 	{
 		Name:  "EqualSign",

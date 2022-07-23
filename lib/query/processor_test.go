@@ -1073,7 +1073,7 @@ var processorExecuteStatementTests = []struct {
 		Logs: "\n" +
 			strings.Repeat(" ", (calcShowFieldsWidth("table1.csv", "table1", 10)-(10+len("table1")))/2) + "Fields in table1\n" +
 			strings.Repeat("-", calcShowFieldsWidth("table1.csv", "table1", 10)) + "\n" +
-			" Type: Table\n" +
+			" Type: File\n" +
 			" Path: " + GetTestFilePath("table1.csv") + "\n" +
 			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
 			" Encoding: UTF8  LineBreak: LF    Header: true\n" +

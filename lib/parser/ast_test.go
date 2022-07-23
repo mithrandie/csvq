@@ -689,6 +689,31 @@ func TestSubquery_String(t *testing.T) {
 	}
 }
 
+func TestUrl_String(t *testing.T) {
+	e := Url{
+		Raw: "https://example.com/foo.txt?q=p",
+	}
+	expect := "https://example.com/foo.txt?q=p"
+
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
+func TestTableFunction_String(t *testing.T) {
+	e := TableFunction{
+		Name: "file",
+		Args: []QueryExpression{
+			NewStringValue("./foo.csv"),
+		},
+	}
+	expect := "FILE::('./foo.csv')"
+
+	if e.String() != expect {
+		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
+	}
+}
+
 func TestTableObject_String(t *testing.T) {
 	e := TableObject{
 		Type:          Token{Token: FIXED, Literal: "fixed"},
@@ -1112,68 +1137,6 @@ func TestTable_String(t *testing.T) {
 	expect = "LATERAL table"
 	if e.String() != expect {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
-	}
-}
-
-func TestTable_Name(t *testing.T) {
-	e := Table{
-		Object: Identifier{Literal: "table.csv"},
-		As:     Token{Token: AS, Literal: "as"},
-		Alias:  Identifier{Literal: "alias"},
-	}
-	expect := Identifier{Literal: "alias"}
-	if !reflect.DeepEqual(e.Name(), expect) {
-		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
-	}
-
-	e = Table{
-		Object: Identifier{Literal: "/path/to/table.csv"},
-	}
-	expect = Identifier{Literal: "table"}
-	if !reflect.DeepEqual(e.Name(), expect) {
-		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
-	}
-
-	e = Table{
-		Object: Stdin{},
-	}
-	expect = Identifier{Literal: "STDIN"}
-	if !reflect.DeepEqual(e.Name(), expect) {
-		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
-	}
-
-	e = Table{
-		Object: Subquery{
-			Query: SelectQuery{
-				SelectEntity: SelectEntity{
-					SelectClause: SelectClause{
-						Fields: []QueryExpression{
-							NewIntegerValueFromString("1"),
-						},
-					},
-					FromClause: FromClause{
-						Tables: []QueryExpression{Dual{}},
-					},
-				},
-			},
-		},
-	}
-	expect = Identifier{}
-	if !reflect.DeepEqual(e.Name(), expect) {
-		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
-	}
-
-	e = Table{
-		Object: TableObject{
-			Type:          Token{Token: FIXED, Literal: "fixed"},
-			FormatElement: NewStringValue("[1, 2, 3]"),
-			Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
-			Args:          nil,
-		},
-	}
-	expect = Identifier{Literal: "fixed_length"}
-	if !reflect.DeepEqual(e.Name(), expect) {
-		t.Errorf("name = %q, want %q for %#v", e.Name(), expect, e)
 	}
 }
 

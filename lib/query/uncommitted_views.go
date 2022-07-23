@@ -101,7 +101,7 @@ func (m *UncommittedViews) UncommittedTempViews() map[string]*FileInfo {
 	var updatedViews = map[string]*FileInfo{}
 
 	for k, v := range m.Updated {
-		if !v.IsFile() {
+		if v.IsInMemoryTable() {
 			updatedViews[k] = v
 		}
 	}
@@ -148,7 +148,7 @@ func (m *UncommittedViews) CountUpdatedViews() int {
 
 	cnt := 0
 	for _, v := range m.Updated {
-		if !v.IsFile() {
+		if v.IsInMemoryTable() {
 			cnt++
 		}
 	}

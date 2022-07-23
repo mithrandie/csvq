@@ -692,7 +692,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: fmt.Sprintf("data parse error in file %s: invalid delimiter position: [6, 2]", GetTestFilePath("fixed_length.txt")),
+		Error: fmt.Sprintf("data parse error in %s: invalid delimiter position: [6, 2]", GetTestFilePath("fixed_length.txt")),
 	},
 	{
 		Name:  "LoadView From Stdin With Omitted FromClause",
@@ -738,7 +738,7 @@ var viewLoadTests = []struct {
 			},
 		},
 		Stdin: "column1,column2\n1\"str1\"",
-		Error: "data parse error in file STDIN: line 1, column 8: wrong number of fields in line",
+		Error: "data parse error in STDIN: line 1, column 8: wrong number of fields in line",
 	},
 	{
 		Name: "LoadView From Stdin Duplicate Table Name Error",
@@ -2435,6 +2435,93 @@ var viewLoadTests = []struct {
 		Error: "file notexist does not exist",
 	},
 	{
+		Name: "LoadView from DATA table function",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableFunction{
+						Name: "data",
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("c1,c2\n1,a\n2,b\n"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "ci"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("ci", []string{"c1", "c2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("a"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("b"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "",
+				Format:    option.CSV,
+				Delimiter: ',',
+				JsonQuery: "",
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeInlineTable,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"CI": "",
+				},
+			},
+		}, time.Time{}, nil),
+	},
+	{
+		Name: "LoadView from Local File as URL",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Url{
+						Raw: "file:./table.json",
+					},
+					Alias: parser.Identifier{Literal: "jt"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("jt", []string{"item1", "item2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("value1"),
+					value.NewFloat(1),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("value2"),
+					value.NewFloat(2),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table.json",
+				Format:    option.JSON,
+				Delimiter: ',',
+				JsonQuery: "",
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ViewType:  ViewTypeFile,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{
+				scopeNameAliases: {
+					"JT": strings.ToUpper(GetTestFilePath("table.json")),
+				},
+			},
+		}, time.Time{}, nil),
+	},
+	{
 		Name: "LoadView Json Inline Table",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
@@ -2467,7 +2554,7 @@ var viewLoadTests = []struct {
 				JsonQuery: "{column1, column2}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
-				ViewType:  ViewTypeTemporaryTable,
+				ViewType:  ViewTypeInlineTable,
 			},
 		},
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
@@ -2591,7 +2678,7 @@ var viewLoadTests = []struct {
 				JsonQuery: "{}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
-				ViewType:  ViewTypeTemporaryTable,
+				ViewType:  ViewTypeInlineTable,
 			},
 		},
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
@@ -2634,7 +2721,7 @@ var viewLoadTests = []struct {
 				JsonQuery: "{}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
-				ViewType:  ViewTypeTemporaryTable,
+				ViewType:  ViewTypeInlineTable,
 			},
 		},
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
@@ -2694,7 +2781,7 @@ var viewLoadTests = []struct {
 				JsonQuery: "",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
-				ViewType:  ViewTypeTemporaryTable,
+				ViewType:  ViewTypeInlineTable,
 			},
 		},
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
@@ -2838,7 +2925,7 @@ var viewLoadTests = []struct {
 				},
 			},
 		},
-		Error: fmt.Sprintf("data parse error in file %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
+		Error: fmt.Sprintf("data parse error in %s: line 3, column 7: wrong number of fields in line", GetTestFilePath("table_broken.csv")),
 	},
 	{
 		Name: "Allow Uneven Field Length",

@@ -873,14 +873,14 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 		return "", err
 	}
 
-	if !view.FileInfo.IsFile() {
+	if view.FileInfo.IsInMemoryTable() {
 		updatedViews := scope.Tx.UncommittedViews.UncommittedTempViews()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
 		if _, ok := updatedViews[ufpath]; ok {
 			status = ObjectUpdated
 		}
-	} else {
+	} else if view.FileInfo.IsFile() {
 		createdViews, updatedView := scope.Tx.UncommittedViews.UncommittedFiles()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
@@ -893,10 +893,10 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 
 	w := NewObjectWriter(scope.Tx)
 	w.WriteColorWithoutLineBreak("Type: ", option.LableEffect)
-	if !view.FileInfo.IsFile() {
-		w.WriteWithoutLineBreak("View")
-	} else {
-		w.WriteWithoutLineBreak("Table")
+	if view.FileInfo.IsInMemoryTable() {
+		w.WriteWithoutLineBreak("Temporary Table")
+	} else if view.FileInfo.IsFile() {
+		w.WriteWithoutLineBreak("File")
 		w.NewLine()
 		w.WriteColorWithoutLineBreak("Path: ", option.LableEffect)
 		w.WriteColorWithoutLineBreak(view.FileInfo.Path, option.ObjectEffect)
