@@ -312,6 +312,84 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "select c1 from https://example.com/csv?q=1",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{
+							Object: Url{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
+								Raw:      "https://example.com/csv?q=1",
+							},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 from file:./foo.csv",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{
+							Object: Url{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
+								Raw:      "file:./foo.csv",
+							},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
+		Input: "select c1 from url::('https://example.com/csv?q=1')",
+		Output: []Statement{
+			SelectQuery{
+				SelectEntity: SelectEntity{
+					SelectClause: SelectClause{
+						BaseExpr: &BaseExpr{line: 1, char: 1},
+						Fields: []QueryExpression{
+							Field{
+								Object: FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "c1"}},
+							},
+						},
+					},
+					FromClause: FromClause{Tables: []QueryExpression{
+						Table{
+							Object: TableFunction{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
+								Name:     "url",
+								Args: []QueryExpression{
+									NewStringValue("https://example.com/csv?q=1"),
+								},
+							},
+						},
+					}},
+				},
+			},
+		},
+	},
+	{
 		Input: "select c1 from fixed('[1, 2, 3]', `fixed_length.dat`) fl",
 		Output: []Statement{
 			SelectQuery{
@@ -2075,6 +2153,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -2094,6 +2173,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '-', Literal: "-", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -2113,6 +2193,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '*', Literal: "*", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -2132,6 +2213,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '/', Literal: "/", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -2151,6 +2233,7 @@ var parseTests = []struct {
 						BaseExpr: &BaseExpr{line: 1, char: 1},
 						Fields: []QueryExpression{
 							Field{Object: Arithmetic{
+								BaseExpr: &BaseExpr{line: 1, char: 16},
 								LHS:      FieldReference{BaseExpr: &BaseExpr{line: 1, char: 8}, Column: Identifier{BaseExpr: &BaseExpr{line: 1, char: 8}, Literal: "column1"}},
 								Operator: Token{Token: '%', Literal: "%", Line: 1, Char: 16},
 								RHS:      NewIntegerValueFromString("1"),
@@ -5615,6 +5698,14 @@ var parseTests = []struct {
 		},
 	},
 	{
+		Input: "dispose view stdin",
+		Output: []Statement{
+			DisposeView{
+				View: Stdin{BaseExpr: &BaseExpr{line: 1, char: 14}},
+			},
+		},
+	},
+	{
 		Input: "prepare stmt from 'select :val'",
 		Output: []Statement{
 			StatementPreparation{
@@ -6356,6 +6447,7 @@ var parseTests = []struct {
 							Object: VariableSubstitution{
 								Variable: Variable{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var1"},
 								Value: Arithmetic{
+									BaseExpr: &BaseExpr{line: 1, char: 23},
 									LHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 17}, Name: "var2"},
 									Operator: Token{Token: '+', Literal: "+", Line: 1, Char: 23},
 									RHS:      Variable{BaseExpr: &BaseExpr{line: 1, char: 25}, Name: "var3"},
@@ -6406,6 +6498,25 @@ var parseTests = []struct {
 					Fields: []QueryExpression{
 						Field{
 							Object: RuntimeInformation{BaseExpr: &BaseExpr{line: 1, char: 8}, Name: "var"},
+						},
+					},
+				},
+			}},
+		},
+	},
+	{
+		Input: "select math::pi",
+		Output: []Statement{
+			SelectQuery{SelectEntity: SelectEntity{
+				SelectClause: SelectClause{
+					BaseExpr: &BaseExpr{line: 1, char: 1},
+					Fields: []QueryExpression{
+						Field{
+							Object: Constant{
+								BaseExpr: &BaseExpr{line: 1, char: 8},
+								Space:    "math",
+								Name:     "pi",
+							},
 						},
 					},
 				},

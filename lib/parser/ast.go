@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
 
 	"github.com/mithrandie/ternary"
@@ -145,7 +145,7 @@ func (e PrimitiveType) String() string {
 	if 0 < len(e.Literal) {
 		switch e.Value.(type) {
 		case *value.String, *value.Datetime:
-			return cmd.QuoteString(e.Literal)
+			return option.QuoteString(e.Literal)
 		default:
 			return e.Literal
 		}
@@ -180,9 +180,19 @@ type Identifier struct {
 
 func (i Identifier) String() string {
 	if i.Quoted {
-		return cmd.QuoteIdentifier(i.Literal)
+		return option.QuoteIdentifier(i.Literal)
 	}
 	return i.Literal
+}
+
+type Constant struct {
+	*BaseExpr
+	Space string
+	Name  string
+}
+
+func (e Constant) String() string {
+	return strings.ToUpper(e.Space) + ConstantDelimiter + strings.ToUpper(e.Name)
 }
 
 type FieldReference struct {
@@ -525,6 +535,25 @@ func (e Subquery) String() string {
 	return putParentheses(e.Query.String())
 }
 
+type Url struct {
+	*BaseExpr
+	Raw string
+}
+
+func (e Url) String() string {
+	return e.Raw
+}
+
+type TableFunction struct {
+	*BaseExpr
+	Name string
+	Args []QueryExpression
+}
+
+func (e TableFunction) String() string {
+	return strings.ToUpper(e.Name) + ConstantDelimiter + putParentheses(listQueryExpressions(e.Args))
+}
+
 type TableObject struct {
 	*BaseExpr
 	Type          Token
@@ -811,37 +840,6 @@ func (e Table) String() string {
 	return joinWithSpace(s)
 }
 
-func tableName(expr QueryExpression) Identifier {
-	switch expr.(type) {
-	case Identifier:
-		file, _ := expr.(Identifier)
-		return Identifier{
-			BaseExpr: file.BaseExpr,
-			Literal:  FormatTableName(file.Literal),
-		}
-	case Stdin:
-		return Identifier{
-			BaseExpr: expr.GetBaseExpr(),
-			Literal:  expr.String(),
-		}
-	case TableObject:
-		obj, _ := expr.(TableObject)
-		return tableName(obj.Path)
-	default:
-		return Identifier{
-			BaseExpr: expr.GetBaseExpr(),
-		}
-	}
-}
-
-func (e Table) Name() Identifier {
-	if e.Alias != nil {
-		return e.Alias.(Identifier)
-	}
-
-	return tableName(e.Object)
-}
-
 type Join struct {
 	*BaseExpr
 	Table     QueryExpression
@@ -1014,13 +1012,13 @@ type ListFunction struct {
 }
 
 func (e ListFunction) String() string {
-	option := make([]string, 0)
+	args := make([]string, 0, 3)
 	if !e.Distinct.IsEmpty() {
-		option = append(option, e.Distinct.String())
+		args = append(args, e.Distinct.String())
 	}
-	option = append(option, listQueryExpressions(e.Args))
+	args = append(args, listQueryExpressions(e.Args))
 
-	s := []string{strings.ToUpper(e.Name) + "(" + joinWithSpace(option) + ")"}
+	s := []string{strings.ToUpper(e.Name) + "(" + joinWithSpace(args) + ")"}
 	if e.OrderBy != nil {
 		s = append(s, keyword(WITHIN), keyword(GROUP), "("+e.OrderBy.String()+")")
 	}
@@ -1041,19 +1039,19 @@ type AnalyticFunction struct {
 }
 
 func (e AnalyticFunction) String() string {
-	option := make([]string, 0)
+	args := make([]string, 0, 6)
 	if !e.Distinct.IsEmpty() {
-		option = append(option, e.Distinct.String())
+		args = append(args, e.Distinct.String())
 	}
 	if e.Args != nil {
-		option = append(option, listQueryExpressions(e.Args))
+		args = append(args, listQueryExpressions(e.Args))
 	}
 	if !e.IgnoreType.IsEmpty() {
-		option = append(option, keyword(IGNORE), e.IgnoreType.String())
+		args = append(args, keyword(IGNORE), e.IgnoreType.String())
 	}
 
 	s := []string{
-		strings.ToUpper(e.Name) + "(" + joinWithSpace(option) + ")",
+		strings.ToUpper(e.Name) + "(" + joinWithSpace(args) + ")",
 		keyword(OVER),
 		"(" + e.AnalyticClause.String() + ")",
 	}
@@ -1185,7 +1183,7 @@ type EnvironmentVariable struct {
 func (e EnvironmentVariable) String() string {
 	name := e.Name
 	if e.Quoted {
-		name = cmd.QuoteIdentifier(name)
+		name = option.QuoteIdentifier(name)
 	}
 
 	return string(VariableSign) + string(EnvironmentVariableSign) + name

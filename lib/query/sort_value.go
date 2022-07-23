@@ -2,9 +2,10 @@ package query
 
 import (
 	"bytes"
+	"math"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -83,7 +84,7 @@ func (values SortValues) Serialize(buf *bytes.Buffer) {
 		case IntegerType, BooleanType:
 			serializeInteger(buf, value.Int64ToStr(val.Integer))
 		case FloatType:
-			serializeFloat(buf, value.Float64ToStr(val.Float))
+			serializeFloat(buf, value.Float64ToStr(val.Float, false))
 		case DatetimeType:
 			serializeDatetimeFromUnixNano(buf, val.Datetime)
 		case StringType:
@@ -103,7 +104,7 @@ type SortValue struct {
 	String   string
 }
 
-func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
+func NewSortValue(val value.Primary, flags *option.Flags) *SortValue {
 	sortValue := &SortValue{}
 
 	if value.IsNull(val) {
@@ -113,14 +114,14 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		sortValue.Type = IntegerType
 		sortValue.Integer = i.(*value.Integer).Raw()
 		sortValue.Float = float64(sortValue.Integer)
-		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.(*value.String).Raw()))
+		sortValue.String = strings.ToUpper(option.TrimSpace(s.(*value.String).Raw()))
 		value.Discard(i)
 		value.Discard(s)
 	} else if f := value.ToFloat(val); !value.IsNull(f) {
 		s := value.ToString(val)
 		sortValue.Type = FloatType
 		sortValue.Float = f.(*value.Float).Raw()
-		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.(*value.String).Raw()))
+		sortValue.String = strings.ToUpper(option.TrimSpace(s.(*value.String).Raw()))
 		value.Discard(f)
 		value.Discard(s)
 	} else if dt := value.ToDatetime(val, flags.DatetimeFormat, flags.GetTimeLocation()); !value.IsNull(dt) {
@@ -137,7 +138,7 @@ func NewSortValue(val value.Primary, flags *cmd.Flags) *SortValue {
 		}
 	} else if s, ok := val.(*value.String); ok {
 		sortValue.Type = StringType
-		sortValue.String = strings.ToUpper(cmd.TrimSpace(s.Raw()))
+		sortValue.String = strings.ToUpper(option.TrimSpace(s.Raw()))
 	} else {
 		sortValue.Type = NullType
 	}
@@ -177,9 +178,23 @@ func (v *SortValue) Less(compareValue *SortValue) ternary.Value {
 	case FloatType:
 		switch compareValue.Type {
 		case IntegerType, FloatType:
+			if math.IsNaN(v.Float) || math.IsNaN(compareValue.Float) {
+				if math.IsNaN(v.Float) && math.IsNaN(compareValue.Float) {
+					return ternary.UNKNOWN
+				}
+
+				if math.IsNaN(v.Float) {
+					return ternary.FALSE
+				}
+
+				// math.IsNaN(compareValue.Float)
+				return ternary.TRUE
+			}
+
 			if v.Float == compareValue.Float {
 				return ternary.UNKNOWN
 			}
+
 			return ternary.ConvertFromBool(v.Float < compareValue.Float)
 		case StringType:
 			return ternary.ConvertFromBool(v.String < compareValue.String)
@@ -219,6 +234,9 @@ func (v *SortValue) EquivalentTo(compareValue *SortValue) bool {
 	case FloatType:
 		switch compareValue.Type {
 		case FloatType:
+			if math.IsNaN(v.Float) && math.IsNaN(compareValue.Float) {
+				return true
+			}
 			return v.Float == compareValue.Float
 		}
 	case DatetimeType:

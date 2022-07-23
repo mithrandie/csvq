@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -1642,6 +1642,66 @@ var insertTests = []struct {
 		UpdateCount: 2,
 	},
 	{
+		Name: "Insert Query Inline Table Cannot Be Updated Error",
+		Query: parser.InsertQuery{
+			WithClause: parser.WithClause{
+				InlineTables: []parser.QueryExpression{
+					parser.InlineTable{
+						Name: parser.Identifier{Literal: "it"},
+						Fields: []parser.QueryExpression{
+							parser.Identifier{Literal: "c1"},
+						},
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Fields: []parser.QueryExpression{
+										parser.Field{Object: parser.NewIntegerValueFromString("2")},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Table: parser.Table{Object: parser.Identifier{Literal: "it"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.Subquery{
+								Query: parser.SelectQuery{
+									SelectEntity: parser.SelectEntity{
+										SelectClause: parser.SelectClause{
+											Fields: []parser.QueryExpression{
+												parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
+											},
+										},
+										FromClause: parser.FromClause{
+											Tables: []parser.QueryExpression{
+												parser.Table{Object: parser.Identifier{Literal: "it"}},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "inline table cannot be updated",
+	},
+	{
 		Name: "Insert Query File Does Not Exist Error",
 		Query: parser.InsertQuery{
 			Table: parser.Table{Object: parser.Identifier{Literal: "notexist"}},
@@ -2038,6 +2098,61 @@ var updateTests = []struct {
 		UpdateCounts: []int{2},
 	},
 	{
+		Name: "Update Query Alias Must Be Specified Error",
+		Query: parser.UpdateQuery{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableFunction{
+						Name: "data",
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("c1,c2\n1,a\n2,b"),
+						},
+					},
+				},
+			},
+			SetList: []parser.UpdateSet{
+				{
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+					Value: parser.NewStringValue("update1"),
+				},
+				{
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+					Value: parser.NewStringValue("update2"),
+				},
+			},
+		},
+		Error: "alias to table identification function or URL must be specified for update",
+	},
+	{
+		Name: "Update Query Inline Table Cannot Be Updated Error",
+		Query: parser.UpdateQuery{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableFunction{
+						Name: "data",
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("c1,c2\n1,a\n2,b"),
+						},
+					},
+					Alias: parser.Identifier{
+						Literal: "t",
+					},
+				},
+			},
+			SetList: []parser.UpdateSet{
+				{
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+					Value: parser.NewStringValue("update1"),
+				},
+				{
+					Field: parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+					Value: parser.NewStringValue("update2"),
+				},
+			},
+		},
+		Error: "inline table cannot be updated",
+	},
+	{
 		Name: "Update Query File Does Not Exist Error",
 		Query: parser.UpdateQuery{
 			Tables: []parser.QueryExpression{
@@ -2427,6 +2542,57 @@ var replaceTests = []struct {
 		}),
 	},
 	{
+		Name: "Replace Query to Empty Table",
+		Query: parser.ReplaceQuery{
+			Table: parser.Table{Object: parser.Identifier{Literal: "table_empty"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "column2"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+							parser.NewStringValue("str4"),
+						},
+					},
+				},
+			},
+		},
+		ResultFile: &FileInfo{
+			Path:      GetTestFilePath("table_empty.csv"),
+			Delimiter: ',',
+			NoHeader:  false,
+			Encoding:  text.UTF8,
+			LineBreak: text.LF,
+			ForUpdate: true,
+		},
+		UpdateCount: 1,
+		ViewCache: GenerateViewMap([]*View{
+			{
+				FileInfo: &FileInfo{
+					Path:      GetTestFilePath("table_empty.csv"),
+					Delimiter: ',',
+					NoHeader:  false,
+					Encoding:  text.UTF8,
+					LineBreak: text.LF,
+					ForUpdate: true,
+				},
+				Header: NewHeader("table_empty", []string{"column1", "column2"}),
+				RecordSet: []Record{
+					NewRecord([]value.Primary{
+						value.NewInteger(4),
+						value.NewString("str4"),
+					}),
+				},
+			},
+		}),
+	},
+	{
 		Name: "Replace Query For Temporary View",
 		Query: parser.ReplaceQuery{
 			Table: parser.Table{Object: parser.Identifier{Literal: "tmpview"}, Alias: parser.Identifier{Literal: "t"}},
@@ -2523,6 +2689,70 @@ var replaceTests = []struct {
 			ForUpdate: true,
 		},
 		UpdateCount: 2,
+	},
+	{
+		Name: "Replace Query Inline Table Cannot Be Updated Error",
+		Query: parser.ReplaceQuery{
+			WithClause: parser.WithClause{
+				InlineTables: []parser.QueryExpression{
+					parser.InlineTable{
+						Name: parser.Identifier{Literal: "it"},
+						Fields: []parser.QueryExpression{
+							parser.Identifier{Literal: "c1"},
+							parser.Identifier{Literal: "c2"},
+						},
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Fields: []parser.QueryExpression{
+										parser.Field{Object: parser.NewIntegerValueFromString("2")},
+										parser.Field{Object: parser.NewStringValue("str3")},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Table: parser.Table{Object: parser.Identifier{Literal: "it"}},
+			Fields: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+				parser.FieldReference{Column: parser.Identifier{Literal: "c2"}},
+			},
+			Keys: []parser.QueryExpression{
+				parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+			},
+			ValuesList: []parser.QueryExpression{
+				parser.RowValue{
+					Value: parser.ValueList{
+						Values: []parser.QueryExpression{
+							parser.NewIntegerValueFromString("4"),
+							parser.NewStringValue("str4"),
+						},
+					},
+				},
+				parser.RowValue{
+					Value: parser.Subquery{
+						Query: parser.SelectQuery{
+							SelectEntity: parser.SelectEntity{
+								SelectClause: parser.SelectClause{
+									Fields: []parser.QueryExpression{
+										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c1"}}},
+										parser.Field{Object: parser.FieldReference{View: parser.Identifier{Literal: "it"}, Column: parser.Identifier{Literal: "c2"}}},
+									},
+								},
+								FromClause: parser.FromClause{
+									Tables: []parser.QueryExpression{
+										parser.Table{Object: parser.Identifier{Literal: "it"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Error: "inline table cannot be updated",
 	},
 	{
 		Name: "Replace Query File Does Not Exist Error",
@@ -2919,27 +3149,90 @@ var deleteTests = []struct {
 		UpdateCounts: []int{2},
 	},
 	{
+		Name: "Delete Query Alias to Table Identification Function Is Not Specified Error ",
+		Query: parser.DeleteQuery{
+			FromClause: parser.FromClause{
+				Tables: []parser.QueryExpression{
+					parser.Table{
+						Object: parser.TableFunction{
+							Name: "data",
+							Args: []parser.QueryExpression{
+								parser.NewStringValue("c1,c2\n1,a\n2,b"),
+							},
+						},
+					},
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+					RHS:      parser.NewIntegerValueFromString("2"),
+					Operator: parser.Token{Token: '=', Literal: "="},
+				},
+			},
+		},
+		Error: "alias to table identification function or URL must be specified for update",
+	},
+	{
+		Name: "Delete Query Inline Table Cannot Be Updated Error ",
+		Query: parser.DeleteQuery{
+			FromClause: parser.FromClause{
+				Tables: []parser.QueryExpression{
+					parser.Table{
+						Object: parser.TableFunction{
+							Name: "data",
+							Args: []parser.QueryExpression{
+								parser.NewStringValue("c1,c2\n1,a\n2,b"),
+							},
+						},
+						Alias: parser.Identifier{
+							Literal: "a",
+						},
+					},
+				},
+			},
+			WhereClause: parser.WhereClause{
+				Filter: parser.Comparison{
+					LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "c1"}},
+					RHS:      parser.NewIntegerValueFromString("2"),
+					Operator: parser.Token{Token: '=', Literal: "="},
+				},
+			},
+		},
+		Error: "inline table cannot be updated",
+	},
+	{
 		Name: "Delete Query Tables Not Specified Error",
 		Query: parser.DeleteQuery{
 			FromClause: parser.FromClause{
 				Tables: []parser.QueryExpression{
-					parser.Table{Object: parser.Join{
-						Table: parser.Table{
-							Object: parser.Identifier{Literal: "table1"},
-							Alias:  parser.Identifier{Literal: "t1"},
-						},
-						JoinTable: parser.Table{
-							Object: parser.Identifier{Literal: "table2"},
-							Alias:  parser.Identifier{Literal: "t2"},
-						},
-						Condition: parser.JoinCondition{
-							On: parser.Comparison{
-								LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
-								RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
-								Operator: parser.Token{Token: '=', Literal: "="},
+					parser.Table{
+						Object: parser.Join{
+							Table: parser.Table{
+								Object: parser.Identifier{Literal: "table1"},
+								Alias:  parser.Identifier{Literal: "t1"},
+							},
+							JoinTable: parser.Table{
+								Object: parser.Identifier{Literal: "table2"},
+								Alias:  parser.Identifier{Literal: "t2"},
+							},
+							Condition: parser.JoinCondition{
+								On: parser.Comparison{
+									LHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column1"}},
+									RHS:      parser.FieldReference{Column: parser.Identifier{Literal: "column3"}},
+									Operator: parser.Token{Token: '=', Literal: "="},
+								},
 							},
 						},
-					}},
+					},
+					parser.Table{
+						Object: parser.TableFunction{
+							Name: "data",
+							Args: []parser.QueryExpression{
+								parser.NewStringValue("c1,c2\n1,a\n2,b"),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -4188,7 +4481,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: '\t',
-			Format:    cmd.TSV,
+			Format:    option.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4208,7 +4501,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: '\t',
-			Format:    cmd.TSV,
+			Format:    option.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4224,7 +4517,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ';',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4259,7 +4552,7 @@ var setTableAttributeTests = []struct {
 			Path:               GetTestFilePath("table1.csv"),
 			Delimiter:          ',',
 			DelimiterPositions: []int{2, 5, 10},
-			Format:             cmd.FIXED,
+			Format:             option.FIXED,
 			Encoding:           text.UTF8,
 			SingleLine:         true,
 			LineBreak:          text.LF,
@@ -4285,7 +4578,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.TEXT,
+			Format:    option.TEXT,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4301,7 +4594,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.JSON,
+			Format:    option.JSON,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4317,7 +4610,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: '\t',
-			Format:    cmd.TSV,
+			Format:    option.TSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4342,7 +4635,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.SJIS,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4358,7 +4651,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.SJIS,
 			LineBreak: text.LF,
 			ForUpdate: true,
@@ -4392,7 +4685,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.CRLF,
 			ForUpdate: true,
@@ -4417,7 +4710,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:      GetTestFilePath("table1.csv"),
 			Delimiter: ',',
-			Format:    cmd.CSV,
+			Format:    option.CSV,
 			Encoding:  text.UTF8,
 			LineBreak: text.LF,
 			NoHeader:  true,
@@ -4443,7 +4736,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:       GetTestFilePath("table1.csv"),
 			Delimiter:  ',',
-			Format:     cmd.CSV,
+			Format:     option.CSV,
 			Encoding:   text.UTF8,
 			LineBreak:  text.LF,
 			EncloseAll: true,
@@ -4460,7 +4753,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:        GetTestFilePath("table.json"),
 			Delimiter:   ',',
-			Format:      cmd.JSON,
+			Format:      option.JSON,
 			Encoding:    text.UTF8,
 			LineBreak:   text.LF,
 			JsonEscape:  json.HexDigits,
@@ -4487,7 +4780,7 @@ var setTableAttributeTests = []struct {
 		Expect: &FileInfo{
 			Path:        GetTestFilePath("table.json"),
 			Delimiter:   ',',
-			Format:      cmd.JSON,
+			Format:      option.JSON,
 			Encoding:    text.UTF8,
 			LineBreak:   text.LF,
 			PrettyPrint: true,
@@ -4510,7 +4803,7 @@ var setTableAttributeTests = []struct {
 			Attribute: parser.Identifier{Literal: "delimiter"},
 			Value:     parser.NewStringValue(","),
 		},
-		Error: "view has no attributes",
+		Error: "table attributes can only be set on files",
 	},
 	{
 		Name: "Value Evaluation Error",

@@ -18,8 +18,6 @@ func ConvertToValue(structure json.Structure) value.Primary {
 	switch structure.(type) {
 	case json.Number:
 		p = value.NewFloat(structure.(json.Number).Raw())
-	case json.Float:
-		p = value.NewFloat(structure.(json.Float).Raw())
 	case json.Integer:
 		p = value.NewInteger(structure.(json.Integer).Raw())
 	case json.String:

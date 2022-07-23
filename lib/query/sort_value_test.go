@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"math"
 	"testing"
 	"time"
 
@@ -203,6 +204,76 @@ var sortValueLessTests = []struct {
 		StrictEqual:  true,
 		Result:       ternary.TRUE,
 	},
+	{
+		Name:         "-Inf is less than +Inf",
+		SortValue:    value.NewFloat(math.Inf(-1)),
+		CompareValue: value.NewFloat(math.Inf(+1)),
+		StrictEqual:  false,
+		Result:       ternary.TRUE,
+	},
+	{
+		Name:         "-Inf is less than +Inf even when StrictEqual is true",
+		SortValue:    value.NewFloat(math.Inf(-1)),
+		CompareValue: value.NewFloat(math.Inf(+1)),
+		StrictEqual:  true,
+		Result:       ternary.TRUE,
+	},
+	{
+		Name:         "-Inf is less than any float value",
+		SortValue:    value.NewFloat(math.Inf(-1)),
+		CompareValue: value.NewFloat(1),
+		StrictEqual:  false,
+		Result:       ternary.TRUE,
+	},
+	{
+		Name:         "-Inf is less than any float value even when StrictEqual is true",
+		SortValue:    value.NewFloat(math.Inf(-1)),
+		CompareValue: value.NewFloat(1),
+		StrictEqual:  true,
+		Result:       ternary.TRUE,
+	},
+	{
+		Name:         "NaN has the same priority as other NaN",
+		SortValue:    value.NewFloat(math.NaN()),
+		CompareValue: value.NewFloat(math.NaN()),
+		StrictEqual:  false,
+		Result:       ternary.UNKNOWN,
+	},
+	{
+		Name:         "NaN has the same priority as other NaN even when StrictEqual is true",
+		SortValue:    value.NewFloat(math.NaN()),
+		CompareValue: value.NewFloat(math.NaN()),
+		StrictEqual:  true,
+		Result:       ternary.UNKNOWN,
+	},
+	{
+		Name:         "NaN has the highest priority than any float value",
+		SortValue:    value.NewFloat(math.NaN()),
+		CompareValue: value.NewFloat(math.Inf(1)),
+		StrictEqual:  false,
+		Result:       ternary.FALSE,
+	},
+	{
+		Name:         "NaN has the highest priority than any float value even when StrictEqual is true",
+		SortValue:    value.NewFloat(math.NaN()),
+		CompareValue: value.NewFloat(math.Inf(1)),
+		StrictEqual:  true,
+		Result:       ternary.FALSE,
+	},
+	{
+		Name:         "Any float value has a lower priority than NaN",
+		SortValue:    value.NewFloat(math.Inf(1)),
+		CompareValue: value.NewFloat(math.NaN()),
+		StrictEqual:  false,
+		Result:       ternary.TRUE,
+	},
+	{
+		Name:         "Any float value has a lower priority than NaN even when StrictEqual is true",
+		SortValue:    value.NewFloat(math.Inf(1)),
+		CompareValue: value.NewFloat(math.NaN()),
+		StrictEqual:  true,
+		Result:       ternary.TRUE,
+	},
 }
 
 func TestSortValue_Less(t *testing.T) {
@@ -325,6 +396,20 @@ var sortValueEquivalentToTests = []struct {
 		CompareValue: value.NewInteger(1),
 		StrictEqual:  true,
 		Result:       false,
+	},
+	{
+		Name:         "Inf and NaN are not equivanent",
+		SortValue:    value.NewFloat(math.Inf(1)),
+		CompareValue: value.NewFloat(math.NaN()),
+		StrictEqual:  false,
+		Result:       false,
+	},
+	{
+		Name:         "NaN and NaN are equivanent in sorting",
+		SortValue:    value.NewFloat(math.NaN()),
+		CompareValue: value.NewFloat(math.NaN()),
+		StrictEqual:  false,
+		Result:       true,
 	},
 }
 

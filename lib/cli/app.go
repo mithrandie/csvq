@@ -7,8 +7,8 @@ import (
 	"os/signal"
 
 	"github.com/mithrandie/csvq/lib/action"
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
 
@@ -30,6 +30,7 @@ func Run() {
 	app.Usage = "SQL-like query language for csv"
 	app.ArgsUsage = "[query|argument]"
 	app.Version = query.Version
+	app.Authors = []*cli.Author{{Name: "Yuki et al."}}
 	app.OnUsageError = onUsageError
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
@@ -56,13 +57,13 @@ func Run() {
 		&cli.BoolFlag{
 			Name:    "strict-equal",
 			Aliases: []string{"g"},
-			Usage:   "compare strictly that two values are equal for DISTINCT, GROUP BY and ORDER BY",
+			Usage:   "compare strictly equal or not in DISTINCT, GROUP BY and ORDER BY",
 		},
 		&cli.Float64Flag{
 			Name:    "wait-timeout",
 			Aliases: []string{"w"},
 			Value:   10,
-			Usage:   "limit of the waiting time in seconds to wait for locked files to be released",
+			Usage:   "maximum time in seconds to wait for locked files to be released",
 		},
 		&cli.StringFlag{
 			Name:    "source",
@@ -171,6 +172,11 @@ func Run() {
 			Usage:   "make JSON output easier to read in query results",
 		},
 		&cli.BoolFlag{
+			Name:    "scientific-notation",
+			Aliases: []string{"SN"},
+			Usage:   "use scientific notation for large exponents in output",
+		},
+		&cli.BoolFlag{
 			Name:    "east-asian-encoding",
 			Aliases: []string{"W"},
 			Usage:   "count ambiguous characters as fullwidth",
@@ -203,7 +209,7 @@ func Run() {
 		&cli.IntFlag{
 			Name:    "cpu",
 			Aliases: []string{"p"},
-			Value:   cmd.GetDefaultNumberOfCPU(),
+			Value:   option.GetDefaultNumberOfCPU(),
 			Usage:   "hint for the number of cpu cores to be used",
 		},
 		&cli.BoolFlag{
@@ -370,67 +376,67 @@ func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Proc
 
 func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	if c.IsSet("repository") {
-		if err := tx.SetFlag(cmd.RepositoryFlag, c.String("repository")); err != nil {
+		if err := tx.SetFlag(option.RepositoryFlag, c.String("repository")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("timezone") {
-		if err := tx.SetFlag(cmd.TimezoneFlag, c.String("timezone")); err != nil {
+		if err := tx.SetFlag(option.TimezoneFlag, c.String("timezone")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("datetime-format") {
-		_ = tx.SetFlag(cmd.DatetimeFormatFlag, c.String("datetime-format"))
+		_ = tx.SetFlag(option.DatetimeFormatFlag, c.String("datetime-format"))
 	}
 	if c.IsSet("ansi-quotes") {
-		_ = tx.SetFlag(cmd.AnsiQuotesFlag, c.Bool("ansi-quotes"))
+		_ = tx.SetFlag(option.AnsiQuotesFlag, c.Bool("ansi-quotes"))
 	}
 	if c.IsSet("strict-equal") {
-		_ = tx.SetFlag(cmd.StrictEqualFlag, c.Bool("strict-equal"))
+		_ = tx.SetFlag(option.StrictEqualFlag, c.Bool("strict-equal"))
 	}
 
 	if c.IsSet("wait-timeout") {
-		_ = tx.SetFlag(cmd.WaitTimeoutFlag, c.Float64("wait-timeout"))
+		_ = tx.SetFlag(option.WaitTimeoutFlag, c.Float64("wait-timeout"))
 	}
 	if c.IsSet("color") {
-		_ = tx.SetFlag(cmd.ColorFlag, c.Bool("color"))
+		_ = tx.SetFlag(option.ColorFlag, c.Bool("color"))
 	}
 
 	if c.IsSet("import-format") {
-		if err := tx.SetFlag(cmd.ImportFormatFlag, c.String("import-format")); err != nil {
+		if err := tx.SetFlag(option.ImportFormatFlag, c.String("import-format")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("delimiter") {
-		if err := tx.SetFlag(cmd.DelimiterFlag, c.String("delimiter")); err != nil {
+		if err := tx.SetFlag(option.DelimiterFlag, c.String("delimiter")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("allow-uneven-fields") {
-		_ = tx.SetFlag(cmd.AllowUnevenFieldsFlag, c.Bool("allow-uneven-fields"))
+		_ = tx.SetFlag(option.AllowUnevenFieldsFlag, c.Bool("allow-uneven-fields"))
 	}
 	if c.IsSet("delimiter-positions") {
-		if err := tx.SetFlag(cmd.DelimiterPositionsFlag, c.String("delimiter-positions")); err != nil {
+		if err := tx.SetFlag(option.DelimiterPositionsFlag, c.String("delimiter-positions")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("json-query") {
-		_ = tx.SetFlag(cmd.JsonQueryFlag, c.String("json-query"))
+		_ = tx.SetFlag(option.JsonQueryFlag, c.String("json-query"))
 	}
 	if c.IsSet("encoding") {
-		if err := tx.SetFlag(cmd.EncodingFlag, c.String("encoding")); err != nil {
+		if err := tx.SetFlag(option.EncodingFlag, c.String("encoding")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("no-header") {
-		_ = tx.SetFlag(cmd.NoHeaderFlag, c.Bool("no-header"))
+		_ = tx.SetFlag(option.NoHeaderFlag, c.Bool("no-header"))
 	}
 	if c.IsSet("without-null") {
-		_ = tx.SetFlag(cmd.WithoutNullFlag, c.Bool("without-null"))
+		_ = tx.SetFlag(option.WithoutNullFlag, c.Bool("without-null"))
 	}
 
 	if c.IsSet("strip-ending-line-break") {
-		_ = tx.SetFlag(cmd.StripEndingLineBreakFlag, c.Bool("strip-ending-line-break"))
+		_ = tx.SetFlag(option.StripEndingLineBreakFlag, c.Bool("strip-ending-line-break"))
 	}
 
 	if err := tx.SetFormatFlag(c.String("format"), c.String("out")); err != nil {
@@ -438,68 +444,71 @@ func overwriteFlags(c *cli.Context, tx *query.Transaction) error {
 	}
 
 	if c.IsSet("write-encoding") {
-		if err := tx.SetFlag(cmd.ExportEncodingFlag, c.String("write-encoding")); err != nil {
+		if err := tx.SetFlag(option.ExportEncodingFlag, c.String("write-encoding")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("write-delimiter") {
-		if err := tx.SetFlag(cmd.ExportDelimiterFlag, c.String("write-delimiter")); err != nil {
+		if err := tx.SetFlag(option.ExportDelimiterFlag, c.String("write-delimiter")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("write-delimiter-positions") {
-		if err := tx.SetFlag(cmd.ExportDelimiterPositionsFlag, c.String("write-delimiter-positions")); err != nil {
+		if err := tx.SetFlag(option.ExportDelimiterPositionsFlag, c.String("write-delimiter-positions")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("without-header") {
-		_ = tx.SetFlag(cmd.WithoutHeaderFlag, c.Bool("without-header"))
+		_ = tx.SetFlag(option.WithoutHeaderFlag, c.Bool("without-header"))
 	}
 	if c.IsSet("line-break") {
-		if err := tx.SetFlag(cmd.LineBreakFlag, c.String("line-break")); err != nil {
+		if err := tx.SetFlag(option.LineBreakFlag, c.String("line-break")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("enclose-all") {
-		_ = tx.SetFlag(cmd.EncloseAllFlag, c.Bool("enclose-all"))
+		_ = tx.SetFlag(option.EncloseAllFlag, c.Bool("enclose-all"))
 	}
 	if c.IsSet("json-escape") {
-		if err := tx.SetFlag(cmd.JsonEscapeFlag, c.String("json-escape")); err != nil {
+		if err := tx.SetFlag(option.JsonEscapeFlag, c.String("json-escape")); err != nil {
 			return query.NewIncorrectCommandUsageError(err.Error())
 		}
 	}
 	if c.IsSet("pretty-print") {
-		_ = tx.SetFlag(cmd.PrettyPrintFlag, c.Bool("pretty-print"))
+		_ = tx.SetFlag(option.PrettyPrintFlag, c.Bool("pretty-print"))
+	}
+	if c.IsSet("scientific-notation") {
+		_ = tx.SetFlag(option.ScientificNotationFlag, c.Bool("scientific-notation"))
 	}
 
 	if c.IsSet("east-asian-encoding") {
-		_ = tx.SetFlag(cmd.EastAsianEncodingFlag, c.Bool("east-asian-encoding"))
+		_ = tx.SetFlag(option.EastAsianEncodingFlag, c.Bool("east-asian-encoding"))
 	}
 	if c.IsSet("count-diacritical-sign") {
-		_ = tx.SetFlag(cmd.CountDiacriticalSignFlag, c.Bool("count-diacritical-sign"))
+		_ = tx.SetFlag(option.CountDiacriticalSignFlag, c.Bool("count-diacritical-sign"))
 	}
 	if c.IsSet("count-format-code") {
-		_ = tx.SetFlag(cmd.CountFormatCodeFlag, c.Bool("count-format-code"))
+		_ = tx.SetFlag(option.CountFormatCodeFlag, c.Bool("count-format-code"))
 	}
 
 	if c.IsSet("quiet") {
-		_ = tx.SetFlag(cmd.QuietFlag, c.Bool("quiet"))
+		_ = tx.SetFlag(option.QuietFlag, c.Bool("quiet"))
 	}
 	if c.IsSet("limit-recursion") {
-		_ = tx.SetFlag(cmd.LimitRecursion, c.Int64("limit-recursion"))
+		_ = tx.SetFlag(option.LimitRecursion, c.Int64("limit-recursion"))
 	}
 	if c.IsSet("cpu") {
-		_ = tx.SetFlag(cmd.CPUFlag, c.Int64("cpu"))
+		_ = tx.SetFlag(option.CPUFlag, c.Int64("cpu"))
 	}
 	if c.IsSet("stats") {
-		_ = tx.SetFlag(cmd.StatsFlag, c.Bool("stats"))
+		_ = tx.SetFlag(option.StatsFlag, c.Bool("stats"))
 	}
 
 	return nil
 }
 
 func runPreloadCommands(ctx context.Context, proc *query.Processor) (err error) {
-	files := cmd.GetSpecialFilePath(cmd.PreloadCommandFileName)
+	files := option.GetSpecialFilePath(option.PreloadCommandFileName)
 	for _, fpath := range files {
 		if !file.Exists(fpath) {
 			continue

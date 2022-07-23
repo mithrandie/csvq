@@ -1,10 +1,11 @@
 package value
 
 import (
+	"math"
 	"testing"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/ternary"
 )
@@ -296,6 +297,22 @@ func TestFloat64ToTime(t *testing.T) {
 	}
 }
 
+func TestFloat64ToStr(t *testing.T) {
+	f := 0.000000123
+	expect := "0.000000123"
+
+	result := Float64ToStr(f, false)
+	if result != expect {
+		t.Errorf("result = %q, want %q for %f", result, expect, f)
+	}
+
+	expect = "1.23e-07"
+	result = Float64ToStr(f, true)
+	if result != expect {
+		t.Errorf("result = %q, want %q for %f", result, expect, f)
+	}
+}
+
 func TestToInteger(t *testing.T) {
 	var p Primary
 	var i Primary
@@ -315,6 +332,24 @@ func TestToInteger(t *testing.T) {
 	p = NewFloat(1.6)
 	i = ToInteger(p)
 	if _, ok := i.(*Integer); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewFloat(math.NaN())
+	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewFloat(math.Inf(1))
+	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
+		t.Errorf("primary type = %T, want Null for %#v", i, p)
+	}
+
+	p = NewFloat(math.Inf(-1))
+	i = ToInteger(p)
+	if _, ok := i.(*Null); !ok {
 		t.Errorf("primary type = %T, want Null for %#v", i, p)
 	}
 
@@ -543,7 +578,7 @@ func TestToString(t *testing.T) {
 	var p Primary
 	var s Primary
 
-	location, _ := cmd.GetLocation("UTC")
+	location, _ := option.GetLocation("UTC")
 
 	p = NewString("str")
 	s = ToString(p)
@@ -622,7 +657,7 @@ func BenchmarkStrToTime5(b *testing.B) {
 
 func BenchmarkStrToTime6(b *testing.B) {
 	formats := []string{"01/02/2006"}
-	location, _ := cmd.GetLocation("UTC")
+	location, _ := option.GetLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "02 Jan 06 15:04 PDT"
@@ -632,7 +667,7 @@ func BenchmarkStrToTime6(b *testing.B) {
 
 func BenchmarkStrToTime7(b *testing.B) {
 	formats := []string{"01/02/2006"}
-	location, _ := cmd.GetLocation("UTC")
+	location, _ := option.GetLocation("UTC")
 
 	for i := 0; i < b.N; i++ {
 		s := "abcdefghijklmnopq"

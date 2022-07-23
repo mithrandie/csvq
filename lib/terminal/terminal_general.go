@@ -6,7 +6,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/query"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -39,7 +39,7 @@ func NewTerminal(ctx context.Context, scope *query.ReferenceScope) (query.Virtua
 	}
 
 	t := SSHTerminal{
-		terminal:  terminal.NewTerminal(NewStdIO(scope.Tx.Session), scope.Tx.Palette.Render(cmd.PromptEffect, DefaultPrompt)),
+		terminal:  terminal.NewTerminal(NewStdIO(scope.Tx.Session), scope.Tx.Palette.Render(option.PromptEffect, DefaultPrompt)),
 		stdin:     stdin,
 		origState: origState,
 		rawState:  rawState,

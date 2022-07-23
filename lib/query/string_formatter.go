@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -171,9 +171,9 @@ func (f *StringFormatter) Format(format string, values []value.Primary) (string,
 
 			switch ch {
 			case 'q':
-				s = cmd.QuoteString(s)
+				s = option.QuoteString(s)
 			case 'i':
-				s = cmd.QuoteIdentifier(s)
+				s = option.QuoteIdentifier(s)
 			}
 
 			s = fmt.Sprintf(placeholder.String(), s)

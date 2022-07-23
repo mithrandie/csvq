@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 )
 
@@ -277,7 +277,7 @@ func (sess *Session) SetTerminal(t VirtualTerminal) {
 	sess.mtx.Unlock()
 }
 
-func (sess *Session) GetStdinView(ctx context.Context, flags *cmd.Flags, fileInfo *FileInfo, expr parser.Stdin) (*View, error) {
+func (sess *Session) GetStdinView(ctx context.Context, flags *option.Flags, fileInfo *FileInfo, expr parser.Stdin) (*View, error) {
 	if !sess.stdinViewMap.Exists(expr.String()) {
 		if !sess.CanReadStdin {
 			return nil, NewStdinEmptyError(expr)

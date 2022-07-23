@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"math"
 	"os"
 	"reflect"
 	"sync"
@@ -280,6 +281,15 @@ var evaluateTests = []struct {
 			Operator: parser.Token{Token: '+', Literal: "+"},
 		},
 		Error: "field notexist does not exist",
+	},
+	{
+		Name: "Arithmetic Division by Zero Error",
+		Expr: parser.Arithmetic{
+			LHS:      parser.NewIntegerValue(1),
+			RHS:      parser.NewIntegerValue(0),
+			Operator: parser.Token{Token: '/', Literal: "/"},
+		},
+		Error: "integer divided by zero",
 	},
 	{
 		Name: "UnaryArithmetic Integer",
@@ -3989,6 +3999,22 @@ var evaluateTests = []struct {
 			Name: "version",
 		},
 		Result: value.NewString("v1.0.0"),
+	},
+	{
+		Name: "Constant",
+		Expr: parser.Constant{
+			Space: "math",
+			Name:  "pi",
+		},
+		Result: value.NewFloat(math.Pi),
+	},
+	{
+		Name: "Constant Undefined Error",
+		Expr: parser.Constant{
+			Space: "math",
+			Name:  "undefined",
+		},
+		Error: "constant MATH::UNDEFINED is not defined",
 	},
 	{
 		Name: "Flag",

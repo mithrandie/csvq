@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/go-text/color"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -17,7 +17,7 @@ const (
 )
 
 type ObjectWriter struct {
-	Flags   *cmd.Flags
+	Flags   *option.Flags
 	Palette *color.Palette
 
 	MaxWidth    int
@@ -99,7 +99,7 @@ func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
 		} else {
 			w.writeToBuf(w.Palette.Render(effect, s))
 		}
-		w.Column = w.Column + cmd.TextWidth(s, w.Flags)
+		w.Column = w.Column + option.TextWidth(s, w.Flags)
 	}
 }
 
@@ -112,18 +112,18 @@ func (w *ObjectWriter) LeadingSpacesWidth() int {
 }
 
 func (w *ObjectWriter) FitInLine(s string) bool {
-	if w.MaxWidth-(w.Padding*2)-1 < w.Column+cmd.TextWidth(s, w.Flags) {
+	if w.MaxWidth-(w.Padding*2)-1 < w.Column+option.TextWidth(s, w.Flags) {
 		return false
 	}
 	return true
 }
 
 func (w *ObjectWriter) WriteWithoutLineBreak(s string) {
-	w.WriteColorWithoutLineBreak(s, cmd.NoEffect)
+	w.WriteColorWithoutLineBreak(s, option.NoEffect)
 }
 
 func (w *ObjectWriter) Write(s string) {
-	w.WriteColor(s, cmd.NoEffect)
+	w.WriteColor(s, option.NoEffect)
 }
 
 func (w *ObjectWriter) WriteWithAutoLineBreak(s string) {
@@ -151,7 +151,7 @@ func (w *ObjectWriter) writeWithAutoLineBreak(s string, useContinueMark bool, us
 		}
 
 		line := scanner.Text()
-		if useBlock && cmd.TrimSpace(line) == "```" {
+		if useBlock && option.TrimSpace(line) == "```" {
 			preformatted = !preformatted
 			continue
 		} else {
@@ -234,7 +234,7 @@ func (w *ObjectWriter) ClearBlock() {
 func (w *ObjectWriter) String() string {
 	var header bytes.Buffer
 	if 0 < len(w.Title1) || 0 < len(w.Title2) {
-		tw := cmd.TextWidth(w.Title1, w.Flags) + cmd.TextWidth(w.Title2, w.Flags)
+		tw := option.TextWidth(w.Title1, w.Flags) + option.TextWidth(w.Title2, w.Flags)
 		if 0 < len(w.Title1) && 0 < len(w.Title2) {
 			tw++
 		}

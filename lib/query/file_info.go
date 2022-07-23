@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/file"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 
 	"github.com/mithrandie/go-text"
@@ -35,6 +35,7 @@ const (
 	ViewTypeFile ViewType = iota
 	ViewTypeTemporaryTable
 	ViewTypeStdin
+	ViewTypeInlineTable
 )
 
 var FileAttributeList = []string{
@@ -68,7 +69,7 @@ func (e TableAttributeUnchangedError) Error() string {
 type FileInfo struct {
 	Path string
 
-	Format             cmd.Format
+	Format             option.Format
 	Delimiter          rune
 	DelimiterPositions fixedlen.DelimiterPositions
 	JsonQuery          string
@@ -93,8 +94,8 @@ type FileInfo struct {
 func NewFileInfo(
 	filename parser.Identifier,
 	repository string,
-	options cmd.ImportOptions,
-	defaultFormat cmd.Format,
+	options option.ImportOptions,
+	defaultFormat option.Format,
 ) (*FileInfo, error) {
 	fpath, format, err := SearchFilePath(filename, repository, options, defaultFormat)
 	if err != nil {
@@ -104,9 +105,9 @@ func NewFileInfo(
 	delimiter := options.Delimiter
 	encoding := options.Encoding
 	switch format {
-	case cmd.TSV:
+	case option.TSV:
 		delimiter = '\t'
-	case cmd.JSON, cmd.JSONL:
+	case option.JSON, option.JSONL:
 		encoding = text.UTF8
 	}
 
@@ -115,20 +116,75 @@ func NewFileInfo(
 		Format:    format,
 		Delimiter: delimiter,
 		Encoding:  encoding,
+		ViewType:  ViewTypeFile,
 	}, nil
 }
 
+func NewTemporaryTableFileInfo(name string) *FileInfo {
+	return &FileInfo{
+		Path:     name,
+		ViewType: ViewTypeTemporaryTable,
+	}
+}
+
+func NewStdinFileInfo(filePath string, importOptions option.ImportOptions, exportOptions option.ExportOptions) *FileInfo {
+	f := &FileInfo{
+		Path:     filePath,
+		ViewType: ViewTypeStdin,
+	}
+	f.SetAllDefaultFileInfoAttributes(importOptions, exportOptions)
+	return f
+}
+
+func NewInlineFileInfo(filePath string, importOptions option.ImportOptions, exportOptions option.ExportOptions) *FileInfo {
+	f := &FileInfo{
+		Path:     filePath,
+		ViewType: ViewTypeInlineTable,
+	}
+	f.SetAllDefaultFileInfoAttributes(importOptions, exportOptions)
+	return f
+}
+
+func (f *FileInfo) SetAllDefaultFileInfoAttributes(importOptions option.ImportOptions, exportOptions option.ExportOptions) {
+	f.Format = importOptions.Format
+	f.Delimiter = importOptions.Delimiter
+	f.Encoding = importOptions.Encoding
+
+	switch f.Format {
+	case option.TSV:
+		f.Delimiter = '\t'
+	case option.JSON, option.JSONL:
+		f.Encoding = text.UTF8
+	}
+
+	f.SetDefaultFileInfoAttributes(importOptions, exportOptions)
+}
+
+func (f *FileInfo) SetDefaultFileInfoAttributes(importOptions option.ImportOptions, exportOptions option.ExportOptions) {
+	f.DelimiterPositions = importOptions.DelimiterPositions
+	f.SingleLine = importOptions.SingleLine
+	f.JsonQuery = option.TrimSpace(importOptions.JsonQuery)
+	f.LineBreak = exportOptions.LineBreak
+	f.NoHeader = importOptions.NoHeader
+	f.EncloseAll = exportOptions.EncloseAll
+	f.JsonEscape = exportOptions.JsonEscape
+}
+
+func (f *FileInfo) IsUpdatable() bool {
+	return f.IsFile() || f.IsInMemoryTable()
+}
+
 func (f *FileInfo) SetDelimiter(s string) error {
-	delimiter, err := cmd.ParseDelimiter(s)
+	delimiter, err := option.ParseDelimiter(s)
 	if err != nil {
 		return err
 	}
 
-	var format cmd.Format
+	var format option.Format
 	if delimiter == '\t' {
-		format = cmd.TSV
+		format = option.TSV
 	} else {
-		format = cmd.CSV
+		format = option.CSV
 	}
 
 	if f.Delimiter == delimiter && f.Format == format {
@@ -141,12 +197,12 @@ func (f *FileInfo) SetDelimiter(s string) error {
 }
 
 func (f *FileInfo) SetDelimiterPositions(s string) error {
-	pos, singleLine, err := cmd.ParseDelimiterPositions(s)
+	pos, singleLine, err := option.ParseDelimiterPositions(s)
 	if err != nil {
 		return err
 	}
 	delimiterPositions := fixedlen.DelimiterPositions(pos)
-	format := cmd.FIXED
+	format := option.FIXED
 
 	if reflect.DeepEqual(f.DelimiterPositions, delimiterPositions) &&
 		f.SingleLine == singleLine &&
@@ -162,7 +218,7 @@ func (f *FileInfo) SetDelimiterPositions(s string) error {
 }
 
 func (f *FileInfo) SetFormat(s string) error {
-	format, escapeType, err := cmd.ParseFormat(s, f.JsonEscape)
+	format, escapeType, err := option.ParseFormat(s, f.JsonEscape)
 	if err != nil {
 		return err
 	}
@@ -176,9 +232,9 @@ func (f *FileInfo) SetFormat(s string) error {
 	encoding := f.Encoding
 
 	switch format {
-	case cmd.TSV:
+	case option.TSV:
 		delimiter = '\t'
-	case cmd.JSON, cmd.JSONL:
+	case option.JSON, option.JSONL:
 		encoding = text.UTF8
 	}
 
@@ -190,13 +246,13 @@ func (f *FileInfo) SetFormat(s string) error {
 }
 
 func (f *FileInfo) SetEncoding(s string) error {
-	encoding, err := cmd.ParseEncoding(s)
+	encoding, err := option.ParseEncoding(s)
 	if err != nil || encoding == text.AUTO {
 		return errors.New("encoding must be one of UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS")
 	}
 
 	switch f.Format {
-	case cmd.JSON, cmd.JSONL:
+	case option.JSON, option.JSONL:
 		if encoding != text.UTF8 {
 			return errors.New("json format is supported only UTF8")
 		}
@@ -211,7 +267,7 @@ func (f *FileInfo) SetEncoding(s string) error {
 }
 
 func (f *FileInfo) SetLineBreak(s string) error {
-	lb, err := cmd.ParseLineBreak(s)
+	lb, err := option.ParseLineBreak(s)
 	if err != nil {
 		return err
 	}
@@ -241,7 +297,7 @@ func (f *FileInfo) SetEncloseAll(b bool) error {
 }
 
 func (f *FileInfo) SetJsonEscape(s string) error {
-	escape, err := cmd.ParseJsonEscapeType(s)
+	escape, err := option.ParseJsonEscapeType(s)
 	if err != nil {
 		return err
 	}
@@ -274,7 +330,11 @@ func (f *FileInfo) IsStdin() bool {
 	return f.ViewType == ViewTypeStdin
 }
 
-func (f *FileInfo) ExportOptions(tx *Transaction) cmd.ExportOptions {
+func (f *FileInfo) IsInMemoryTable() bool {
+	return f.ViewType == ViewTypeStdin || f.ViewType == ViewTypeTemporaryTable
+}
+
+func (f *FileInfo) ExportOptions(tx *Transaction) option.ExportOptions {
 	ops := tx.Flags.ExportOptions.Copy()
 	ops.Format = f.Format
 	ops.Delimiter = f.Delimiter
@@ -289,36 +349,36 @@ func (f *FileInfo) ExportOptions(tx *Transaction) cmd.ExportOptions {
 	return ops
 }
 
-func SearchFilePath(filename parser.Identifier, repository string, options cmd.ImportOptions, defaultFormat cmd.Format) (string, cmd.Format, error) {
+func SearchFilePath(filename parser.Identifier, repository string, options option.ImportOptions, defaultFormat option.Format) (string, option.Format, error) {
 	var fpath string
 	var err error
 
 	format := options.Format
 
 	switch format {
-	case cmd.CSV, cmd.TSV:
+	case option.CSV, option.TSV:
 		fpath, err = SearchCSVFilePath(filename, repository)
-	case cmd.JSON:
+	case option.JSON:
 		fpath, err = SearchJsonFilePath(filename, repository)
-	case cmd.JSONL:
+	case option.JSONL:
 		fpath, err = SearchJsonlFilePath(filename, repository)
-	case cmd.FIXED:
+	case option.FIXED:
 		fpath, err = SearchFixedLengthFilePath(filename, repository)
-	case cmd.LTSV:
+	case option.LTSV:
 		fpath, err = SearchLTSVFilePath(filename, repository)
 	default: // AutoSelect
 		if fpath, err = SearchFilePathFromAllTypes(filename, repository); err == nil {
 			switch strings.ToLower(filepath.Ext(fpath)) {
-			case cmd.CsvExt:
-				format = cmd.CSV
-			case cmd.TsvExt:
-				format = cmd.TSV
-			case cmd.JsonExt:
-				format = cmd.JSON
-			case cmd.JsonlExt:
-				format = cmd.JSONL
-			case cmd.LtsvExt:
-				format = cmd.LTSV
+			case option.CsvExt:
+				format = option.CSV
+			case option.TsvExt:
+				format = option.TSV
+			case option.JsonExt:
+				format = option.JSON
+			case option.JsonlExt:
+				format = option.JSONL
+			case option.LtsvExt:
+				format = option.LTSV
 			default:
 				format = defaultFormat
 			}
@@ -329,27 +389,27 @@ func SearchFilePath(filename parser.Identifier, repository string, options cmd.I
 }
 
 func SearchCSVFilePath(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.TextExt})
+	return SearchFilePathWithExtType(filename, repository, []string{option.CsvExt, option.TsvExt, option.TextExt})
 }
 
 func SearchJsonFilePath(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.JsonExt})
+	return SearchFilePathWithExtType(filename, repository, []string{option.JsonExt})
 }
 
 func SearchJsonlFilePath(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.JsonlExt})
+	return SearchFilePathWithExtType(filename, repository, []string{option.JsonlExt})
 }
 
 func SearchFixedLengthFilePath(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.TextExt})
+	return SearchFilePathWithExtType(filename, repository, []string{option.TextExt})
 }
 
 func SearchLTSVFilePath(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.LtsvExt, cmd.TextExt})
+	return SearchFilePathWithExtType(filename, repository, []string{option.LtsvExt, option.TextExt})
 }
 
 func SearchFilePathFromAllTypes(filename parser.Identifier, repository string) (string, error) {
-	return SearchFilePathWithExtType(filename, repository, []string{cmd.CsvExt, cmd.TsvExt, cmd.JsonExt, cmd.JsonlExt, cmd.LtsvExt, cmd.TextExt})
+	return SearchFilePathWithExtType(filename, repository, []string{option.CsvExt, option.TsvExt, option.JsonExt, option.JsonlExt, option.LtsvExt, option.TextExt})
 }
 
 func SearchFilePathWithExtType(filename parser.Identifier, repository string, extTypes []string) (string, error) {
@@ -401,25 +461,25 @@ func NewFileInfoForCreate(filename parser.Identifier, repository string, delimit
 		return nil, NewIOError(filename, err.Error())
 	}
 
-	var format cmd.Format
+	var format option.Format
 	switch strings.ToLower(filepath.Ext(fpath)) {
-	case cmd.TsvExt:
+	case option.TsvExt:
 		delimiter = '\t'
-		format = cmd.TSV
-	case cmd.JsonExt:
+		format = option.TSV
+	case option.JsonExt:
 		encoding = text.UTF8
-		format = cmd.JSON
-	case cmd.JsonlExt:
+		format = option.JSON
+	case option.JsonlExt:
 		encoding = text.UTF8
-		format = cmd.JSONL
-	case cmd.LtsvExt:
-		format = cmd.LTSV
-	case cmd.GfmExt:
-		format = cmd.GFM
-	case cmd.OrgExt:
-		format = cmd.ORG
+		format = option.JSONL
+	case option.LtsvExt:
+		format = option.LTSV
+	case option.GfmExt:
+		format = option.GFM
+	case option.OrgExt:
+		format = option.ORG
 	default:
-		format = cmd.CSV
+		format = option.CSV
 	}
 
 	return &FileInfo{
@@ -427,6 +487,7 @@ func NewFileInfoForCreate(filename parser.Identifier, repository string, delimit
 		Delimiter: delimiter,
 		Format:    format,
 		Encoding:  encoding,
+		ViewType:  ViewTypeFile,
 	}, nil
 }
 

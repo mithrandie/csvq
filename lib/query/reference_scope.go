@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -260,7 +260,7 @@ func (rs *ReferenceScope) CreateNode() *ReferenceScope {
 		node.cachedFilePath = make(map[string]string)
 	}
 	if node.now.IsZero() {
-		node.now = cmd.Now(rs.Tx.Flags.GetTimeLocation())
+		node.now = option.Now(rs.Tx.Flags.GetTimeLocation())
 	}
 
 	return node
@@ -295,6 +295,14 @@ func (rs *ReferenceScope) NextRecord() bool {
 	return true
 }
 
+func (rs *ReferenceScope) FilePathExists(identifier string) bool {
+	if rs.cachedFilePath == nil {
+		return false
+	}
+	_, ok := rs.cachedFilePath[identifier]
+	return ok
+}
+
 func (rs *ReferenceScope) StoreFilePath(identifier string, fpath string) {
 	if rs.cachedFilePath != nil {
 		rs.cachedFilePath[identifier] = fpath
@@ -312,7 +320,7 @@ func (rs *ReferenceScope) LoadFilePath(identifier string) (string, bool) {
 
 func (rs *ReferenceScope) Now() time.Time {
 	if rs.now.IsZero() {
-		return cmd.Now(rs.Tx.Flags.GetTimeLocation())
+		return option.Now(rs.Tx.Flags.GetTimeLocation())
 	}
 	return rs.now
 }
@@ -398,7 +406,7 @@ func (rs *ReferenceScope) GetTemporaryTable(name parser.Identifier) (*View, erro
 	return nil, NewUndeclaredTemporaryTableError(name)
 }
 
-func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *cmd.Flags) (view *View, err error) {
+func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *option.Flags) (view *View, err error) {
 	for i := range rs.Blocks {
 		if view, err = rs.Blocks[i].TemporaryTables.GetWithInternalId(ctx, name, flags); err == nil {
 			return
@@ -440,10 +448,11 @@ func (rs *ReferenceScope) StoreTemporaryTable(session *Session, uncomittedViews 
 
 				if view.FileInfo.IsStdin() {
 					session.updateStdinView(view.Copy())
-				} else {
+					msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
+				} else if view.FileInfo.IsTemporaryTable() {
 					view.CreateRestorePoint()
+					msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
 				}
-				msglist = append(msglist, fmt.Sprintf("Commit: restore point of view %q is created.", view.FileInfo.Path))
 			}
 			return true
 		})
@@ -460,10 +469,11 @@ func (rs *ReferenceScope) RestoreTemporaryTable(uncomittedViews map[string]*File
 
 				if view.FileInfo.IsStdin() {
 					rs.Blocks[i].TemporaryTables.Delete(view.FileInfo.Path)
-				} else {
+					msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
+				} else if view.FileInfo.IsTemporaryTable() {
 					view.Restore()
+					msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
 				}
-				msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
 			}
 			return true
 		})
@@ -476,7 +486,7 @@ func (rs *ReferenceScope) AllTemporaryTables() ViewMap {
 
 	for i := range rs.Blocks {
 		rs.Blocks[i].TemporaryTables.Range(func(key, value interface{}) bool {
-			if !value.(*View).FileInfo.IsFile() {
+			if value.(*View).FileInfo.IsInMemoryTable() {
 				k := key.(string)
 				if !all.Exists(k) {
 					all.Store(k, value.(*View))

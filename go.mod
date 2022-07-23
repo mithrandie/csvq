@@ -3,7 +3,7 @@ module github.com/mithrandie/csvq
 require (
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/mithrandie/go-file/v2 v2.1.0
-	github.com/mithrandie/go-text v1.5.3
+	github.com/mithrandie/go-text v1.5.4
 	github.com/mithrandie/readline-csvq v1.2.0
 	github.com/mithrandie/ternary v1.1.1
 	github.com/urfave/cli/v2 v2.10.3

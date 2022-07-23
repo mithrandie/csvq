@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
 	"github.com/mithrandie/csvq/lib/excmd"
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 
@@ -216,7 +216,7 @@ func (proc *Processor) ExecuteStatement(ctx context.Context, stmt parser.Stateme
 							err = e
 						}
 					} else if !proc.Tx.Flags.ExportOptions.StripEndingLineBreak &&
-						!(proc.Tx.Session.OutFile() != nil && exportOptions.Format == cmd.FIXED && exportOptions.SingleLine) {
+						!(proc.Tx.Session.OutFile() != nil && exportOptions.Format == option.FIXED && exportOptions.SingleLine) {
 						_, err = writer.Write([]byte(proc.Tx.Flags.ExportOptions.LineBreak.Value()))
 					}
 				}
@@ -722,8 +722,8 @@ func (proc *Processor) showExecutionTime(ctx context.Context) {
 		return
 	}
 
-	exectime := cmd.FormatNumber(time.Since(proc.measurementStart).Seconds(), 6, ".", ",", "")
-	stats := fmt.Sprintf(proc.Tx.Palette.Render(cmd.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
+	exectime := option.FormatNumber(time.Since(proc.measurementStart).Seconds(), 6, ".", ",", "")
+	stats := fmt.Sprintf(proc.Tx.Palette.Render(option.LableEffect, "Query Execution Time: ")+"%s seconds", exectime)
 	proc.Log(stats, false)
 }
 

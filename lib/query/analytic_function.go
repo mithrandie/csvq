@@ -45,8 +45,8 @@ func Analyze(ctx context.Context, scope *ReferenceScope, view *View, fn parser.A
 	var udfn *UserDefinedFunction
 	var err error
 
-	fieldIdentifier := parser.FormatFieldIdentifier(fn)
-	fieldLabel := parser.FormatFieldLabel(fn)
+	fieldIdentifier := FormatFieldIdentifier(fn)
+	fieldLabel := FormatFieldLabel(fn)
 
 	uname := strings.ToUpper(fn.Name)
 	if f, ok := AnalyticFunctions[uname]; ok {

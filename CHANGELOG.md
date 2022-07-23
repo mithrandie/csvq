@@ -1,5 +1,21 @@
 # Change Log
 
+## Version 1.17.7
+
+Released on Jul 3, 2022
+
+- Add [system defined constants](https://mithrandie.github.io/csvq/reference/system-defined-constant.html).
+- Add the command option --scientific-notation.
+- Handle NaN and Infinity.
+- Add several numeric and datetime functions.
+- Fix some bugs.
+
+## Version 1.17.6
+
+Released on Jun 30, 2022
+
+- Fix a bug in REPLACE query. ([GitHub #79](https://github.com/mithrandie/csvq/issues/79))
+
 ## Version 1.17.5
 
 Released on Jun 26, 2022

@@ -24,6 +24,9 @@ const (
 	ErrorNotAllowedAnalyticFunction           = 10202
 	ErrorUndeclaredVariable                   = 10301
 	ErrorVariableRedeclared                   = 10302
+	ErrorUndefinedConstant                    = 10321
+	ErrorInvalidUrl                           = 10341
+	ErrorUnsupportedUrlScheme                 = 10342
 	ErrorFunctionNotExist                     = 10401
 	ErrorFunctionArgumentsLength              = 10402
 	ErrorFunctionInvalidArgument              = 10403
@@ -67,6 +70,8 @@ const (
 	ErrorDuplicateTableName                   = 11601
 	ErrorTableNotLoaded                       = 11602
 	ErrorStdinEmpty                           = 11603
+	ErrorInlineTableCannotBeUpdated           = 11604
+	ErrorAliasMustBeSpecifiedForUpdate        = 11605
 	ErrorRowValueLengthInComparison           = 11701
 	ErrorFieldLengthInComparison              = 11702
 	ErrorInvalidLimitPercentage               = 11801
@@ -110,6 +115,7 @@ const (
 	ErrorReplaceKeyNotSet                     = 13901
 	ErrorSelectIntoQueryFieldLengthNotMatch   = 14001
 	ErrorSelectIntoQueryTooManyRecords        = 14002
+	ErrorIntegerDevidedByZero                 = 30000
 
 	//Incorrect Command Usage
 	ErrorIncorrectCommandUsage = 90020

@@ -2,12 +2,13 @@ package value
 
 import (
 	"bytes"
+	"math"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/mithrandie/csvq/lib/cmd"
+	"github.com/mithrandie/csvq/lib/option"
 
 	"github.com/mithrandie/ternary"
 )
@@ -56,7 +57,7 @@ func (dfmap DatetimeFormatMap) Get(s string) string {
 }
 
 func StrToTime(s string, formats []string, location *time.Location) (time.Time, bool) {
-	s = cmd.TrimSpace(s)
+	s = option.TrimSpace(s)
 
 	for _, format := range formats {
 		if t, e := time.ParseInLocation(DatetimeFormats.Get(format), s, location); e == nil {
@@ -224,7 +225,7 @@ func ConvertDatetimeFormat(format string) string {
 }
 
 func Float64ToTime(f float64, location *time.Location) time.Time {
-	s := Float64ToStr(f)
+	s := Float64ToStr(f, false)
 	ar := strings.Split(s, ".")
 
 	sec, _ := strconv.ParseInt(ar[0], 10, 64)
@@ -248,18 +249,24 @@ func Int64ToStr(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
 
-func Float64ToStr(f float64) string {
+func Float64ToStr(f float64, useScientificNotation bool) string {
+	if useScientificNotation {
+		return strconv.FormatFloat(f, 'g', -1, 64)
+	}
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
 func ToInteger(p Primary) Primary {
-	switch p.(type) {
+	switch val := p.(type) {
 	case *Integer:
-		return NewInteger(p.(*Integer).Raw())
+		return NewInteger(val.Raw())
 	case *Float:
-		return NewInteger(int64(p.(*Float).Raw()))
+		if math.IsNaN(val.Raw()) || math.IsInf(val.Raw(), 0) {
+			return NewNull()
+		}
+		return NewInteger(int64(val.Raw()))
 	case *String:
-		s := cmd.TrimSpace(p.(*String).Raw())
+		s := option.TrimSpace(val.Raw())
 		if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 			return NewInteger(i)
 		}
@@ -276,7 +283,7 @@ func ToIntegerStrictly(p Primary) Primary {
 	case *Integer:
 		return NewInteger(p.(*Integer).Raw())
 	case *String:
-		s := cmd.TrimSpace(p.(*String).Raw())
+		s := option.TrimSpace(p.(*String).Raw())
 		if i, e := strconv.ParseInt(s, 10, 64); e == nil {
 			return NewInteger(i)
 		}
@@ -292,7 +299,7 @@ func ToFloat(p Primary) Primary {
 	case *Float:
 		return NewFloat(p.(*Float).Raw())
 	case *String:
-		s := cmd.TrimSpace(p.(*String).Raw())
+		s := option.TrimSpace(p.(*String).Raw())
 		if f, e := strconv.ParseFloat(s, 64); e == nil {
 			return NewFloat(f)
 		}
@@ -337,7 +344,7 @@ func ToString(p Primary) Primary {
 	case *Integer:
 		return NewString(Int64ToStr(p.(*Integer).Raw()))
 	case *Float:
-		return NewString(Float64ToStr(p.(*Float).Raw()))
+		return NewString(Float64ToStr(p.(*Float).Raw(), false))
 	}
 	return NewNull()
 }
