@@ -98,21 +98,15 @@ var CsvqSyntax = []Expression{
 						Group: []Grammar{
 							{Link("table_identifier")},
 							{Link("table_object")},
-							{Link("inline_table_object")},
 						},
 					},
 					{
 						Name: "table_identifier",
 						Group: []Grammar{
 							{Identifier("table_name")},
-							{Keyword("STDIN")},
-						},
-					},
-					{
-						Name: "inline_table_identifier",
-						Group: []Grammar{
-							{Identifier("table_name")},
 							{Identifier("url")},
+							{Link("table_identification_function")},
+							{Keyword("STDIN")},
 						},
 					},
 					{
@@ -162,12 +156,12 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
-						Name: "inline_table_object",
+						Name: "table_identification_function",
 						Group: []Grammar{
-							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), Link("inline_table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), String("csv_data"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), Link("inline_table_identifier")}}},
-							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), String("json_data")}}},
+							{Function{Name: "FILE::", Args: []Element{String("file_path")}}},
+							{Function{Name: "INLINE::", Args: []Element{String("file_path")}}},
+							{Function{Name: "URL::", Args: []Element{String("url")}}},
+							{Function{Name: "DATA::", Args: []Element{String("data")}}},
 						},
 					},
 				},
