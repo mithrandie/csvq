@@ -6,7 +6,7 @@ SQL-like query language for csv
 [![codecov](https://codecov.io/gh/mithrandie/csvq/branch/master/graph/badge.svg)](https://codecov.io/gh/mithrandie/csvq)
 [![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
 
-csvq is a command line tool to operate CSV files. 
+Csvq is a command line tool to operate CSV files. 
 You can read, update, delete CSV records with SQL-like query.
 
 You can also execute multiple operations sequentially in managed transactions by passing a procedure or using the interactive shell.
@@ -15,6 +15,17 @@ In the multiple operations, you can use variables, cursors, temporary tables, an
 ## Latest Release
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mithrandie/csvq?color=%2320b2aa&label=GitHub%20Release&sort=semver)](https://github.com/mithrandie/csvq/releases/latest)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/qittu/csvq-deb?color=%2320b2aa&label=Launchpad%20PPA)](https://launchpad.net/~mithrandie/+archive/ubuntu/csvq)
+
+## Intended Use
+Csvq is intended for one-time queries and routine processing described in source files on the amount of data that can be handled by spreadsheet applications.
+
+It is not suitable for handling very large data since all data is kept on memory when queries are executed.
+There is no indexing, calculation order optimization, etc., and the execution speed is not fast due to the inclusion of mechanisms for updating data and handling various other features.
+
+However, it can be run with a single executable binary, and you don't have to worry about troublesome dependencies during installation.
+You can not only write and run your own queries, but also give the source files to your coworkers to run.
+
+This tool may be useful for those who want to handle data easily without having to think about troublesome matters.
 
 ## Features
 
