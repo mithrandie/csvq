@@ -98,21 +98,15 @@ var CsvqSyntax = []Expression{
 						Group: []Grammar{
 							{Link("table_identifier")},
 							{Link("table_object")},
-							{Link("inline_table_object")},
 						},
 					},
 					{
 						Name: "table_identifier",
 						Group: []Grammar{
 							{Identifier("table_name")},
-							{Keyword("STDIN")},
-						},
-					},
-					{
-						Name: "inline_table_identifier",
-						Group: []Grammar{
-							{Identifier("table_name")},
 							{Identifier("url")},
+							{Link("table_identification_function")},
+							{Keyword("STDIN")},
 						},
 					},
 					{
@@ -162,12 +156,12 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
-						Name: "inline_table_object",
+						Name: "table_identification_function",
 						Group: []Grammar{
-							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), Link("inline_table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "CSV_INLINE", Args: []Element{String("delimiter"), String("csv_data"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), Link("inline_table_identifier")}}},
-							{Function{Name: "JSON_INLINE", Args: []Element{String("json_query"), String("json_data")}}},
+							{Function{Name: "FILE::", Args: []Element{String("file_path")}}},
+							{Function{Name: "INLINE::", Args: []Element{String("file_path")}}},
+							{Function{Name: "URL::", Args: []Element{String("url")}}},
+							{Function{Name: "DATA::", Args: []Element{String("data")}}},
 						},
 					},
 				},
@@ -1070,6 +1064,8 @@ var CsvqSyntax = []Expression{
 				"%s  <type::%s>\n" +
 				"  > Make JSON output easier to read in query results.\n" +
 				"%s  <type::%s>\n" +
+				"  > Use Scientific Notation for large exponents in output.\n" +
+				"%s  <type::%s>\n" +
 				"  > Count ambiguous characters as fullwidth.\n" +
 				"%s  <type::%s>\n" +
 				"  > Count diacritical signs as halfwidth.\n" +
@@ -1109,6 +1105,7 @@ var CsvqSyntax = []Expression{
 				Flag("@@ENCLOSE_ALL"), Boolean("boolean"),
 				Flag("@@JSON_ESCAPE"), String("string"), Link("Json Escape Type"),
 				Flag("@@PRETTY_PRINT"), Boolean("boolean"),
+				Flag("@@SCIENTIFIC_NOTATION"), Boolean("boolean"),
 				Flag("@@EAST_ASIAN_ENCODING"), Boolean("boolean"),
 				Flag("@@COUNT_DIACRITICAL_SIGN"), Boolean("boolean"),
 				Flag("@@COUNT_FORMAT_CODE"), Boolean("boolean"),

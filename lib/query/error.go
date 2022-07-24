@@ -39,6 +39,8 @@ const (
 	ErrMsgUndeclaredVariable                   = "variable %s is undeclared"
 	ErrMsgVariableRedeclared                   = "variable %s is redeclared"
 	ErrMsgUndefinedConstant                    = "constant %s is not defined"
+	ErrMsgInvalidUrl                           = "failed to parse %q as url"
+	ErrMsgUnsupportedUrlScheme                 = "url scheme %s is not supported"
 	ErrMsgFunctionNotExist                     = "function %s does not exist"
 	ErrMsgFunctionArgumentsLength              = "function %s takes %s"
 	ErrMsgFunctionInvalidArgument              = "%s for function %s"
@@ -76,7 +78,7 @@ const (
 	ErrMsgFileUnableToRead                     = "file %s is unable to be read"
 	ErrMsgFileLockTimeout                      = "file %s: lock wait timeout period exceeded"
 	ErrMsgFileNameAmbiguous                    = "filename %s is ambiguous"
-	ErrMsgDataParsing                          = "data parse error in file %s: %s"
+	ErrMsgDataParsing                          = "data parse error in %s: %s"
 	ErrMsgDataEncoding                         = "data encode error: %s"
 	ErrMsgTableFieldLength                     = "select query should return exactly %s for table %s"
 	ErrMsgTemporaryTableRedeclared             = "view %s is redeclared"
@@ -85,6 +87,8 @@ const (
 	ErrMsgDuplicateTableName                   = "table name %s is a duplicate"
 	ErrMsgTableNotLoaded                       = "table %s is not loaded"
 	ErrMsgStdinEmpty                           = "STDIN is empty"
+	ErrMsgInlineTableCannotBeUpdated           = "inline table cannot be updated"
+	ErrMsgAliasMustBeSpecifiedForUpdate        = "alias to table identification function or URL must be specified for update"
 	ErrMsgRowValueLengthInComparison           = "row value should contain exactly %s"
 	ErrMsgFieldLengthInComparison              = "select query should return exactly %s"
 	ErrMsgInvalidLimitPercentage               = "limit percentage %s is not a float value"
@@ -109,7 +113,7 @@ const (
 	ErrMsgRemoveFlagNotSupportedName           = "remove flag element syntax does not support %s"
 	ErrMsgInvalidFlagValueToBeRemoved          = "%s is an invalid value for %s to specify the element"
 	ErrMsgInvalidRuntimeInformation            = "%s is an unknown runtime information"
-	ErrMsgNotTable                             = "view has no attributes"
+	ErrMsgNotTable                             = "table attributes can only be set on files"
 	ErrMsgInvalidTableAttributeName            = "table attribute %s does not exist"
 	ErrMsgTableAttributeValueNotAllowedFormat  = "%s for %s is not allowed"
 	ErrMsgInvalidTableAttributeValue           = "%s"
@@ -122,7 +126,7 @@ const (
 	ErrMsgUnknownFormatPlaceholder             = "%q is an unknown placeholder"
 	ErrMsgFormatUnexpectedTermination          = "unexpected termination of format string"
 	ErrMsgExternalCommand                      = "external command: %s"
-	ErrMsgHttpRequest                          = "http request to %s: %s"
+	ErrMsgHttpRequest                          = "failed to get resource from %s: %s"
 	ErrMsgInvalidReloadType                    = "%s is an unknown reload type"
 	ErrMsgLoadConfiguration                    = "configuration loading error: %s"
 	ErrMsgDuplicateStatementName               = "statement %s is a duplicate"
@@ -532,6 +536,26 @@ type UndefinedConstantError struct {
 func NewUndefinedConstantError(expr parser.Constant) error {
 	return &UndefinedConstantError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgUndefinedConstant, expr), ReturnCodeApplicationError, ErrorUndefinedConstant),
+	}
+}
+
+type InvalidUrlError struct {
+	*BaseError
+}
+
+func NewInvalidUrlError(expr parser.Url) error {
+	return &InvalidUrlError{
+		NewBaseError(expr, fmt.Sprintf(ErrMsgInvalidUrl, expr), ReturnCodeApplicationError, ErrorInvalidUrl),
+	}
+}
+
+type UnsupportedUrlSchemeError struct {
+	*BaseError
+}
+
+func NewUnsupportedUrlSchemeError(expr parser.Url, scheme string) error {
+	return &UnsupportedUrlSchemeError{
+		NewBaseError(expr, fmt.Sprintf(ErrMsgUnsupportedUrlScheme, scheme), ReturnCodeApplicationError, ErrorUnsupportedUrlScheme),
 	}
 }
 
@@ -1020,6 +1044,26 @@ type StdinEmptyError struct {
 func NewStdinEmptyError(stdin parser.Stdin) error {
 	return &StdinEmptyError{
 		NewBaseError(stdin, ErrMsgStdinEmpty, ReturnCodeApplicationError, ErrorStdinEmpty),
+	}
+}
+
+type InlineTableCannotBeUpdatedError struct {
+	*BaseError
+}
+
+func NewInlineTableCannotBeUpdatedError(expr parser.QueryExpression) error {
+	return &InlineTableCannotBeUpdatedError{
+		NewBaseError(expr, ErrMsgInlineTableCannotBeUpdated, ReturnCodeApplicationError, ErrorInlineTableCannotBeUpdated),
+	}
+}
+
+type AliasMustBeSpecifiedForUpdateError struct {
+	*BaseError
+}
+
+func NewAliasMustBeSpecifiedForUpdateError(expr parser.QueryExpression) error {
+	return &AliasMustBeSpecifiedForUpdateError{
+		NewBaseError(expr, ErrMsgAliasMustBeSpecifiedForUpdate, ReturnCodeApplicationError, ErrorAliasMustBeSpecifiedForUpdate),
 	}
 }
 

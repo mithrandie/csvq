@@ -3,8 +3,6 @@ package query
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	gojson "encoding/json"
 	"fmt"
 	"io"
@@ -35,7 +33,7 @@ import (
 const fileLoadingPreparedRecordSetCap = 300
 const fileLoadingBuffer = 300
 
-const inlineObjectHashPrefix = "@__io__"
+const inlineTablePrefix = "@__io__"
 
 type ApplyView struct {
 	View     *View
@@ -46,21 +44,12 @@ type RecordReader interface {
 	Read() ([]text.RawText, error)
 }
 
-func inlineObjectCacheKey(tablePath parser.QueryExpression) string {
-	b := sha256.Sum256([]byte(getInlineObjectData(tablePath)))
-	return inlineObjectHashPrefix + hex.EncodeToString(b[:])
-}
-
-func isInlineObjectData(tablePath parser.QueryExpression) bool {
+func isTableObjectAsDataObject(tablePath parser.QueryExpression) bool {
 	_, ok := tablePath.(parser.Identifier)
 	return !ok
 }
 
-func getInlineObjectData(tablePath parser.QueryExpression) string {
-	return tablePath.(parser.PrimitiveType).Value.(*value.String).Raw()
-}
-
-func isInlineObjectURL(tablePath parser.QueryExpression) bool {
+func isTableObjectAsURL(tablePath parser.QueryExpression) bool {
 	i, ok := tablePath.(parser.Identifier)
 	if !ok {
 		return false
@@ -132,7 +121,10 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 	}
 
 	table := tableExpr.(parser.Table)
-	tableName := table.Name()
+	tableName, err := ParseTableName(ctx, scope, table)
+	if err != nil {
+		return nil, err
+	}
 
 	switch table.Object.(type) {
 	case parser.Dual:
@@ -156,16 +148,18 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		case parser.CSV_INLINE, parser.JSON_INLINE, parser.JSON_TABLE:
 			isInlineObject = true
 
-			if isInlineObjectData(tableObject.Path) {
+			if isTableObjectAsDataObject(tableObject.Path) {
 				p, err := Evaluate(ctx, scope, tableObject.Path)
 				if err != nil {
 					return nil, err
 				}
-				txt := value.ToString(p)
-				if value.IsNull(txt) {
+				d := value.ToString(p)
+				if value.IsNull(d) {
 					return nil, NewEmptyInlineTableError(tableObject)
 				}
-				tablePath = parser.PrimitiveType{BaseExpr: tableObject.GetBaseExpr(), Value: txt}
+				tablePath = DataObject{BaseExpr: tableObject.GetBaseExpr(), Raw: d.(*value.String).Raw()}
+			} else if isTableObjectAsURL(tableObject.Path) {
+				tablePath = parser.Url{BaseExpr: tableObject.GetBaseExpr(), Raw: tableObject.Path.(parser.Identifier).Literal}
 			}
 
 			forUpdate = false
@@ -334,14 +328,16 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			return nil, err
 		}
 
-		if isInlineObject {
-			view.FileInfo.Path = ""
-			view.FileInfo.ViewType = ViewTypeTemporaryTable
-		}
-
-	case parser.Identifier, parser.Stdin:
+	case parser.Identifier, parser.Url, parser.TableFunction, parser.Stdin:
 		options := scope.Tx.Flags.ImportOptions.Copy()
 		options.Format = option.AutoSelect
+
+		isInlineObject := false
+		if tableFunction, ok := table.Object.(parser.TableFunction); ok {
+			if strings.ToUpper(tableFunction.Name) == "INLINE" {
+				isInlineObject = true
+			}
+		}
 
 		view, err = loadObject(
 			ctx,
@@ -350,12 +346,13 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			tableName,
 			forUpdate,
 			useInternalId,
-			false,
+			isInlineObject,
 			options,
 		)
 		if err != nil {
 			return nil, err
 		}
+
 	case parser.Join:
 		join := table.Object.(parser.Join)
 		view, err = loadView(ctx, scope, join.Table, forUpdate, useInternalId)
@@ -369,7 +366,10 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				return nil, NewIncorrectLateralUsageError(t)
 			}
 
-			joinTableName := t.Name()
+			joinTableName, err := ParseTableName(ctx, scope, t)
+			if err != nil {
+				return nil, err
+			}
 
 			subquery := t.Object.(parser.Subquery)
 			var hfields Header
@@ -438,6 +438,14 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				return nil, err
 			}
 		}
+
+		if view.FileInfo != nil {
+			view.FileInfo.ViewType = ViewTypeInlineTable
+		}
+	}
+
+	if view.FileInfo != nil && !view.FileInfo.IsUpdatable() {
+		view.FileInfo.Path = ""
 	}
 
 	return view, err
@@ -527,7 +535,21 @@ func joinViews(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 	return nil
 }
 
-func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, stdin parser.Stdin, tableName parser.Identifier, forUpdate bool, useInternalId bool) (*View, error) {
+func loadObjectFromStdin(
+	ctx context.Context,
+	scope *ReferenceScope,
+	stdin parser.Stdin,
+	tableName parser.Identifier,
+	forUpdate bool,
+	useInternalId bool,
+	options option.ImportOptions,
+) (*View, error) {
+	if options.Format == option.AutoSelect {
+		options.Format = scope.Tx.Flags.ImportOptions.Format
+	}
+
+	fileInfo := NewStdinFileInfo(stdin.String(), options, scope.Tx.Flags.ExportOptions)
+
 	scope.Tx.viewLoadingMutex.Lock()
 	defer scope.Tx.viewLoadingMutex.Unlock()
 
@@ -581,6 +603,211 @@ func loadStdin(ctx context.Context, scope *ReferenceScope, fileInfo *FileInfo, s
 	return view, nil
 }
 
+func loadObjectFromString(
+	ctx context.Context,
+	scope *ReferenceScope,
+	data string,
+	tablePath parser.QueryExpression,
+	tableName parser.Identifier,
+	options option.ImportOptions,
+) (*View, error) {
+	fileInfo := NewInlineFileInfo(inlineTablePrefix+file.RandomString(12), options, scope.Tx.Flags.ExportOptions)
+
+	var fp io.ReadSeeker = strings.NewReader(data)
+	view, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tablePath)
+	if err != nil {
+		if _, ok := err.(Error); !ok {
+			err = NewDataParsingError(tablePath, tablePath.String(), err.Error())
+		}
+		return nil, err
+	}
+
+	if 0 < len(tableName.Literal) {
+		if err = scope.AddAlias(tableName, ""); err != nil {
+			return nil, err
+		}
+		if err = view.Header.Update(tableName.Literal, nil); err != nil {
+			return nil, err
+		}
+	}
+
+	return view, nil
+}
+
+func loadDataObject(
+	ctx context.Context,
+	scope *ReferenceScope,
+	dataObject DataObject,
+	tablePath parser.QueryExpression,
+	tableName parser.Identifier,
+	options option.ImportOptions,
+) (*View, error) {
+	if options.Format == option.AutoSelect {
+		options.Format = scope.Tx.Flags.ImportOptions.Format
+	}
+
+	return loadObjectFromString(ctx, scope, dataObject.Raw, tablePath, tableName, options)
+}
+
+func loadHttpObject(
+	ctx context.Context,
+	scope *ReferenceScope,
+	httpObject HttpObject,
+	tablePath parser.QueryExpression,
+	tableName parser.Identifier,
+	options option.ImportOptions,
+) (*View, error) {
+	scope.Tx.viewLoadingMutex.Lock()
+
+	urlResource, ok := scope.Tx.UrlCache[httpObject.URL]
+	if !ok {
+		res, err := http.Get(httpObject.URL)
+		if err != nil {
+			scope.Tx.viewLoadingMutex.Unlock()
+			return nil, NewHttpRequestError(tablePath, httpObject.URL, err.Error())
+		}
+		if 400 <= res.StatusCode {
+			scope.Tx.viewLoadingMutex.Unlock()
+			return nil, NewHttpRequestError(tablePath, httpObject.URL, fmt.Sprintf("code %d, status %q", res.StatusCode, res.Status))
+		}
+
+		urlResource, err = NewUrlResource(res)
+		if err != nil {
+			scope.Tx.viewLoadingMutex.Unlock()
+			return nil, err
+		}
+		scope.Tx.UrlCache[httpObject.URL] = urlResource
+	}
+
+	data := string(urlResource.Data)
+	scope.Tx.viewLoadingMutex.Unlock()
+
+	if options.Format == option.AutoSelect {
+		switch urlResource.MimeType {
+		case "text/csv":
+			options.Format = option.CSV
+		case "application/json":
+			options.Format = option.JSON
+		default:
+			options.Format = scope.Tx.Flags.ImportOptions.Format
+		}
+	}
+
+	return loadObjectFromString(ctx, scope, data, tablePath, tableName, options)
+}
+
+func loadInlineObjectFromFile(
+	ctx context.Context,
+	scope *ReferenceScope,
+	tableIdentifier parser.Identifier,
+	tableName parser.Identifier,
+	options option.ImportOptions,
+) (view *View, err error) {
+	scope.Tx.viewLoadingMutex.Lock()
+	defer scope.Tx.viewLoadingMutex.Unlock()
+
+	fileInfo, err := NewFileInfo(tableIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
+	if err != nil {
+		return
+	}
+	fileInfo.ViewType = ViewTypeInlineTable
+	fileInfo.SetDefaultFileInfoAttributes(options, scope.Tx.Flags.ExportOptions)
+
+	var fp io.ReadSeeker
+	cachedView, cacheExists := scope.Tx.CachedViews.Load(fileInfo.Path)
+
+	if cacheExists {
+		fp = cachedView.FileInfo.Handler.File()
+	} else {
+		h, e := file.NewHandlerForRead(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
+		if e != nil {
+			tableIdentifier.Literal = fileInfo.Path
+			err = ConvertFileHandlerError(e, tableIdentifier)
+			return
+		}
+		defer func() {
+			err = appendCompositeError(err, scope.Tx.FileContainer.Close(h))
+		}()
+		fp = h.File()
+	}
+	if _, err = fp.Seek(0, io.SeekStart); err != nil {
+		return nil, NewSystemError(err.Error())
+	}
+
+	view, err = loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tableIdentifier)
+	if err != nil {
+		if _, ok := err.(Error); !ok {
+			err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
+		}
+		return
+	}
+
+	if 0 < len(tableName.Literal) {
+		if err = scope.AddAlias(tableName, ""); err != nil {
+			return
+		}
+		if err = view.Header.Update(tableName.Literal, nil); err != nil {
+			return
+		}
+	}
+
+	if !scope.FilePathExists(tableIdentifier.Literal) {
+		scope.StoreFilePath(tableIdentifier.Literal, view.FileInfo.Path)
+	}
+
+	return
+}
+
+func loadObjectFromFile(
+	ctx context.Context,
+	scope *ReferenceScope,
+	tableIdentifier parser.Identifier,
+	tableName parser.Identifier,
+	forUpdate bool,
+	useInternalId bool,
+	options option.ImportOptions,
+) (view *View, err error) {
+	filePath, err := cacheViewFromFile(
+		ctx,
+		scope,
+		tableIdentifier,
+		forUpdate,
+		options,
+	)
+	if err != nil {
+		return
+	}
+
+	pathIdent := parser.Identifier{BaseExpr: tableIdentifier.GetBaseExpr(), Literal: filePath}
+	if useInternalId {
+		if view, err = scope.Tx.CachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
+			if err == errTableNotLoaded {
+				err = NewTableNotLoadedError(pathIdent)
+			}
+			return
+		}
+	} else {
+		if view, err = scope.Tx.CachedViews.Get(pathIdent); err != nil {
+			err = NewTableNotLoadedError(pathIdent)
+			return
+		}
+	}
+
+	if 0 < len(tableName.Literal) {
+		if err = scope.AddAlias(tableName, filePath); err != nil {
+			return
+		}
+	}
+
+	if !strings.EqualFold(FormatTableName(filePath), tableName.Literal) {
+		if err = view.Header.Update(tableName.Literal, nil); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
 func loadObject(
 	ctx context.Context,
 	scope *ReferenceScope,
@@ -592,272 +819,178 @@ func loadObject(
 	options option.ImportOptions,
 ) (*View, error) {
 	if stdin, ok := tablePath.(parser.Stdin); ok {
-		if options.Format == option.AutoSelect {
-			options.Format = scope.Tx.Flags.ImportOptions.Format
-		}
-
-		switch options.Format {
-		case option.TSV:
-			options.Delimiter = '\t'
-		case option.JSON, option.JSONL:
-			options.Encoding = text.UTF8
-		}
-
-		fileInfo := &FileInfo{
-			Path:               stdin.String(),
-			Format:             options.Format,
-			Delimiter:          options.Delimiter,
-			DelimiterPositions: options.DelimiterPositions,
-			SingleLine:         options.SingleLine,
-			JsonQuery:          options.JsonQuery,
-			Encoding:           options.Encoding,
-			LineBreak:          scope.Tx.Flags.ExportOptions.LineBreak,
-			NoHeader:           options.NoHeader,
-			ViewType:           ViewTypeStdin,
-		}
-		return loadStdin(ctx, scope, fileInfo, stdin, tableName, forUpdate, useInternalId)
+		return loadObjectFromStdin(ctx, scope, stdin, tableName, forUpdate, useInternalId, options)
 	}
 
-	if !isInlineObject {
-		tableIdentifier := tablePath.(parser.Identifier)
-
-		if scope.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, scope.RecursiveTable.Name.Literal) && scope.RecursiveTmpView != nil {
-			view := scope.RecursiveTmpView.Copy()
-			if !strings.EqualFold(scope.RecursiveTable.Name.Literal, tableName.Literal) {
-				if err := view.Header.Update(tableName.Literal, nil); err != nil {
-					return nil, err
-				}
-			}
-			return view, nil
-		}
-
-		if scope.InlineTableExists(tableIdentifier) {
-			if err := scope.AddAlias(tableName, ""); err != nil {
-				return nil, err
-			}
-
-			view, _ := scope.GetInlineTable(tableIdentifier)
-			if !strings.EqualFold(tableIdentifier.Literal, tableName.Literal) {
-				if err := view.Header.Update(tableName.Literal, nil); err != nil {
-					return nil, err
-				}
-			}
-			return view, nil
-		}
-
-		filePath := tableIdentifier.Literal
-		if scope.TemporaryTableExists(filePath) {
-			if err := scope.AddAlias(tableName, filePath); err != nil {
-				return nil, err
-			}
-
-			var view *View
-			var err error
-			pathIdent := parser.Identifier{Literal: filePath}
-			if useInternalId {
-				if view, err = scope.GetTemporaryTableWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
-					return nil, err
-				}
-			} else {
-				if view, err = scope.GetTemporaryTable(pathIdent); err != nil {
-					return nil, err
-				}
-			}
-
-			if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
-				if err := view.Header.Update(tableName.Literal, nil); err != nil {
-					return nil, err
-				}
-			}
-
-			return view, nil
-		}
-	}
-
-	filePath, err := cacheViewFromFile(
-		ctx,
-		scope,
-		tablePath,
-		forUpdate,
-		isInlineObject,
-		options,
-	)
+	originalTablePath := tablePath
+	tablePath, err := NormalizeTableObject(ctx, scope, tablePath)
 	if err != nil {
 		return nil, err
 	}
 
-	var view *View
-	pathIdent := parser.Identifier{BaseExpr: tablePath.GetBaseExpr(), Literal: filePath}
-	if useInternalId {
-		if view, err = scope.Tx.CachedViews.GetWithInternalId(ctx, pathIdent, scope.Tx.Flags); err != nil {
-			if err == errTableNotLoaded {
-				err = NewTableNotLoadedError(pathIdent)
-			}
-			return nil, err
-		}
-	} else {
-		if view, err = scope.Tx.CachedViews.Get(pathIdent); err != nil {
-			return nil, NewTableNotLoadedError(pathIdent)
-		}
+	if dataObject, ok := tablePath.(DataObject); ok {
+		return loadDataObject(ctx, scope, dataObject, originalTablePath, tableName, options)
 	}
+
+	if httpObject, ok := tablePath.(HttpObject); ok {
+		return loadHttpObject(ctx, scope, httpObject, originalTablePath, tableName, options)
+	}
+
+	tableIdentifier := tablePath.(parser.Identifier)
 
 	if isInlineObject {
-		filePath = ""
+		return loadInlineObjectFromFile(ctx, scope, tableIdentifier, tableName, options)
 	}
 
-	if 0 < len(tableName.Literal) {
-		if err = scope.AddAlias(tableName, filePath); err != nil {
-			return nil, err
+	if scope.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, scope.RecursiveTable.Name.Literal) && scope.RecursiveTmpView != nil {
+		view := scope.RecursiveTmpView.Copy()
+		if !strings.EqualFold(scope.RecursiveTable.Name.Literal, tableName.Literal) {
+			if err := view.Header.Update(tableName.Literal, nil); err != nil {
+				return nil, err
+			}
 		}
+		return view, nil
 	}
 
-	if !strings.EqualFold(parser.FormatTableName(filePath), tableName.Literal) {
-		if err = view.Header.Update(tableName.Literal, nil); err != nil {
+	if scope.InlineTableExists(tableIdentifier) {
+		if err := scope.AddAlias(tableName, ""); err != nil {
 			return nil, err
 		}
+
+		view, _ := scope.GetInlineTable(tableIdentifier)
+		if !strings.EqualFold(tableIdentifier.Literal, tableName.Literal) {
+			if err := view.Header.Update(tableName.Literal, nil); err != nil {
+				return nil, err
+			}
+		}
+		return view, nil
 	}
-	return view, nil
+
+	if scope.TemporaryTableExists(tableIdentifier.Literal) {
+		var view *View = nil
+		var err error
+
+		if useInternalId {
+			view, err = scope.GetTemporaryTableWithInternalId(ctx, tableIdentifier, scope.Tx.Flags)
+		} else {
+			view, err = scope.GetTemporaryTable(tableIdentifier)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		if err := scope.AddAlias(tableName, tableIdentifier.Literal); err != nil {
+			return nil, err
+		}
+
+		if !strings.EqualFold(FormatTableName(tableIdentifier.Literal), tableName.Literal) {
+			if err := view.Header.Update(tableName.Literal, nil); err != nil {
+				return nil, err
+			}
+		}
+
+		return view, nil
+	}
+
+	return loadObjectFromFile(ctx, scope, tableIdentifier, tableName, forUpdate, useInternalId, options)
 }
 
 func cacheViewFromFile(
 	ctx context.Context,
 	scope *ReferenceScope,
-	tablePath parser.QueryExpression,
+	tableIdentifier parser.Identifier,
 	forUpdate bool,
-	isInlineObject bool,
 	options option.ImportOptions,
-) (string, error) {
+) (filePath string, err error) {
 	scope.Tx.viewLoadingMutex.Lock()
 	defer scope.Tx.viewLoadingMutex.Unlock()
 
-	filePath, filePathForCacheKey, err := (func() (string, string, error) {
-		if isInlineObjectData(tablePath) {
-			return inlineObjectCacheKey(tablePath), "", nil
-		}
-		if isInlineObject && isInlineObjectURL(tablePath) {
-			return tablePath.(parser.Identifier).Literal, "", nil
-		}
-
-		ident := tablePath.(parser.Identifier)
-		fpathForCache := ""
-		fpath, ok := scope.LoadFilePath(ident.Literal)
-		if !ok {
-			p, err := CreateFilePath(ident, scope.Tx.Flags.Repository)
-			if err != nil {
-				return fpath, "", NewIOError(ident, err.Error())
+	filePath, view, isCached, err := func() (string, *View, bool, error) {
+		if p, ok := scope.LoadFilePath(tableIdentifier.Literal); ok {
+			if v, ok := scope.Tx.CachedViews.Load(p); ok {
+				return p, v, true, nil
 			}
-			fpath = p
-			fpathForCache = ident.Literal
 		}
 
-		return fpath, fpathForCache, nil
-	})()
+		// Uncommitted newly created tables are not yet created as files, so they need to be checked if they are
+		// registered in the cache with CreateFilePath(), instead of SearchFilePath().
+		p, e := CreateFilePath(tableIdentifier, scope.Tx.Flags.Repository)
+		if e != nil {
+			return "", nil, false, NewIOError(tableIdentifier, err.Error())
+		}
+		if v, ok := scope.Tx.CachedViews.Load(p); ok {
+			return p, v, true, nil
+		}
 
+		p, _, e = SearchFilePath(tableIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
+		if e != nil {
+			return "", nil, false, e
+		}
+		v, ok := scope.Tx.CachedViews.Load(p)
+		return p, v, ok, nil
+	}()
 	if err != nil {
-		return filePath, err
+		return
 	}
 
-	view, ok := scope.Tx.CachedViews.Load(filePath)
-	if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
-		fileInfo, err := (func() (*FileInfo, error) {
-			if isInlineObject && (isInlineObjectData(tablePath) || isInlineObjectURL(tablePath)) {
-				return &FileInfo{
-					Path:      filePath,
-					Format:    options.Format,
-					Delimiter: options.Delimiter,
-					Encoding:  options.Encoding,
-				}, nil
-			}
-
-			return NewFileInfo(tablePath.(parser.Identifier), scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
-		})()
-
-		if err != nil {
-			return filePath, err
-		}
-		filePath = fileInfo.Path
-
-		view, ok = scope.Tx.CachedViews.Load(filePath)
-		if !ok || (forUpdate && !view.FileInfo.ForUpdate) {
-			fileInfo.DelimiterPositions = options.DelimiterPositions
-			fileInfo.SingleLine = options.SingleLine
-			fileInfo.JsonQuery = option.TrimSpace(options.JsonQuery)
-			fileInfo.LineBreak = scope.Tx.Flags.ExportOptions.LineBreak
-			fileInfo.NoHeader = options.NoHeader
-			fileInfo.EncloseAll = scope.Tx.Flags.ExportOptions.EncloseAll
-			fileInfo.JsonEscape = scope.Tx.Flags.ExportOptions.JsonEscape
-
-			if ok {
-				fileInfo = view.FileInfo
-			}
-
+	if !isCached || (forUpdate && !view.FileInfo.ForUpdate) {
+		var fileInfo *FileInfo = nil
+		if isCached {
+			fileInfo = view.FileInfo
 			if err = scope.Tx.CachedViews.Dispose(scope.Tx.FileContainer, fileInfo.Path); err != nil {
-				return filePath, err
+				return
 			}
-
-			tableIdentifier := (func() parser.Identifier {
-				if isInlineObjectData(tablePath) {
-					return parser.Identifier{
-						BaseExpr: tablePath.GetBaseExpr(),
-						Literal:  getInlineObjectData(tablePath),
-					}
-				}
-
-				return tablePath.(parser.Identifier)
-			})()
-
-			var fp io.ReadSeeker
-			if isInlineObject && isInlineObjectData(tablePath) {
-				fp = strings.NewReader(getInlineObjectData(tablePath))
-			} else if isInlineObject && isInlineObjectURL(tablePath) {
-				i := tablePath.(parser.Identifier)
-				res, err := http.Get(i.Literal)
-				if err != nil {
-					return filePath, NewHttpRequestError(tablePath, i.Literal, err.Error())
-				}
-				if res.StatusCode < 200 || 300 <= res.StatusCode {
-					return filePath, NewHttpRequestError(tablePath, i.Literal, fmt.Sprintf("code %d, status %q", res.StatusCode, res.Status))
-				}
-
-				body, _ := ioutil.ReadAll(res.Body)
-				fp = bytes.NewReader(body)
-			} else {
-				if forUpdate {
-					h, err := file.NewHandlerForUpdate(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
-					if err != nil {
-						tableIdentifier.Literal = fileInfo.Path
-						return filePath, ConvertFileHandlerError(err, tableIdentifier)
-					}
-					fileInfo.Handler = h
-					fp = h.File()
-				} else {
-					h, err := file.NewHandlerForRead(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
-					if err != nil {
-						tableIdentifier.Literal = fileInfo.Path
-						return filePath, ConvertFileHandlerError(err, tableIdentifier)
-					}
-					defer func() {
-						err = appendCompositeError(err, scope.Tx.FileContainer.Close(h))
-					}()
-					fp = h.File()
-				}
-			}
-
-			loadView, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tableIdentifier)
+		} else {
+			fileInfo, err = NewFileInfo(tableIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
 			if err != nil {
-				if _, ok := err.(Error); !ok {
-					err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
-				}
-				return filePath, appendCompositeError(err, scope.Tx.FileContainer.Close(fileInfo.Handler))
+				return
 			}
-			loadView.FileInfo.ForUpdate = forUpdate
-			scope.Tx.CachedViews.Set(loadView)
+			fileInfo.SetDefaultFileInfoAttributes(options, scope.Tx.Flags.ExportOptions)
+			filePath = fileInfo.Path
 		}
+
+		var fp io.ReadSeeker
+		if forUpdate {
+			h, e := file.NewHandlerForUpdate(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
+			if e != nil {
+				tableIdentifier.Literal = fileInfo.Path
+				err = ConvertFileHandlerError(e, tableIdentifier)
+				return
+			}
+			fileInfo.Handler = h
+			fp = h.File()
+		} else {
+			h, e := file.NewHandlerForRead(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
+			if e != nil {
+				tableIdentifier.Literal = fileInfo.Path
+				err = ConvertFileHandlerError(e, tableIdentifier)
+				return
+			}
+			defer func() {
+				err = appendCompositeError(err, scope.Tx.FileContainer.Close(h))
+			}()
+			fp = h.File()
+		}
+
+		view, err = loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tableIdentifier)
+		if err != nil {
+			if _, ok := err.(Error); !ok {
+				err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
+			}
+			if forUpdate {
+				err = appendCompositeError(err, scope.Tx.FileContainer.Close(fileInfo.Handler))
+			}
+			return
+		}
+		view.FileInfo.ForUpdate = forUpdate
+		scope.Tx.CachedViews.Set(view)
 	}
-	if 0 < len(filePathForCacheKey) {
-		scope.StoreFilePath(filePathForCacheKey, filePath)
+
+	if !scope.FilePathExists(tableIdentifier.Literal) {
+		scope.StoreFilePath(tableIdentifier.Literal, filePath)
 	}
-	return filePath, nil
+
+	return
 }
 
 func loadViewFromFile(ctx context.Context, flags *option.Flags, fp io.ReadSeeker, fileInfo *FileInfo, options option.ImportOptions, expr parser.QueryExpression) (*View, error) {
@@ -942,13 +1075,17 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, file
 	}
 
 	view := NewView()
-	view.Header = NewHeaderWithAutofill(parser.FormatTableName(fileInfo.Path), header)
+	view.Header = NewHeaderWithAutofill(FormatTableName(fileInfo.Path), header)
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
 }
 
 func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, allowUnevenFields bool, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+	if fileInfo.Format == option.TSV {
+		fileInfo.Delimiter = '\t'
+	}
+
 	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
 	if err != nil {
 		return nil, NewCannotDetectFileEncodingError(expr)
@@ -994,7 +1131,7 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 		if len(header) < reader.FieldsPerRecord {
 			header = append(header, make([]string, reader.FieldsPerRecord-len(header))...)
 		}
-		view.Header = NewHeaderWithAutofill(parser.FormatTableName(fileInfo.Path), header)
+		view.Header = NewHeaderWithAutofill(FormatTableName(fileInfo.Path), header)
 
 		for i := range records {
 			if reader.FieldsPerRecord <= len(records[i]) {
@@ -1013,7 +1150,7 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 			records[i] = append(records[i], filling...)
 		}
 	} else {
-		view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+		view.Header = NewHeader(FormatTableName(fileInfo.Path), header)
 	}
 
 	view.RecordSet = records
@@ -1058,7 +1195,7 @@ func loadViewFromLTSVFile(ctx context.Context, flags *option.Flags, fp io.ReadSe
 	}
 
 	view := NewView()
-	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), header)
+	view.Header = NewHeader(FormatTableName(fileInfo.Path), header)
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
@@ -1165,7 +1302,7 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 	fileInfo.JsonEscape = escapeType
 
 	view := NewView()
-	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerLabels)
+	view.Header = NewHeader(FormatTableName(fileInfo.Path), headerLabels)
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
@@ -1305,7 +1442,7 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp io.R
 	fileInfo.JsonEscape = escapeType
 
 	view := NewView()
-	view.Header = NewHeader(parser.FormatTableName(fileInfo.Path), headerList)
+	view.Header = NewHeader(FormatTableName(fileInfo.Path), headerList)
 	view.RecordSet = recordSet
 	view.FileInfo = fileInfo
 	return view, nil
@@ -1339,6 +1476,10 @@ func NewViewFromGroupedRecord(ctx context.Context, flags *option.Flags, referenc
 		return nil, err
 	}
 	return view, nil
+}
+
+func (view *View) IsUpdatable() bool {
+	return view.FileInfo != nil && view.FileInfo.IsUpdatable()
 }
 
 func (view *View) Where(ctx context.Context, scope *ReferenceScope, clause parser.WhereClause) error {
@@ -1387,14 +1528,15 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 
 	gm := NewGoroutineTaskManager(view.RecordLen(), -1, scope.Tx.Flags.CPU)
 	groupsList := make([]map[string][]int, gm.Number)
-	groupKeyCnt := make(map[string]int, 20)
-	groupKeys := make([]string, 0, 20)
+	groupKeyCnt := make(map[string]int, 40)
+	groupKeys := make([]string, 0, 40)
 	mtx := &sync.Mutex{}
 
 	var grpFn = func(thIdx int) {
 		start, end := gm.RecordRange(thIdx)
 		seqScope := scope.CreateScopeForSequentialEvaluation(view)
 		groups := make(map[string][]int, 20)
+		values := make([]value.Primary, len(items))
 
 	GroupKeyLoop:
 		for i := start; i < end; i++ {
@@ -1407,7 +1549,6 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 
 			seqScope.Records[0].recordIndex = i
 
-			values := make([]value.Primary, len(items))
 			for i, item := range items {
 				p, e := Evaluate(ctx, seqScope, item)
 				if e != nil {
@@ -1424,7 +1565,7 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 			if _, ok := groups[key]; ok {
 				groups[key] = append(groups[key], i)
 			} else {
-				groups[key] = make([]int, 0, view.RecordLen()/18)
+				groups[key] = make([]int, 0, int(math.Min(float64(view.RecordLen()/18), 1000)))
 				groups[key] = append(groups[key], i)
 				mtx.Lock()
 				if _, ok := groupKeyCnt[key]; !ok {
@@ -1827,7 +1968,7 @@ func (view *View) numberOfColumnsToBeAdded(exprs []parser.QueryExpression, funcs
 			return 0
 		}
 
-		identifier := parser.FormatFieldIdentifier(fn)
+		identifier := FormatFieldIdentifier(fn)
 
 		if _, ok := analyticFunctionIdentifiers[identifier]; ok {
 			return 0
@@ -1907,7 +2048,7 @@ func (view *View) evalColumn(ctx context.Context, scope *ReferenceScope, obj par
 		}); err != nil {
 			return idx, err
 		}
-		view.Header, idx = AddHeaderField(view.Header, parser.FormatFieldIdentifier(obj), parser.FormatFieldLabel(obj), alias)
+		view.Header, idx = AddHeaderField(view.Header, FormatFieldIdentifier(obj), FormatFieldLabel(obj), alias)
 	}
 
 	if 0 < len(alias) {
@@ -2456,7 +2597,7 @@ func (view *View) ListValuesForAggregateFunctions(ctx context.Context, scope *Re
 }
 
 func (view *View) RestoreHeaderReferences() error {
-	return view.Header.Update(parser.FormatTableName(view.FileInfo.Path), nil)
+	return view.Header.Update(FormatTableName(view.FileInfo.Path), nil)
 }
 
 func (view *View) FieldIndex(fieldRef parser.QueryExpression) (int, error) {

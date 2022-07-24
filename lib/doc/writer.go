@@ -1,4 +1,4 @@
-package query
+package doc
 
 import (
 	"bufio"
@@ -7,16 +7,11 @@ import (
 
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/go-text/color"
-
-	"golang.org/x/crypto/ssh/terminal"
 )
 
-const (
-	DefaultLineWidth = 75
-	DefaultPadding   = 1
-)
+const DefaultPadding = 1
 
-type ObjectWriter struct {
+type Writer struct {
 	Flags   *option.Flags
 	Palette *color.Palette
 
@@ -37,22 +32,11 @@ type ObjectWriter struct {
 	Column    int
 }
 
-func NewObjectWriter(tx *Transaction) *ObjectWriter {
-	maxWidth := DefaultLineWidth
-	if tx.Session.Terminal() != nil {
-		if termw, _, err := tx.Session.Terminal().GetSize(); err == nil {
-			maxWidth = termw
-		}
-	} else {
-		if w, _, err := terminal.GetSize(int(tx.Session.ScreenFd())); err == nil {
-			maxWidth = w
-		}
-	}
-
-	return &ObjectWriter{
-		Flags:       tx.Flags,
-		Palette:     tx.Palette,
-		MaxWidth:    maxWidth,
+func NewWriter(screenWidth int, flags *option.Flags, palette *color.Palette) *Writer {
+	return &Writer{
+		Flags:       flags,
+		Palette:     palette,
+		MaxWidth:    screenWidth,
 		Indent:      0,
 		IndentWidth: 4,
 		Padding:     DefaultPadding,
@@ -62,7 +46,7 @@ func NewObjectWriter(tx *Transaction) *ObjectWriter {
 	}
 }
 
-func (w *ObjectWriter) Clear() {
+func (w *Writer) Clear() {
 	w.Title1 = ""
 	w.Title1Effect = ""
 	w.Title2 = ""
@@ -73,15 +57,15 @@ func (w *ObjectWriter) Clear() {
 	w.buf.Reset()
 }
 
-func (w *ObjectWriter) WriteColorWithoutLineBreak(s string, effect string) {
+func (w *Writer) WriteColorWithoutLineBreak(s string, effect string) {
 	w.write(s, effect, true)
 }
 
-func (w *ObjectWriter) WriteColor(s string, effect string) {
+func (w *Writer) WriteColor(s string, effect string) {
 	w.write(s, effect, false)
 }
 
-func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
+func (w *Writer) write(s string, effect string, withoutLineBreak bool) {
 	startOfLine := w.Column < 1
 
 	if startOfLine {
@@ -103,38 +87,38 @@ func (w *ObjectWriter) write(s string, effect string, withoutLineBreak bool) {
 	}
 }
 
-func (w *ObjectWriter) writeToBuf(s string) {
+func (w *Writer) writeToBuf(s string) {
 	w.buf.WriteString(s)
 }
 
-func (w *ObjectWriter) LeadingSpacesWidth() int {
+func (w *Writer) LeadingSpacesWidth() int {
 	return w.Padding + (w.Indent * w.IndentWidth)
 }
 
-func (w *ObjectWriter) FitInLine(s string) bool {
+func (w *Writer) FitInLine(s string) bool {
 	if w.MaxWidth-(w.Padding*2)-1 < w.Column+option.TextWidth(s, w.Flags) {
 		return false
 	}
 	return true
 }
 
-func (w *ObjectWriter) WriteWithoutLineBreak(s string) {
+func (w *Writer) WriteWithoutLineBreak(s string) {
 	w.WriteColorWithoutLineBreak(s, option.NoEffect)
 }
 
-func (w *ObjectWriter) Write(s string) {
+func (w *Writer) Write(s string) {
 	w.WriteColor(s, option.NoEffect)
 }
 
-func (w *ObjectWriter) WriteWithAutoLineBreak(s string) {
+func (w *Writer) WriteWithAutoLineBreak(s string) {
 	w.writeWithAutoLineBreak(s, false, true)
 }
 
-func (w *ObjectWriter) WriteWithAutoLineBreakWithContinueMark(s string) {
+func (w *Writer) WriteWithAutoLineBreakWithContinueMark(s string) {
 	w.writeWithAutoLineBreak(s, true, false)
 }
 
-func (w *ObjectWriter) writeWithAutoLineBreak(s string, useContinueMark bool, useBlock bool) {
+func (w *Writer) writeWithAutoLineBreak(s string, useContinueMark bool, useBlock bool) {
 	continueMark := ""
 	if useContinueMark {
 		continueMark = "\\"
@@ -199,11 +183,11 @@ func (w *ObjectWriter) writeWithAutoLineBreak(s string, useContinueMark bool, us
 	}
 }
 
-func (w *ObjectWriter) WriteSpaces(l int) {
+func (w *Writer) WriteSpaces(l int) {
 	w.Write(strings.Repeat(" ", l))
 }
 
-func (w *ObjectWriter) NewLine() {
+func (w *Writer) NewLine() {
 	w.buf.WriteRune('\n')
 	if w.lineWidth < w.Column {
 		w.lineWidth = w.Column
@@ -211,27 +195,27 @@ func (w *ObjectWriter) NewLine() {
 	w.Column = 0
 }
 
-func (w *ObjectWriter) BeginBlock() {
+func (w *Writer) BeginBlock() {
 	w.Indent++
 }
 
-func (w *ObjectWriter) EndBlock() {
+func (w *Writer) EndBlock() {
 	w.Indent--
 }
 
-func (w *ObjectWriter) BeginSubBlock() {
+func (w *Writer) BeginSubBlock() {
 	w.subBlock = w.Column - w.LeadingSpacesWidth()
 }
 
-func (w *ObjectWriter) EndSubBlock() {
+func (w *Writer) EndSubBlock() {
 	w.subBlock = 0
 }
 
-func (w *ObjectWriter) ClearBlock() {
+func (w *Writer) ClearBlock() {
 	w.Indent = 0
 }
 
-func (w *ObjectWriter) String() string {
+func (w *Writer) String() string {
 	var header bytes.Buffer
 	if 0 < len(w.Title1) || 0 < len(w.Title2) {
 		tw := option.TextWidth(w.Title1, w.Flags) + option.TextWidth(w.Title2, w.Flags)

@@ -126,7 +126,7 @@ func (h Header) ContainsObject(obj parser.QueryExpression) (int, bool) {
 		}
 	}
 
-	column := parser.FormatFieldIdentifier(obj)
+	column := FormatFieldIdentifier(obj)
 
 	idx := -1
 	for i, f := range h {

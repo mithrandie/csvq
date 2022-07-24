@@ -65,9 +65,9 @@ var aliasMapGetTests = []struct {
 		Result: "/PATH/TO/TBL1.CSV",
 	},
 	{
-		Name:  "AliasMap Get Empty Path",
-		Alias: parser.Identifier{Literal: "tbl2"},
-		Error: "table tbl2 is not loaded",
+		Name:   "AliasMap Get Empty Path",
+		Alias:  parser.Identifier{Literal: "tbl2"},
+		Result: "",
 	},
 	{
 		Name:  "AliasMap Get Not Loaded Error",

@@ -267,7 +267,7 @@ func appendAnalyticFunctionToListIfNotExist(list1 []parser.AnalyticFunction, lis
 	var createMap = func(list []parser.AnalyticFunction) map[string]parser.AnalyticFunction {
 		m := make(map[string]parser.AnalyticFunction, len(list))
 		for _, v := range list {
-			m[parser.FormatFieldIdentifier(v)] = v
+			m[FormatFieldIdentifier(v)] = v
 		}
 		return m
 	}

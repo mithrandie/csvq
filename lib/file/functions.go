@@ -26,12 +26,16 @@ func randStrForLock() *rand.Rand {
 	return randForLock
 }
 
-func rlockFileSuffix() string {
-	l := make([]rune, rlockFileSuffixLen)
-	for i := 0; i < rlockFileSuffixLen; i++ {
-		l[i] = letterRunes[randStrForLock().Intn(len(letterRunes))]
+func RandomString(length int) string {
+	r := make([]rune, length)
+	for i := 0; i < length; i++ {
+		r[i] = letterRunes[randStrForLock().Intn(len(letterRunes))]
 	}
-	return "." + string(l) + RLockFileSuffix
+	return string(r)
+}
+
+func rlockFileSuffix() string {
+	return "." + RandomString(rlockFileSuffixLen) + RLockFileSuffix
 }
 
 func GetTimeoutContext(ctx context.Context, waitTimeOut time.Duration) (context.Context, context.CancelFunc) {

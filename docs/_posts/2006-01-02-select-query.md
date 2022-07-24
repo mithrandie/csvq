@@ -128,12 +128,10 @@ table_entity
 
 table_identifier
   : table_name
+  | url
+  | table_identification_function
   | STDIN
   
-inline_table_identifier
-  : table_name
-  | url
-
 laterable_table
   : subquery
   | subquery alias
@@ -158,6 +156,12 @@ join_condition
   : ON condition
   | USING (column_name [, column_name, ...])
 
+table_identification_function
+  : FILE::(file_path)
+  : INLINE::(file_path)
+  : URL::(url_string)
+  : DATA::(data_string)
+
 table_object
   : CSV(delimiter, table_identifier [, encoding [, no_header [, without_null]]])
   | FIXED(delimiter_positions, table_identifier [, encoding [, no_header [, without_null]]])
@@ -165,11 +169,15 @@ table_object
   | JSONL(json_query, table_identifier)
   | LTSV(table_identifier [, encoding [, without_null]])
 
-inline_table_object
+inline_table_object  -- Deprecated. Table identification functions can be used instead.
   : CSV_INLINE(delimiter, inline_table_identifier [, encoding [, no_header [, without_null]]])
   | CSV_INLINE(delimiter, csv_data)
   | JSON_INLINE(json_query, inline_table_identifier [, encoding [, no_header [, without_null]]])
   | JSON_INLINE(json_query, json_data)
+
+inline_table_identifier
+  : table_name
+  | url_identifier
 
 ```
 
@@ -179,7 +187,7 @@ _table_name_
   A _table_name_ represents a file path, a [temporary table]({{ '/reference/temporary-table.html' | relative_url }}), or a [inline table]({{ '/reference/common-table-expression.html' | relative_url }}).
   You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#options' | relative_url }}) as a file path.
   
-  When the file name extension is ".csv", ".tsv", ".json" or ".txt", the format to be loaded is automatically determined by the file extension and you can omit it. 
+  When the file name extension is ".csv", ".tsv", ".json", ".jsonl" or ".txt", the format to be loaded is automatically determined by the file extension, and you can omit it. 
   
   ```sql
   FROM `user.csv`          -- Relative path
@@ -190,12 +198,68 @@ _table_name_
   The specifications of the command options are used as file attributes such as encoding to be loaded. 
   If you want to specify the different attributes for each file, you can use _table_object_ expressions for each file to load.
 
-  Once a file is loaded, then the data is cached and it can be loaded with only file name after that within the transaction.
+  Once a file is loaded, then the data is cached, and it can be loaded with only file name after that within the transaction.
 
 _url_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+: A string of characters representing URL starting with a schema name and a colon.
 
-  A URL of the http or https scheme to refer to a resource.
+  "http", "https" and "file" schemes are available.
+
+  ```sql
+  https://example.com/files/data.csv       -- Remote resource downloaded using HTTP GET method
+  file:///C:/Users/yourname/files/data.csv -- Local file specified by absolute path
+  file:./data.csv                          -- Local file specified by relative path
+  ```
+
+  An inline table is created from remote resources.
+  The downloaded data is cached until the transaction ends.
+
+  The file format is automatically determined when the http response specifies the following content types.
+
+| MIME type        | Format |
+|:-----------------|:-------|
+| text/csv         | CSV    |
+| application/json | JSON   |
+
+_table_identification_function_
+: Function notation with a name followed by two colons.
+
+  - FILE::(file_path)
+
+    file_path: [string]({{ '/reference/value.html#string' | relative_url }})
+
+    This is the same as specifying a file using _table_name_.
+  
+  - INLINE::(file_path)
+
+    file_path: [string]({{ '/reference/value.html#string' | relative_url }})
+
+    Files read by this function are not cached and cannot be updated.
+
+  - URL::(url_string)
+
+    url_string: [string]({{ '/reference/value.html#string' | relative_url }})
+
+    When specifying a resource using _url_, the path must be encoded, but this function does not require encoding.
+
+  - DATA::(data_string)
+
+    file_path: [string]({{ '/reference/value.html#string' | relative_url }})
+
+    This function creates an inline table from a string.
+
+  Example of use in a query:
+  
+  ```sql
+  SELECT id,
+         tag_name,
+         (SELECT COUNT(*) FROM JSON('', DATA::(assets))) AS number_of_assets,
+         published_at
+    FROM https://api.github.com/repos/mithrandie/csvq/releases
+   WHERE prerelease = false
+   ORDER BY published_at DESC
+   LIMIT 10
+  ```
 
 _alias_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
@@ -217,27 +281,13 @@ _condition_
 _column_name_
 : [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
 
+_delimiter_  
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
 _json_query_
 : [JSON Query]({{ '/reference/json.html#query' | relative_url }})
 
   Empty string is equivalent to "{}".
-
-_json_file_
-: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
-  
-  A _json_file_ represents a json file path.
-  You can use absolute path or relative path from the directory specified by the ["--repository" option]({{ '/reference/command.html#options' | relative_url }}) as a json file path.
-  
-  If a file name extension is ".json", you can omit it. 
-
-_csv_data_
-: [string]({{ '/reference/value.html#string' | relative_url }})
-
-_json_data_
-: [string]({{ '/reference/value.html#string' | relative_url }})
-
-_delimiter_  
-: [string]({{ '/reference/value.html#string' | relative_url }})
 
 _delimiter_positions_  
 : [string]({{ '/reference/value.html#string' | relative_url }})
@@ -254,6 +304,17 @@ _no_header_
 
 _without_null_
 : [boolean]({{ '/reference/value.html#boolean' | relative_url }})
+
+_url_identifier_
+: [identifier]({{ '/reference/statement.html#parsing' | relative_url }})
+
+  A URL of the http or https scheme to refer to a resource.
+
+_csv_data_
+: [string]({{ '/reference/value.html#string' | relative_url }})
+
+_json_data_
+: [string]({{ '/reference/value.html#string' | relative_url }})
 
 #### Special Tables
 {: #special_tables}

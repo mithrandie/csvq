@@ -88,10 +88,7 @@ func DeclareView(ctx context.Context, scope *ReferenceScope, expr parser.ViewDec
 		view.RecordSet = RecordSet{}
 	}
 
-	view.FileInfo = &FileInfo{
-		Path:     expr.View.Literal,
-		ViewType: ViewTypeTemporaryTable,
-	}
+	view.FileInfo = NewTemporaryTableFileInfo(expr.View.Literal)
 	view.CreateRestorePoint()
 
 	scope.SetTemporaryTable(view)
@@ -369,6 +366,9 @@ func Insert(ctx context.Context, scope *ReferenceScope, query parser.InsertQuery
 	if err != nil {
 		return nil, insertRecords, err
 	}
+	if !view.IsUpdatable() {
+		return nil, insertRecords, NewInlineTableCannotBeUpdatedError(query.Table.Object)
+	}
 
 	fields := query.Fields
 	if fields == nil {
@@ -389,9 +389,9 @@ func Insert(ctx context.Context, scope *ReferenceScope, query parser.InsertQuery
 		return nil, insertRecords, err
 	}
 
-	if !view.FileInfo.IsFile() {
+	if view.FileInfo.IsInMemoryTable() {
 		scope.ReplaceTemporaryTable(view)
-	} else {
+	} else if view.FileInfo.IsFile() {
 		scope.Tx.CachedViews.Set(view)
 	}
 
@@ -430,17 +430,30 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 	updatedCount := make(map[string]int)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		tableName := table.Name()
+		tableName, err := ParseTableName(ctx, queryScope, table)
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(tableName.Literal) < 1 {
+			return nil, nil, NewAliasMustBeSpecifiedForUpdateError(table.Object)
+		}
+
 		fpath, err := queryScope.GetAlias(tableName)
 		if err != nil {
 			return nil, nil, err
+		}
+		if len(fpath) < 1 {
+			return nil, nil, NewInlineTableCannotBeUpdatedError(table.Object)
 		}
 		viewKey := strings.ToUpper(tableName.Literal)
 
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToUpdate[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToUpdate[viewKey], _ = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToUpdate[viewKey], err = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
+			if err != nil {
+				return nil, nil, NewInlineTableCannotBeUpdatedError(table.Object)
+			}
 		}
 		if err = viewsToUpdate[viewKey].Header.Update(tableName.Literal, nil); err != nil {
 			return nil, nil, err
@@ -506,9 +519,9 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 			return nil, nil, err
 		}
 
-		if !v.FileInfo.IsFile() {
+		if v.FileInfo.IsInMemoryTable() {
 			scope.ReplaceTemporaryTable(v)
-		} else {
+		} else if v.FileInfo.IsFile() {
 			scope.Tx.CachedViews.Set(v)
 		}
 
@@ -542,6 +555,9 @@ func Replace(ctx context.Context, scope *ReferenceScope, query parser.ReplaceQue
 	if err != nil {
 		return nil, replaceRecords, err
 	}
+	if !view.IsUpdatable() {
+		return nil, replaceRecords, NewInlineTableCannotBeUpdatedError(query.Table.Object)
+	}
 
 	fields := query.Fields
 	if fields == nil {
@@ -562,9 +578,9 @@ func Replace(ctx context.Context, scope *ReferenceScope, query parser.ReplaceQue
 		return nil, replaceRecords, err
 	}
 
-	if !view.FileInfo.IsFile() {
+	if view.FileInfo.IsInMemoryTable() {
 		scope.ReplaceTemporaryTable(view)
-	} else {
+	} else if view.FileInfo.IsFile() {
 		scope.Tx.CachedViews.Set(view)
 	}
 
@@ -586,13 +602,7 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 		if 1 < len(tables) {
 			return nil, nil, NewDeleteTableNotSpecifiedError(query)
 		}
-		table := tables[0].(parser.Table)
-		switch table.Object.(type) {
-		case parser.Identifier, parser.TableObject, parser.Stdin:
-			query.Tables = tables
-		default:
-			return nil, nil, NewDeleteTableNotSpecifiedError(query)
-		}
+		query.Tables = tables
 	}
 
 	queryScope.Tx.operationMutex.Lock()
@@ -613,17 +623,30 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 	deletedIndices := make(map[string]map[int]bool)
 	for _, v := range query.Tables {
 		table := v.(parser.Table)
-		tableName := table.Name()
+		tableName, err := ParseTableName(ctx, queryScope, table)
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(tableName.Literal) < 1 {
+			return nil, nil, NewAliasMustBeSpecifiedForUpdateError(table.Object)
+		}
+
 		fpath, err := queryScope.GetAlias(tableName)
 		if err != nil {
 			return nil, nil, err
 		}
-
+		if len(fpath) < 1 {
+			return nil, nil, NewInlineTableCannotBeUpdatedError(table.Object)
+		}
 		viewKey := strings.ToUpper(tableName.Literal)
+
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToDelete[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToDelete[viewKey], _ = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToDelete[viewKey], err = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
+			if err != nil {
+				return nil, nil, NewInlineTableCannotBeUpdatedError(table.Object)
+			}
 		}
 		if err = viewsToDelete[viewKey].Header.Update(tableName.Literal, nil); err != nil {
 			return nil, nil, err
@@ -666,9 +689,9 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 			return nil, nil, err
 		}
 
-		if !v.FileInfo.IsFile() {
+		if v.FileInfo.IsInMemoryTable() {
 			scope.ReplaceTemporaryTable(v)
-		} else {
+		} else if v.FileInfo.IsFile() {
 			scope.Tx.CachedViews.Set(v)
 		}
 
@@ -709,7 +732,7 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 			return nil, appendCompositeError(err, queryScope.Tx.FileContainer.Close(fileInfo.Handler))
 		}
 
-		if err = view.Header.Update(parser.FormatTableName(fileInfo.Path), query.Fields); err != nil {
+		if err = view.Header.Update(FormatTableName(fileInfo.Path), query.Fields); err != nil {
 			if _, ok := err.(*FieldLengthNotMatchError); ok {
 				err = NewTableFieldLengthError(query.Query.(parser.SelectQuery), query.Table, len(query.Fields))
 			}
@@ -728,7 +751,7 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 			fields[i] = lit
 			fieldsMap[ulit] = true
 		}
-		header := NewHeader(parser.FormatTableName(fileInfo.Path), fields)
+		header := NewHeader(FormatTableName(fileInfo.Path), fields)
 		view = &View{
 			Header:    header,
 			RecordSet: RecordSet{},
@@ -758,6 +781,9 @@ func AddColumns(ctx context.Context, scope *ReferenceScope, query parser.AddColu
 	view, err := LoadViewFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, 0, err
+	}
+	if !view.IsUpdatable() {
+		return nil, 0, NewInlineTableCannotBeUpdatedError(query.Table)
 	}
 
 	var insertPos int
@@ -799,7 +825,7 @@ func AddColumns(ctx context.Context, scope *ReferenceScope, query parser.AddColu
 		columnNamesMap[ulit] = true
 	}
 
-	addHeader := NewHeader(parser.FormatTableName(view.FileInfo.Path), fields)
+	addHeader := NewHeader(FormatTableName(view.FileInfo.Path), fields)
 	header := make(Header, newFieldLen)
 	for i, v := range view.Header {
 		var idx int
@@ -852,9 +878,9 @@ func AddColumns(ctx context.Context, scope *ReferenceScope, query parser.AddColu
 	view.Header = header
 	view.RecordSet = records
 
-	if !view.FileInfo.IsFile() {
+	if view.FileInfo.IsInMemoryTable() {
 		scope.ReplaceTemporaryTable(view)
-	} else {
+	} else if view.FileInfo.IsFile() {
 		scope.Tx.CachedViews.Set(view)
 	}
 
@@ -871,6 +897,9 @@ func DropColumns(ctx context.Context, scope *ReferenceScope, query parser.DropCo
 	view, err := LoadViewFromTableIdentifier(ctx, queryScope, query.Table, true, false)
 	if err != nil {
 		return nil, 0, err
+	}
+	if !view.IsUpdatable() {
+		return nil, 0, NewInlineTableCannotBeUpdatedError(query.Table)
 	}
 
 	dropIndices := NewUintPool(len(query.Columns), LimitToUseUintSlicePool)
@@ -895,9 +924,9 @@ func DropColumns(ctx context.Context, scope *ReferenceScope, query parser.DropCo
 		return nil, 0, err
 	}
 
-	if !view.FileInfo.IsFile() {
+	if view.FileInfo.IsInMemoryTable() {
 		scope.ReplaceTemporaryTable(view)
-	} else {
+	} else if view.FileInfo.IsFile() {
 		scope.Tx.CachedViews.Set(view)
 	}
 
@@ -916,6 +945,9 @@ func RenameColumn(ctx context.Context, scope *ReferenceScope, query parser.Renam
 	if err != nil {
 		return nil, err
 	}
+	if !view.IsUpdatable() {
+		return nil, NewInlineTableCannotBeUpdatedError(query.Table)
+	}
 
 	columnNames := view.Header.TableColumnNames()
 	columnNamesMap := make(map[string]bool, len(columnNames))
@@ -933,9 +965,9 @@ func RenameColumn(ctx context.Context, scope *ReferenceScope, query parser.Renam
 
 	view.Header[idx].Column = query.New.Literal
 
-	if !view.FileInfo.IsFile() {
+	if view.FileInfo.IsInMemoryTable() {
 		scope.ReplaceTemporaryTable(view)
-	} else {
+	} else if view.FileInfo.IsFile() {
 		scope.Tx.CachedViews.Set(view)
 	}
 
@@ -1016,7 +1048,7 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 		return nil, log, NewInvalidTableAttributeValueError(query, err.Error())
 	}
 
-	w := NewObjectWriter(scope.Tx)
+	w := scope.Tx.CreateDocumentWriter()
 	w.WriteColorWithoutLineBreak("Path: ", option.LableEffect)
 	w.WriteColorWithoutLineBreak(fileInfo.Path, option.ObjectEffect)
 	w.NewLine()

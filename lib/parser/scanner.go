@@ -36,7 +36,7 @@ const (
 	BeginExpression = '{'
 	EndExpression   = '}'
 
-	ConstantSign = ':'
+	IdentifierDelimiter = ':'
 )
 
 var errTokenIsNotKeyword = errors.New("token is not keyword")
@@ -54,6 +54,17 @@ var comparisonOperators = []string{
 
 var stringOperators = []string{
 	"||",
+}
+
+var runesNotIncludedInUrl = []rune{
+	'{',
+	'}',
+	'|',
+	'\\',
+	'^',
+	'[',
+	']',
+	'`',
 }
 
 var aggregateFunctions = []string{
@@ -92,7 +103,7 @@ var functionsWithIgnoreNulls = []string{
 	"LEAD",
 }
 
-var ConstantDelimiter = string(ConstantSign) + string(ConstantSign)
+var ConstantDelimiter = string(IdentifierDelimiter) + string(IdentifierDelimiter)
 
 func TokenLiteral(token int) string {
 	if TokenFrom <= token && token <= TokenTo {
@@ -153,11 +164,24 @@ func (s *Scanner) holderNameExists(name string) bool {
 }
 
 func (s *Scanner) peek() rune {
-	if len(s.src) <= s.srcPos {
+	return s.peekFurtherAhead(1)
+}
+
+func (s *Scanner) peekFurtherAhead(n int) rune {
+	pos := n - 1 + s.srcPos
+
+	if len(s.src) <= pos {
 		return EOF
 	}
 
-	return s.src[s.srcPos]
+	return s.src[pos]
+}
+
+func (s *Scanner) peekNextLetter(n int) rune {
+	for unicode.IsSpace(s.peekFurtherAhead(n)) {
+		n = n + 1
+	}
+	return s.peekFurtherAhead(n)
 }
 
 func (s *Scanner) next() rune {
@@ -244,13 +268,27 @@ func (s *Scanner) Scan() (Token, error) {
 		} else if s.isFunctionsWithIgnoreNulls(literal) {
 			token = FUNCTION_WITH_INS
 		} else {
-			if s.peek() == ':' {
-				err = s.scanConstant()
-				literal = s.literal.String()
-				if err != nil {
-					token = Uncategorized
+			if unicode.IsLetter(ch) && s.peek() == ':' {
+				if s.peekFurtherAhead(2) == ':' {
+					if s.peekNextLetter(3) == '(' {
+						s.next()
+						s.next()
+						token = TABLE_FUNCTION
+					} else {
+						s.literal.WriteRune(s.next())
+						s.literal.WriteRune(s.next())
+						err = s.scanConstant()
+						literal = s.literal.String()
+						token = CONSTANT
+						if err != nil {
+							token = Uncategorized
+						}
+					}
 				} else {
-					token = CONSTANT
+					s.literal.WriteRune(s.next())
+					s.scanUrl()
+					literal = s.literal.String()
+					token = URL
 				}
 			} else {
 				token = IDENTIFIER
@@ -367,11 +405,6 @@ func (s *Scanner) scanIdentifier(head rune) {
 }
 
 func (s *Scanner) scanConstant() error {
-	s.literal.WriteRune(s.next())
-	if s.peek() != ':' {
-		return errInvalidConstantSyntax
-	}
-	s.literal.WriteRune(s.next())
 	if !s.isIdentRune(s.peek()) {
 		return errInvalidConstantSyntax
 	}
@@ -380,6 +413,23 @@ func (s *Scanner) scanConstant() error {
 		s.literal.WriteRune(s.next())
 	}
 	return nil
+}
+
+func (s *Scanner) scanUrl() int {
+	oldPos := s.srcPos
+	for !unicode.IsSpace(s.peek()) && !s.isRuneNotIncludedInUrl(s.peek()) && s.peek() != EOF {
+		s.literal.WriteRune(s.next())
+	}
+	return s.srcPos - oldPos
+}
+
+func (s *Scanner) isRuneNotIncludedInUrl(ch rune) bool {
+	for _, r := range runesNotIncludedInUrl {
+		if r == ch {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Scanner) isIdentRune(ch rune) bool {

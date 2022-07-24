@@ -5,11 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/mithrandie/csvq/lib/doc"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -18,6 +21,27 @@ import (
 	"github.com/mithrandie/go-text/color"
 	"github.com/mithrandie/go-text/fixedlen"
 )
+
+type UrlResource struct {
+	MimeType string
+	Data     []byte
+}
+
+func NewUrlResource(res *http.Response) (*UrlResource, error) {
+	contentType := res.Header.Get("Content-Type")
+	contentItems := strings.Split(contentType, ";")
+	mimeType := contentItems[0]
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, NewSystemError(err.Error())
+	}
+
+	return &UrlResource{
+		MimeType: mimeType,
+		Data:     body,
+	}, nil
+}
 
 type Transaction struct {
 	Session *Session
@@ -32,6 +56,8 @@ type Transaction struct {
 
 	CachedViews      ViewMap
 	UncommittedViews UncommittedViews
+
+	UrlCache map[string]*UrlResource
 
 	operationMutex   *sync.Mutex
 	viewLoadingMutex *sync.Mutex
@@ -75,6 +101,7 @@ func NewTransaction(ctx context.Context, defaultWaitTimeout time.Duration, retry
 		FileContainer:      file.NewContainer(),
 		CachedViews:        NewViewMap(),
 		UncommittedViews:   NewUncommittedViews(),
+		UrlCache:           make(map[string]*UrlResource, 5),
 		operationMutex:     &sync.Mutex{},
 		viewLoadingMutex:   &sync.Mutex{},
 		stdinIsLocked:      false,
@@ -238,6 +265,7 @@ func (tx *Transaction) ReleaseResources() error {
 		return err
 	}
 	tx.UnlockStdin()
+	tx.ClearUrlCache()
 	return nil
 }
 
@@ -250,6 +278,7 @@ func (tx *Transaction) ReleaseResourcesWithErrors() error {
 		errs = append(errs, err.(*file.ForcedUnlockError).Errors...)
 	}
 	tx.UnlockStdin()
+	tx.ClearUrlCache()
 	return file.NewForcedUnlockError(errs)
 }
 
@@ -280,6 +309,16 @@ func (tx *Transaction) RLockStdinContext(ctx context.Context) error {
 
 func (tx *Transaction) RUnlockStdin() {
 	_ = tx.Session.stdinLocker.RUnlock()
+}
+
+func (tx *Transaction) ClearUrlCache() {
+	for k := range tx.UrlCache {
+		delete(tx.UrlCache, k)
+	}
+}
+
+func (tx *Transaction) CreateDocumentWriter() *doc.Writer {
+	return doc.NewWriter(tx.Session.ScreenWidth(), tx.Flags, tx.Palette)
 }
 
 func (tx *Transaction) Error(s string) string {

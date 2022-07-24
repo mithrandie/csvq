@@ -196,7 +196,7 @@ func showStats(ctx context.Context, proc *query.Processor, start time.Time) {
 	}
 	width = width + 1
 
-	w := query.NewObjectWriter(proc.Tx)
+	w := proc.Tx.CreateDocumentWriter()
 	w.WriteColor(" TotalTime:", option.LableEffect)
 	w.WriteSpaces(width - len(exectime))
 	w.WriteWithoutLineBreak(exectime + " seconds")

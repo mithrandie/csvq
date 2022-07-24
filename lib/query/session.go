@@ -13,6 +13,8 @@ import (
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var (
@@ -21,6 +23,8 @@ var (
 	stdout   io.WriteCloser = os.Stdout
 	stderr   io.WriteCloser = os.Stderr
 )
+
+const DefaultScreenWidth = 75
 
 func isNamedPipe(fp *os.File) bool {
 	fi, err := fp.Stat()
@@ -230,6 +234,20 @@ func (sess *Session) OutFile() io.Writer {
 
 func (sess *Session) Terminal() VirtualTerminal {
 	return sess.terminal
+}
+
+func (sess *Session) ScreenWidth() int {
+	width := DefaultScreenWidth
+	if sess.Terminal() != nil {
+		if termw, _, err := sess.Terminal().GetSize(); err == nil {
+			width = termw
+		}
+	} else {
+		if w, _, err := terminal.GetSize(int(sess.ScreenFd())); err == nil {
+			width = w
+		}
+	}
+	return width
 }
 
 func (sess *Session) SetStdin(r io.ReadCloser) error {

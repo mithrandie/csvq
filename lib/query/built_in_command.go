@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mithrandie/csvq/lib/doc"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -467,7 +468,7 @@ func showFlag(tx *Transaction, flagName string) (string, bool) {
 func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error) {
 	var s string
 
-	w := NewObjectWriter(scope.Tx)
+	w := scope.Tx.CreateDocumentWriter()
 
 	switch strings.ToUpper(expr.Type.Literal) {
 	case ShowTables:
@@ -717,7 +718,7 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 	return s, nil
 }
 
-func writeTableAttribute(w *ObjectWriter, flags *option.Flags, info *FileInfo) {
+func writeTableAttribute(w *doc.Writer, flags *option.Flags, info *FileInfo) {
 	encWidth := option.TextWidth(info.Encoding.String(), flags)
 
 	w.WriteColor("Format: ", option.LableEffect)
@@ -795,7 +796,7 @@ func writeTableAttribute(w *ObjectWriter, flags *option.Flags, info *FileInfo) {
 	}
 }
 
-func writeFields(w *ObjectWriter, fields []string) {
+func writeFields(w *doc.Writer, fields []string) {
 	w.BeginBlock()
 	w.NewLine()
 	w.WriteColor("Fields: ", option.LableEffect)
@@ -814,7 +815,7 @@ func writeFields(w *ObjectWriter, fields []string) {
 	w.EndSubBlock()
 }
 
-func writeFunctions(w *ObjectWriter, funcs UserDefinedFunctionMap) {
+func writeFunctions(w *doc.Writer, funcs UserDefinedFunctionMap) {
 	keys := funcs.SortedKeys()
 
 	for _, key := range keys {
@@ -873,14 +874,14 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 		return "", err
 	}
 
-	if !view.FileInfo.IsFile() {
+	if view.FileInfo.IsInMemoryTable() {
 		updatedViews := scope.Tx.UncommittedViews.UncommittedTempViews()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
 		if _, ok := updatedViews[ufpath]; ok {
 			status = ObjectUpdated
 		}
-	} else {
+	} else if view.FileInfo.IsFile() {
 		createdViews, updatedView := scope.Tx.UncommittedViews.UncommittedFiles()
 		ufpath := strings.ToUpper(view.FileInfo.Path)
 
@@ -891,12 +892,12 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 		}
 	}
 
-	w := NewObjectWriter(scope.Tx)
+	w := scope.Tx.CreateDocumentWriter()
 	w.WriteColorWithoutLineBreak("Type: ", option.LableEffect)
-	if !view.FileInfo.IsFile() {
-		w.WriteWithoutLineBreak("View")
-	} else {
-		w.WriteWithoutLineBreak("Table")
+	if view.FileInfo.IsInMemoryTable() {
+		w.WriteWithoutLineBreak("Temporary Table")
+	} else if view.FileInfo.IsFile() {
+		w.WriteWithoutLineBreak("File")
 		w.NewLine()
 		w.WriteColorWithoutLineBreak("Path: ", option.LableEffect)
 		w.WriteColorWithoutLineBreak(view.FileInfo.Path, option.ObjectEffect)
@@ -928,7 +929,7 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 	return "\n" + w.String() + "\n", nil
 }
 
-func writeFieldList(w *ObjectWriter, fields []string) {
+func writeFieldList(w *doc.Writer, fields []string) {
 	l := len(fields)
 	digits := len(strconv.Itoa(l))
 	fieldNumbers := make([]string, 0, l)
@@ -950,7 +951,7 @@ func writeFieldList(w *ObjectWriter, fields []string) {
 	}
 }
 
-func writeQuery(w *ObjectWriter, s string) {
+func writeQuery(w *doc.Writer, s string) {
 	w.NewLine()
 	w.WriteSpaces(2)
 	w.BeginSubBlock()
@@ -1084,7 +1085,7 @@ func Syntax(ctx context.Context, scope *ReferenceScope, expr parser.Syntax) (str
 	store := syntax.NewStore()
 	exps := store.Search(keys)
 
-	w := NewObjectWriter(scope.Tx)
+	w := scope.Tx.CreateDocumentWriter()
 
 	for _, exp := range exps {
 		w.WriteColor(exp.Label, option.LableEffect)

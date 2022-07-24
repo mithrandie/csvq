@@ -1,10 +1,11 @@
-package parser
+package query
 
 import (
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
 
@@ -15,8 +16,8 @@ func FormatTableName(s string) string {
 	return strings.TrimSuffix(filepath.Base(s), filepath.Ext(s))
 }
 
-func FormatFieldIdentifier(e QueryExpression) string {
-	if pt, ok := e.(PrimitiveType); ok {
+func FormatFieldIdentifier(e parser.QueryExpression) string {
+	if pt, ok := e.(parser.PrimitiveType); ok {
 		prefix := "@__PT:"
 		switch pt.Value.(type) {
 		case *value.String:
@@ -36,16 +37,16 @@ func FormatFieldIdentifier(e QueryExpression) string {
 		}
 		return prefix + ":" + FormatFieldLabel(e)
 	}
-	if fr, ok := e.(FieldReference); ok {
-		if col, ok := fr.Column.(Identifier); ok {
+	if fr, ok := e.(parser.FieldReference); ok {
+		if col, ok := fr.Column.(parser.Identifier); ok {
 			return "@__IDENT:" + col.Literal
 		}
 	}
 	return e.String()
 }
 
-func FormatFieldLabel(e QueryExpression) string {
-	if pt, ok := e.(PrimitiveType); ok {
+func FormatFieldLabel(e parser.QueryExpression) string {
+	if pt, ok := e.(parser.PrimitiveType); ok {
 		if s, ok := pt.Value.(*value.String); ok {
 			return s.Raw()
 		}
@@ -54,8 +55,8 @@ func FormatFieldLabel(e QueryExpression) string {
 		}
 		return pt.Value.String()
 	}
-	if fr, ok := e.(FieldReference); ok {
-		if col, ok := fr.Column.(Identifier); ok {
+	if fr, ok := e.(parser.FieldReference); ok {
+		if col, ok := fr.Column.(parser.Identifier); ok {
 			return col.Literal
 		}
 	}

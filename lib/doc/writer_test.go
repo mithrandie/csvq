@@ -1,15 +1,21 @@
-package query
+package doc
 
 import (
+	"context"
 	"testing"
 
+	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/option"
 )
 
-func TestObjectWriter_String(t *testing.T) {
-	defer initFlag(TestTx.Flags)
+func TestWriter_String(t *testing.T) {
+	environment, _ := option.NewEnvironment(context.Background(), file.DefaultWaitTimeout, file.DefaultRetryDelay)
 
-	w := NewObjectWriter(TestTx)
+	flags, _ := option.NewFlags(environment)
+	palette, _ := option.NewPalette(environment)
+	screenWidth := 75
+
+	w := NewWriter(screenWidth, flags, palette)
 	w.MaxWidth = 20
 
 	w.Write("aaa")
@@ -72,7 +78,7 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %s, want %s", result, expect)
 	}
 
-	w = NewObjectWriter(TestTx)
+	w = NewWriter(screenWidth, flags, palette)
 	w.MaxWidth = 20
 
 	w.Title1 = "title"
@@ -111,7 +117,7 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %s, want %s", result, expect)
 	}
 
-	w = NewObjectWriter(TestTx)
+	w = NewWriter(screenWidth, flags, palette)
 	w.MaxWidth = 20
 
 	w.Title1 = "title"
@@ -128,10 +134,9 @@ func TestObjectWriter_String(t *testing.T) {
 		t.Errorf("result = %s, want %s", result, expect)
 	}
 
-	TestTx.UseColor(true)
-	defer TestTx.UseColor(false)
+	palette.Enable()
 
-	w = NewObjectWriter(TestTx)
+	w = NewWriter(screenWidth, flags, palette)
 	w.MaxWidth = 20
 
 	w.Title1 = "title1"
