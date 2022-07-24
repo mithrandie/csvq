@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mithrandie/csvq/lib/doc"
 	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
@@ -314,6 +315,10 @@ func (tx *Transaction) ClearUrlCache() {
 	for k := range tx.UrlCache {
 		delete(tx.UrlCache, k)
 	}
+}
+
+func (tx *Transaction) CreateDocumentWriter() *doc.Writer {
+	return doc.NewWriter(tx.Session.ScreenWidth(), tx.Flags, tx.Palette)
 }
 
 func (tx *Transaction) Error(s string) string {

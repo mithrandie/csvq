@@ -1048,7 +1048,7 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 		return nil, log, NewInvalidTableAttributeValueError(query, err.Error())
 	}
 
-	w := NewObjectWriter(scope.Tx)
+	w := scope.Tx.CreateDocumentWriter()
 	w.WriteColorWithoutLineBreak("Path: ", option.LableEffect)
 	w.WriteColorWithoutLineBreak(fileInfo.Path, option.ObjectEffect)
 	w.NewLine()
