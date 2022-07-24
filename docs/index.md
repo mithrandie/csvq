@@ -29,7 +29,7 @@ There is no indexing, calculation order optimization, etc., and the execution sp
 However, it can be run with a single executable binary, and you don't have to worry about troublesome dependencies during installation.
 You can not only write and run your own queries, but also give the source files to your coworkers to run.
 
-This tool may be useful for those who want to handle data easily without having to think about troublesome matters.
+This tool may be useful for those who want to handle data easily and roughly, without having to think about troublesome matters.
 
 ## Features
 
