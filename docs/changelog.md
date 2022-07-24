@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.17.8
+
+Released on Jul 24, 2022
+
+- Allow URLs and Table identification functions to be used as table identifiers.
+
 ## Version 1.17.7
 
 Released on Jul 3, 2022
