@@ -410,6 +410,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 
 			view.Header = hfields
 			view.RecordSet = resultSet
+			view.FileInfo = nil
 
 		} else {
 			joinView, err := loadView(ctx, scope, join.JoinTable, forUpdate, useInternalId)
