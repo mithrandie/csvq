@@ -302,13 +302,6 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		options := scope.Tx.Flags.ImportOptions.Copy()
 		options.Format = option.AutoSelect
 
-		isInlineObject := false
-		if tableFunction, ok := table.Object.(parser.TableFunction); ok {
-			if strings.ToUpper(tableFunction.Name) == "INLINE" {
-				isInlineObject = true
-			}
-		}
-
 		view, err = loadObject(
 			ctx,
 			scope,
@@ -316,7 +309,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			tableName,
 			forUpdate,
 			useInternalId,
-			isInlineObject,
+			false,
 			options,
 		)
 		if err != nil {
@@ -791,6 +784,12 @@ func loadObject(
 ) (*View, error) {
 	if stdin, ok := tablePath.(parser.Stdin); ok {
 		return loadObjectFromStdin(ctx, scope, stdin, tableName, forUpdate, useInternalId, options)
+	}
+
+	if !isInlineObject {
+		if tableFunction, ok := tablePath.(parser.TableFunction); ok && strings.ToUpper(tableFunction.Name) == "INLINE" {
+			isInlineObject = true
+		}
 	}
 
 	originalTablePath := tablePath

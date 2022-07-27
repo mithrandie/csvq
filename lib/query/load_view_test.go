@@ -2479,6 +2479,62 @@ var loadViewTests = []struct {
 			},
 		}, time.Time{}, nil),
 	},
+	{ //TODO
+		Name: "LoadView Inline Table as TableObject",
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.TableObject{
+						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
+						FormatElement: parser.NewStringValue(","),
+						Path: parser.TableFunction{
+							Name: "inline",
+							Args: []parser.QueryExpression{
+								parser.NewStringValue("table5"),
+							},
+						},
+						Args: []parser.QueryExpression{
+							parser.NewStringValue("SJIS"),
+							parser.NewTernaryValueFromString("true"),
+							parser.NewTernaryValueFromString("true"),
+						},
+					},
+					Alias: parser.Identifier{Literal: "t"},
+				},
+			},
+		},
+		Result: &View{
+			Header: NewHeader("t", []string{"c1", "c2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString(""),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "",
+				Delimiter: ',',
+				Format:    option.CSV,
+				Encoding:  text.SJIS,
+				LineBreak: text.LF,
+				NoHeader:  true,
+				ViewType:  ViewTypeInlineTable,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
+			{scopeNameAliases: {
+				"T": "",
+			}},
+		}, time.Time{}, nil),
+	},
 	{
 		Name: "LoadView from Local File as URL",
 		From: parser.FromClause{
