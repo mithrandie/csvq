@@ -18,6 +18,7 @@ type Statement interface{}
 
 type Expression interface {
 	GetBaseExpr() *BaseExpr
+	ClearBaseExpr()
 	HasParseInfo() bool
 	Line() int
 	Char() int
@@ -28,6 +29,7 @@ type QueryExpression interface {
 	String() string
 
 	GetBaseExpr() *BaseExpr
+	ClearBaseExpr()
 	HasParseInfo() bool
 	Line() int
 	Char() int
@@ -61,6 +63,12 @@ func (e *BaseExpr) HasParseInfo() bool {
 
 func (e *BaseExpr) GetBaseExpr() *BaseExpr {
 	return e
+}
+
+func (e *BaseExpr) ClearBaseExpr() {
+	e.line = 0
+	e.char = 0
+	e.sourceFile = ""
 }
 
 func NewBaseExpr(token Token) *BaseExpr {

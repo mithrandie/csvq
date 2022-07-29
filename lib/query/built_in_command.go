@@ -27,6 +27,7 @@ const (
 	ObjectFixed ObjectStatus = iota
 	ObjectCreated
 	ObjectUpdated
+	ReadOnly
 )
 
 const IgnoredFlagPrefix = "(ignored) "
@@ -851,13 +852,19 @@ func writeFunctions(w *doc.Writer, funcs UserDefinedFunctionMap) {
 }
 
 func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFields) (string, error) {
-	var tableName = func(expr parser.QueryExpression) (s string) {
-		if e, ok := expr.(parser.Identifier); ok {
-			s = e.Literal
-		} else if e, ok := expr.(parser.Stdin); ok {
-			s = e.String()
+	var tableName = func(expr parser.QueryExpression) string {
+		switch e := expr.(type) {
+		case parser.Identifier:
+			return e.Literal
+		case parser.Stdin:
+			return e.String()
+		case HttpObject:
+			return "Remote Object"
+		case DataObject:
+			return "String Object"
+		default:
+			return "Inline Table"
 		}
-		return
 	}
 
 	if !strings.EqualFold(expr.Type.Literal, "FIELDS") {
@@ -890,41 +897,67 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 		} else if _, ok := updatedView[ufpath]; ok {
 			status = ObjectUpdated
 		}
+	} else {
+		status = ReadOnly
 	}
 
 	w := scope.Tx.CreateDocumentWriter()
 	w.WriteColorWithoutLineBreak("Type: ", option.LableEffect)
-	if view.FileInfo.IsInMemoryTable() {
+	if view.FileInfo.IsTemporaryTable() {
 		w.WriteWithoutLineBreak("Temporary Table")
+	} else if view.FileInfo.IsStdin() {
+		w.WriteWithoutLineBreak("STDIN")
 	} else if view.FileInfo.IsFile() {
 		w.WriteWithoutLineBreak("File")
 		w.NewLine()
 		w.WriteColorWithoutLineBreak("Path: ", option.LableEffect)
 		w.WriteColorWithoutLineBreak(view.FileInfo.Path, option.ObjectEffect)
+	} else if view.FileInfo.IsRemoteObject() {
+		w.WriteWithoutLineBreak("Remote Object")
+		w.NewLine()
+		w.WriteColorWithoutLineBreak(" URL: ", option.LableEffect)
+		w.WriteColorWithoutLineBreak(view.FileInfo.Path, option.ObjectEffect)
+	} else if view.FileInfo.IsStringObject() {
+		w.WriteWithoutLineBreak("String Object")
+	} else if view.FileInfo.IsInlineTable() {
+		w.WriteWithoutLineBreak("Inline Table")
+	}
+
+	if !view.FileInfo.IsTemporaryTable() {
 		w.NewLine()
 		writeTableAttribute(w, scope.Tx.Flags, view.FileInfo)
 	}
 
-	w.NewLine()
-	w.WriteColorWithoutLineBreak("Status: ", option.LableEffect)
-	switch status {
-	case ObjectCreated:
-		w.WriteColorWithoutLineBreak("Created", option.EmphasisEffect)
-	case ObjectUpdated:
-		w.WriteColorWithoutLineBreak("Updated", option.EmphasisEffect)
-	default:
-		w.WriteWithoutLineBreak("Fixed")
+	if b, ok := ctx.Value("CallFromSubcommand").(bool); !ok || !b {
+		w.NewLine()
+		w.WriteColorWithoutLineBreak("Status: ", option.LableEffect)
+		switch status {
+		case ObjectCreated:
+			w.WriteColorWithoutLineBreak("Created", option.EmphasisEffect)
+		case ObjectUpdated:
+			w.WriteColorWithoutLineBreak("Updated", option.EmphasisEffect)
+		case ReadOnly:
+			w.WriteWithoutLineBreak("Read-Only")
+		default:
+			w.WriteWithoutLineBreak("Fixed")
+		}
 	}
 
 	w.NewLine()
 	writeFieldList(w, view.Header.TableColumnNames())
 
 	w.Title1 = "Fields in"
-	if e, ok := expr.Table.(parser.TableObject); ok {
-		w.Title2 = tableName(e.Path)
-	} else {
-		w.Title2 = tableName(expr.Table)
+	tablePath := func() parser.QueryExpression {
+		if e, ok := expr.Table.(parser.TableObject); ok {
+			return e.Path
+		}
+		return expr.Table
+	}()
+	tableObject, err := NormalizeTableObject(ctx, scope, tablePath)
+	if err != nil {
+		return "", nil
 	}
+	w.Title2 = tableName(tableObject)
 	w.Title2Effect = option.IdentifierEffect
 	return "\n" + w.String() + "\n", nil
 }

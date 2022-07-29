@@ -2468,7 +2468,7 @@ var loadViewTests = []struct {
 				JsonQuery: "",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
-				ViewType:  ViewTypeInlineTable,
+				ViewType:  ViewTypeStringObject,
 			},
 		},
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
@@ -2610,7 +2610,7 @@ var loadViewTests = []struct {
 				JsonQuery: "{column1, column2}",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
-				ViewType:  ViewTypeInlineTable,
+				ViewType:  ViewTypeStringObject,
 			},
 		},
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{
@@ -2837,7 +2837,7 @@ var loadViewTests = []struct {
 				JsonQuery: "",
 				Encoding:  text.UTF8,
 				LineBreak: text.LF,
-				ViewType:  ViewTypeInlineTable,
+				ViewType:  ViewTypeStringObject,
 			},
 		},
 		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{

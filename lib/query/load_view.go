@@ -408,7 +408,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 	}
 
-	if view.FileInfo != nil && !view.FileInfo.IsUpdatable() {
+	if view.FileInfo != nil && !(view.FileInfo.IsUpdatable() || view.FileInfo.IsRemoteObject()) {
 		view.FileInfo.Path = ""
 	}
 
@@ -610,7 +610,11 @@ func loadDataObject(
 		options.Format = scope.Tx.Flags.ImportOptions.Format
 	}
 
-	return loadObjectFromString(ctx, scope, dataObject.Raw, tablePath, tableName, options)
+	view, err := loadObjectFromString(ctx, scope, dataObject.Raw, tablePath, tableName, options)
+	if err == nil {
+		view.FileInfo.ViewType = ViewTypeStringObject
+	}
+	return view, err
 }
 
 func loadHttpObject(
@@ -657,7 +661,12 @@ func loadHttpObject(
 		}
 	}
 
-	return loadObjectFromString(ctx, scope, data, tablePath, tableName, options)
+	view, err := loadObjectFromString(ctx, scope, data, tablePath, tableName, options)
+	if err == nil {
+		view.FileInfo.Path = httpObject.URL
+		view.FileInfo.ViewType = ViewTypeRemoteObject
+	}
+	return view, err
 }
 
 func loadInlineObjectFromFile(

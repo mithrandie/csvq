@@ -35,6 +35,8 @@ const (
 	ViewTypeFile ViewType = iota
 	ViewTypeTemporaryTable
 	ViewTypeStdin
+	ViewTypeRemoteObject
+	ViewTypeStringObject
 	ViewTypeInlineTable
 )
 
@@ -332,6 +334,18 @@ func (f *FileInfo) IsStdin() bool {
 
 func (f *FileInfo) IsInMemoryTable() bool {
 	return f.ViewType == ViewTypeStdin || f.ViewType == ViewTypeTemporaryTable
+}
+
+func (f *FileInfo) IsRemoteObject() bool {
+	return f.ViewType == ViewTypeRemoteObject
+}
+
+func (f *FileInfo) IsStringObject() bool {
+	return f.ViewType == ViewTypeStringObject
+}
+
+func (f *FileInfo) IsInlineTable() bool {
+	return f.ViewType == ViewTypeInlineTable
 }
 
 func (f *FileInfo) ExportOptions(tx *Transaction) option.ExportOptions {

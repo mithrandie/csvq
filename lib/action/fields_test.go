@@ -15,6 +15,11 @@ var showFieldsTests = []struct {
 	Error string
 }{
 	{
+		Name:  "Empty File Name Error",
+		Input: "",
+		Error: "file name is empty",
+	},
+	{
 		Name:  "File Not Exist Error",
 		Input: "notexist",
 		Error: "file notexist does not exist",
