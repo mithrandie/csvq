@@ -450,7 +450,7 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToUpdate[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToUpdate[viewKey], err = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToUpdate[viewKey], err = queryScope.Tx.CachedViews.Get(fpath)
 			if err != nil {
 				return nil, nil, NewInlineTableCannotBeUpdatedError(table.Object)
 			}
@@ -643,7 +643,7 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToDelete[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToDelete[viewKey], err = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToDelete[viewKey], err = queryScope.Tx.CachedViews.Get(fpath)
 			if err != nil {
 				return nil, nil, NewInlineTableCannotBeUpdatedError(table.Object)
 			}

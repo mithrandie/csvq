@@ -1,7 +1,6 @@
 package query
 
 import (
-	"strings"
 	"sync"
 )
 
@@ -20,7 +19,7 @@ func NewUncommittedViews() UncommittedViews {
 }
 
 func (m *UncommittedViews) SetForCreatedView(fileInfo *FileInfo) {
-	ufpath := strings.ToUpper(fileInfo.Path)
+	ufpath := fileInfo.IdentifiedPath()
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -33,7 +32,7 @@ func (m *UncommittedViews) SetForCreatedView(fileInfo *FileInfo) {
 }
 
 func (m *UncommittedViews) SetForUpdatedView(fileInfo *FileInfo) {
-	ufpath := strings.ToUpper(fileInfo.Path)
+	ufpath := fileInfo.IdentifiedPath()
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -46,7 +45,7 @@ func (m *UncommittedViews) SetForUpdatedView(fileInfo *FileInfo) {
 }
 
 func (m *UncommittedViews) Unset(fileInfo *FileInfo) {
-	ufpath := strings.ToUpper(fileInfo.Path)
+	ufpath := fileInfo.IdentifiedPath()
 
 	m.mtx.Lock()
 	defer m.mtx.Unlock()

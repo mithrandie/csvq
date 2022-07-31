@@ -883,14 +883,14 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 
 	if view.FileInfo.IsInMemoryTable() {
 		updatedViews := scope.Tx.UncommittedViews.UncommittedTempViews()
-		ufpath := strings.ToUpper(view.FileInfo.Path)
+		ufpath := view.FileInfo.IdentifiedPath()
 
 		if _, ok := updatedViews[ufpath]; ok {
 			status = ObjectUpdated
 		}
 	} else if view.FileInfo.IsFile() {
 		createdViews, updatedView := scope.Tx.UncommittedViews.UncommittedFiles()
-		ufpath := strings.ToUpper(view.FileInfo.Path)
+		ufpath := view.FileInfo.IdentifiedPath()
 
 		if _, ok := createdViews[ufpath]; ok {
 			status = ObjectCreated

@@ -69,7 +69,8 @@ func (e TableAttributeUnchangedError) Error() string {
 }
 
 type FileInfo struct {
-	Path string
+	Path        string
+	ArchivePath string
 
 	Format             option.Format
 	Delimiter          rune
@@ -346,6 +347,14 @@ func (f *FileInfo) IsStringObject() bool {
 
 func (f *FileInfo) IsInlineTable() bool {
 	return f.ViewType == ViewTypeInlineTable
+}
+
+func (f *FileInfo) IdentifiedPath() string {
+	s := strings.ToUpper(f.Path)
+	if 0 < len(f.ArchivePath) {
+		s = s + " IN " + strings.ToUpper(f.ArchivePath)
+	}
+	return s
 }
 
 func (f *FileInfo) ExportOptions(tx *Transaction) option.ExportOptions {

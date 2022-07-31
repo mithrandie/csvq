@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/mithrandie/csvq/lib/parser"
@@ -16,12 +17,12 @@ var viewMapExistsTests = []struct {
 }{
 	{
 		Name:   "ViewMap Exists",
-		Path:   "/path/to/table1.csv",
+		Path:   strings.ToUpper("/path/to/table1.csv"),
 		Result: true,
 	},
 	{
 		Name:   "ViewMap Exists Not Exist",
-		Path:   "/path/to/notexist.csv",
+		Path:   strings.ToUpper("/path/to/notexist.csv"),
 		Result: false,
 	},
 }
@@ -48,13 +49,13 @@ func TestViewMap_Exists(t *testing.T) {
 
 var viewMapGetTests = []struct {
 	Name   string
-	Path   parser.Identifier
+	Path   string
 	Result *View
 	Error  string
 }{
 	{
 		Name: "ViewMap Get",
-		Path: parser.Identifier{Literal: "/path/to/table1.csv"},
+		Path: strings.ToUpper("/path/to/table1.csv"),
 		Result: &View{
 			Header: NewHeader("table1", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -75,7 +76,7 @@ var viewMapGetTests = []struct {
 	},
 	{
 		Name:  "ViewMap Get Not Loaded Error",
-		Path:  parser.Identifier{Literal: "/path/to/table2.csv"},
+		Path:  strings.ToUpper("/path/to/table2.csv"),
 		Error: "table not loaded",
 	},
 }
@@ -123,13 +124,13 @@ func TestViewMap_Get(t *testing.T) {
 
 var viewMapGetWithInternalIdTests = []struct {
 	Name   string
-	Path   parser.Identifier
+	Path   string
 	Result *View
 	Error  string
 }{
 	{
 		Name: "ViewMap GetWithInternalId",
-		Path: parser.Identifier{Literal: "/path/to/table1.csv"},
+		Path: strings.ToUpper("/path/to/table1.csv"),
 		Result: &View{
 			Header: NewHeaderWithId("table1", []string{"column1", "column2"}),
 			RecordSet: []Record{
@@ -150,7 +151,7 @@ var viewMapGetWithInternalIdTests = []struct {
 	},
 	{
 		Name:  "ViewMap GetWithInternalId Not Loaded Error",
-		Path:  parser.Identifier{Literal: "/path/to/table2.csv"},
+		Path:  strings.ToUpper("/path/to/table2.csv"),
 		Error: "table not loaded",
 	},
 }
@@ -401,7 +402,7 @@ func generateViewMapGetWithInternalIdBenchViewMap() ViewMap {
 			Path: "bench_view",
 		},
 	}})
-	view, _ := m.Load("bench_view")
+	view, _ := m.Load("BENCH_VIEW")
 	view.RecordSet = make(RecordSet, 10000)
 	for i := 0; i < 10000; i++ {
 		view.RecordSet[i] = NewRecord([]value.Primary{
@@ -416,6 +417,6 @@ func generateViewMapGetWithInternalIdBenchViewMap() ViewMap {
 
 func BenchmarkViewMap_GetWithInternalId(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = viewMapGetWithInternalIdBench.GetWithInternalId(context.Background(), parser.Identifier{Literal: "BENCH_VIEW"}, TestTx.Flags)
+		_, _ = viewMapGetWithInternalIdBench.GetWithInternalId(context.Background(), strings.ToUpper("BENCH_VIEW"), TestTx.Flags)
 	}
 }

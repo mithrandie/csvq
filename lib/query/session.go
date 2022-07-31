@@ -313,13 +313,17 @@ func (sess *Session) GetStdinView(ctx context.Context, flags *option.Flags, file
 			}
 			return nil, err
 		}
-		sess.stdinViewMap.Store(view.FileInfo.Path, view)
+		sess.stdinViewMap.Store(view.FileInfo.IdentifiedPath(), view)
 	}
-	return sess.stdinViewMap.Get(parser.Identifier{BaseExpr: expr.BaseExpr, Literal: expr.String()})
+	view, err := sess.stdinViewMap.Get(expr.String())
+	if err != nil {
+		err = NewTableNotLoadedError(parser.Identifier{BaseExpr: expr.BaseExpr, Literal: expr.String()})
+	}
+	return view, err
 }
 
 func (sess *Session) updateStdinView(view *View) {
-	sess.stdinViewMap.Store(view.FileInfo.Path, view)
+	sess.stdinViewMap.Store(view.FileInfo.IdentifiedPath(), view)
 }
 
 func (sess *Session) WriteToStdout(s string) (err error) {
