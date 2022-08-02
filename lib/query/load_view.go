@@ -576,8 +576,8 @@ func loadObjectFromString(
 ) (*View, error) {
 	fileInfo := NewInlineFileInfo(inlineTablePrefix+file.RandomString(12), options, scope.Tx.Flags.ExportOptions)
 
-	var fp io.ReadSeeker = strings.NewReader(data)
-	view, err := loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tablePath)
+	r := strings.NewReader(data)
+	view, err := loadViewFromFile(ctx, scope.Tx.Flags, r, fileInfo, options, tablePath)
 	if err != nil {
 		if _, ok := err.(Error); !ok {
 			err = NewDataParsingError(tablePath, tablePath.String(), err.Error())
@@ -685,7 +685,8 @@ func loadInlineObjectFromFile(
 	fileInfo.ViewType = ViewTypeInlineTable
 	fileInfo.SetDefaultFileInfoAttributes(options, scope.Tx.Flags.ExportOptions)
 
-	var fp io.ReadSeeker
+	var fp *os.File
+
 	cachedView, cacheExists := scope.Tx.CachedViews.Load(fileInfo.IdentifiedPath())
 
 	if cacheExists {
@@ -702,8 +703,9 @@ func loadInlineObjectFromFile(
 		}()
 		fp = h.File()
 	}
-	if _, err = fp.Seek(0, io.SeekStart); err != nil {
-		return nil, NewSystemError(err.Error())
+	_, err = fp.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, NewIOError(tableIdentifier, err.Error())
 	}
 
 	view, err = loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tableIdentifier)
@@ -926,7 +928,8 @@ func cacheViewFromFile(
 			filePath = fileInfo.Path
 		}
 
-		var fp io.ReadSeeker
+		var fp *os.File
+
 		if forUpdate {
 			h, e := scope.Tx.FileContainer.CreateHandlerForUpdate(ctx, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
 			if e != nil {
@@ -947,6 +950,10 @@ func cacheViewFromFile(
 				err = appendCompositeError(err, scope.Tx.FileContainer.Close(h))
 			}()
 			fp = h.File()
+		}
+		_, err = fp.Seek(0, io.SeekStart)
+		if err != nil {
+			return filePath, NewIOError(tableIdentifier, err.Error())
 		}
 
 		view, err = loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tableIdentifier)
@@ -970,22 +977,32 @@ func cacheViewFromFile(
 	return
 }
 
-func loadViewFromFile(ctx context.Context, flags *option.Flags, fp io.ReadSeeker, fileInfo *FileInfo, options option.ImportOptions, expr parser.QueryExpression) (*View, error) {
+func loadViewFromFile(ctx context.Context, flags *option.Flags, fp io.Reader, fileInfo *FileInfo, options option.ImportOptions, expr parser.QueryExpression) (*View, error) {
+	fileReader, err := file.NewReader(fp, 2048)
+	if err != nil {
+		return nil, NewIOError(expr, err.Error())
+	}
+
 	switch fileInfo.Format {
 	case option.FIXED:
-		return loadViewFromFixedLengthTextFile(ctx, fp, fileInfo, options.WithoutNull, expr)
+		return loadViewFromFixedLengthTextFile(ctx, fileReader, fileInfo, options.WithoutNull, expr)
 	case option.LTSV:
-		return loadViewFromLTSVFile(ctx, flags, fp, fileInfo, options.WithoutNull, expr)
+		return loadViewFromLTSVFile(ctx, flags, fileReader, fileInfo, options.WithoutNull, expr)
 	case option.JSON:
-		return loadViewFromJsonFile(fp, fileInfo, expr)
+		return loadViewFromJsonFile(fileReader, fileInfo, expr)
 	case option.JSONL:
-		return loadViewFromJsonLinesFile(ctx, flags, fp, fileInfo, expr)
+		return loadViewFromJsonLinesFile(ctx, flags, fileReader, fileInfo, expr)
 	}
-	return loadViewFromCSVFile(ctx, fp, fileInfo, options.AllowUnevenFields, options.WithoutNull, expr)
+	return loadViewFromCSVFile(ctx, fileReader, fileInfo, options.AllowUnevenFields, options.WithoutNull, expr)
 }
 
-func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
-	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
+func loadViewFromFixedLengthTextFile(ctx context.Context, fp *file.Reader, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+	fileHead, err := fp.HeadBytes()
+	if err != nil {
+		return nil, NewIOError(expr, err.Error())
+	}
+
+	enc, err := text.DetectInSpecifiedEncoding(fileHead, fileInfo.Encoding)
 	if err != nil {
 		return nil, NewCannotDetectFileEncodingError(expr)
 	}
@@ -1012,7 +1029,7 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, file
 		}
 
 		if _, err = br.Seek(0, io.SeekStart); err != nil {
-			return nil, NewSystemError(err.Error())
+			return nil, NewIOError(expr, err.Error())
 		}
 		r = br
 	} else {
@@ -1035,7 +1052,7 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, file
 		}
 	}
 
-	records, err := readRecordSet(ctx, reader, fileSize(fp))
+	records, err := readRecordSet(ctx, reader, fp.Size())
 	if err != nil {
 		return nil, err
 	}
@@ -1058,12 +1075,17 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp io.ReadSeeker, file
 	return view, nil
 }
 
-func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileInfo, allowUnevenFields bool, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+func loadViewFromCSVFile(ctx context.Context, fp *file.Reader, fileInfo *FileInfo, allowUnevenFields bool, withoutNull bool, expr parser.QueryExpression) (*View, error) {
 	if fileInfo.Format == option.TSV {
 		fileInfo.Delimiter = '\t'
 	}
 
-	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
+	fileHead, err := fp.HeadBytes()
+	if err != nil {
+		return nil, NewIOError(expr, err.Error())
+	}
+
+	enc, err := text.DetectInSpecifiedEncoding(fileHead, fileInfo.Encoding)
 	if err != nil {
 		return nil, NewCannotDetectFileEncodingError(expr)
 	}
@@ -1085,7 +1107,7 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 		}
 	}
 
-	records, err := readRecordSet(ctx, reader, fileSize(fp))
+	records, err := readRecordSet(ctx, reader, fp.Size())
 	if err != nil {
 		return nil, err
 	}
@@ -1135,8 +1157,13 @@ func loadViewFromCSVFile(ctx context.Context, fp io.ReadSeeker, fileInfo *FileIn
 	return view, nil
 }
 
-func loadViewFromLTSVFile(ctx context.Context, flags *option.Flags, fp io.ReadSeeker, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
-	enc, err := text.DetectInSpecifiedEncoding(fp, fileInfo.Encoding)
+func loadViewFromLTSVFile(ctx context.Context, flags *option.Flags, fp *file.Reader, fileInfo *FileInfo, withoutNull bool, expr parser.QueryExpression) (*View, error) {
+	fileHead, err := fp.HeadBytes()
+	if err != nil {
+		return nil, NewIOError(expr, err.Error())
+	}
+
+	enc, err := text.DetectInSpecifiedEncoding(fileHead, fileInfo.Encoding)
 	if err != nil {
 		return nil, NewCannotDetectFileEncodingError(expr)
 	}
@@ -1148,7 +1175,7 @@ func loadViewFromLTSVFile(ctx context.Context, flags *option.Flags, fp io.ReadSe
 	}
 	reader.WithoutNull = withoutNull
 
-	records, err := readRecordSet(ctx, reader, fileSize(fp))
+	records, err := readRecordSet(ctx, reader, fp.Size())
 	if err != nil {
 		return nil, err
 	}
@@ -1176,15 +1203,6 @@ func loadViewFromLTSVFile(ctx context.Context, flags *option.Flags, fp io.ReadSe
 	view.RecordSet = records
 	view.FileInfo = fileInfo
 	return view, nil
-}
-
-func fileSize(fp io.ReadSeeker) int64 {
-	if f, ok := fp.(*os.File); ok {
-		if fi, err := f.Stat(); err == nil {
-			return fi.Size()
-		}
-	}
-	return 0
 }
 
 func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (RecordSet, error) {
@@ -1259,7 +1277,7 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 	return recordSet, err
 }
 
-func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
+func loadViewFromJsonFile(fp *file.Reader, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
 	jsonText, err := ioutil.ReadAll(fp)
 	if err != nil {
 		return nil, NewIOError(expr, err.Error())
@@ -1285,14 +1303,14 @@ func loadViewFromJsonFile(fp io.Reader, fileInfo *FileInfo, expr parser.QueryExp
 	return view, nil
 }
 
-func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp io.ReadSeeker, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
+func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp *file.Reader, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
 	var err error
 	headerList := make([]string, 0, 32)
 	headerMap := make(map[string]bool, 32)
 	objectList := make([]txjson.Object, 0, fileLoadingPreparedRecordSetCap)
 
 	escapeType := txjson.Backslash
-	fileSize := fileSize(fp)
+	fileSize := fp.Size()
 	jsonQuery, err := json.Query.Parse(fileInfo.JsonQuery)
 	if err != nil {
 		return nil, NewLoadJsonError(expr, err.Error())
@@ -1365,12 +1383,12 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp io.R
 				}
 				jarray, ok := jstruct.(txjson.Array)
 				if !ok || len(jarray) < 1 {
-					err = e
+					err = NewJsonLinesStructureError(expr)
 					break
 				}
 				rowObj, ok = jarray[0].(txjson.Object)
 				if !ok {
-					err = e
+					err = NewJsonLinesStructureError(expr)
 					break
 				}
 			}

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 	"sync"
 	"time"
@@ -301,12 +300,7 @@ func (sess *Session) GetStdinView(ctx context.Context, flags *option.Flags, file
 			return nil, NewStdinEmptyError(expr)
 		}
 
-		b, err := ioutil.ReadAll(sess.stdin)
-		if err != nil {
-			return nil, NewIOError(expr, err.Error())
-		}
-
-		view, err := loadViewFromFile(ctx, flags, bytes.NewReader(b), fileInfo, flags.ImportOptions, expr)
+		view, err := loadViewFromFile(ctx, flags, sess.stdin, fileInfo, flags.ImportOptions, expr)
 		if err != nil {
 			if _, ok := err.(Error); !ok {
 				err = NewDataParsingError(expr, fileInfo.Path, err.Error())
