@@ -127,7 +127,7 @@ func (e *Environment) Load(ctx context.Context, defaultWaitTimeout time.Duration
 		var h *file.Handler
 		var buf []byte
 
-		h, err = file.NewHandlerWithoutLock(ctx, container, fpath, defaultWaitTimeout, retryDelay)
+		h, err = container.CreateHandlerWithoutLock(ctx, fpath, defaultWaitTimeout, retryDelay)
 		if err != nil {
 			return
 		}

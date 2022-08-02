@@ -691,7 +691,7 @@ func loadInlineObjectFromFile(
 	if cacheExists {
 		fp = cachedView.FileInfo.Handler.File()
 	} else {
-		h, e := file.NewHandlerForRead(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
+		h, e := scope.Tx.FileContainer.CreateHandlerForRead(ctx, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
 		if e != nil {
 			tableIdentifier.Literal = fileInfo.Path
 			err = ConvertFileHandlerError(e, tableIdentifier)
@@ -928,7 +928,7 @@ func cacheViewFromFile(
 
 		var fp io.ReadSeeker
 		if forUpdate {
-			h, e := file.NewHandlerForUpdate(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
+			h, e := scope.Tx.FileContainer.CreateHandlerForUpdate(ctx, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
 			if e != nil {
 				tableIdentifier.Literal = fileInfo.Path
 				err = ConvertFileHandlerError(e, tableIdentifier)
@@ -937,7 +937,7 @@ func cacheViewFromFile(
 			fileInfo.Handler = h
 			fp = h.File()
 		} else {
-			h, e := file.NewHandlerForRead(ctx, scope.Tx.FileContainer, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
+			h, e := scope.Tx.FileContainer.CreateHandlerForRead(ctx, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
 			if e != nil {
 				tableIdentifier.Literal = fileInfo.Path
 				err = ConvertFileHandlerError(e, tableIdentifier)

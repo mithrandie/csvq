@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -713,7 +712,7 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 	if err != nil {
 		return nil, err
 	}
-	h, err := file.NewHandlerForCreate(queryScope.Tx.FileContainer, fileInfo.Path)
+	h, err := queryScope.Tx.FileContainer.CreateHandlerForCreate(fileInfo.Path)
 	if err != nil {
 		query.Table.Literal = fileInfo.Path
 		return nil, ConvertFileHandlerError(err, query.Table)

@@ -140,7 +140,7 @@ func LoadContentsFromFile(ctx context.Context, tx *Transaction, fpath parser.Ide
 		return content, NewFileNotExistError(fpath)
 	}
 
-	h, err := file.NewHandlerWithoutLock(ctx, tx.FileContainer, p, tx.WaitTimeout, tx.RetryDelay)
+	h, err := tx.FileContainer.CreateHandlerWithoutLock(ctx, p, tx.WaitTimeout, tx.RetryDelay)
 	if err != nil {
 		return content, ConvertFileHandlerError(err, fpath)
 	}
