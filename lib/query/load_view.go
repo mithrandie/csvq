@@ -6,7 +6,6 @@ import (
 	gojson "encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -1011,7 +1010,7 @@ func loadViewFromFixedLengthTextFile(ctx context.Context, fp *file.Reader, fileI
 	var r io.Reader
 
 	if fileInfo.DelimiterPositions == nil {
-		data, err := ioutil.ReadAll(fp)
+		data, err := io.ReadAll(fp)
 		if err != nil {
 			return nil, NewIOError(expr, err.Error())
 		}
@@ -1278,7 +1277,7 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 }
 
 func loadViewFromJsonFile(fp *file.Reader, fileInfo *FileInfo, expr parser.QueryExpression) (*View, error) {
-	jsonText, err := ioutil.ReadAll(fp)
+	jsonText, err := io.ReadAll(fp)
 	if err != nil {
 		return nil, NewIOError(expr, err.Error())
 	}

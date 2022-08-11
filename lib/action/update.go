@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"runtime"
 	"strconv"
@@ -145,7 +145,7 @@ func (c Client) GetLatestRelease() (*GithubRelease, error) {
 	}
 
 	release := &GithubRelease{}
-	body, _ := ioutil.ReadAll(res.Body)
+	body, _ := io.ReadAll(res.Body)
 	err = json.Unmarshal(body, &release)
 	return release, err
 }
@@ -157,7 +157,7 @@ func (c Client) GetLatestReleaseIncludingPreRelease() (*GithubRelease, error) {
 	}
 
 	release := []*GithubRelease{{}}
-	body, _ := ioutil.ReadAll(res.Body)
+	body, _ := io.ReadAll(res.Body)
 	err = json.Unmarshal(body, &release)
 	return release[0], err
 }

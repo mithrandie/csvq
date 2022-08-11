@@ -633,7 +633,7 @@ func (rs *ReferenceScope) DeclareAggregateFunction(expr parser.AggregateDeclarat
 
 func (rs *ReferenceScope) GetFunction(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
 	for i := range rs.Blocks {
-		if fn, ok := rs.Blocks[i].Functions.Get(expr, name); ok {
+		if fn, ok := rs.Blocks[i].Functions.Get(name); ok {
 			return fn, nil
 		}
 	}

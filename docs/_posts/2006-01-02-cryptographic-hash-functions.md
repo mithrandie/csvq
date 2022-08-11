@@ -47,7 +47,7 @@ _data_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Generates a SHA-1 hash value.
+Generates an SHA-1 hash value.
 
 ### SHA256
 {: #sha256}
@@ -62,7 +62,7 @@ _data_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Generates a SHA-256 hash value.
+Generates an SHA-256 hash value.
 
 ### SHA512
 {: #sha512}
@@ -77,7 +77,7 @@ _data_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Generates a SHA-512 hash value.
+Generates an SHA-512 hash value.
 
 ### MD5_HMAC
 {: #md5_hmac}
@@ -113,7 +113,7 @@ _key_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Generates a SHA-1 keyed-hash value using the HMAC method.
+Generates an SHA-1 keyed-hash value using the HMAC method.
 
 ### SHA256_HMAC
 {: #sha256_hmac}
@@ -131,7 +131,7 @@ _key_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Generates a SHA-256 keyed-hash value using the HMAC method.
+Generates an SHA-256 keyed-hash value using the HMAC method.
 
 ### SHA512_HMAC
 {: #sha512_hmac}
@@ -149,4 +149,4 @@ _key_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Generates a SHA-512 keyed-hash value using the HMAC method.
+Generates an SHA-512 keyed-hash value using the HMAC method.

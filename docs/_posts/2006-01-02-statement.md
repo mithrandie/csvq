@@ -92,14 +92,14 @@ Identifier
   You cannot use [reserved words](#reserved_words) as an identifier.
 
   Notwithstanding above naming restriction, you can use most character strings as an identifier by enclosing in Grave Accents(U+0060 \` ) or Quotation Marks(U+0022 `"`) if [--ansi-quotes]({{ '/reference/command.html#options' | relative_url }}) is specified. 
-  Enclosure characters are escaped by back slashes or double enclosures.
+  Enclosure characters are escaped by backslashes or double enclosures.
   
   Identifiers represent tables, columns, functions or cursors.
-  Character case is insensitive except file paths, and whether file paths are case insensitive or not depends on your file system.
+  Character case is insensitive except file paths, and whether file paths are case-insensitive or not depends on your file system.
   
 String
 : A string is a character string enclosed in Apostrophes(U+0027 `'`) or Quotation Marks(U+0022 `"`) if [--ansi-quotes]({{ '/reference/command.html#options' | relative_url }}) is not specified.
-  In a string, enclosure characters are escaped by back slashes or double enclosures.
+  In a string, enclosure characters are escaped by backslashes or double enclosures.
 
 Integer
 : An integer is a word that contains only \[0-9\].

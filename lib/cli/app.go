@@ -356,7 +356,7 @@ func commandAction(fn func(ctx context.Context, c *cli.Context, proc *query.Proc
 			cancel()
 		}()
 
-		// Run pre-load commands
+		// Run preload commands
 		if err = runPreloadCommands(ctx, proc); err != nil {
 			return
 		}

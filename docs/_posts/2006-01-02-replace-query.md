@@ -8,7 +8,7 @@ category: reference
 
 Replace query is used to insert or update records to a csv file.
 
-If records matching _key_columns_ exist, the records are updated. Otherwise insert records.
+If records matching _key_columns_ exist, the records are updated. Otherwise, insert records.
 
 ## Insert or Update Values
 

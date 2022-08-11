@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -112,7 +112,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	expectedCreatedContents := "column1,column2\n"
-	createdContents, err := ioutil.ReadFile(GetTestFilePath("created_file.csv"))
+	createdContents, err := os.ReadFile(GetTestFilePath("created_file.csv"))
 	if err != nil {
 		t.Fatalf("unexpected error %q", err.Error())
 	}
@@ -122,7 +122,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	expectedUpdatedContents := "column1,column2\n1,str1\nupdate1,update2\n3,str3\n"
-	updatedContents, err := ioutil.ReadFile(GetTestFilePath("updated_file_1.csv"))
+	updatedContents, err := os.ReadFile(GetTestFilePath("updated_file_1.csv"))
 	if err != nil {
 		t.Fatalf("unexpected error %q", err.Error())
 	}
@@ -205,7 +205,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	expectedCreatedContents = "column1,column2"
-	createdContents, err = ioutil.ReadFile(GetTestFilePath("created_file_1.csv"))
+	createdContents, err = os.ReadFile(GetTestFilePath("created_file_1.csv"))
 	if err != nil {
 		t.Fatalf("unexpected error %q", err.Error())
 	}
@@ -215,7 +215,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	expectedUpdatedContents = "column1,column2\n1,str1\nupdate1,update2\n3,str3"
-	updatedContents, err = ioutil.ReadFile(GetTestFilePath("updated_file_1.csv"))
+	updatedContents, err = os.ReadFile(GetTestFilePath("updated_file_1.csv"))
 	if err != nil {
 		t.Fatalf("unexpected error %q", err.Error())
 	}

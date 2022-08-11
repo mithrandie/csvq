@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -32,7 +31,7 @@ func NewUrlResource(res *http.Response) (*UrlResource, error) {
 	contentItems := strings.Split(contentType, ";")
 	mimeType := contentItems[0]
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, NewSystemError(err.Error())
 	}

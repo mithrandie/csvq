@@ -6,7 +6,7 @@ category: reference
 
 # Operator Precedence
 
-The following table list operators from highest precedence to lowest.
+The following table list operators from the highest precedence to lowest.
 
 | precedence | operators | associativity |
 | :- | :- | :- |

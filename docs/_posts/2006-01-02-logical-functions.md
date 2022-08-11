@@ -49,7 +49,7 @@ _value2_
 _return_
 : [primitive type]({{ '/reference/value.html#primitive_types' | relative_url }})
 
-If _condition_ is TRUE, then returns _value1_. Otherwise returns _value2_.
+If _condition_ is TRUE, then returns _value1_. Otherwise, returns _value2_.
 
 ### IFNULL
 {: #ifnull}

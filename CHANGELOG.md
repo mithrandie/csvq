@@ -189,7 +189,7 @@ Released on January 12, 2020
 
 Released on December 12, 2019
 
-- Prevent query results from being written when the results is empty. ([Github #21](https://github.com/mithrandie/csvq/issues/21))
+- Prevent query results from being written when the results are empty. ([Github #21](https://github.com/mithrandie/csvq/issues/21))
 
 ## Version 1.11.7
 

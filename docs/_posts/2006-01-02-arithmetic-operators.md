@@ -26,7 +26,7 @@ value operator value
 _value_
 : [value]({{ '/reference/value.html' | relative_url }})
 
-An binary arithmetic operator calculate integer or float values, and return the result.
+A binary arithmetic operator calculate integer or float values, and return the result.
 
 If either of operands is null or the conversions to integer or float failed, return null.
 

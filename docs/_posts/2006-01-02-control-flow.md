@@ -34,7 +34,7 @@ _condition_
 _statements_
 : [Statements]({{ '/reference/statement.html' | relative_url }})
 
-A If statement executes the first _statements_ that _condition_ is TRUE.
+IF statement executes the first _statements_ that _condition_ is TRUE.
 If no condition is TRUE, the _statements_ of the ELSE expression are executed.
 
 ## CASE
@@ -124,7 +124,7 @@ A While In statement fetch the data from the [cursor]({{ '/reference/cursor.html
 The While In statement iterates it until the _cursor_name_ pointer reaches the last record in the referring view.
 
 If DECLARE or VAR keyword is specified, then variables are declared in the child scope. 
-Otherwise variables in the current scope is used to fetch.
+Otherwise, variables in the current scope is used to fetch.
 
 ## CONTINUE
 {: #continue}
@@ -156,7 +156,7 @@ _exit_code_
 
   0 is the default.
 
-A Exit statement stops statements execution, then terminates the executing procedure without commit.
+Exit statement stops statements execution, then terminates the executing procedure without commit.
 
 ## TRIGGER ERROR
 {: #trigger_error}

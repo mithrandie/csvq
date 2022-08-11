@@ -7,7 +7,7 @@ category: reference
 # Transaction Management
 
 A transaction is a single logical unit of work.
-A transaction is a atomic unit, so you get the result of either all of the changes are performed or none of them is performed.
+A transaction is an atomic unit, so you get the result of either all the changes are performed or none of them is performed.
 
 * [Usage Flow in a Procedure](#usage_flow_in_prodecure)
 * [Usage Flow in the Interactive Shell](#usage_flow_in_shell)
@@ -26,9 +26,9 @@ A transaction is started automatically when the procedure execution is started, 
 
 A transaction is terminated when a commit or rollback statement is executed.
 
-When the procedure is normally terminated, then commit all of the changes automatically.
+When the procedure is normally terminated, then commit all the changes automatically.
 
-When some errors occurred in the procedure, then roll all of the changes back automatically.
+When some errors occurred in the procedure, then roll all the changes back automatically.
 
 When the procedure is exited by [EXIT statement]({{ '/reference/control-flow.html#exit' | relative_url }}), then roll all of the changes back automatically.
 
@@ -43,7 +43,7 @@ A transaction is started automatically when the interactive shell is launched, o
 
 A transaction is terminated when a commit or rollback statement is executed.
 
-When the interactive shell is terminated, then roll all of the changes back automatically.
+When the interactive shell is terminated, then roll all the changes back automatically.
 
 
 ## File Locking
@@ -75,7 +75,7 @@ In that case, you must manually remove following hidden files created by csvq.
 ## Commit Statement
 {: #commit}
 
-A commit statement writes all of the changes to files.
+A commit statement writes all the changes to files.
 
 ```sql
 COMMIT;
@@ -84,7 +84,7 @@ COMMIT;
 ## Rollback Statement
 {: #rollback}
 
-A rollback statement discards all of the changes.
+A rollback statement discards all the changes.
 
 ```sql
 ROLLBACK;

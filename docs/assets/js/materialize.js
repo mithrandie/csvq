@@ -160,13 +160,13 @@ if (typeof jQuery === 'undefined') {
       return x < 0.5 ? (1 - bounceOut(1 - 2 * x)) / 2 : (1 + bounceOut(2 * x - 1)) / 2;
     }
   });
-});; // Custom Easing
+}); // Custom Easing
 jQuery.extend(jQuery.easing, {
   easeInOutMaterial: function (x, t, b, c, d) {
     if ((t /= d / 2) < 1) return c / 2 * t * t + b;
     return c / 4 * ((t -= 2) * t * t + 2) + b;
   }
-});; /*! VelocityJS.org (1.2.3). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
+}); /*! VelocityJS.org (1.2.3). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 /*! VelocityJS.org jQuery Shim (1.0.1). (C) 2014 The jQuery Foundation. MIT @license: en.wikipedia.org/wiki/MIT_License. */
 /*! Note that this has been modified by Materialize to confirm that Velocity is not already being imported. */
 jQuery.Velocity ? console.log("Velocity is already loaded. You may be needlessly importing Velocity again; note that Materialize includes Velocity.") : (!function (e) {
@@ -792,7 +792,7 @@ jQuery.Velocity ? console.log("Velocity is already loaded. You may be needlessly
     }), b;
   }(window.jQuery || window.Zepto || window, window, document);
 }));
-;!function (a, b, c, d) {
+!function (a, b, c, d) {
   "use strict";
   function k(a, b, c) {
     return setTimeout(q(a, c), b);
@@ -1215,7 +1215,7 @@ jQuery.Velocity ? console.log("Velocity is already loaded. You may be needlessly
     } }, n(hc, { INPUT_START: O, INPUT_MOVE: P, INPUT_END: Q, INPUT_CANCEL: R, STATE_POSSIBLE: Rb, STATE_BEGAN: Sb, STATE_CHANGED: Tb, STATE_ENDED: Ub, STATE_RECOGNIZED: Vb, STATE_CANCELLED: Wb, STATE_FAILED: Xb, DIRECTION_NONE: S, DIRECTION_LEFT: T, DIRECTION_RIGHT: U, DIRECTION_UP: V, DIRECTION_DOWN: W, DIRECTION_HORIZONTAL: X, DIRECTION_VERTICAL: Y, DIRECTION_ALL: Z, Manager: kc, Input: ab, TouchAction: Pb, TouchInput: Eb, MouseInput: rb, PointerEventInput: wb, TouchMouseInput: Gb, SingleTouchInput: Ab, Recognizer: Yb, AttrRecognizer: ac, Tap: gc, Pan: bc, Swipe: fc, Pinch: cc, Rotate: ec, Press: dc, on: t, off: u, each: m, merge: o, extend: n, inherit: p, bindFn: q, prefixed: B }), typeof define == g && define.amd ? define(function () {
     return hc;
   }) : "undefined" != typeof module && module.exports ? module.exports = hc : a[c] = hc;
-}(window, document, "Hammer");;(function (factory) {
+}(window, document, "Hammer");(function (factory) {
   if (typeof define === 'function' && define.amd) {
     define(['jquery', 'hammerjs'], factory);
   } else if (typeof exports === 'object') {
@@ -1595,7 +1595,7 @@ if (Vel) {
   $(document).ready(function () {
     $('.collapsible').collapsible();
   });
-})(jQuery);;(function ($) {
+})(jQuery);(function ($) {
 
   // Add posibility to scroll to selected option
   // usefull for select for example
@@ -3033,7 +3033,7 @@ if (Vel) {
     $('.tooltipped').tooltip();
   });
 })(jQuery);
-; /*!
+ /*!
   * Waves v0.6.4
   * http://fian.my.id/Waves
   *
@@ -4447,7 +4447,7 @@ if (Vel) {
 
           $(this).removeClass('tabbed');
         });
-        return;
+
       }
     });
 
@@ -5650,7 +5650,7 @@ if (Vel) {
           e.preventDefault();
           self.selectChip(chipsLength - 1, $chips);
           $target.blur();
-          return;
+
         }
       });
 
@@ -5852,7 +5852,7 @@ if (Vel) {
       });
     });
   };
-})(jQuery);;(function ($) {
+})(jQuery);(function ($) {
   $(document).ready(function () {
 
     // jQuery reverse

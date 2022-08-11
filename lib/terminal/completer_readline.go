@@ -4,7 +4,6 @@ package terminal
 
 import (
 	"github.com/mithrandie/csvq/lib/constant"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -2414,7 +2413,7 @@ func (c *Completer) ListFiles(path string, includeExt []string, repository strin
 		path = filepath.Dir(path)
 	}
 
-	if files, err := ioutil.ReadDir(path); err == nil {
+	if files, err := os.ReadDir(path); err == nil {
 
 		for _, f := range files {
 			if f.Name()[0] == '.' {

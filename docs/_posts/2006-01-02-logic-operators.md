@@ -26,7 +26,7 @@ _condition_
 
 If either of conditions is FALSE, then return FALSE.
 If both of conditions are not FALSE, and either of conditions is UNKNOWN, then return UNKNOWN.
-Otherwise return TRUE.
+Otherwise, return TRUE.
 
 ## OR
 {: #or}
@@ -40,7 +40,7 @@ _condition_
 
 If either of conditions is TRUE, then return TRUE.
 If both of conditions are not TRUE, and either of conditions is UNKNOWN, then return UNKNOWN.
-Otherwise return FALSE.
+Otherwise, return FALSE.
 
 ## NOT
 {: #not}

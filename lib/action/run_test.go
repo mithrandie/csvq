@@ -2,7 +2,7 @@ package action
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -93,7 +93,7 @@ func TestRun(t *testing.T) {
 
 			if 0 < len(v.OutFile) {
 				fp, _ := os.Open(v.OutFile)
-				buf, _ := ioutil.ReadAll(fp)
+				buf, _ := io.ReadAll(fp)
 				if string(buf) != v.Content {
 					t.Errorf("%s: content = %q, want %q", v.Name, string(buf), v.Content)
 				}

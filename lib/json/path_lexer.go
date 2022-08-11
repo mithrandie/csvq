@@ -17,7 +17,7 @@ func (l *PathLexer) Lex(lval *jpSymType) int {
 	return tok.Token
 }
 
-func (l *PathLexer) Error(e string) {
+func (l *PathLexer) Error(_ string) {
 	if l.token.Token == EOF {
 		l.err = NewPathSyntaxError("unexpected termination", l.token)
 	} else {

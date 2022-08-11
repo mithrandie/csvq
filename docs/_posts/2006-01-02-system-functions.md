@@ -28,5 +28,5 @@ _argument_
 _return_
 : [string]({{ '/reference/value.html#string' | relative_url }})
 
-Execute a external _command_ and returns the standard output as a string.
+Execute an external _command_ and returns the standard output as a string.
 If the external command failed, then the executing procedure is terminated with an error.

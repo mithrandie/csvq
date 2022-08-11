@@ -593,7 +593,7 @@ _oct_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Converts _hex_ representing a octal number to an integer.
+Converts _hex_ representing an octal number to an integer.
 
 ### HEX_TO_DEC
 {: #hex_to_dec}

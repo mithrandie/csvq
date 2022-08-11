@@ -194,7 +194,7 @@ _order_by_clause_
 _return_
 : [integer]({{ '/reference/value.html#integer' | relative_url }})
 
-Splits the records into _number_of_groups_ groups, then returns the sequential numbers of the groups.
+Splits the records into _number_of_groups_, then returns the sequential numbers of the groups.
 
 
 ### FIRST_VALUE

@@ -206,7 +206,7 @@ _function_name_
 A RETURN statement terminates executing function, then returns a value.
 If the return value is not specified, then returns a null.
 
-When there is no return statement, the function executes all of the statements and returns a null.
+When there is no return statement, the function executes all the statements and returns a null.
 
 ```sql
 RETURN [value];

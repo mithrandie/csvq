@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -148,7 +148,7 @@ func LoadContentsFromFile(ctx context.Context, tx *Transaction, fpath parser.Ide
 		err = appendCompositeError(err, tx.FileContainer.Close(h))
 	}()
 
-	buf, err := ioutil.ReadAll(h.File())
+	buf, err := io.ReadAll(h.File())
 	if err != nil {
 		return content, ConvertFileHandlerError(err, fpath)
 	}
