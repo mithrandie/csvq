@@ -948,7 +948,7 @@ func ShowFields(ctx context.Context, scope *ReferenceScope, expr parser.ShowFiel
 
 	w.Title1 = "Fields in"
 	tablePath := func() parser.QueryExpression {
-		if e, ok := expr.Table.(parser.TableObject); ok {
+		if e, ok := expr.Table.(parser.FormatSpecifiedFunction); ok {
 			return e.Path
 		}
 		return expr.Table

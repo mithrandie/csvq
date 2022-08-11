@@ -715,7 +715,7 @@ type EmptyInlineTableError struct {
 	*BaseError
 }
 
-func NewEmptyInlineTableError(expr parser.TableObject) error {
+func NewEmptyInlineTableError(expr parser.FormatSpecifiedFunction) error {
 	return &EmptyInlineTableError{
 		NewBaseError(expr, ErrMsgEmptyInlineTable, ReturnCodeApplicationError, ErrorEmptyInlineTable),
 	}
@@ -725,7 +725,7 @@ type InvalidTableObjectError struct {
 	*BaseError
 }
 
-func NewInvalidTableObjectError(expr parser.TableObject, objectName string) error {
+func NewInvalidTableObjectError(expr parser.FormatSpecifiedFunction, objectName string) error {
 	return &InvalidTableObjectError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgInvalidTableObject, objectName), ReturnCodeApplicationError, ErrorInvalidTableObject),
 	}
@@ -735,7 +735,7 @@ type TableObjectInvalidDelimiterError struct {
 	*BaseError
 }
 
-func NewTableObjectInvalidDelimiterError(expr parser.TableObject, delimiter string) error {
+func NewTableObjectInvalidDelimiterError(expr parser.FormatSpecifiedFunction, delimiter string) error {
 	return &InvalidTableObjectError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgTableObjectInvalidDelimiter, delimiter), ReturnCodeApplicationError, ErrorTableObjectInvalidDelimiter),
 	}
@@ -745,7 +745,7 @@ type TableObjectInvalidDelimiterPositionsError struct {
 	*BaseError
 }
 
-func NewTableObjectInvalidDelimiterPositionsError(expr parser.TableObject, positions string) error {
+func NewTableObjectInvalidDelimiterPositionsError(expr parser.FormatSpecifiedFunction, positions string) error {
 	return &InvalidTableObjectError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgTableObjectInvalidDelimiterPositions, positions), ReturnCodeApplicationError, ErrorTableObjectInvalidDelimiterPositions),
 	}
@@ -755,7 +755,7 @@ type TableObjectInvalidJsonQueryError struct {
 	*BaseError
 }
 
-func NewTableObjectInvalidJsonQueryError(expr parser.TableObject, jsonQuery string) error {
+func NewTableObjectInvalidJsonQueryError(expr parser.FormatSpecifiedFunction, jsonQuery string) error {
 	return &InvalidTableObjectError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgTableObjectInvalidJsonQuery, jsonQuery), ReturnCodeApplicationError, ErrorTableObjectInvalidJsonQuery),
 	}
@@ -765,7 +765,7 @@ type TableObjectArgumentsLengthError struct {
 	*BaseError
 }
 
-func NewTableObjectArgumentsLengthError(expr parser.TableObject, argLen int) error {
+func NewTableObjectArgumentsLengthError(expr parser.FormatSpecifiedFunction, argLen int) error {
 	return &TableObjectArgumentsLengthError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgTableObjectArgumentsLength, expr.Type.Literal, argLen), ReturnCodeApplicationError, ErrorTableObjectArgumentsLength),
 	}
@@ -775,7 +775,7 @@ type TableObjectJsonArgumentsLengthError struct {
 	*BaseError
 }
 
-func NewTableObjectJsonArgumentsLengthError(expr parser.TableObject, argLen int) error {
+func NewTableObjectJsonArgumentsLengthError(expr parser.FormatSpecifiedFunction, argLen int) error {
 	return &TableObjectJsonArgumentsLengthError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgTableObjectJsonArgumentsLength, expr.Type.Literal, argLen), ReturnCodeApplicationError, ErrorTableObjectJsonArgumentsLength),
 	}
@@ -785,7 +785,7 @@ type TableObjectInvalidArgumentError struct {
 	*BaseError
 }
 
-func NewTableObjectInvalidArgumentError(expr parser.TableObject, message string) error {
+func NewTableObjectInvalidArgumentError(expr parser.FormatSpecifiedFunction, message string) error {
 	return &TableObjectInvalidArgumentError{
 		NewBaseError(expr, fmt.Sprintf(ErrMsgTableObjectInvalidArgument, expr.Type.Literal, message), ReturnCodeApplicationError, ErrorTableObjectInvalidArgument),
 	}

@@ -2503,7 +2503,7 @@ var showFieldsTests = []struct {
 		Name: "ShowFields",
 		Expr: parser.ShowFields{
 			Type: parser.Identifier{Literal: "fields"},
-			Table: parser.TableObject{
+			Table: parser.FormatSpecifiedFunction{
 				Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 				FormatElement: parser.NewStringValue(","),
 				Path:          parser.Identifier{Literal: "show_fields_create.csv"},

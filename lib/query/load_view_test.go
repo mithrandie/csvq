@@ -775,11 +775,11 @@ var loadViewTests = []struct {
 		Error: "STDIN is empty",
 	},
 	{
-		Name: "LoadView TableObject From CSV File",
+		Name: "LoadView FormatSpecifiedFunction From CSV File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.Identifier{Literal: "table5"},
@@ -825,11 +825,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From TSV File",
+		Name: "LoadView FormatSpecifiedFunction From TSV File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue("\t"),
 						Path:          parser.Identifier{Literal: "table3"},
@@ -868,11 +868,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From CSV File FormatElement Evaluate Error",
+		Name: "LoadView FormatSpecifiedFunction From CSV File FormatElement Evaluate Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.FieldReference{Column: parser.Identifier{Literal: "notexist"}},
 						Path:          parser.Identifier{Literal: "table1"},
@@ -884,11 +884,11 @@ var loadViewTests = []struct {
 		Error: "field notexist does not exist",
 	},
 	{
-		Name: "LoadView TableObject From CSV File FormatElement Is Not Specified",
+		Name: "LoadView FormatSpecifiedFunction From CSV File FormatElement Is Not Specified",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type: parser.Token{Token: parser.CSV, Literal: "csv"},
 						Path: parser.Identifier{Literal: "table1"},
 					},
@@ -899,11 +899,11 @@ var loadViewTests = []struct {
 		Error: "invalid argument for csv: delimiter is not specified",
 	},
 	{
-		Name: "LoadView TableObject From CSV File FormatElement is Null",
+		Name: "LoadView FormatSpecifiedFunction From CSV File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewNullValue(),
 						Path:          parser.Identifier{Literal: "table1"},
@@ -915,11 +915,11 @@ var loadViewTests = []struct {
 		Error: "invalid delimiter: NULL",
 	},
 	{
-		Name: "LoadView TableObject From CSV File FormatElement Invalid Delimiter",
+		Name: "LoadView FormatSpecifiedFunction From CSV File FormatElement Invalid Delimiter",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue("invalid"),
 						Path:          parser.Identifier{Literal: "table1"},
@@ -931,11 +931,11 @@ var loadViewTests = []struct {
 		Error: "invalid delimiter: 'invalid'",
 	},
 	{
-		Name: "LoadView TableObject From CSV File Arguments Length Error",
+		Name: "LoadView FormatSpecifiedFunction From CSV File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.Identifier{Literal: "table5"},
@@ -953,11 +953,11 @@ var loadViewTests = []struct {
 		Error: "table object csv takes at most 5 arguments",
 	},
 	{
-		Name: "LoadView TableObject From CSV File 3rd Argument Error",
+		Name: "LoadView FormatSpecifiedFunction From CSV File 3rd Argument Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.Identifier{Literal: "table5"},
@@ -972,11 +972,11 @@ var loadViewTests = []struct {
 		Error: "invalid argument for csv: cannot be converted as a encoding value: TRUE",
 	},
 	{
-		Name: "LoadView TableObject From CSV File 4th Argument Error",
+		Name: "LoadView FormatSpecifiedFunction From CSV File 4th Argument Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.Identifier{Literal: "table5"},
@@ -992,11 +992,11 @@ var loadViewTests = []struct {
 		Error: "invalid argument for csv: cannot be converted as a no-header value: 'SJIS'",
 	},
 	{
-		Name: "LoadView TableObject From CSV File 5th Argument Error",
+		Name: "LoadView FormatSpecifiedFunction From CSV File 5th Argument Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.Identifier{Literal: "table5"},
@@ -1013,11 +1013,11 @@ var loadViewTests = []struct {
 		Error: "invalid argument for csv: cannot be converted as a without-null value: 'SJIS'",
 	},
 	{
-		Name: "LoadView TableObject From CSV File Invalid Encoding Type",
+		Name: "LoadView FormatSpecifiedFunction From CSV File Invalid Encoding Type",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.Identifier{Literal: "table5"},
@@ -1032,11 +1032,11 @@ var loadViewTests = []struct {
 		Error: "invalid argument for csv: encoding must be one of AUTO|UTF8|UTF8M|UTF16|UTF16BE|UTF16LE|UTF16BEM|UTF16LEM|SJIS",
 	},
 	{
-		Name: "LoadView TableObject From Fixed-Length File",
+		Name: "LoadView FormatSpecifiedFunction From Fixed-Length File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.FIXED, Literal: "fixed"},
 						FormatElement: parser.NewStringValue("spaces"),
 						Path:          parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
@@ -1077,11 +1077,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From Fixed-Length File with UTF-8 BOM",
+		Name: "LoadView FormatSpecifiedFunction From Fixed-Length File with UTF-8 BOM",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.FIXED, Literal: "fixed"},
 						FormatElement: parser.NewStringValue("spaces"),
 						Path:          parser.Identifier{Literal: "fixed_length_bom.txt", Quoted: true},
@@ -1122,11 +1122,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From Single-Line Fixed-Length File",
+		Name: "LoadView FormatSpecifiedFunction From Single-Line Fixed-Length File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.FIXED, Literal: "fixed"},
 						FormatElement: parser.NewStringValue("s[1,5]"),
 						Path:          parser.Identifier{Literal: "fixed_length_sl.txt", Quoted: true},
@@ -1168,11 +1168,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From Fixed-Length File FormatElement Is Not Specified",
+		Name: "LoadView FormatSpecifiedFunction From Fixed-Length File FormatElement Is Not Specified",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type: parser.Token{Token: parser.FIXED, Literal: "fixed"},
 						Path: parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
 					},
@@ -1183,11 +1183,11 @@ var loadViewTests = []struct {
 		Error: "invalid argument for fixed: delimiter positions are not specified",
 	},
 	{
-		Name: "LoadView TableObject From Fixed-Length File FormatElement is Null",
+		Name: "LoadView FormatSpecifiedFunction From Fixed-Length File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.FIXED, Literal: "fixed"},
 						FormatElement: parser.NewNullValue(),
 						Path:          parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
@@ -1199,11 +1199,11 @@ var loadViewTests = []struct {
 		Error: "invalid delimiter positions: NULL",
 	},
 	{
-		Name: "LoadView TableObject From Fixed-Length File Invalid Delimiter Positions",
+		Name: "LoadView FormatSpecifiedFunction From Fixed-Length File Invalid Delimiter Positions",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.FIXED, Literal: "fixed"},
 						FormatElement: parser.NewStringValue("invalid"),
 						Path:          parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
@@ -1215,11 +1215,11 @@ var loadViewTests = []struct {
 		Error: "invalid delimiter positions: 'invalid'",
 	},
 	{
-		Name: "LoadView TableObject From Fixed-Length File Arguments Length Error",
+		Name: "LoadView FormatSpecifiedFunction From Fixed-Length File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.FIXED, Literal: "fixed"},
 						FormatElement: parser.NewStringValue("spaces"),
 						Path:          parser.Identifier{Literal: "fixed_length.txt", Quoted: true},
@@ -1237,11 +1237,11 @@ var loadViewTests = []struct {
 		Error: "table object fixed takes at most 5 arguments",
 	},
 	{
-		Name: "LoadView TableObject From Json File",
+		Name: "LoadView FormatSpecifiedFunction From Json File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON, Literal: "json"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "table"},
@@ -1278,11 +1278,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From JsonH File",
+		Name: "LoadView FormatSpecifiedFunction From JsonH File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON, Literal: "json"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "table_h"},
@@ -1320,11 +1320,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From JsonA File",
+		Name: "LoadView FormatSpecifiedFunction From JsonA File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON, Literal: "json"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "table_a"},
@@ -1362,11 +1362,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From Json File FormatElement Is Not Specified",
+		Name: "LoadView FormatSpecifiedFunction From Json File FormatElement Is Not Specified",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type: parser.Token{Token: parser.JSON, Literal: "json"},
 						Path: parser.Identifier{Literal: "table"},
 					},
@@ -1377,11 +1377,11 @@ var loadViewTests = []struct {
 		Error: "invalid argument for json: json query is not specified",
 	},
 	{
-		Name: "LoadView TableObject From Json File FormatElement is Null",
+		Name: "LoadView FormatSpecifiedFunction From Json File FormatElement is Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON, Literal: "json"},
 						FormatElement: parser.NewNullValue(),
 						Path:          parser.Identifier{Literal: "table"},
@@ -1397,7 +1397,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON, Literal: "json"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "notexist"},
@@ -1409,11 +1409,11 @@ var loadViewTests = []struct {
 		Error: "file notexist does not exist",
 	},
 	{
-		Name: "LoadView TableObject From Json Lines File",
+		Name: "LoadView FormatSpecifiedFunction From Json Lines File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSONL, Literal: "jsonl"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "table7"},
@@ -1450,11 +1450,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From LTSV File",
+		Name: "LoadView FormatSpecifiedFunction From LTSV File",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type: parser.Token{Token: parser.LTSV, Literal: "ltsv"},
 						Path: parser.Identifier{Literal: "table6"},
 					},
@@ -1493,11 +1493,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From LTSV File Without Null",
+		Name: "LoadView FormatSpecifiedFunction From LTSV File Without Null",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type: parser.Token{Token: parser.LTSV, Literal: "ltsv"},
 						Path: parser.Identifier{Literal: "table6"},
 						Args: []parser.QueryExpression{
@@ -1540,11 +1540,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From LTSV File with UTF-8 BOM",
+		Name: "LoadView FormatSpecifiedFunction From LTSV File with UTF-8 BOM",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type: parser.Token{Token: parser.LTSV, Literal: "ltsv"},
 						Path: parser.Identifier{Literal: "table6_bom"},
 					},
@@ -1583,11 +1583,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{
-		Name: "LoadView TableObject From LTSV File Arguments Length Error",
+		Name: "LoadView FormatSpecifiedFunction From LTSV File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type: parser.Token{Token: parser.LTSV, Literal: "ltsv"},
 						Path: parser.Identifier{Literal: "table6"},
 						Args: []parser.QueryExpression{
@@ -1603,11 +1603,11 @@ var loadViewTests = []struct {
 		Error: "table object ltsv takes exactly 3 arguments",
 	},
 	{
-		Name: "LoadView TableObject Invalid Object Type",
+		Name: "LoadView FormatSpecifiedFunction Invalid Object Type",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: 0, Literal: "invalid"},
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.Identifier{Literal: "table"},
@@ -1619,11 +1619,11 @@ var loadViewTests = []struct {
 		Error: "invalid table object: invalid",
 	},
 	{
-		Name: "LoadView TableObject From Json File Arguments Length Error",
+		Name: "LoadView FormatSpecifiedFunction From Json File Arguments Length Error",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON, Literal: "json"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "table"},
@@ -2480,11 +2480,11 @@ var loadViewTests = []struct {
 		}, time.Time{}, nil),
 	},
 	{ //TODO
-		Name: "LoadView Inline Table as TableObject",
+		Name: "LoadView Inline Table as FormatSpecifiedFunction",
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 						FormatElement: parser.NewStringValue(","),
 						Path: parser.TableFunction{
@@ -2582,7 +2582,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
 						FormatElement: parser.NewStringValue("{column1, column2}"),
 						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
@@ -2626,7 +2626,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
 						FormatElement: parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
 						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
@@ -2642,7 +2642,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
 						FormatElement: parser.NewStringValue("{column1, column2}"),
 						Path:          parser.FieldReference{Column: parser.Identifier{Literal: "notexists"}},
@@ -2658,7 +2658,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
 						FormatElement: parser.NewNullValue(),
 						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
@@ -2674,7 +2674,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
 						FormatElement: parser.NewStringValue("{column1, column2}"),
 						Path:          parser.NewNullValue(),
@@ -2690,7 +2690,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
 						FormatElement: parser.NewStringValue("{column1, column2"),
 						Path:          parser.NewStringValue("[{\"column1\":1, \"column2\":2},{\"column1\":3, \"column2\":4}]"),
@@ -2706,7 +2706,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_INLINE, Literal: "json_inline"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "table"},
@@ -2750,7 +2750,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "table"},
@@ -2793,7 +2793,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.JSON_TABLE, Literal: "json_table"},
 						FormatElement: parser.NewStringValue("{}"),
 						Path:          parser.Identifier{Literal: "notexist"},
@@ -2809,7 +2809,7 @@ var loadViewTests = []struct {
 		From: parser.FromClause{
 			Tables: []parser.QueryExpression{
 				parser.Table{
-					Object: parser.TableObject{
+					Object: parser.FormatSpecifiedFunction{
 						Type:          parser.Token{Token: parser.CSV_INLINE, Literal: "csv_inline"},
 						FormatElement: parser.NewStringValue(","),
 						Path:          parser.NewStringValue("c1,c2\n1,a\n2,b\n"),

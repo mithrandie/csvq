@@ -54,7 +54,7 @@ var parseTableNameTests = []struct {
 	},
 	{
 		Table: parser.Table{
-			Object: parser.TableObject{
+			Object: parser.FormatSpecifiedFunction{
 				Type:          parser.Token{Token: parser.FIXED, Literal: "fixed"},
 				FormatElement: parser.NewStringValue("[1, 2, 3]"),
 				Path:          parser.Identifier{Literal: "fixed_length.dat", Quoted: true},

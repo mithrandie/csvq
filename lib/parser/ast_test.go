@@ -714,8 +714,8 @@ func TestTableFunction_String(t *testing.T) {
 	}
 }
 
-func TestTableObject_String(t *testing.T) {
-	e := TableObject{
+func TestFormatSpecifiedFunction_String(t *testing.T) {
+	e := FormatSpecifiedFunction{
 		Type:          Token{Token: FIXED, Literal: "fixed"},
 		FormatElement: NewStringValue("[1, 2, 3]"),
 		Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
@@ -726,7 +726,7 @@ func TestTableObject_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = TableObject{
+	e = FormatSpecifiedFunction{
 		Type:          Token{Token: FIXED, Literal: "fixed"},
 		FormatElement: NewStringValue("[1, 2, 3]"),
 		Path:          Identifier{Literal: "fixed_length.dat", Quoted: true},
@@ -737,7 +737,7 @@ func TestTableObject_String(t *testing.T) {
 		t.Errorf("string = %q, want %q for %#v", e.String(), expect, e)
 	}
 
-	e = TableObject{
+	e = FormatSpecifiedFunction{
 		Type: Token{Token: LTSV, Literal: "ltsv"},
 		Path: Identifier{Literal: "table.ltsv", Quoted: true},
 		Args: []QueryExpression{NewStringValue("utf8")},

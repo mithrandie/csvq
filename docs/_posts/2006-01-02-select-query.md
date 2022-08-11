@@ -123,8 +123,8 @@ table
 
 table_entity
   : table_identifier
-  | table_object
-  | inline_table_object
+  | format_specified_function
+  | inline_format_specified_function
 
 table_identifier
   : table_name
@@ -162,14 +162,14 @@ table_identification_function
   : URL::(url_string)
   : DATA::(data_string)
 
-table_object
+format_specified_function
   : CSV(delimiter, table_identifier [, encoding [, no_header [, without_null]]])
   | FIXED(delimiter_positions, table_identifier [, encoding [, no_header [, without_null]]])
   | JSON(json_query, table_identifier)
   | JSONL(json_query, table_identifier)
   | LTSV(table_identifier [, encoding [, without_null]])
 
-inline_table_object  -- Deprecated. Table identification functions can be used instead.
+inline_format_specified_function  -- Deprecated. Table identification functions can be used instead.
   : CSV_INLINE(delimiter, inline_table_identifier [, encoding [, no_header [, without_null]]])
   | CSV_INLINE(delimiter, csv_data)
   | JSON_INLINE(json_query, inline_table_identifier [, encoding [, no_header [, without_null]]])

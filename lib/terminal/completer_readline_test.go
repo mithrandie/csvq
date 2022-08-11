@@ -619,7 +619,7 @@ var completerStatementsTests = []completerTest{
 		},
 	},
 	{
-		Name:     "Statements TableObject",
+		Name:     "Statements FormatSpecifiedFunction",
 		Line:     "",
 		OrigLine: "select 1 from csv(",
 		Index:    18,

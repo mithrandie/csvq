@@ -562,7 +562,7 @@ func (e TableFunction) String() string {
 	return strings.ToUpper(e.Name) + ConstantDelimiter + putParentheses(listQueryExpressions(e.Args))
 }
 
-type TableObject struct {
+type FormatSpecifiedFunction struct {
 	*BaseExpr
 	Type          Token
 	FormatElement QueryExpression
@@ -570,7 +570,7 @@ type TableObject struct {
 	Args          []QueryExpression
 }
 
-func (e TableObject) String() string {
+func (e FormatSpecifiedFunction) String() string {
 	allArgs := make([]QueryExpression, 0, len(e.Args)+2)
 	if e.FormatElement != nil {
 		allArgs = append(allArgs, e.FormatElement)

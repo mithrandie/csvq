@@ -97,7 +97,7 @@ var CsvqSyntax = []Expression{
 						Name: "table_entity",
 						Group: []Grammar{
 							{Link("table_identifier")},
-							{Link("table_object")},
+							{Link("format_specified_function")},
 						},
 					},
 					{
@@ -146,22 +146,22 @@ var CsvqSyntax = []Expression{
 						},
 					},
 					{
-						Name: "table_object",
-						Group: []Grammar{
-							{Function{Name: "CSV", Args: []Element{String("delimiter"), Link("table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "FIXED", Args: []Element{String("delimiter_positions"), Link("table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
-							{Function{Name: "JSON", Args: []Element{String("json_query"), Link("table_identifier")}}},
-							{Function{Name: "JSONL", Args: []Element{String("json_query"), Link("table_identifier")}}},
-							{Function{Name: "LTSV", Args: []Element{Link("table_identifier"), Option{String("encoding"), Boolean("without_null")}}}},
-						},
-					},
-					{
 						Name: "table_identification_function",
 						Group: []Grammar{
 							{Function{Name: "FILE::", Args: []Element{String("file_path")}}},
 							{Function{Name: "INLINE::", Args: []Element{String("file_path")}}},
 							{Function{Name: "URL::", Args: []Element{String("url")}}},
 							{Function{Name: "DATA::", Args: []Element{String("data")}}},
+						},
+					},
+					{
+						Name: "format_specified_function",
+						Group: []Grammar{
+							{Function{Name: "CSV", Args: []Element{String("delimiter"), Link("table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
+							{Function{Name: "FIXED", Args: []Element{String("delimiter_positions"), Link("table_identifier"), Option{String("encoding"), Boolean("no_header"), Boolean("without_null")}}}},
+							{Function{Name: "JSON", Args: []Element{String("json_query"), Link("table_identifier")}}},
+							{Function{Name: "JSONL", Args: []Element{String("json_query"), Link("table_identifier")}}},
+							{Function{Name: "LTSV", Args: []Element{Link("table_identifier"), Option{String("encoding"), Boolean("without_null")}}}},
 						},
 					},
 				},

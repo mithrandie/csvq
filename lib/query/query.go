@@ -1057,7 +1057,7 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 	w.Title1 = "Attributes Updated in"
 	if i, ok := query.Table.(parser.Identifier); ok {
 		w.Title2 = i.Literal
-	} else if to, ok := query.Table.(parser.TableObject); ok {
+	} else if to, ok := query.Table.(parser.FormatSpecifiedFunction); ok {
 		if pi, ok := to.Path.(parser.Identifier); ok {
 			w.Title2 = pi.Literal
 		}

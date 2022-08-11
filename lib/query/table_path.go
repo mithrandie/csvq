@@ -47,7 +47,7 @@ func ParseTableName(ctx context.Context, scope *ReferenceScope, table parser.Tab
 		name.Literal = FormatTableName(obj.Literal)
 	case parser.Stdin:
 		name.Literal = obj.String()
-	case parser.TableObject:
+	case parser.FormatSpecifiedFunction:
 		return ParseTableName(ctx, scope, parser.Table{Object: obj.Path})
 	default:
 		// Do Nothing

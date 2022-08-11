@@ -99,14 +99,14 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 	switch table.Object.(type) {
 	case parser.Dual:
 		view = NewDualView()
-	case parser.TableObject:
-		tableObject := table.Object.(parser.TableObject)
-		tablePath := tableObject.Path
+	case parser.FormatSpecifiedFunction:
+		formatSpecifiedFunction := table.Object.(parser.FormatSpecifiedFunction)
+		tablePath := formatSpecifiedFunction.Path
 		options := scope.Tx.Flags.ImportOptions.Copy()
 
 		var felem value.Primary
-		if tableObject.FormatElement != nil {
-			p, err := Evaluate(ctx, scope, tableObject.FormatElement)
+		if formatSpecifiedFunction.FormatElement != nil {
+			p, err := Evaluate(ctx, scope, formatSpecifiedFunction.FormatElement)
 			if err != nil {
 				return nil, err
 			}
@@ -114,31 +114,31 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		}
 
 		isInlineObject := false
-		switch tableObject.Type.Token {
+		switch formatSpecifiedFunction.Type.Token {
 		case parser.CSV_INLINE, parser.JSON_INLINE, parser.JSON_TABLE:
 			isInlineObject = true
 
-			if isTableObjectAsDataObject(tableObject.Path) {
-				p, err := Evaluate(ctx, scope, tableObject.Path)
+			if isTableObjectAsDataObject(formatSpecifiedFunction.Path) {
+				p, err := Evaluate(ctx, scope, formatSpecifiedFunction.Path)
 				if err != nil {
 					return nil, err
 				}
 				d := value.ToString(p)
 				if value.IsNull(d) {
-					return nil, NewEmptyInlineTableError(tableObject)
+					return nil, NewEmptyInlineTableError(formatSpecifiedFunction)
 				}
-				tablePath = DataObject{BaseExpr: tableObject.GetBaseExpr(), Raw: d.(*value.String).Raw()}
-			} else if isTableObjectAsURL(tableObject.Path) {
-				tablePath = parser.Url{BaseExpr: tableObject.GetBaseExpr(), Raw: tableObject.Path.(parser.Identifier).Literal}
+				tablePath = DataObject{BaseExpr: formatSpecifiedFunction.GetBaseExpr(), Raw: d.(*value.String).Raw()}
+			} else if isTableObjectAsURL(formatSpecifiedFunction.Path) {
+				tablePath = parser.Url{BaseExpr: formatSpecifiedFunction.GetBaseExpr(), Raw: formatSpecifiedFunction.Path.(parser.Identifier).Literal}
 			}
 
 			forUpdate = false
 
-			switch tableObject.Type.Token {
+			switch formatSpecifiedFunction.Type.Token {
 			case parser.CSV_INLINE:
-				tableObject.Type.Token = parser.CSV
+				formatSpecifiedFunction.Type.Token = parser.CSV
 			default: // JSON_INLINE, JSON_TABLE
-				tableObject.Type.Token = parser.JSON
+				formatSpecifiedFunction.Type.Token = parser.JSON
 			}
 		}
 
@@ -146,21 +146,21 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 		noHeaderIdx := 1
 		withoutNullIdx := 2
 
-		switch tableObject.Type.Token {
+		switch formatSpecifiedFunction.Type.Token {
 		case parser.CSV:
 			if felem == nil {
-				return nil, NewTableObjectInvalidArgumentError(tableObject, "delimiter is not specified")
+				return nil, NewTableObjectInvalidArgumentError(formatSpecifiedFunction, "delimiter is not specified")
 			}
 			if value.IsNull(felem) {
-				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
+				return nil, NewTableObjectInvalidDelimiterError(formatSpecifiedFunction, formatSpecifiedFunction.FormatElement.String())
 			}
 			s := felem.(*value.String).Raw()
 			d := []rune(s)
 			if 1 != len(d) {
-				return nil, NewTableObjectInvalidDelimiterError(tableObject, tableObject.FormatElement.String())
+				return nil, NewTableObjectInvalidDelimiterError(formatSpecifiedFunction, formatSpecifiedFunction.FormatElement.String())
 			}
-			if 3 < len(tableObject.Args) {
-				return nil, NewTableObjectArgumentsLengthError(tableObject, 5)
+			if 3 < len(formatSpecifiedFunction.Args) {
+				return nil, NewTableObjectArgumentsLengthError(formatSpecifiedFunction, 5)
 			}
 			options.Delimiter = d[0]
 			if options.Delimiter == '\t' {
@@ -170,10 +170,10 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 		case parser.FIXED:
 			if felem == nil {
-				return nil, NewTableObjectInvalidArgumentError(tableObject, "delimiter positions are not specified")
+				return nil, NewTableObjectInvalidArgumentError(formatSpecifiedFunction, "delimiter positions are not specified")
 			}
 			if value.IsNull(felem) {
-				return nil, NewTableObjectInvalidDelimiterPositionsError(tableObject, tableObject.FormatElement.String())
+				return nil, NewTableObjectInvalidDelimiterPositionsError(formatSpecifiedFunction, formatSpecifiedFunction.FormatElement.String())
 			}
 			s := felem.(*value.String).Raw()
 
@@ -185,40 +185,40 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				}
 				err = gojson.Unmarshal([]byte(s), &positions)
 				if err != nil {
-					return nil, NewTableObjectInvalidDelimiterPositionsError(tableObject, tableObject.FormatElement.String())
+					return nil, NewTableObjectInvalidDelimiterPositionsError(formatSpecifiedFunction, formatSpecifiedFunction.FormatElement.String())
 				}
 			}
-			if 3 < len(tableObject.Args) {
-				return nil, NewTableObjectArgumentsLengthError(tableObject, 5)
+			if 3 < len(formatSpecifiedFunction.Args) {
+				return nil, NewTableObjectArgumentsLengthError(formatSpecifiedFunction, 5)
 			}
 			options.DelimiterPositions = positions
 			options.Format = option.FIXED
 		case parser.JSON, parser.JSONL:
 			if felem == nil {
-				return nil, NewTableObjectInvalidArgumentError(tableObject, "json query is not specified")
+				return nil, NewTableObjectInvalidArgumentError(formatSpecifiedFunction, "json query is not specified")
 			}
 			if value.IsNull(felem) {
-				return nil, NewTableObjectInvalidJsonQueryError(tableObject, tableObject.FormatElement.String())
+				return nil, NewTableObjectInvalidJsonQueryError(formatSpecifiedFunction, formatSpecifiedFunction.FormatElement.String())
 			}
-			if 0 < len(tableObject.Args) {
-				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 2)
+			if 0 < len(formatSpecifiedFunction.Args) {
+				return nil, NewTableObjectJsonArgumentsLengthError(formatSpecifiedFunction, 2)
 			}
 
 			options.JsonQuery = felem.(*value.String).Raw()
 			options.Encoding = text.UTF8
-			if tableObject.Type.Token == parser.JSONL {
+			if formatSpecifiedFunction.Type.Token == parser.JSONL {
 				options.Format = option.JSONL
 			} else {
 				options.Format = option.JSON
 			}
 		case parser.LTSV:
-			if 2 < len(tableObject.Args) {
-				return nil, NewTableObjectJsonArgumentsLengthError(tableObject, 3)
+			if 2 < len(formatSpecifiedFunction.Args) {
+				return nil, NewTableObjectJsonArgumentsLengthError(formatSpecifiedFunction, 3)
 			}
 			options.Format = option.LTSV
 			withoutNullIdx, noHeaderIdx = noHeaderIdx, withoutNullIdx
 		default:
-			return nil, NewInvalidTableObjectError(tableObject, tableObject.Type.Literal)
+			return nil, NewInvalidTableObjectError(formatSpecifiedFunction, formatSpecifiedFunction.Type.Literal)
 		}
 
 		args := make([]value.Primary, 3)
@@ -230,7 +230,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 			}
 		}()
 
-		for i, a := range tableObject.Args {
+		for i, a := range formatSpecifiedFunction.Args {
 			if pt, ok := a.(parser.PrimitiveType); ok && value.IsNull(pt.Value) {
 				continue
 			}
@@ -240,7 +240,7 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				if col, ok := fr.Column.(parser.Identifier); ok {
 					a = parser.NewStringValue(col.Literal)
 				} else {
-					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as an argument: %s", tableObject.Args[encodingIdx].String()))
+					return nil, NewTableObjectInvalidArgumentError(formatSpecifiedFunction, fmt.Sprintf("cannot be converted as an argument: %s", formatSpecifiedFunction.Args[encodingIdx].String()))
 				}
 			}
 			if pv, err := Evaluate(ctx, scope, a); err == nil {
@@ -253,28 +253,28 @@ func loadView(ctx context.Context, scope *ReferenceScope, tableExpr parser.Query
 				if !value.IsNull(v) {
 					args[i] = v
 				} else {
-					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as a encoding value: %s", tableObject.Args[encodingIdx].String()))
+					return nil, NewTableObjectInvalidArgumentError(formatSpecifiedFunction, fmt.Sprintf("cannot be converted as a encoding value: %s", formatSpecifiedFunction.Args[encodingIdx].String()))
 				}
 			case noHeaderIdx:
 				v := value.ToBoolean(p)
 				if !value.IsNull(v) {
 					args[i] = v
 				} else {
-					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as a no-header value: %s", tableObject.Args[noHeaderIdx].String()))
+					return nil, NewTableObjectInvalidArgumentError(formatSpecifiedFunction, fmt.Sprintf("cannot be converted as a no-header value: %s", formatSpecifiedFunction.Args[noHeaderIdx].String()))
 				}
 			case withoutNullIdx:
 				v := value.ToBoolean(p)
 				if !value.IsNull(v) {
 					args[i] = v
 				} else {
-					return nil, NewTableObjectInvalidArgumentError(tableObject, fmt.Sprintf("cannot be converted as a without-null value: %s", tableObject.Args[withoutNullIdx].String()))
+					return nil, NewTableObjectInvalidArgumentError(formatSpecifiedFunction, fmt.Sprintf("cannot be converted as a without-null value: %s", formatSpecifiedFunction.Args[withoutNullIdx].String()))
 				}
 			}
 		}
 
 		if args[encodingIdx] != nil {
 			if options.Encoding, err = option.ParseEncoding(args[0].(*value.String).Raw()); err != nil {
-				return nil, NewTableObjectInvalidArgumentError(tableObject, err.Error())
+				return nil, NewTableObjectInvalidArgumentError(formatSpecifiedFunction, err.Error())
 			}
 		}
 		if args[noHeaderIdx] != nil {
@@ -735,7 +735,7 @@ func loadInlineObjectFromFile(
 func loadObjectFromFile(
 	ctx context.Context,
 	scope *ReferenceScope,
-	tableIdentifier parser.Identifier,
+	fileIdentifier parser.Identifier,
 	tableName parser.Identifier,
 	forUpdate bool,
 	useInternalId bool,
@@ -744,7 +744,7 @@ func loadObjectFromFile(
 	filePath, err := cacheViewFromFile(
 		ctx,
 		scope,
-		tableIdentifier,
+		fileIdentifier,
 		forUpdate,
 		options,
 	)
@@ -755,13 +755,13 @@ func loadObjectFromFile(
 	if useInternalId {
 		if view, err = scope.Tx.CachedViews.GetWithInternalId(ctx, strings.ToUpper(filePath), scope.Tx.Flags); err != nil {
 			if err == errTableNotLoaded {
-				err = NewTableNotLoadedError(parser.Identifier{BaseExpr: tableIdentifier.GetBaseExpr(), Literal: filePath})
+				err = NewTableNotLoadedError(parser.Identifier{BaseExpr: fileIdentifier.GetBaseExpr(), Literal: filePath})
 			}
 			return
 		}
 	} else {
 		if view, err = scope.Tx.CachedViews.Get(strings.ToUpper(filePath)); err != nil {
-			err = NewTableNotLoadedError(parser.Identifier{BaseExpr: tableIdentifier.GetBaseExpr(), Literal: filePath})
+			err = NewTableNotLoadedError(parser.Identifier{BaseExpr: fileIdentifier.GetBaseExpr(), Literal: filePath})
 			return
 		}
 	}
@@ -815,13 +815,13 @@ func loadObject(
 		return loadHttpObject(ctx, scope, httpObject, originalTablePath, tableName, options)
 	}
 
-	tableIdentifier := tablePath.(parser.Identifier)
+	fileIdentifier := tablePath.(parser.Identifier)
 
 	if isInlineObject {
-		return loadInlineObjectFromFile(ctx, scope, tableIdentifier, tableName, options)
+		return loadInlineObjectFromFile(ctx, scope, fileIdentifier, tableName, options)
 	}
 
-	if scope.RecursiveTable != nil && strings.EqualFold(tableIdentifier.Literal, scope.RecursiveTable.Name.Literal) && scope.RecursiveTmpView != nil {
+	if scope.RecursiveTable != nil && strings.EqualFold(fileIdentifier.Literal, scope.RecursiveTable.Name.Literal) && scope.RecursiveTmpView != nil {
 		view := scope.RecursiveTmpView.Copy()
 		if !strings.EqualFold(scope.RecursiveTable.Name.Literal, tableName.Literal) {
 			if err := view.Header.Update(tableName.Literal, nil); err != nil {
@@ -831,13 +831,13 @@ func loadObject(
 		return view, nil
 	}
 
-	if scope.InlineTableExists(tableIdentifier) {
+	if scope.InlineTableExists(fileIdentifier) {
 		if err := scope.AddAlias(tableName, ""); err != nil {
 			return nil, err
 		}
 
-		view, _ := scope.GetInlineTable(tableIdentifier)
-		if !strings.EqualFold(tableIdentifier.Literal, tableName.Literal) {
+		view, _ := scope.GetInlineTable(fileIdentifier)
+		if !strings.EqualFold(fileIdentifier.Literal, tableName.Literal) {
 			if err := view.Header.Update(tableName.Literal, nil); err != nil {
 				return nil, err
 			}
@@ -845,24 +845,24 @@ func loadObject(
 		return view, nil
 	}
 
-	if scope.TemporaryTableExists(tableIdentifier.Literal) {
+	if scope.TemporaryTableExists(fileIdentifier.Literal) {
 		var view *View = nil
 		var err error
 
 		if useInternalId {
-			view, err = scope.GetTemporaryTableWithInternalId(ctx, tableIdentifier, scope.Tx.Flags)
+			view, err = scope.GetTemporaryTableWithInternalId(ctx, fileIdentifier, scope.Tx.Flags)
 		} else {
-			view, err = scope.GetTemporaryTable(tableIdentifier)
+			view, err = scope.GetTemporaryTable(fileIdentifier)
 		}
 		if err != nil {
 			return nil, err
 		}
 
-		if err := scope.AddAlias(tableName, tableIdentifier.Literal); err != nil {
+		if err := scope.AddAlias(tableName, fileIdentifier.Literal); err != nil {
 			return nil, err
 		}
 
-		if !strings.EqualFold(FormatTableName(tableIdentifier.Literal), tableName.Literal) {
+		if !strings.EqualFold(FormatTableName(fileIdentifier.Literal), tableName.Literal) {
 			if err := view.Header.Update(tableName.Literal, nil); err != nil {
 				return nil, err
 			}
@@ -871,13 +871,13 @@ func loadObject(
 		return view, nil
 	}
 
-	return loadObjectFromFile(ctx, scope, tableIdentifier, tableName, forUpdate, useInternalId, options)
+	return loadObjectFromFile(ctx, scope, fileIdentifier, tableName, forUpdate, useInternalId, options)
 }
 
 func cacheViewFromFile(
 	ctx context.Context,
 	scope *ReferenceScope,
-	tableIdentifier parser.Identifier,
+	fileIdentifier parser.Identifier,
 	forUpdate bool,
 	options option.ImportOptions,
 ) (filePath string, err error) {
@@ -885,7 +885,7 @@ func cacheViewFromFile(
 	defer scope.Tx.viewLoadingMutex.Unlock()
 
 	filePath, view, isCached, err := func() (string, *View, bool, error) {
-		if p, ok := scope.LoadFilePath(tableIdentifier.Literal); ok {
+		if p, ok := scope.LoadFilePath(fileIdentifier.Literal); ok {
 			if v, ok := scope.Tx.CachedViews.Load(p); ok {
 				return p, v, true, nil
 			}
@@ -893,15 +893,15 @@ func cacheViewFromFile(
 
 		// Uncommitted newly created tables are not yet created as files, so they need to be checked if they are
 		// registered in the cache with CreateFilePath(), instead of SearchFilePath().
-		p, e := CreateFilePath(tableIdentifier, scope.Tx.Flags.Repository)
+		p, e := CreateFilePath(fileIdentifier, scope.Tx.Flags.Repository)
 		if e != nil {
-			return "", nil, false, NewIOError(tableIdentifier, err.Error())
+			return "", nil, false, NewIOError(fileIdentifier, err.Error())
 		}
 		if v, ok := scope.Tx.CachedViews.Load(strings.ToUpper(p)); ok {
 			return p, v, true, nil
 		}
 
-		p, _, e = SearchFilePath(tableIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
+		p, _, e = SearchFilePath(fileIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
 		if e != nil {
 			return "", nil, false, e
 		}
@@ -920,7 +920,7 @@ func cacheViewFromFile(
 				return
 			}
 		} else {
-			fileInfo, err = NewFileInfo(tableIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
+			fileInfo, err = NewFileInfo(fileIdentifier, scope.Tx.Flags.Repository, options, scope.Tx.Flags.ImportOptions.Format)
 			if err != nil {
 				return
 			}
@@ -933,8 +933,8 @@ func cacheViewFromFile(
 		if forUpdate {
 			h, e := scope.Tx.FileContainer.CreateHandlerForUpdate(ctx, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
 			if e != nil {
-				tableIdentifier.Literal = fileInfo.Path
-				err = ConvertFileHandlerError(e, tableIdentifier)
+				fileIdentifier.Literal = fileInfo.Path
+				err = ConvertFileHandlerError(e, fileIdentifier)
 				return
 			}
 			fileInfo.Handler = h
@@ -942,8 +942,8 @@ func cacheViewFromFile(
 		} else {
 			h, e := scope.Tx.FileContainer.CreateHandlerForRead(ctx, fileInfo.Path, scope.Tx.WaitTimeout, scope.Tx.RetryDelay)
 			if e != nil {
-				tableIdentifier.Literal = fileInfo.Path
-				err = ConvertFileHandlerError(e, tableIdentifier)
+				fileIdentifier.Literal = fileInfo.Path
+				err = ConvertFileHandlerError(e, fileIdentifier)
 				return
 			}
 			defer func() {
@@ -953,13 +953,13 @@ func cacheViewFromFile(
 		}
 		_, err = fp.Seek(0, io.SeekStart)
 		if err != nil {
-			return filePath, NewIOError(tableIdentifier, err.Error())
+			return filePath, NewIOError(fileIdentifier, err.Error())
 		}
 
-		view, err = loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, tableIdentifier)
+		view, err = loadViewFromFile(ctx, scope.Tx.Flags, fp, fileInfo, options, fileIdentifier)
 		if err != nil {
 			if _, ok := err.(Error); !ok {
-				err = NewDataParsingError(tableIdentifier, fileInfo.Path, err.Error())
+				err = NewDataParsingError(fileIdentifier, fileInfo.Path, err.Error())
 			}
 			if forUpdate {
 				err = appendCompositeError(err, scope.Tx.FileContainer.Close(fileInfo.Handler))
@@ -970,8 +970,8 @@ func cacheViewFromFile(
 		scope.Tx.CachedViews.Set(view)
 	}
 
-	if !scope.FilePathExists(tableIdentifier.Literal) {
-		scope.StoreFilePath(tableIdentifier.Literal, filePath)
+	if !scope.FilePathExists(fileIdentifier.Literal) {
+		scope.StoreFilePath(fileIdentifier.Literal, filePath)
 	}
 
 	return
