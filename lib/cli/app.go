@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sort"
 
 	"github.com/mithrandie/csvq/lib/action"
 	"github.com/mithrandie/csvq/lib/file"
@@ -298,6 +299,9 @@ func Run() {
 
 		return err
 	})
+
+	sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.CommandsByName(app.Commands))
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatalln(err.Error())
