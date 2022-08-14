@@ -2129,7 +2129,7 @@ func (c *Completer) SearchAllTables(line string, _ string, _ int) readline.Candi
 	items := make([]string, 0, len(tableKeys)+len(files)+len(c.viewList))
 	tablePath := make(map[string]bool)
 	for _, k := range tableKeys {
-		if view, ok := c.scope.Tx.CachedViews.Load(k); ok {
+		if view, ok := c.scope.Tx.CachedViews.Load(strings.ToUpper(k)); ok {
 			lpath := view.FileInfo.Path
 			tablePath[lpath] = true
 			if filepath.Dir(lpath) == defaultDir {
