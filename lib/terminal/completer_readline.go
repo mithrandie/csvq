@@ -3,13 +3,13 @@
 package terminal
 
 import (
-	"github.com/mithrandie/csvq/lib/constant"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"unicode"
 
+	"github.com/mithrandie/csvq/lib/constant"
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
