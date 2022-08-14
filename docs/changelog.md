@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.17.10
+
+Released on Aug 14, 2022
+
+- Fix a bug when loading views from cache.
+
 ## Version 1.17.9
 
 Released on Aug 14, 2022
