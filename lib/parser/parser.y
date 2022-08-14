@@ -134,14 +134,14 @@ import (
 %type<queryexpr>   window_frame_low
 %type<queryexpr>   window_frame_high
 %type<queryexpr>   table_identifier
-%type<token>       table_object_type
-%type<queryexpr>   table_object
-%type<token>       inline_table_object_type
-%type<queryexpr>   inline_table_object
+%type<token>       table_format
+%type<queryexpr>   format_specified_function
+%type<token>       inline_table_format
+%type<queryexpr>   inline_format_specified_function
 %type<queryexpr>   updatable_table_identifier
 %type<queryexprs>  identified_tables
 %type<queryexprs>  updatable_tables
-%type<queryexpr>   virtual_table_object
+%type<queryexpr>   table_object
 %type<table>       laterable_query_table
 %type<queryexprs>  joinable_tables
 %type<queryexpr>   table
@@ -2017,7 +2017,7 @@ table_identifier
         $$ = Stdin{BaseExpr: NewBaseExpr($1)}
     }
 
-table_object_type
+table_format
     : CSV
     {
         $$ = $1
@@ -2039,7 +2039,7 @@ table_object_type
         $$ = $1
     }
 
-inline_table_object_type
+inline_table_format
     : CSV_INLINE
     {
         $$ = $1
@@ -2053,40 +2053,40 @@ inline_table_object_type
         $$ = $1
     }
 
-table_object
-    : table_object_type '(' table_identifier ')'
+format_specified_function
+    : table_format '(' table_identifier ')'
     {
-        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, Path: $3, Args: nil}
+        $$ = FormatSpecifiedFunction{BaseExpr: NewBaseExpr($1), Type: $1, Path: $3, Args: nil}
     }
-    | table_object_type '(' table_identifier ',' arguments ')'
+    | table_format '(' table_identifier ',' arguments ')'
     {
-        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, Path: $3, Args: $5}
+        $$ = FormatSpecifiedFunction{BaseExpr: NewBaseExpr($1), Type: $1, Path: $3, Args: $5}
     }
-    | table_object_type '(' substantial_value ',' table_identifier ')'
+    | table_format '(' substantial_value ',' table_identifier ')'
     {
-        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
+        $$ = FormatSpecifiedFunction{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
     }
-    | table_object_type '(' substantial_value ',' table_identifier ',' arguments ')'
+    | table_format '(' substantial_value ',' table_identifier ',' arguments ')'
     {
-        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
+        $$ = FormatSpecifiedFunction{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
     }
 
-inline_table_object
-    : inline_table_object_type '(' substantial_value ',' identifier ')'
+inline_format_specified_function
+    : inline_table_format '(' substantial_value ',' identifier ')'
     {
-        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
+        $$ = FormatSpecifiedFunction{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
     }
-    | inline_table_object_type '(' substantial_value ',' identifier ',' arguments ')'
+    | inline_table_format '(' substantial_value ',' identifier ',' arguments ')'
     {
-        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
+        $$ = FormatSpecifiedFunction{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
     }
-    | inline_table_object_type '(' substantial_value ',' substantial_value ')'
+    | inline_table_format '(' substantial_value ',' substantial_value ')'
     {
-        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
+        $$ = FormatSpecifiedFunction{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: nil}
     }
-    | inline_table_object_type '(' substantial_value ',' substantial_value ',' arguments ')'
+    | inline_table_format '(' substantial_value ',' substantial_value ',' arguments ')'
     {
-        $$ = TableObject{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
+        $$ = FormatSpecifiedFunction{BaseExpr: NewBaseExpr($1), Type: $1, FormatElement: $3, Path: $5, Args: $7}
     }
 
 updatable_table_identifier
@@ -2094,17 +2094,17 @@ updatable_table_identifier
     {
         $$ = $1
     }
-    | table_object
+    | format_specified_function
     {
         $$ = $1
     }
 
-virtual_table_object
+table_object
     : updatable_table_identifier
     {
         $$ = $1
     }
-    | inline_table_object
+    | inline_format_specified_function
     {
         $$ = $1
     }
@@ -2146,15 +2146,15 @@ joinable_tables
     }
 
 table
-    : virtual_table_object
+    : table_object
     {
         $$ = Table{Object: $1}
     }
-    | virtual_table_object identifier
+    | table_object identifier
     {
         $$ = Table{Object: $1, Alias: $2}
     }
-    | virtual_table_object AS identifier
+    | table_object AS identifier
     {
         $$ = Table{Object: $1, As: $2, Alias: $3}
     }

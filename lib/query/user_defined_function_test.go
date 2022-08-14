@@ -320,7 +320,7 @@ func TestUserDefinedFunctionMap_Get(t *testing.T) {
 	})
 
 	for _, v := range userDefinedFunctionMapGetTests {
-		result, ok := funcs.Get(v.Function, v.FuncName)
+		result, ok := funcs.Get(v.FuncName)
 		if ok != v.OK {
 			t.Errorf("%s: result = %t, want %t", v.Name, ok, v.OK)
 			continue

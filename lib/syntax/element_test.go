@@ -110,12 +110,12 @@ var grammarFormatTests = []struct {
 		Expect:     syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str1")) + syntaxTestPalette.Render(ItalicEffect, syntaxTestPalette.Render(option.StringEffect, "str2")),
 	},
 	{
-		Grammar:    []Element{Function{Name: "fn", Args: []Element{Option{Keyword("DISTINCT")}, String("str"), Option{String("arg1"), String("arg2")}}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Link("partition_clause")}}, Return: Return(String("string"))}},
+		Grammar:    []Element{Function{Name: "fn", Args: []Element{Option{Keyword("DISTINCT")}, String("str"), Option{String("arg1"), String("arg2")}}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Link("partition_clause")}}, Return: Return("string")}},
 		UsePalette: false,
 		Expect:     "fn([DISTINCT] str::string [, arg1::string [, arg2::string]]) OVER (<partition_clause>)  return::string",
 	},
 	{
-		Grammar:    []Element{Function{Name: "fn", Args: []Element{Option{Keyword("DISTINCT")}, String("str"), Option{String("arg1"), String("arg2")}}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Link("partition_clause")}}, Return: Return(String("string"))}},
+		Grammar:    []Element{Function{Name: "fn", Args: []Element{Option{Keyword("DISTINCT")}, String("str"), Option{String("arg1"), String("arg2")}}, AfterArgs: []Element{Keyword("OVER"), Parentheses{Link("partition_clause")}}, Return: Return("string")}},
 		UsePalette: true,
 		Expect: syntaxTestPalette.Render(KeywordEffect, "fn") +
 			"([" + syntaxTestPalette.Render(KeywordEffect, "DISTINCT") + "] " +

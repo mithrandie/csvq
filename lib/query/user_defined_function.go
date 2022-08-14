@@ -135,7 +135,7 @@ func (m UserDefinedFunctionMap) CheckDuplicate(name parser.Identifier) error {
 	return nil
 }
 
-func (m UserDefinedFunctionMap) Get(fn parser.QueryExpression, name string) (*UserDefinedFunction, bool) {
+func (m UserDefinedFunctionMap) Get(name string) (*UserDefinedFunction, bool) {
 	if fn, ok := m.Load(name); ok {
 		return fn, true
 	}

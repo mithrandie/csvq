@@ -1,9 +1,11 @@
 package file
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type Container struct {
@@ -38,6 +40,34 @@ func (c *Container) Remove(path string) {
 	if _, ok := c.m[key]; ok {
 		delete(c.m, key)
 	}
+}
+
+func (c *Container) CreateHandlerWithoutLock(ctx context.Context, path string, defaultWaitTimeout time.Duration, retryDelay time.Duration) (*Handler, error) {
+	return c.createHandler(ctx, path, defaultWaitTimeout, retryDelay, NewHandlerWithoutLock)
+}
+
+func (c *Container) CreateHandlerForRead(ctx context.Context, path string, defaultWaitTimeout time.Duration, retryDelay time.Duration) (*Handler, error) {
+	return c.createHandler(ctx, path, defaultWaitTimeout, retryDelay, NewHandlerForRead)
+}
+
+func (c *Container) CreateHandlerForCreate(path string) (*Handler, error) {
+	return c.createHandler(nil, path, DefaultWaitTimeout, DefaultRetryDelay, newHandlerForCreate)
+}
+
+func (c *Container) CreateHandlerForUpdate(ctx context.Context, path string, defaultWaitTimeout time.Duration, retryDelay time.Duration) (*Handler, error) {
+	return c.createHandler(ctx, path, defaultWaitTimeout, retryDelay, NewHandlerForUpdate)
+}
+
+func (c *Container) createHandler(ctx context.Context, path string, defaultWaitTimeout time.Duration, retryDelay time.Duration, fn func(context.Context, string, time.Duration, time.Duration) (*Handler, error)) (*Handler, error) {
+	h, err := fn(ctx, path, defaultWaitTimeout, retryDelay)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := c.Add(h.path, h); err != nil {
+		return h, closeIsolatedHandler(h, err)
+	}
+	return h, nil
 }
 
 func (c *Container) Close(h *Handler) error {

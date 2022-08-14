@@ -14,7 +14,7 @@ category: reference
 | [LIKE](#like)       | Check if a string matches a pattern |
 | [IN](#in)           | Check if a value is within a set of values |
 | [ANY](#any)         | Check if any of values fulfill conditions |
-| [ALL](#all)         | Check if all of values fulfill conditions |
+| [ALL](#all)         | Check if all values fulfill conditions |
 | [EXISTS](#exists)   | Check if a subquery returns at least one row |
 
 A comparison operator returns a ternary value.
@@ -22,15 +22,15 @@ A comparison operator returns a ternary value.
 ## Relational Operators
 {: #relational_operators}
 
-| operator | description |
-| :------- | :---------- |
-| \=       | LHS is equal to RHS |
+| operator | description                                               |
+|:---------|:----------------------------------------------------------|
+| \=       | LHS is equal to RHS                                       |
 | \=\=     | LHS and RHS are of the same type, and LHS is equal to RHS |
-| <        | LHS is less than RHS |
-| <\=      | LHS is less than or equal to RHS |
-| >        | LHS is greater than RHS |
-| >\=      | LHS is greater than or equal to RHS |
-| <>, !\=  | LHS is not equal to RHS |
+| <        | LHS is less than RHS                                      |
+| <\=      | LHS is less than or equal to RHS                          |
+| >        | LHS is greater than RHS                                   |
+| >\=      | LHS is greater than or equal to RHS                       |
+| <>, !\=  | LHS is not equal to RHS                                   |
 
 ```sql
 relational_operation
@@ -197,7 +197,7 @@ _multiple_fields_subquery_
 Compare _value_ or _row_value_ to each listed _values_ or each records retrieved by _select_query_.
 If any of comparison results is TRUE, returns TRUE.
 If there is no TRUE result and there is at least one UNKNOWN result, returns UNKNOWN.
-Otherwise returns FALSE.
+Otherwise, returns FALSE.
 
 If _select_query_ returns no record, returns FALSE.
 
@@ -230,7 +230,7 @@ _multiple_fields_subquery_
 Compare _value_ or _row_value_ to every listed _values_ or each records retrieved by _select_query_.
 If any of comparison results is FALSE, returns FALSE.
 If there is no FALSE result and there is at least one UNKNOWN result, returns UNKNOWN.
-Otherwise returns TRUE.
+Otherwise, returns TRUE.
 
 If _select_query_ returns no record, returns TRUE.
 

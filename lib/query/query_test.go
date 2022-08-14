@@ -4488,9 +4488,9 @@ var setTableAttributeTests = []struct {
 		},
 	},
 	{
-		Name: "Set Delimiter to TSV with TableObject",
+		Name: "Set Delimiter to TSV with FormatSpecifiedFunction",
 		Query: parser.SetTableAttribute{
-			Table: parser.TableObject{
+			Table: parser.FormatSpecifiedFunction{
 				Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 				Path:          parser.Identifier{Literal: "table1.csv"},
 				FormatElement: parser.NewStringValue(","),

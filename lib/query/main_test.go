@@ -295,7 +295,7 @@ func GenerateReferenceScope(blocks []map[string]map[string]interface{}, nodes []
 func GenerateViewMap(values []*View) ViewMap {
 	m := NewViewMap()
 	for _, v := range values {
-		m.Store(v.FileInfo.Path, v)
+		m.Store(v.FileInfo.IdentifiedPath(), v)
 	}
 	return m
 }

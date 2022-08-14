@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -32,7 +31,7 @@ func NewUrlResource(res *http.Response) (*UrlResource, error) {
 	contentItems := strings.Split(contentType, ";")
 	mimeType := contentItems[0]
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, NewSystemError(err.Error())
 	}
@@ -143,8 +142,8 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 	updateFileInfo := make([]*FileInfo, 0, len(updatedFiles))
 
 	if 0 < len(createdFiles) {
-		for _, fileinfo := range createdFiles {
-			view, _ := tx.CachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
+		for _, fileInfo := range createdFiles {
+			view, _ := tx.CachedViews.Get(fileInfo.IdentifiedPath())
 
 			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
@@ -154,11 +153,11 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 				return NewSystemError(err.Error())
 			}
 
-			if _, err := EncodeView(ctx, fp, view, fileinfo.ExportOptions(tx), tx.Palette); err != nil {
+			if _, err := EncodeView(ctx, fp, view, fileInfo.ExportOptions(tx), tx.Palette); err != nil {
 				return NewCommitError(expr, err.Error())
 			}
 
-			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileinfo.Format == option.FIXED && fileinfo.SingleLine) {
+			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileInfo.Format == option.FIXED && fileInfo.SingleLine) {
 				if _, err := fp.Write([]byte(tx.Flags.ExportOptions.LineBreak.Value())); err != nil {
 					return NewCommitError(expr, err.Error())
 				}
@@ -169,8 +168,8 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 	}
 
 	if 0 < len(updatedFiles) {
-		for _, fileinfo := range updatedFiles {
-			view, _ := tx.CachedViews.Get(parser.Identifier{Literal: fileinfo.Path})
+		for _, fileInfo := range updatedFiles {
+			view, _ := tx.CachedViews.Get(fileInfo.IdentifiedPath())
 
 			fp, _ := view.FileInfo.Handler.FileForUpdate()
 			if err := fp.Truncate(0); err != nil {
@@ -180,11 +179,11 @@ func (tx *Transaction) Commit(ctx context.Context, scope *ReferenceScope, expr p
 				return NewSystemError(err.Error())
 			}
 
-			if _, err := EncodeView(ctx, fp, view, fileinfo.ExportOptions(tx), tx.Palette); err != nil {
+			if _, err := EncodeView(ctx, fp, view, fileInfo.ExportOptions(tx), tx.Palette); err != nil {
 				return NewCommitError(expr, err.Error())
 			}
 
-			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileinfo.Format == option.FIXED && fileinfo.SingleLine) {
+			if !tx.Flags.ExportOptions.StripEndingLineBreak && !(fileInfo.Format == option.FIXED && fileInfo.SingleLine) {
 				if _, err := fp.Write([]byte(tx.Flags.ExportOptions.LineBreak.Value())); err != nil {
 					return NewCommitError(expr, err.Error())
 				}

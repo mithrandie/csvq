@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -388,33 +389,36 @@ func (rs *ReferenceScope) AllVariables() VariableMap {
 	return all
 }
 
-func (rs *ReferenceScope) TemporaryTableExists(name string) bool {
+func (rs *ReferenceScope) TemporaryTableExists(identifier string) bool {
+	identifier = strings.ToUpper(identifier)
 	for i := range rs.Blocks {
-		if rs.Blocks[i].TemporaryTables.Exists(name) {
+		if rs.Blocks[i].TemporaryTables.Exists(identifier) {
 			return true
 		}
 	}
 	return false
 }
 
-func (rs *ReferenceScope) GetTemporaryTable(name parser.Identifier) (*View, error) {
+func (rs *ReferenceScope) GetTemporaryTable(identifier parser.Identifier) (*View, error) {
+	fileIdentifier := strings.ToUpper(identifier.Literal)
 	for i := range rs.Blocks {
-		if view, err := rs.Blocks[i].TemporaryTables.Get(name); err == nil {
+		if view, err := rs.Blocks[i].TemporaryTables.Get(fileIdentifier); err == nil {
 			return view, nil
 		}
 	}
-	return nil, NewUndeclaredTemporaryTableError(name)
+	return nil, NewUndeclaredTemporaryTableError(identifier)
 }
 
-func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, name parser.Identifier, flags *option.Flags) (view *View, err error) {
+func (rs *ReferenceScope) GetTemporaryTableWithInternalId(ctx context.Context, identifier parser.Identifier, flags *option.Flags) (view *View, err error) {
+	fileIdentifier := strings.ToUpper(identifier.Literal)
 	for i := range rs.Blocks {
-		if view, err = rs.Blocks[i].TemporaryTables.GetWithInternalId(ctx, name, flags); err == nil {
+		if view, err = rs.Blocks[i].TemporaryTables.GetWithInternalId(ctx, fileIdentifier, flags); err == nil {
 			return
 		} else if err != errTableNotLoaded {
 			return nil, err
 		}
 	}
-	return nil, NewUndeclaredTemporaryTableError(name)
+	return nil, NewUndeclaredTemporaryTableError(identifier)
 }
 
 func (rs *ReferenceScope) SetTemporaryTable(view *View) {
@@ -423,7 +427,7 @@ func (rs *ReferenceScope) SetTemporaryTable(view *View) {
 
 func (rs *ReferenceScope) ReplaceTemporaryTable(view *View) {
 	for i := range rs.Blocks {
-		if rs.Blocks[i].TemporaryTables.Exists(view.FileInfo.Path) {
+		if rs.Blocks[i].TemporaryTables.Exists(view.FileInfo.IdentifiedPath()) {
 			rs.Blocks[i].TemporaryTables.Set(view)
 			return
 		}
@@ -468,7 +472,7 @@ func (rs *ReferenceScope) RestoreTemporaryTable(uncomittedViews map[string]*File
 				view := value.(*View)
 
 				if view.FileInfo.IsStdin() {
-					rs.Blocks[i].TemporaryTables.Delete(view.FileInfo.Path)
+					rs.Blocks[i].TemporaryTables.Delete(view.FileInfo.IdentifiedPath())
 					msglist = append(msglist, fmt.Sprintf("Rollback: view %q is restored.", view.FileInfo.Path))
 				} else if view.FileInfo.IsTemporaryTable() {
 					view.Restore()
@@ -629,7 +633,7 @@ func (rs *ReferenceScope) DeclareAggregateFunction(expr parser.AggregateDeclarat
 
 func (rs *ReferenceScope) GetFunction(expr parser.QueryExpression, name string) (*UserDefinedFunction, error) {
 	for i := range rs.Blocks {
-		if fn, ok := rs.Blocks[i].Functions.Get(expr, name); ok {
+		if fn, ok := rs.Blocks[i].Functions.Get(name); ok {
 			return fn, nil
 		}
 	}

@@ -2437,17 +2437,23 @@ var showFieldsTests = []struct {
 					"STDIN": &View{
 						Header: NewHeader("stdin", []string{"column1", "column2"}),
 						FileInfo: &FileInfo{
-							Path:     "stdin",
-							ViewType: ViewTypeStdin,
+							Path:      "stdin",
+							Format:    option.CSV,
+							Encoding:  text.UTF8,
+							Delimiter: ',',
+							LineBreak: text.LF,
+							ViewType:  ViewTypeStdin,
 						},
 					},
 				},
 			},
 		}, nil, time.Time{}, nil),
 		Expect: "\n" +
-			"    Fields in STDIN\n" +
-			"-----------------------\n" +
-			" Type: Temporary Table\n" +
+			"                   Fields in STDIN\n" +
+			"-----------------------------------------------------\n" +
+			" Type: STDIN\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
 			" Status: Fixed\n" +
 			" Fields:\n" +
 			"   1. column1\n" +
@@ -2497,7 +2503,7 @@ var showFieldsTests = []struct {
 		Name: "ShowFields",
 		Expr: parser.ShowFields{
 			Type: parser.Identifier{Literal: "fields"},
-			Table: parser.TableObject{
+			Table: parser.FormatSpecifiedFunction{
 				Type:          parser.Token{Token: parser.CSV, Literal: "csv"},
 				FormatElement: parser.NewStringValue(","),
 				Path:          parser.Identifier{Literal: "show_fields_create.csv"},
@@ -2615,6 +2621,30 @@ var showFieldsTests = []struct {
 			" Fields:\n" +
 			"   1. column1\n" +
 			"   2. column2\n" +
+			"\n",
+	},
+	{
+		Name: "ShowFields Inline Table from String",
+		Expr: parser.ShowFields{
+			Type: parser.Identifier{Literal: "fields"},
+			Table: parser.TableFunction{
+				Name: "data",
+				Args: []parser.QueryExpression{
+					parser.NewStringValue("c1,c2\n1,a\n2,b"),
+				},
+			},
+		},
+		Scope: GenerateReferenceScope([]map[string]map[string]interface{}{}, nil, time.Time{}, nil),
+		Expect: "\n" +
+			"               Fields in String Object\n" +
+			"-----------------------------------------------------\n" +
+			" Type: String Object\n" +
+			" Format: CSV     Delimiter: ','   Enclose All: false\n" +
+			" Encoding: UTF8  LineBreak: LF    Header: true\n" +
+			" Status: Read-Only\n" +
+			" Fields:\n" +
+			"   1. c1\n" +
+			"   2. c2\n" +
 			"\n",
 	},
 	{

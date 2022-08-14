@@ -6,7 +6,7 @@ category: reference
 
 # Common Table Expression
 
-A Common Table Expression in a _with clause_ declare a inline table that can be referenced in a single query.
+A Common Table Expression in a _with clause_ declare an inline table that can be referenced in a single query.
 You can use the views in a [Select Query]({{ '/reference/select-query.html' | relative_url }}), [Insert Query]({{ '/reference/insert-query.html' | relative_url }}), [Update Query]({{ '/reference/update-query.html' | relative_url }}), or [Delete Query]({{ '/reference/delete-query.html' | relative_url }}).
 
 ## Syntax

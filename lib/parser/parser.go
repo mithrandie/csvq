@@ -4539,49 +4539,49 @@ yydefault:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line lib/parser/parser.y:2058
 		{
-			yyVAL.queryexpr = TableObject{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, Path: yyDollar[3].queryexpr, Args: nil}
+			yyVAL.queryexpr = FormatSpecifiedFunction{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, Path: yyDollar[3].queryexpr, Args: nil}
 		}
 	case 371:
 		yyDollar = yyS[yypt-6 : yypt+1]
 //line lib/parser/parser.y:2062
 		{
-			yyVAL.queryexpr = TableObject{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, Path: yyDollar[3].queryexpr, Args: yyDollar[5].queryexprs}
+			yyVAL.queryexpr = FormatSpecifiedFunction{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, Path: yyDollar[3].queryexpr, Args: yyDollar[5].queryexprs}
 		}
 	case 372:
 		yyDollar = yyS[yypt-6 : yypt+1]
 //line lib/parser/parser.y:2066
 		{
-			yyVAL.queryexpr = TableObject{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].queryexpr, Args: nil}
+			yyVAL.queryexpr = FormatSpecifiedFunction{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].queryexpr, Args: nil}
 		}
 	case 373:
 		yyDollar = yyS[yypt-8 : yypt+1]
 //line lib/parser/parser.y:2070
 		{
-			yyVAL.queryexpr = TableObject{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].queryexpr, Args: yyDollar[7].queryexprs}
+			yyVAL.queryexpr = FormatSpecifiedFunction{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].queryexpr, Args: yyDollar[7].queryexprs}
 		}
 	case 374:
 		yyDollar = yyS[yypt-6 : yypt+1]
 //line lib/parser/parser.y:2076
 		{
-			yyVAL.queryexpr = TableObject{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].identifier, Args: nil}
+			yyVAL.queryexpr = FormatSpecifiedFunction{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].identifier, Args: nil}
 		}
 	case 375:
 		yyDollar = yyS[yypt-8 : yypt+1]
 //line lib/parser/parser.y:2080
 		{
-			yyVAL.queryexpr = TableObject{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].identifier, Args: yyDollar[7].queryexprs}
+			yyVAL.queryexpr = FormatSpecifiedFunction{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].identifier, Args: yyDollar[7].queryexprs}
 		}
 	case 376:
 		yyDollar = yyS[yypt-6 : yypt+1]
 //line lib/parser/parser.y:2084
 		{
-			yyVAL.queryexpr = TableObject{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].queryexpr, Args: nil}
+			yyVAL.queryexpr = FormatSpecifiedFunction{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].queryexpr, Args: nil}
 		}
 	case 377:
 		yyDollar = yyS[yypt-8 : yypt+1]
 //line lib/parser/parser.y:2088
 		{
-			yyVAL.queryexpr = TableObject{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].queryexpr, Args: yyDollar[7].queryexprs}
+			yyVAL.queryexpr = FormatSpecifiedFunction{BaseExpr: NewBaseExpr(yyDollar[1].token), Type: yyDollar[1].token, FormatElement: yyDollar[3].queryexpr, Path: yyDollar[5].queryexpr, Args: yyDollar[7].queryexprs}
 		}
 	case 378:
 		yyDollar = yyS[yypt-1 : yypt+1]

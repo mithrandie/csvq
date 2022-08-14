@@ -5,10 +5,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/mithrandie/csvq/lib/option"
-
 	"github.com/mithrandie/csvq/lib/file"
-
+	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -29,38 +27,38 @@ func (m ViewMap) IsEmpty() bool {
 	return m.SyncMap == nil
 }
 
-func (m ViewMap) Store(fpath string, view *View) {
-	m.store(strings.ToUpper(fpath), view)
+func (m ViewMap) Store(identifier string, view *View) {
+	m.store(identifier, view)
 }
 
-func (m ViewMap) LoadDirect(name string) (interface{}, bool) {
-	return m.load(strings.ToUpper(name))
+func (m ViewMap) LoadDirect(identifier string) (interface{}, bool) {
+	return m.load(identifier)
 }
 
-func (m ViewMap) Load(fpath string) (*View, bool) {
-	if v, ok := m.load(strings.ToUpper(fpath)); ok {
+func (m ViewMap) Load(identifier string) (*View, bool) {
+	if v, ok := m.load(identifier); ok {
 		return v.(*View), true
 	}
 	return nil, false
 }
 
-func (m ViewMap) Delete(fpath string) {
-	m.delete(strings.ToUpper(fpath))
+func (m ViewMap) Delete(identifier string) {
+	m.delete(identifier)
 }
 
-func (m ViewMap) Exists(fpath string) bool {
-	return m.exists(strings.ToUpper(fpath))
+func (m ViewMap) Exists(identifier string) bool {
+	return m.exists(identifier)
 }
 
-func (m ViewMap) Get(fpath parser.Identifier) (*View, error) {
-	if view, ok := m.Load(fpath.Literal); ok {
+func (m ViewMap) Get(identifier string) (*View, error) {
+	if view, ok := m.Load(identifier); ok {
 		return view.Copy(), nil
 	}
 	return nil, errTableNotLoaded
 }
 
-func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier, flags *option.Flags) (*View, error) {
-	if view, ok := m.Load(fpath.Literal); ok {
+func (m ViewMap) GetWithInternalId(ctx context.Context, identifier string, flags *option.Flags) (*View, error) {
+	if view, ok := m.Load(identifier); ok {
 		ret := view.Copy()
 
 		ret.Header = NewHeaderWithId(ret.Header[0].View, []string{}).Merge(ret.Header)
@@ -84,33 +82,33 @@ func (m ViewMap) GetWithInternalId(ctx context.Context, fpath parser.Identifier,
 
 func (m ViewMap) Set(view *View) {
 	if view.FileInfo != nil {
-		m.Store(view.FileInfo.Path, view)
+		m.Store(view.FileInfo.IdentifiedPath(), view)
 	}
 }
 
-func (m ViewMap) DisposeTemporaryTable(table parser.QueryExpression) bool {
-	var tableName string
-	if e, ok := table.(parser.Stdin); ok {
-		tableName = e.String()
-	} else {
-		tableName = table.(parser.Identifier).Literal
-	}
+func (m ViewMap) DisposeTemporaryTable(tablePath parser.QueryExpression) bool {
+	identifier := func() string {
+		if e, ok := tablePath.(parser.Stdin); ok {
+			return e.String()
+		}
+		return strings.ToUpper(tablePath.(parser.Identifier).Literal)
+	}()
 
-	if v, ok := m.Load(tableName); ok && v.FileInfo.IsInMemoryTable() {
-		m.Delete(tableName)
+	if v, ok := m.Load(identifier); ok && v.FileInfo.IsInMemoryTable() {
+		m.Delete(identifier)
 		return true
 	}
 	return false
 }
 
-func (m ViewMap) Dispose(container *file.Container, name string) error {
-	if view, ok := m.Load(name); ok {
+func (m ViewMap) Dispose(container *file.Container, identifier string) error {
+	if view, ok := m.Load(identifier); ok {
 		if view.FileInfo.Handler != nil {
 			if err := container.Close(view.FileInfo.Handler); err != nil {
 				return err
 			}
 		}
-		m.Delete(name)
+		m.Delete(identifier)
 	}
 	return nil
 }

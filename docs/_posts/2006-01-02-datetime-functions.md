@@ -337,7 +337,7 @@ _return_
 
 Returns the week number of the year of _datetime_ as an integer.
 The week number is in the range from 1 to 53.
-Jan 01 to Jan 03 of a year might returns week 52 or 53 of the last year, and Dec 29 to Dec 31 might returns week 1 of the next year.
+Jan 01 to Jan 03 of a year might return week 52 or 53 of the last year, and Dec 29 to Dec 31 might return week 1 of the next year.
 
 ### ADD_YEAR
 {: #add_year}

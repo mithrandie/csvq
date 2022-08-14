@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
@@ -450,7 +449,7 @@ func Update(ctx context.Context, scope *ReferenceScope, query parser.UpdateQuery
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToUpdate[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToUpdate[viewKey], err = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToUpdate[viewKey], err = queryScope.Tx.CachedViews.Get(fpath)
 			if err != nil {
 				return nil, nil, NewInlineTableCannotBeUpdatedError(table.Object)
 			}
@@ -643,7 +642,7 @@ func Delete(ctx context.Context, scope *ReferenceScope, query parser.DeleteQuery
 		if queryScope.TemporaryTableExists(fpath) {
 			viewsToDelete[viewKey], _ = queryScope.GetTemporaryTable(parser.Identifier{Literal: fpath})
 		} else {
-			viewsToDelete[viewKey], err = queryScope.Tx.CachedViews.Get(parser.Identifier{Literal: fpath})
+			viewsToDelete[viewKey], err = queryScope.Tx.CachedViews.Get(fpath)
 			if err != nil {
 				return nil, nil, NewInlineTableCannotBeUpdatedError(table.Object)
 			}
@@ -713,7 +712,7 @@ func CreateTable(ctx context.Context, scope *ReferenceScope, query parser.Create
 	if err != nil {
 		return nil, err
 	}
-	h, err := file.NewHandlerForCreate(queryScope.Tx.FileContainer, fileInfo.Path)
+	h, err := queryScope.Tx.FileContainer.CreateHandlerForCreate(fileInfo.Path)
 	if err != nil {
 		query.Table.Literal = fileInfo.Path
 		return nil, ConvertFileHandlerError(err, query.Table)
@@ -1058,7 +1057,7 @@ func SetTableAttribute(ctx context.Context, scope *ReferenceScope, query parser.
 	w.Title1 = "Attributes Updated in"
 	if i, ok := query.Table.(parser.Identifier); ok {
 		w.Title2 = i.Literal
-	} else if to, ok := query.Table.(parser.TableObject); ok {
+	} else if to, ok := query.Table.(parser.FormatSpecifiedFunction); ok {
 		if pi, ok := to.Path.(parser.Identifier); ok {
 			w.Title2 = pi.Literal
 		}

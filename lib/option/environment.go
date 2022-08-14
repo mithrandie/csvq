@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -127,12 +127,12 @@ func (e *Environment) Load(ctx context.Context, defaultWaitTimeout time.Duration
 		var h *file.Handler
 		var buf []byte
 
-		h, err = file.NewHandlerWithoutLock(ctx, container, fpath, defaultWaitTimeout, retryDelay)
+		h, err = container.CreateHandlerWithoutLock(ctx, fpath, defaultWaitTimeout, retryDelay)
 		if err != nil {
 			return
 		}
 
-		buf, err = ioutil.ReadAll(h.File())
+		buf, err = io.ReadAll(h.File())
 		if err != nil {
 			err = errors.New(fmt.Sprintf("failed to load %q: %s", fpath, err.Error()))
 			return

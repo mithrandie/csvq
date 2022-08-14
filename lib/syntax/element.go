@@ -374,7 +374,7 @@ func (e Flag) Format(p *color.Palette) string {
 
 type Token string
 
-func (e Token) Format(p *color.Palette) string {
+func (e Token) Format(_ *color.Palette) string {
 	return string(e)
 }
 

@@ -3,14 +3,13 @@
 package terminal
 
 import (
-	"github.com/mithrandie/csvq/lib/constant"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"unicode"
 
+	"github.com/mithrandie/csvq/lib/constant"
 	"github.com/mithrandie/csvq/lib/option"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/query"
@@ -2414,7 +2413,7 @@ func (c *Completer) ListFiles(path string, includeExt []string, repository strin
 		path = filepath.Dir(path)
 	}
 
-	if files, err := ioutil.ReadDir(path); err == nil {
+	if files, err := os.ReadDir(path); err == nil {
 
 		for _, f := range files {
 			if f.Name()[0] == '.' {
@@ -2480,21 +2479,21 @@ func (c *Completer) ColumnList(tableName string, repository string) []string {
 		return list
 	}
 
-	if view, ok := c.scope.Blocks[0].TemporaryTables.Load(tableName); ok {
+	if view, ok := c.scope.Blocks[0].TemporaryTables.Load(strings.ToUpper(tableName)); ok {
 		list := c.columnList(view)
 		c.tableColumns[tableName] = list
 		return list
 	}
 
 	if fpath, err := query.CreateFilePath(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.scope.Tx.CachedViews.Load(fpath); ok {
+		if view, ok := c.scope.Tx.CachedViews.Load(strings.ToUpper(fpath)); ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list
 		}
 	}
 	if fpath, err := query.SearchFilePathFromAllTypes(parser.Identifier{Literal: tableName}, repository); err == nil {
-		if view, ok := c.scope.Tx.CachedViews.Load(fpath); ok {
+		if view, ok := c.scope.Tx.CachedViews.Load(strings.ToUpper(fpath)); ok {
 			list := c.columnList(view)
 			c.tableColumns[tableName] = list
 			return list

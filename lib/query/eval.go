@@ -901,9 +901,7 @@ func evalPlaceholder(ctx context.Context, scope *ReferenceScope, expr parser.Pla
 	return Evaluate(ctx, scope, replace.Values[idx])
 }
 
-/*
- * Returns single or multiple fields, single record
- */
+// EvalRowValue returns single or multiple fields, single record
 func EvalRowValue(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression) (value.RowValue, error) {
 	var rowValue value.RowValue
 	var err error
@@ -928,9 +926,7 @@ func EvalRowValue(ctx context.Context, scope *ReferenceScope, expr parser.QueryE
 	return rowValue, err
 }
 
-/*
- * Returns multiple fields, multiple records
- */
+// evalRowValueList returns multiple fields, multiple records
 func evalRowValueList(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpression) ([]value.RowValue, error) {
 	var list []value.RowValue
 	var err error

@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -12,7 +12,6 @@ import (
 
 	"github.com/mithrandie/go-text"
 
-	"github.com/mithrandie/csvq/lib/file"
 	"github.com/mithrandie/csvq/lib/parser"
 	"github.com/mithrandie/csvq/lib/value"
 )
@@ -27,8 +26,8 @@ func TestTransaction_Commit(t *testing.T) {
 
 	TestTx.Flags.SetQuiet(false)
 
-	ch, _ := file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("created_file.csv"))
-	uh, _ := file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
+	ch, _ := TestTx.FileContainer.CreateHandlerForCreate(GetTestFilePath("created_file.csv"))
+	uh, _ := TestTx.FileContainer.CreateHandlerForUpdate(context.Background(), GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
 
 	TestTx.CachedViews = GenerateViewMap([]*View{
 		{
@@ -113,7 +112,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	expectedCreatedContents := "column1,column2\n"
-	createdContents, err := ioutil.ReadFile(GetTestFilePath("created_file.csv"))
+	createdContents, err := os.ReadFile(GetTestFilePath("created_file.csv"))
 	if err != nil {
 		t.Fatalf("unexpected error %q", err.Error())
 	}
@@ -123,7 +122,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	expectedUpdatedContents := "column1,column2\n1,str1\nupdate1,update2\n3,str3\n"
-	updatedContents, err := ioutil.ReadFile(GetTestFilePath("updated_file_1.csv"))
+	updatedContents, err := os.ReadFile(GetTestFilePath("updated_file_1.csv"))
 	if err != nil {
 		t.Fatalf("unexpected error %q", err.Error())
 	}
@@ -134,8 +133,8 @@ func TestTransaction_Commit(t *testing.T) {
 
 	// Flags.StripEndingLineBreak = true
 	TestTx.Flags.ExportOptions.StripEndingLineBreak = true
-	ch, _ = file.NewHandlerForCreate(TestTx.FileContainer, GetTestFilePath("created_file_1.csv"))
-	uh, _ = file.NewHandlerForUpdate(context.Background(), TestTx.FileContainer, GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
+	ch, _ = TestTx.FileContainer.CreateHandlerForCreate(GetTestFilePath("created_file_1.csv"))
+	uh, _ = TestTx.FileContainer.CreateHandlerForUpdate(context.Background(), GetTestFilePath("updated_file_1.csv"), TestTx.WaitTimeout, TestTx.RetryDelay)
 	TestTx.CachedViews = GenerateViewMap([]*View{
 		{
 			Header:    NewHeader("created_file_1", []string{"column1", "column2"}),
@@ -206,7 +205,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	expectedCreatedContents = "column1,column2"
-	createdContents, err = ioutil.ReadFile(GetTestFilePath("created_file_1.csv"))
+	createdContents, err = os.ReadFile(GetTestFilePath("created_file_1.csv"))
 	if err != nil {
 		t.Fatalf("unexpected error %q", err.Error())
 	}
@@ -216,7 +215,7 @@ func TestTransaction_Commit(t *testing.T) {
 	}
 
 	expectedUpdatedContents = "column1,column2\n1,str1\nupdate1,update2\n3,str3"
-	updatedContents, err = ioutil.ReadFile(GetTestFilePath("updated_file_1.csv"))
+	updatedContents, err = os.ReadFile(GetTestFilePath("updated_file_1.csv"))
 	if err != nil {
 		t.Fatalf("unexpected error %q", err.Error())
 	}

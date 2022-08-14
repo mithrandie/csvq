@@ -404,7 +404,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
 								Type:          Token{Token: FIXED, Literal: "fixed", Line: 1, Char: 16},
 								FormatElement: NewStringValue("[1, 2, 3]"),
@@ -432,7 +432,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
 								Type:          Token{Token: CSV, Literal: "csv", Line: 1, Char: 16},
 								FormatElement: NewStringValue(","),
@@ -460,7 +460,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
 								Type:          Token{Token: JSON, Literal: "json", Line: 1, Char: 16},
 								FormatElement: NewStringValue("{}"),
@@ -489,7 +489,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
 								Type:          Token{Token: JSONL, Literal: "jsonl", Line: 1, Char: 16},
 								FormatElement: NewStringValue("[]"),
@@ -518,7 +518,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 16},
 								Type:     Token{Token: LTSV, Literal: "ltsv", Line: 1, Char: 16},
 								Path:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "table.ltsv", Quoted: true},
@@ -544,7 +544,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 16},
 								Type:     Token{Token: LTSV, Literal: "ltsv", Line: 1, Char: 16},
 								Path:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 21}, Literal: "table.ltsv", Quoted: true},
@@ -571,7 +571,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr: &BaseExpr{line: 1, char: 16},
 								Type:     Token{Token: LTSV, Literal: "ltsv", Line: 1, Char: 16},
 								Path:     Stdin{BaseExpr: &BaseExpr{line: 1, char: 21}},
@@ -598,7 +598,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
 								Type:          Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
 								FormatElement: NewStringValue("key"),
@@ -625,7 +625,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
 								Type:          Token{Token: CSV_INLINE, Literal: "csv_inline", Line: 1, Char: 16},
 								FormatElement: NewStringValue(","),
@@ -653,7 +653,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
 								Type:          Token{Token: JSON_INLINE, Literal: "json_inline", Line: 1, Char: 16},
 								FormatElement: NewStringValue("key"),
@@ -681,7 +681,7 @@ var parseTests = []struct {
 					},
 					FromClause: FromClause{Tables: []QueryExpression{
 						Table{
-							Object: TableObject{
+							Object: FormatSpecifiedFunction{
 								BaseExpr:      &BaseExpr{line: 1, char: 16},
 								Type:          Token{Token: JSON_TABLE, Literal: "json_table", Line: 1, Char: 16},
 								FormatElement: NewStringValue("key"),
@@ -4462,7 +4462,7 @@ var parseTests = []struct {
 		Output: []Statement{
 			UpdateQuery{
 				Tables: []QueryExpression{
-					Table{Object: TableObject{
+					Table{Object: FormatSpecifiedFunction{
 						BaseExpr:      &BaseExpr{line: 1, char: 8},
 						Type:          Token{Token: CSV, Literal: "csv", Line: 1, Char: 8},
 						FormatElement: NewStringValue(","),
@@ -5023,7 +5023,7 @@ var parseTests = []struct {
 		Input: "alter table csv(',', table1) add column1",
 		Output: []Statement{
 			AddColumns{
-				Table: TableObject{
+				Table: FormatSpecifiedFunction{
 					BaseExpr:      &BaseExpr{line: 1, char: 13},
 					Type:          Token{Token: CSV, Literal: "csv", Line: 1, Char: 13},
 					FormatElement: NewStringValue(","),
@@ -5425,7 +5425,7 @@ var parseTests = []struct {
 			ShowFields{
 				BaseExpr: &BaseExpr{line: 1, char: 1},
 				Type:     Identifier{BaseExpr: &BaseExpr{line: 1, char: 6}, Literal: "fields"},
-				Table: TableObject{
+				Table: FormatSpecifiedFunction{
 					BaseExpr:      &BaseExpr{line: 1, char: 18},
 					Type:          Token{Token: CSV, Literal: "csv", Line: 1, Char: 18},
 					FormatElement: NewStringValue(","),

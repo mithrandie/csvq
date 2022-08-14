@@ -18,6 +18,7 @@ type Statement interface{}
 
 type Expression interface {
 	GetBaseExpr() *BaseExpr
+	ClearBaseExpr()
 	HasParseInfo() bool
 	Line() int
 	Char() int
@@ -28,6 +29,7 @@ type QueryExpression interface {
 	String() string
 
 	GetBaseExpr() *BaseExpr
+	ClearBaseExpr()
 	HasParseInfo() bool
 	Line() int
 	Char() int
@@ -61,6 +63,12 @@ func (e *BaseExpr) HasParseInfo() bool {
 
 func (e *BaseExpr) GetBaseExpr() *BaseExpr {
 	return e
+}
+
+func (e *BaseExpr) ClearBaseExpr() {
+	e.line = 0
+	e.char = 0
+	e.sourceFile = ""
 }
 
 func NewBaseExpr(token Token) *BaseExpr {
@@ -554,7 +562,7 @@ func (e TableFunction) String() string {
 	return strings.ToUpper(e.Name) + ConstantDelimiter + putParentheses(listQueryExpressions(e.Args))
 }
 
-type TableObject struct {
+type FormatSpecifiedFunction struct {
 	*BaseExpr
 	Type          Token
 	FormatElement QueryExpression
@@ -562,7 +570,7 @@ type TableObject struct {
 	Args          []QueryExpression
 }
 
-func (e TableObject) String() string {
+func (e FormatSpecifiedFunction) String() string {
 	allArgs := make([]QueryExpression, 0, len(e.Args)+2)
 	if e.FormatElement != nil {
 		allArgs = append(allArgs, e.FormatElement)
