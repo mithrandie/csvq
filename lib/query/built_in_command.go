@@ -481,7 +481,7 @@ func ShowObjects(scope *ReferenceScope, expr parser.ShowObjects) (string, error)
 			createdFiles, updatedFiles := scope.Tx.UncommittedViews.UncommittedFiles()
 
 			for _, key := range keys {
-				if view, ok := scope.Tx.CachedViews.Load(key); ok {
+				if view, ok := scope.Tx.CachedViews.Load(strings.ToUpper(key)); ok {
 					fields := view.Header.TableColumnNames()
 					info := view.FileInfo
 					ufpath := strings.ToUpper(info.Path)

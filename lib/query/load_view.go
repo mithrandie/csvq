@@ -885,7 +885,7 @@ func cacheViewFromFile(
 
 	filePath, view, isCached, err := func() (string, *View, bool, error) {
 		if p, ok := scope.LoadFilePath(fileIdentifier.Literal); ok {
-			if v, ok := scope.Tx.CachedViews.Load(p); ok {
+			if v, ok := scope.Tx.CachedViews.Load(strings.ToUpper(p)); ok {
 				return p, v, true, nil
 			}
 		}
@@ -904,7 +904,7 @@ func cacheViewFromFile(
 		if e != nil {
 			return "", nil, false, e
 		}
-		v, ok := scope.Tx.CachedViews.Load(p)
+		v, ok := scope.Tx.CachedViews.Load(strings.ToUpper(p))
 		return p, v, ok, nil
 	}()
 	if err != nil {

@@ -20,6 +20,7 @@ import (
 
 var loadViewTests = []struct {
 	Name               string
+	TestCache          bool
 	Encoding           text.Encoding
 	NoHeader           bool
 	From               parser.FromClause
@@ -110,6 +111,47 @@ var loadViewTests = []struct {
 			Tables: []parser.QueryExpression{
 				parser.Table{
 					Object: parser.Identifier{Literal: "table1.csv"},
+				},
+			},
+		},
+		ForUpdate: true,
+		Result: &View{
+			Header: NewHeader("table1", []string{"column1", "column2"}),
+			RecordSet: []Record{
+				NewRecord([]value.Primary{
+					value.NewString("1"),
+					value.NewString("str1"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("2"),
+					value.NewString("str2"),
+				}),
+				NewRecord([]value.Primary{
+					value.NewString("3"),
+					value.NewString("str3"),
+				}),
+			},
+			FileInfo: &FileInfo{
+				Path:      "table1.csv",
+				Delimiter: ',',
+				Encoding:  text.UTF8,
+				LineBreak: text.LF,
+				ForUpdate: true,
+			},
+		},
+		ResultScope: GenerateReferenceScope(nil, []map[string]map[string]interface{}{{
+			scopeNameAliases: {
+				"TABLE1": strings.ToUpper(GetTestFilePath("table1.csv")),
+			},
+		}}, time.Time{}, nil),
+	},
+	{
+		Name:      "LoadView from Cached View",
+		TestCache: true,
+		From: parser.FromClause{
+			Tables: []parser.QueryExpression{
+				parser.Table{
+					Object: parser.Identifier{Literal: "table1"},
 				},
 			},
 		},
@@ -3189,6 +3231,10 @@ func TestLoadView(t *testing.T) {
 
 		queryScope := v.Scope.CreateNode()
 		view, err := LoadView(ctx, queryScope, v.From.Tables, v.ForUpdate, v.UseInternalId)
+		if v.TestCache {
+			queryScope.nodes[len(queryScope.nodes)-1].Clear()
+			view, err = LoadView(ctx, queryScope, v.From.Tables, v.ForUpdate, v.UseInternalId)
+		}
 
 		if err != nil {
 			if len(v.Error) < 1 {
