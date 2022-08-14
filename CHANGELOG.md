@@ -1,5 +1,12 @@
 # Change Log
 
+## Version 1.17.9
+
+Released on Aug 14, 2022
+
+- Sort the command options displayed in the help message. ([GitHub #80](https://github.com/mithrandie/csvq/issues/80))
+- Fix some bugs.
+
 ## Version 1.17.8
 
 Released on Jul 24, 2022
