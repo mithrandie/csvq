@@ -86,6 +86,10 @@ Installing using a package manager does not ensure that you always get the lates
 2. ```$ sudo apt update```
 3. ```$ sudo apt install csvq```
 
+#### Arch Linux (unofficial)
+
+Install the [csvq-git](https://aur.archlinux.org/packages/csvq-git) or [csvq-bin](https://aur.archlinux.org/packages/csvq-bin) from the [Arch User Repository](https://wiki.archlinux.org/title/Arch_User_Repository) (e.g. `yay -S csvq-git`)
+
 #### macOS (unofficial)
 
 1. Install homebrew (cf. [The missing package manager for macOS (or Linux) — Homebrew](https://brew.sh))
