@@ -15,6 +15,7 @@ const (
 
 const (
 	//Application Error
+	ErrorFatal                                = 1
 	ErrorCannotDetectFileEncoding             = 10001
 	ErrorFieldAmbiguous                       = 10101
 	ErrorFieldNotExist                        = 10102

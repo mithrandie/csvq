@@ -143,6 +143,18 @@ func (m *GoroutineTaskManager) Wait() {
 }
 
 func (m *GoroutineTaskManager) run(ctx context.Context, fn func(int) error, thIdx int) {
+	defer func() {
+		if !m.HasError() {
+			if panicReport := recover(); panicReport != nil {
+				m.SetError(NewFatalError(panicReport))
+			}
+		}
+
+		if 1 < m.Number {
+			m.Done()
+		}
+	}()
+
 	start, end := m.RecordRange(thIdx)
 
 	for i := start; i < end; i++ {
@@ -157,10 +169,6 @@ func (m *GoroutineTaskManager) run(ctx context.Context, fn func(int) error, thId
 			m.SetError(err)
 			break
 		}
-	}
-
-	if 1 < m.Number {
-		m.Done()
 	}
 }
 

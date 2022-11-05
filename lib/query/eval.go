@@ -102,6 +102,18 @@ func Evaluate(ctx context.Context, scope *ReferenceScope, expr parser.QueryExpre
 }
 
 func evaluateSequentialRoutine(ctx context.Context, scope *ReferenceScope, view *View, fn func(*ReferenceScope, int) error, thIdx int, gm *GoroutineTaskManager) {
+	defer func() {
+		if !gm.HasError() {
+			if panicReport := recover(); panicReport != nil {
+				gm.SetError(NewFatalError(panicReport))
+			}
+		}
+
+		if 1 < gm.Number {
+			gm.Done()
+		}
+	}()
+
 	start, end := gm.RecordRange(thIdx)
 	seqScope := scope.CreateScopeForSequentialEvaluation(
 		&View{
@@ -126,10 +138,6 @@ func evaluateSequentialRoutine(ctx context.Context, scope *ReferenceScope, view 
 		}
 
 		i++
-	}
-
-	if 1 < gm.Number {
-		gm.Done()
 	}
 }
 
