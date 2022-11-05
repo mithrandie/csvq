@@ -1228,7 +1228,7 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 				}
 			}
 
-			if 0 < fileSize && len(recordSet) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
+			if 0 < fileSize && 0 < pos && len(recordSet) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
 				l := int((float64(fileSize) / float64(pos)) * fileLoadingPreparedRecordSetCap * 1.2)
 				newSet := make(RecordSet, fileLoadingPreparedRecordSetCap, l)
 				copy(newSet, recordSet)
