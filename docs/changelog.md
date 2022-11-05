@@ -5,6 +5,13 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.17.11
+
+Released on Nov 5, 2022
+
+- Prevent divide-by-zero error while loading csv files. ([GitHub #89](https://github.com/mithrandie/csvq/issues/89))
+- Handle panics during processor executions.
+
 ## Version 1.17.10
 
 Released on Aug 14, 2022
