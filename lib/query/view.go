@@ -121,6 +121,18 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 	mtx := &sync.Mutex{}
 
 	var grpFn = func(thIdx int) {
+		defer func() {
+			if !gm.HasError() {
+				if panicReport := recover(); panicReport != nil {
+					gm.SetError(NewFatalError(panicReport))
+				}
+			}
+
+			if 1 < gm.Number {
+				gm.Done()
+			}
+		}()
+
 		start, end := gm.RecordRange(thIdx)
 		seqScope := scope.CreateScopeForSequentialEvaluation(view)
 		groups := make(map[string][]int, 20)
@@ -165,10 +177,6 @@ func (view *View) group(ctx context.Context, scope *ReferenceScope, items []pars
 		}
 
 		groupsList[thIdx] = groups
-
-		if 1 < gm.Number {
-			gm.Done()
-		}
 	}
 
 	if 1 < gm.Number {

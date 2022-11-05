@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -263,6 +264,34 @@ func NewBaseErrorWithPrefix(prefix string, message string, code int, number int)
 		code:    code,
 		number:  number,
 		prefix:  prefix,
+	}
+}
+
+type FatalError struct {
+	*BaseError
+}
+
+func NewFatalError(panicReport interface{}) error {
+	stacks := make([]string, 0, 30)
+	for depth := 0; ; depth++ {
+		pc, src, line, ok := runtime.Caller(depth)
+		if !ok {
+			break
+		}
+		if depth == 0 {
+			continue
+		}
+		stacks = append(stacks, fmt.Sprintf("  %d: %s [%s:%d]", depth-1, runtime.FuncForPC(pc).Name(), src, line))
+	}
+
+	message := fmt.Sprintf("%v\n", panicReport) +
+		"An unexpected error has occurred. Please report this problem to: https://github.com/mithrandie/csvq/issues\n" +
+		"\n" +
+		"Stack:\n" +
+		strings.Join(stacks, "\n")
+
+	return &FatalError{
+		NewBaseErrorWithPrefix("Fatal Error", message, ReturnCodeApplicationError, ErrorFatal),
 	}
 }
 

@@ -1208,17 +1208,29 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 	var err error
 	recordSet := make(RecordSet, 0, fileLoadingPreparedRecordSetCap)
 	rowch := make(chan []text.RawText, fileLoadingBuffer)
+	panicCh := make(chan bool, 1)
 	pos := 0
 
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
 	go func() {
+		defer func() {
+			if err == nil {
+				if panicReport := recover(); panicReport != nil {
+					err = NewFatalError(panicReport)
+				}
+			}
+			panicCh <- true
+			wg.Done()
+		}()
+
 		for {
 			row, ok := <-rowch
 			if !ok {
 				break
 			}
+
 			record := make(Record, len(row))
 			for i, v := range row {
 				if v == nil {
@@ -1228,7 +1240,7 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 				}
 			}
 
-			if 0 < fileSize && len(recordSet) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
+			if 0 < fileSize && 0 < pos && len(recordSet) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
 				l := int((float64(fileSize) / float64(pos)) * fileLoadingPreparedRecordSetCap * 1.2)
 				newSet := make(RecordSet, fileLoadingPreparedRecordSetCap, l)
 				copy(newSet, recordSet)
@@ -1237,12 +1249,24 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 
 			recordSet = append(recordSet, record)
 		}
-		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
+		panicOccurred := false
+
+		defer func() {
+			if err == nil && !panicOccurred {
+				if panicReport := recover(); panicReport != nil {
+					err = NewFatalError(panicReport)
+				}
+			}
+			close(rowch)
+			wg.Done()
+		}()
+
 		i := 0
+
 		for {
 			if i&15 == 0 && ctx.Err() != nil {
 				err = ConvertContextError(ctx.Err())
@@ -1264,14 +1288,22 @@ func readRecordSet(ctx context.Context, reader RecordReader, fileSize int64) (Re
 				}
 			}
 
-			rowch <- row
+			select {
+			case _ = <-panicCh:
+				panicOccurred = true
+			case rowch <- row:
+				// Row data sent.
+			}
+
+			if panicOccurred {
+				break
+			}
 			i++
 		}
-		close(rowch)
-		wg.Done()
 	}()
 
 	wg.Wait()
+	close(panicCh)
 
 	return recordSet, err
 }
@@ -1316,6 +1348,7 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp *fil
 	}
 
 	rowch := make(chan txjson.Object, fileLoadingBuffer)
+	panicCh := make(chan bool, 1)
 	pos := 0
 
 	reader := jsonl.NewReader(fp)
@@ -1325,6 +1358,16 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp *fil
 
 	wg.Add(1)
 	go func() {
+		defer func() {
+			if err == nil {
+				if panicReport := recover(); panicReport != nil {
+					err = NewFatalError(panicReport)
+				}
+			}
+			panicCh <- true
+			wg.Done()
+		}()
+
 		for {
 			row, ok := <-rowch
 			if !ok {
@@ -1338,7 +1381,7 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp *fil
 				}
 			}
 
-			if 0 < fileSize && len(objectList) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
+			if 0 < fileSize && 0 < pos && len(objectList) == fileLoadingPreparedRecordSetCap && int64(pos) < fileSize {
 				l := int((float64(fileSize) / float64(pos)) * fileLoadingPreparedRecordSetCap * 1.2)
 				newSet := make([]txjson.Object, fileLoadingPreparedRecordSetCap, l)
 				copy(newSet, objectList)
@@ -1347,11 +1390,22 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp *fil
 
 			objectList = append(objectList, row)
 		}
-		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
+		panicOccurred := false
+
+		defer func() {
+			if err == nil && !panicOccurred {
+				if panicReport := recover(); panicReport != nil {
+					err = NewFatalError(panicReport)
+				}
+			}
+			close(rowch)
+			wg.Done()
+		}()
+
 		i := 0
 		for {
 			if i&15 == 0 && ctx.Err() != nil {
@@ -1400,14 +1454,22 @@ func loadViewFromJsonLinesFile(ctx context.Context, flags *option.Flags, fp *fil
 				pos = reader.Pos()
 			}
 
-			rowch <- rowObj
+			select {
+			case _ = <-panicCh:
+				panicOccurred = true
+			case rowch <- rowObj:
+				// Row data sent.
+			}
+
+			if panicOccurred {
+				break
+			}
 			i++
 		}
-		close(rowch)
-		wg.Done()
 	}()
 
 	wg.Wait()
+	close(panicCh)
 
 	if err != nil {
 		return nil, err

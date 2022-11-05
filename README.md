@@ -42,12 +42,12 @@ This tool may be useful for those who want to handle data easily and roughly, wi
 * Transaction Management
 * Support loading data from Standard Input
 * Support following file formats
-  * CSV
+  * [CSV](https://datatracker.ietf.org/doc/html/rfc4180)
   * TSV
-  * LTSV
+  * [LTSV](http://ltsv.org)
   * Fixed-Length Format
-  * JSON
-  * JSON Lines
+  * [JSON](https://datatracker.ietf.org/doc/html/rfc8259)
+  * [JSON Lines](https://jsonlines.org)
 * Support following file encodings
   * UTF-8
   * UTF-16

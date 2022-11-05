@@ -130,6 +130,18 @@ func Analyze(ctx context.Context, scope *ReferenceScope, view *View, fn parser.A
 	gm := NewGoroutineTaskManager(len(partitionMapKeys), minReq, scope.Tx.Flags.CPU)
 
 	var analyzeFn = func(thIdx int) {
+		defer func() {
+			if !gm.HasError() {
+				if panicReport := recover(); panicReport != nil {
+					gm.SetError(NewFatalError(panicReport))
+				}
+			}
+
+			if 1 < gm.Number {
+				gm.Done()
+			}
+		}()
+
 		start, end := gm.RecordRange(thIdx)
 		seqScope := scope.CreateScopeForSequentialEvaluation(view)
 
@@ -196,10 +208,6 @@ func Analyze(ctx context.Context, scope *ReferenceScope, view *View, fn parser.A
 					}
 				}
 			}
-		}
-
-		if 1 < gm.Number {
-			gm.Done()
 		}
 	}
 

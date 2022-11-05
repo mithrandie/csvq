@@ -142,6 +142,18 @@ func InnerJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 	recordsList := make([]RecordSet, gm.Number)
 
 	var joinFn = func(thIdx int) {
+		defer func() {
+			if !gm.HasError() {
+				if panicReport := recover(); panicReport != nil {
+					gm.SetError(NewFatalError(panicReport))
+				}
+			}
+
+			if 1 < gm.Number {
+				gm.Done()
+			}
+		}()
+
 		ctx := ctx
 		start, end := gm.RecordRange(thIdx)
 		records := make(RecordSet, 0, end-start)
@@ -183,10 +195,6 @@ func InnerJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 		}
 
 		recordsList[thIdx] = records
-
-		if 1 < gm.Number {
-			gm.Done()
-		}
 	}
 
 	if 1 < gm.Number {
@@ -235,6 +243,18 @@ func OuterJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 	joinViewMatchesList := make([][]bool, gm.Number)
 
 	var joinFn = func(thIdx int) {
+		defer func() {
+			if !gm.HasError() {
+				if panicReport := recover(); panicReport != nil {
+					gm.SetError(NewFatalError(panicReport))
+				}
+			}
+
+			if 1 < gm.Number {
+				gm.Done()
+			}
+		}()
+
 		ctx := ctx
 		start, end := gm.RecordRange(thIdx)
 		records := make(RecordSet, 0, end-start)
@@ -318,10 +338,6 @@ func OuterJoin(ctx context.Context, scope *ReferenceScope, view *View, joinView 
 
 		recordsList[thIdx] = records
 		joinViewMatchesList[thIdx] = joinViewMatches
-
-		if 1 < gm.Number {
-			gm.Done()
-		}
 	}
 
 	if 1 < gm.Number {

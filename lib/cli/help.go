@@ -3,7 +3,7 @@ package cli
 var appHHelpTemplate = `Name:
    {{.Name}}{{if .Usage}} - {{.Usage}}{{end}}
 
-     https://mithrandie.github.io/csvq
+     https://mithrandie.github.io/csvq/
 
 Usage:
    {{if .UsageText}}{{.UsageText}}{{else}}{{.HelpName}} {{if .VisibleFlags}}[options]{{end}}{{if .Commands}} [subcommand]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}{{end}}{{if .Version}}{{if not .HideVersion}}

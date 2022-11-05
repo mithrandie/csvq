@@ -87,20 +87,28 @@ func (proc *Processor) Execute(ctx context.Context, statements []parser.Statemen
 	return flow, err
 }
 
-func (proc *Processor) execute(ctx context.Context, statements []parser.Statement) (StatementFlow, error) {
-	flow := Terminate
+func (proc *Processor) execute(ctx context.Context, statements []parser.Statement) (flow StatementFlow, err error) {
+	defer func() {
+		if err == nil {
+			if panicReport := recover(); panicReport != nil {
+				flow = TerminateWithError
+				err = NewFatalError(panicReport)
+			}
+		}
+	}()
+
+	flow = Terminate
 
 	for _, stmt := range statements {
-		f, err := proc.ExecuteStatement(ctx, stmt)
+		flow, err = proc.ExecuteStatement(ctx, stmt)
 		if err != nil {
-			return f, err
+			return
 		}
-		if f != Terminate {
-			flow = f
+		if flow != Terminate {
 			break
 		}
 	}
-	return flow, nil
+	return
 }
 
 func (proc *Processor) executeChild(ctx context.Context, statements []parser.Statement) (StatementFlow, error) {
