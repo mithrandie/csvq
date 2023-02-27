@@ -70,7 +70,7 @@ This tool may be useful for those who want to handle data easily and roughly, wi
 
 #### Requirements
 
-Go 1.17 or later (cf. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
+Go 1.18 or later (cf. [Getting Started - The Go Programming Language](https://golang.org/doc/install))
 
 #### Build command
 
