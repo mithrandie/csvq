@@ -8,7 +8,7 @@ require (
 	github.com/mithrandie/ternary v1.1.1
 	github.com/urfave/cli/v2 v2.10.3
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
+	golang.org/x/sys v0.1.0
 	golang.org/x/text v0.3.8
 )
 
