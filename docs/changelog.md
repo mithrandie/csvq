@@ -5,6 +5,12 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.18.1
+
+Released on Mar 26, 2023
+
+- Update dependencies.
+
 ## Version 1.18.0
 
 Released on Mar 26, 2023
