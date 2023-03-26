@@ -3,10 +3,10 @@ module github.com/mithrandie/csvq
 require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mithrandie/go-file/v2 v2.1.0
-	github.com/mithrandie/go-text v1.5.4
-	github.com/mithrandie/readline-csvq v1.2.1
+	github.com/mithrandie/go-text v1.6.0
+	github.com/mithrandie/readline-csvq v1.3.0
 	github.com/mithrandie/ternary v1.1.1
-	github.com/urfave/cli/v2 v2.25.0
+	github.com/urfave/cli/v2 v2.25.1
 	golang.org/x/crypto v0.7.0
 	golang.org/x/sys v0.6.0
 	golang.org/x/text v0.8.0
