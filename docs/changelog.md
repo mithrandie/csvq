@@ -5,6 +5,13 @@ title: Change Log - csvq
 
 # Change Log
 
+## Version 1.18.0
+
+Released on Mar 26, 2023
+
+- Update dependencies.
+- Update supported Go version to 1.18 or later.
+
 ## Version 1.17.11
 
 Released on Nov 5, 2022
