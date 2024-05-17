@@ -143,6 +143,7 @@ func (c Client) GetLatestRelease() (*GithubRelease, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 
 	release := &GithubRelease{}
 	body, _ := io.ReadAll(res.Body)
